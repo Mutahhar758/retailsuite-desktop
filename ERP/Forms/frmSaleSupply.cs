@@ -210,6 +210,7 @@ namespace ERP
                         ItemId = cmbItem.SelectedValue.ToString(),
                         Description = txtDescription.Text,
                         Narration = cmbNarration.SelectedValue?.ToString(),
+                        SupplyOrderMasterId = cmbSupplyOrder.SelectedValue != null ? (int?)Convert.ToInt32(cmbSupplyOrder.SelectedValue) : null,
                         Lines = lines
                     };
                     voucher = await _apiService.CreateAsync(request);
@@ -222,6 +223,7 @@ namespace ERP
                         ItemId = cmbItem.SelectedValue.ToString(),
                         Description = txtDescription.Text,
                         Narration = cmbNarration.SelectedValue?.ToString(),
+                        SupplyOrderMasterId = cmbSupplyOrder.SelectedValue != null ? (int?)Convert.ToInt32(cmbSupplyOrder.SelectedValue) : null,
                         Lines = lines
                     };
                     await _apiService.UpdateAsync(voucher, request);
@@ -275,6 +277,13 @@ namespace ERP
                     cmbNarration.SelectedValue = first.Narration;
                 cmbItem.SelectedValue = first.ItemId;
                 txtDescription.Text = first.Description;
+
+                // Restore Supply Order Profile
+                if (first.SupplyOrderMasterId.HasValue)
+                    cmbSupplyOrder.SelectedValue = first.SupplyOrderMasterId.Value;
+                else
+                    cmbSupplyOrder.SelectedIndex = -1;
+
                 txtCreatedBy.Text = first.CreatedBy + " | " + first.CreatedOn.ToString("dd-MMM-yyyy hh:mm:ss tt");
                 txtEditBy.Text = !string.IsNullOrWhiteSpace(first.LastModifiedBy)
                     ? first.LastModifiedBy + " | " + first.LastModifiedOn.Value.ToString("dd-MMM-yyyy hh:mm:ss tt")
@@ -663,6 +672,7 @@ namespace ERP
             dtpDate.Focus();
             cmbItem.SelectedIndex = -1;
             cmbNarration.SelectedIndex = dtNarration.Rows.Count > 0 ? 0 : -1;
+            cmbSupplyOrder.SelectedIndex = -1;
         }
 
         void Navigate(Navigators Nav)
@@ -827,6 +837,7 @@ namespace ERP
                 txtCreatedBy.Text = "";
                 txtEditBy.Text = "";
                 dtpDate.Value = DateTime.Now;
+                // Keep cmbSupplyOrder as-is — profile is carried to the new voucher
                 MessageBox.Show("Record copied for new entry. Click Save to create a new record.", "Copy as New", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 dtpDate.Focus();
             }

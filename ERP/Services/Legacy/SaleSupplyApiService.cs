@@ -129,8 +129,14 @@ namespace ERP.Services.Legacy
         [JsonProperty("narration")]
         public string Narration { get; set; }
 
+        [JsonProperty("narrationId")]
+        public string NarrationId { get; set; }
+
         [JsonProperty("description")]
         public string Description { get; set; }
+
+        [JsonProperty("supplyOrderMasterId")]
+        public int? SupplyOrderMasterId { get; set; }
 
         [JsonProperty("customerId")]
         public string CustomerId { get; set; }
@@ -180,6 +186,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("narration")]
         public string Narration { get; set; }
 
+        [JsonProperty("supplyOrderMasterId")]
+        public int? SupplyOrderMasterId { get; set; }
+
         [JsonProperty("lines")]
         public List<SaleSupplyLineApiRequest> Lines { get; set; } = new List<SaleSupplyLineApiRequest>();
     }
@@ -197,6 +206,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("narration")]
         public string Narration { get; set; }
+
+        [JsonProperty("supplyOrderMasterId")]
+        public int? SupplyOrderMasterId { get; set; }
 
         [JsonProperty("lines")]
         public List<SaleSupplyLineApiRequest> Lines { get; set; } = new List<SaleSupplyLineApiRequest>();
