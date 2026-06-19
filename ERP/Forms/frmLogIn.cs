@@ -57,9 +57,6 @@ namespace ERP
             }
 
             UserInfo.UserId = "Log Out";
-
-            txtUserId.Text = "admin";
-            txtPassword.Text = "123456";
         }
 
         private async void btnLogIn_Click(object sender, EventArgs e)

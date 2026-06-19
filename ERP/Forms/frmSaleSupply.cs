@@ -253,6 +253,7 @@ namespace ERP
                     row.Date.ToString("dd-MMM-yyyy"),
                     "SP-" + row.VoucherNo,
                     row.Item,
+                    row.SupplyOrderTitle,
                     row.CreatedBy + " | " + row.CreatedOn.ToString("dd-MMM-yyyy hh:mm:ss tt"),
                     !string.IsNullOrWhiteSpace(row.LastModifiedBy)
                         ? row.LastModifiedBy + " | " + row.LastModifiedOn.Value.ToString("dd-Mmm-yyyy hh:mm:ss tt")
@@ -329,6 +330,14 @@ namespace ERP
         {
             try
             {
+                var clnProfile = new System.Windows.Forms.DataGridViewTextBoxColumn();
+                clnProfile.Name = "clnProfile";
+                clnProfile.HeaderText = "Profile";
+                clnProfile.MinimumWidth = 150;
+                clnProfile.Width = 150;
+                clnProfile.ReadOnly = true;
+                dgvQuery.Columns.Insert(3, clnProfile);
+
                 await LoadLookupsAsync();
                 await FillQueryAsync();
                 FLogIn = false;

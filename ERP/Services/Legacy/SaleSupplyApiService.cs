@@ -110,6 +110,12 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lastModifiedOn")]
         public DateTime? LastModifiedOn { get; set; }
+
+        [JsonProperty("supplyOrderMasterId")]
+        public int? SupplyOrderMasterId { get; set; }
+
+        [JsonProperty("supplyOrderTitle")]
+        public string SupplyOrderTitle { get; set; }
     }
 
     internal class SaleSupplyLineDto
