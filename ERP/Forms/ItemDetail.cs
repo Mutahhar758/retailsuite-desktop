@@ -102,6 +102,8 @@ namespace ERP
             dtItemDetail.Columns.Add("OpnStock", typeof(decimal));
             dtItemDetail.Columns.Add("OpnRate", typeof(decimal));
             dtItemDetail.Columns.Add("status", typeof(string));
+            dtItemDetail.Columns.Add("MediaId", typeof(string));
+            dtItemDetail.Columns.Add("MediaUrl", typeof(string));
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -121,10 +123,12 @@ namespace ERP
                     items[i].LowStockAlert.HasValue ? (object)items[i].LowStockAlert.Value : DBNull.Value,
                     items[i].OpnStock.HasValue ? (object)items[i].OpnStock.Value : DBNull.Value,
                     items[i].OpnRate.HasValue ? (object)items[i].OpnRate.Value : DBNull.Value,
-                    "0");
+                    "0",
+                    items[i].MediaId,
+                    items[i].MediaUrl);
             }
         }
-        void Fillform(string catagory)
+        async System.Threading.Tasks.Task FillformAsync(string catagory)
         {
             DataTable dtfilter = dtItemDetail.Copy();
             dtfilter.Rows.Clear();
@@ -132,7 +136,7 @@ namespace ERP
             dgvItemDetail.Rows.Clear();
             for (int i = 0; i < dtfilter.Rows.Count; i++)
             {
-                dgvItemDetail.Rows.Add(dtfilter.Rows[i]["Id"].ToString(),
+                int rIdx = dgvItemDetail.Rows.Add(dtfilter.Rows[i]["Id"].ToString(),
                     dtfilter.Rows[i]["Barcode"].ToString(),
                     dtfilter.Rows[i]["fkitemcatagory"].ToString(),
                     dtfilter.Rows[i]["Title"].ToString(),
@@ -149,18 +153,29 @@ namespace ERP
                     dtfilter.Rows[i]["OpnRate"].ToString().EmptyToNull(),
                     dtfilter.Rows[i]["status"].ToString(),
                     "0");
+                dgvItemDetail.Rows[rIdx].Cells["clnMediaId"].Value = dtfilter.Rows[i]["MediaId"]?.ToString() ?? string.Empty;
+                dgvItemDetail.Rows[rIdx].Cells["clnMediaUrl"].Value = dtfilter.Rows[i]["MediaUrl"]?.ToString() ?? string.Empty;
             }
             dgvItemDetail.Rows.Add();
             CalcTotals();
+            await UpdateProductPictureAsync();
         }
         private async void frmItemDetail_Load(object sender, EventArgs e)
         {
+            profileImage1.SearchButton.Click += btnProductSearch_Click;
+            profileImage1.CancelButton.Click += btnProductCancel_Click;
+
+            var clnMediaId = new DataGridViewTextBoxColumn { Name = "clnMediaId", Visible = false };
+            var clnMediaUrl = new DataGridViewTextBoxColumn { Name = "clnMediaUrl", Visible = false };
+            dgvItemDetail.Columns.Add(clnMediaId);
+            dgvItemDetail.Columns.Add(clnMediaUrl);
+
             await LoadUnitsAsync();
             await fillItemCatagory();
             await LoadItemDetailAsync();
             FillUnits();
             dgvItemDetail.Rows.Add();
-            Fillform((string)cmbItemCatagory.SelectedValue);
+            await FillformAsync((string)cmbItemCatagory.SelectedValue);
             FLogin = false;
             if (UserInfo.UserId != "Admin" )
             {
@@ -178,13 +193,14 @@ namespace ERP
             currentRow = e.RowIndex;
             
         }
-        private void dgvItemDetail_SelectionChanged(object sender, EventArgs e)
+        private async void dgvItemDetail_SelectionChanged(object sender, EventArgs e)
         {
             if (resetRow)
             {
                 resetRow = false;     
                 dgvItemDetail.CurrentCell = dgvItemDetail.Rows[currentRow].Cells[dgvItemDetail.CurrentCell.ColumnIndex];
             }
+            await UpdateProductPictureAsync();
         }
         private void dgvItemDetail_KeyDown(object sender, KeyEventArgs e)
         {
@@ -292,7 +308,8 @@ namespace ERP
                                 Alert = Validation.ToBool(row.Cells[clnAlert.Index].Value),
                                 LowStockAlert = ParseNullableDecimal(row.Cells[clnLowStockAlert.Index].Value),
                                 OpnStock = ParseNullableDecimal(row.Cells[clnOpnStock.Index].Value),
-                                OpnRate = ParseNullableDecimal(row.Cells[clnOpnRate.Index].Value)
+                                OpnRate = ParseNullableDecimal(row.Cells[clnOpnRate.Index].Value),
+                                MediaId = row.Cells["clnMediaId"] != null ? Convert.ToString(row.Cells["clnMediaId"].Value) : string.Empty
                             };
 
                             var id = request.Id ?? string.Empty;
@@ -304,7 +321,7 @@ namespace ERP
                 }
                 MessageBox.Show("Record Successfully Saved..!");
                 await LoadItemDetailAsync();
-                Fillform((string)cmbItemCatagory.SelectedValue);
+                await FillformAsync((string)cmbItemCatagory.SelectedValue);
                 this.DialogResult = System.Windows.Forms.DialogResult.OK;
             }
         }
@@ -312,7 +329,7 @@ namespace ERP
         private async void cmbItemCatagory_SelectedIndexChanged(object sender, EventArgs e)
         {
             if ( !FLogin && cmbItemCatagory.SelectedValue != null)
-                Fillform((string)cmbItemCatagory.SelectedValue);
+                await FillformAsync((string)cmbItemCatagory.SelectedValue);
         }
 
         private void btnClose_Click(object sender, EventArgs e)
@@ -375,7 +392,7 @@ namespace ERP
                 {
                     await _inventoryApiService.DeleteItemAsync(id);
                     await LoadItemDetailAsync();
-                    Fillform((string)cmbItemCatagory.SelectedValue);
+                    await FillformAsync((string)cmbItemCatagory.SelectedValue);
                 }
                 else
                 {
@@ -429,9 +446,78 @@ namespace ERP
             }
         }
 
-      
+        private async System.Threading.Tasks.Task UpdateProductPictureAsync()
+        {
+            if (profileImage1 == null || dgvItemDetail.CurrentRow == null)
+                return;
 
-       
-        
+            var row = dgvItemDetail.CurrentRow;
+            if (row.Cells["clnMediaId"] != null)
+            {
+                var mediaId = Convert.ToString(row.Cells["clnMediaId"].Value);
+                var mediaUrl = Convert.ToString(row.Cells["clnMediaUrl"].Value);
+
+                profileImage1.MediaId = mediaId;
+                profileImage1.MediaUrl = mediaUrl;
+                await profileImage1.LoadImageAsync(mediaUrl);
+            }
+            else
+            {
+                profileImage1.ClearImage();
+            }
+        }
+
+        private async void btnProductSearch_Click(object sender, EventArgs e)
+        {
+            if (dgvItemDetail.CurrentRow == null)
+            {
+                MessageBox.Show("Please select a product row first.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Image Files (*.jpg;*.jpeg;*.png;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        var fileName = System.IO.Path.GetFileName(openFileDialog.FileName);
+                        var presigned = await _inventoryApiService.GetPresignedUploadUrlAsync(fileName);
+                        if (presigned != null)
+                        {
+                            await _inventoryApiService.UploadFileAsync(presigned.UploadUrl, openFileDialog.FileName);
+                            
+                            var row = dgvItemDetail.CurrentRow;
+                            row.Cells["clnMediaId"].Value = presigned.FileId;
+                            row.Cells["clnMediaUrl"].Value = openFileDialog.FileName;
+                            row.Cells["clnIsEdit"].Value = "1";
+                            
+                            profileImage1.MediaId = presigned.FileId;
+                            profileImage1.MediaUrl = openFileDialog.FileName;
+                            profileImage1.PictureBox.Image = Image.FromFile(openFileDialog.FileName);
+                            
+                            MessageBox.Show("Image uploaded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to upload image: {ex.Message}", "Upload Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void btnProductCancel_Click(object sender, EventArgs e)
+        {
+            if (dgvItemDetail.CurrentRow != null)
+            {
+                var row = dgvItemDetail.CurrentRow;
+                row.Cells["clnMediaId"].Value = string.Empty;
+                row.Cells["clnMediaUrl"].Value = string.Empty;
+                row.Cells["clnIsEdit"].Value = "1";
+            }
+            profileImage1.ClearImage();
+        }
     }
 }

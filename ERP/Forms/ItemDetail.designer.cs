@@ -86,6 +86,7 @@ namespace ERP
             this.panel1.SuspendLayout();
             this.contextMenuStrip1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
+            this.profileImage1 = new ERP.Controls.ProfileImage();
             this.SuspendLayout();
             // 
             // cmbItemCatagory
@@ -116,9 +117,8 @@ namespace ERP
             this.dgvItemDetail.AllowUserToDeleteRows = false;
             this.dgvItemDetail.AllowUserToOrderColumns = true;
             this.dgvItemDetail.AllowUserToResizeColumns = false;
-            this.dgvItemDetail.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dgvItemDetail.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left)));
             this.dgvItemDetail.BackgroundColor = System.Drawing.SystemColors.ControlLightLight;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
@@ -168,7 +168,7 @@ namespace ERP
             this.dgvItemDetail.RowHeadersDefaultCellStyle = dataGridViewCellStyle6;
             this.dgvItemDetail.RowHeadersWidth = 30;
             this.dgvItemDetail.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvItemDetail.Size = new System.Drawing.Size(1152, 387);
+            this.dgvItemDetail.Size = new System.Drawing.Size(980, 387);
             this.dgvItemDetail.TabIndex = 164;
             this.dgvItemDetail.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvItemDetail_CellEndEdit);
             this.dgvItemDetail.CellMouseUp += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvItemDetail_CellMouseUp);
@@ -541,6 +541,14 @@ namespace ERP
             this.clnIsEdit.ReadOnly = true;
             this.clnIsEdit.Visible = false;
             // 
+            // profileImage1
+            // 
+            this.profileImage1.Location = new System.Drawing.Point(985, 140);
+            this.profileImage1.Name = "profileImage1";
+            this.profileImage1.Size = new System.Drawing.Size(160, 240);
+            this.profileImage1.TabIndex = 220;
+            this.profileImage1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            // 
             // frmItemDetail
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -552,6 +560,7 @@ namespace ERP
             this.Controls.Add(this.txtBarcode);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.panel1);
+            this.Controls.Add(this.profileImage1);
             this.Controls.Add(this.dgvItemDetail);
             this.Controls.Add(this.cmbItemCatagory);
             this.Controls.Add(this.label11);
@@ -613,5 +622,6 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn clnOpnRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnstatus;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnIsEdit;
+        private ERP.Controls.ProfileImage profileImage1;
     }
 }

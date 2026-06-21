@@ -56,6 +56,7 @@ namespace ERP
             lblCreatedBy.Text = lblEditBy.Text = "-";
             chkActive.Checked = true;
             chkSMSAlert.Checked = chkEmailAlert.Checked = false;
+            profileImage1?.ClearImage();
         }
 
         // ══════════════════════════════════════════════════════════════════
@@ -83,7 +84,7 @@ namespace ERP
                                       c.Email, c.Address, c.Active ? "Yes" : "No");
         }
 
-        private void FillDetail(string code)
+        private async void FillDetail(string code)
         {
             if (Flogin || string.IsNullOrWhiteSpace(code)) return;
 
@@ -109,6 +110,13 @@ namespace ERP
 
             lblCreatedBy.Text = FormatAudit(c.CreatedBy,       c.CreatedOn);
             lblEditBy.Text    = FormatAudit(c.LastModifiedBy,  c.LastModifiedOn);
+
+            if (profileImage1 != null)
+            {
+                profileImage1.MediaId = c.MediaId;
+                profileImage1.MediaUrl = c.MediaUrl;
+                await profileImage1.LoadImageAsync(c.MediaUrl);
+            }
         }
 
         private static string FormatAudit(string by, DateTime? on) =>
@@ -130,7 +138,8 @@ namespace ERP
             Iban          = txtIBAN.Text,
             SmsAlert      = chkSMSAlert.Checked,
             EmailAlert    = chkEmailAlert.Checked,
-            Active        = chkActive.Checked
+            Active        = chkActive.Checked,
+            MediaId       = profileImage1?.MediaId
         };
 
         // ══════════════════════════════════════════════════════════════════
@@ -271,6 +280,8 @@ namespace ERP
         {
             try
             {
+                profileImage1.SearchButton.Click += btnCustomerSearch_Click;
+                profileImage1.CancelButton.Click += btnCustomerCancel_Click;
                 await FillCustomersAsync();
                 Flogin = false;
                 string code = cmbCustomerCode.SelectedValue?.ToString();
@@ -297,6 +308,39 @@ namespace ERP
                 txtAccountCode.Text = code ?? string.Empty;
                 FillDetail(code);
             }
+        }
+
+        private async void btnCustomerSearch_Click(object sender, EventArgs e)
+        {
+            using (var openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Image Files (*.jpg;*.jpeg;*.png;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        var fileName = System.IO.Path.GetFileName(openFileDialog.FileName);
+                        var presigned = await _customerApiService.GetPresignedUploadUrlAsync(fileName);
+                        if (presigned != null)
+                        {
+                            await _customerApiService.UploadFileAsync(presigned.UploadUrl, openFileDialog.FileName);
+                            profileImage1.MediaId = presigned.FileId;
+                            profileImage1.MediaUrl = openFileDialog.FileName;
+                            profileImage1.PictureBox.Image = System.Drawing.Image.FromFile(openFileDialog.FileName);
+                            MessageBox.Show("Image uploaded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to upload image: {ex.Message}", "Upload Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void btnCustomerCancel_Click(object sender, EventArgs e)
+        {
+            profileImage1.ClearImage();
         }
 
         // ── Helper ────────────────────────────────────────────────────────

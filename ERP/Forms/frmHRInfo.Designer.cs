@@ -1,4 +1,4 @@
-﻿namespace ERP.Forms
+namespace ERP.Forms
 {
     partial class frmHRInfo
     {
@@ -365,7 +365,7 @@
             this.profileImage1.Image = null;
             this.profileImage1.Location = new System.Drawing.Point(821, 11);
             this.profileImage1.Name = "profileImage1";
-            this.profileImage1.Size = new System.Drawing.Size(160, 207);
+            this.profileImage1.Size = new System.Drawing.Size(160, 240);
             this.profileImage1.TabIndex = 295;
             // 
             // grpInvoiceDetail

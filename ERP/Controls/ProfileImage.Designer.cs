@@ -1,4 +1,4 @@
-﻿namespace ERP.Controls
+namespace ERP.Controls
 {
     partial class ProfileImage
     {
@@ -47,7 +47,7 @@
             this.groupBox1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox1.Location = new System.Drawing.Point(3, 3);
             this.groupBox1.Name = "groupBox1";
-            this.groupBox1.Size = new System.Drawing.Size(151, 198);
+            this.groupBox1.Size = new System.Drawing.Size(151, 230);
             this.groupBox1.TabIndex = 295;
             this.groupBox1.TabStop = false;
             this.groupBox1.Text = "Profile Photo";
@@ -96,7 +96,7 @@
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.Controls.Add(this.groupBox1);
             this.Name = "ProfileImage";
-            this.Size = new System.Drawing.Size(160, 207);
+            this.Size = new System.Drawing.Size(160, 240);
             this.Load += new System.EventHandler(this.ProfileImage_Load);
             this.groupBox1.ResumeLayout(false);
             ((System.ComponentModel.ISupportInitialize)(this.picHRPicture)).EndInit();

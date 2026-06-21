@@ -57,6 +57,19 @@ namespace ERP.Services.Legacy
                 await EnsureSuccessWithServerMessageAsync(response);
             }
         }
+
+        public async Task<PresignedUploadUrlDto> GetPresignedUploadUrlAsync(string fileName)
+        {
+            using (var client = CreateClient())
+            {
+                var response = await client.PostAsync(Endpoint + "/presigned-upload-url?fileName=" + Uri.EscapeDataString(fileName), null);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<PresignedUploadUrlDto>>(json);
+                return payload?.Body;
+            }
+        }
     }
 
     internal class CustomerDto
@@ -114,6 +127,12 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lastModifiedOn")]
         public DateTime? LastModifiedOn { get; set; }
+
+        [JsonProperty("mediaId")]
+        public string MediaId { get; set; }
+
+        [JsonProperty("mediaUrl")]
+        public string MediaUrl { get; set; }
     }
 
     internal class CustomerUpsertApiRequest
@@ -156,5 +175,8 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("active")]
         public bool Active { get; set; }
+
+        [JsonProperty("mediaId")]
+        public string MediaId { get; set; }
     }
 }

@@ -97,5 +97,31 @@ namespace ERP.Services.Legacy
 
             return client;
         }
+
+        public async Task UploadFileAsync(string uploadUrl, string filePath)
+        {
+            using (var client = new HttpClient())
+            using (var form = new MultipartFormDataContent())
+            using (var fileStream = System.IO.File.OpenRead(filePath))
+            using (var streamContent = new StreamContent(fileStream))
+            {
+                streamContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue("application/octet-stream");
+                form.Add(streamContent, "File", System.IO.Path.GetFileName(filePath));
+                var response = await client.PostAsync(uploadUrl, form);
+                await EnsureSuccessWithServerMessageAsync(response);
+            }
+        }
+    }
+
+    public class PresignedUploadUrlDto
+    {
+        [JsonProperty("fileId")]
+        public string FileId { get; set; }
+
+        [JsonProperty("uploadUrl")]
+        public string UploadUrl { get; set; }
+
+        [JsonProperty("expiresAt")]
+        public DateTime ExpiresAt { get; set; }
     }
 }

@@ -66,6 +66,19 @@ namespace ERP.Services.Legacy
                 await EnsureSuccessWithServerMessageAsync(response);
             }
         }
+
+        public async Task<PresignedUploadUrlDto> GetPresignedUploadUrlAsync(string fileName)
+        {
+            using (var client = CreateClient(includeTenantId: true))
+            {
+                var response = await client.PostAsync(Endpoint + "/presigned-upload-url?fileName=" + Uri.EscapeDataString(fileName), null);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<PresignedUploadUrlDto>>(json);
+                return payload?.Body;
+            }
+        }
     }
 
     public class HRInfoDto
@@ -86,6 +99,8 @@ namespace ERP.Services.Legacy
         public decimal Overtime { get; set; }
         public string ExpenseAccount { get; set; }
         public string PayableAccount { get; set; }
+        public string MediaId { get; set; }
+        public string MediaUrl { get; set; }
     }
 
     public class HRInfoUpsertApiRequest
@@ -105,5 +120,6 @@ namespace ERP.Services.Legacy
         public decimal Overtime { get; set; }
         public string ExpenseAccount { get; set; }
         public string PayableAccount { get; set; }
+        public string MediaId { get; set; }
     }
 }

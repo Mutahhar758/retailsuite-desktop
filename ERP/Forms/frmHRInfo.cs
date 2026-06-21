@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -73,6 +73,10 @@ namespace ERP.Forms
                         cmbExpenseAccount.SelectedValue = emp.ExpenseAccount;
                     if (emp.PayableAccount != null)
                         cmbPayable.SelectedValue = emp.PayableAccount;
+
+                    profileImage1.MediaId = emp.MediaId;
+                    profileImage1.MediaUrl = emp.MediaUrl;
+                    await profileImage1.LoadImageAsync(emp.MediaUrl);
                 }
             }
             catch (Exception ex)
@@ -108,12 +112,47 @@ namespace ERP.Forms
             try
             {
                 await LoadAccountLookupsAsync();
+                profileImage1.SearchButton.Click += btnHRSearch_Click;
+                profileImage1.CancelButton.Click += btnHRCancel_Click;
                 FillQuery();
             }
             catch (Exception ex)
             {
                 MessageBox.Show($"Error loading lookup data: {ex.Message}", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private async void btnHRSearch_Click(object sender, EventArgs e)
+        {
+            using (var openFileDialog = new OpenFileDialog())
+            {
+                openFileDialog.Filter = "Image Files (*.jpg;*.jpeg;*.png;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
+                if (openFileDialog.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        var fileName = System.IO.Path.GetFileName(openFileDialog.FileName);
+                        var presigned = await _hrInfoService.GetPresignedUploadUrlAsync(fileName);
+                        if (presigned != null)
+                        {
+                            await _hrInfoService.UploadFileAsync(presigned.UploadUrl, openFileDialog.FileName);
+                            profileImage1.MediaId = presigned.FileId;
+                            profileImage1.MediaUrl = openFileDialog.FileName;
+                            profileImage1.PictureBox.Image = Image.FromFile(openFileDialog.FileName);
+                            MessageBox.Show("Image uploaded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show($"Failed to upload image: {ex.Message}", "Upload Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void btnHRCancel_Click(object sender, EventArgs e)
+        {
+            profileImage1.ClearImage();
         }
 
         private async void btnSave_Click(object sender, EventArgs e)
@@ -147,7 +186,8 @@ namespace ERP.Forms
                         LeaveCharges = ntxtLeaveCharges.Value,
                         Overtime = ntxtOvertime.Value,
                         ExpenseAccount = cmbExpenseAccount.SelectedValue?.ToString() ?? string.Empty,
-                        PayableAccount = cmbPayable.SelectedValue?.ToString() ?? string.Empty
+                        PayableAccount = cmbPayable.SelectedValue?.ToString() ?? string.Empty,
+                        MediaId = profileImage1.MediaId
                     };
 
                     if (string.IsNullOrEmpty(txtHRID.Text))
@@ -164,6 +204,7 @@ namespace ERP.Forms
                     MessageBox.Show("Record Successfully Saved...!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     FillQuery();
                     Validation.Clear(tbDetail);
+                    profileImage1.ClearImage();
                 }
                 catch (Exception ex)
                 {
@@ -189,6 +230,7 @@ namespace ERP.Forms
         {
             Validation.Clear(tbDetail);
             txtHRID.Clear();
+            profileImage1.ClearImage();
         }
 
         private async void btnDelete_Click(object sender, EventArgs e)
@@ -210,6 +252,7 @@ namespace ERP.Forms
                     {
                         await _hrInfoService.DeleteAsync(txtHRID.Text);
                         Validation.Clear(tbDetail);
+                        profileImage1.ClearImage();
                         MessageBox.Show("Record Successfully Deleted...!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         FillQuery();
                     }
