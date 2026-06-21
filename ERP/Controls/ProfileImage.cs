@@ -70,7 +70,9 @@ namespace ERP.Controls
                     return;
                 }
 
-                using (var client = new System.Net.Http.HttpClient())
+                var handler = new System.Net.Http.HttpClientHandler();
+                handler.ServerCertificateCustomValidationCallback = delegate { return true; };
+                using (var client = new System.Net.Http.HttpClient(handler))
                 {
                     var bytes = await client.GetByteArrayAsync(url);
                     using (var ms = new MemoryStream(bytes))

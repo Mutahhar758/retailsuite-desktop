@@ -307,7 +307,7 @@ namespace ERP
             // 
             // profileImage1
             // 
-            this.profileImage1.Image = ((System.Drawing.Image)(resources.GetObject("profileImage1.Image")));
+            this.profileImage1.Image = null;
             this.profileImage1.Location = new System.Drawing.Point(580, 86);
             this.profileImage1.MediaId = null;
             this.profileImage1.MediaUrl = null;
