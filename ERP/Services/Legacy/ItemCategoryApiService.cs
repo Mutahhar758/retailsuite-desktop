@@ -25,14 +25,15 @@ namespace ERP.Services.Legacy
             }
         }
 
-        public async Task CreateAsync(string title, bool active)
+        public async Task CreateAsync(string title, bool active, string mediaId)
         {
             using (var client = CreateClient())
             {
                 var request = new ItemCategoryCreateRequest
                 {
                     Title = title,
-                    Active = active
+                    Active = active,
+                    MediaId = mediaId
                 };
 
                 var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
@@ -41,19 +42,33 @@ namespace ERP.Services.Legacy
             }
         }
 
-        public async Task UpdateAsync(string code, string title, bool active)
+        public async Task UpdateAsync(string code, string title, bool active, string mediaId)
         {
             using (var client = CreateClient())
             {
                 var request = new ItemCategoryUpdateRequest
                 {
                     Title = title,
-                    Active = active
+                    Active = active,
+                    MediaId = mediaId
                 };
 
                 var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
                 var response = await client.PutAsync(Endpoint + "/" + Uri.EscapeDataString(code), content);
                 await EnsureSuccessWithServerMessageAsync(response);
+            }
+        }
+
+        public async Task<PresignedUploadUrlDto> GetPresignedUploadUrlAsync(string fileName)
+        {
+            using (var client = CreateClient())
+            {
+                var response = await client.PostAsync(Endpoint + "/presigned-upload-url?fileName=" + Uri.EscapeDataString(fileName), null);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<PresignedUploadUrlDto>>(json);
+                return payload?.Body;
             }
         }
     }
@@ -68,6 +83,12 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("active")]
         public bool Active { get; set; }
+
+        [JsonProperty("mediaId")]
+        public string MediaId { get; set; }
+
+        [JsonProperty("mediaUrl")]
+        public string MediaUrl { get; set; }
     }
 
     internal class ItemCategoryCreateRequest
@@ -77,6 +98,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("active")]
         public bool Active { get; set; }
+
+        [JsonProperty("mediaId")]
+        public string MediaId { get; set; }
     }
 
     internal class ItemCategoryUpdateRequest
@@ -86,6 +110,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("active")]
         public bool Active { get; set; }
+
+        [JsonProperty("mediaId")]
+        public string MediaId { get; set; }
     }
 }
 

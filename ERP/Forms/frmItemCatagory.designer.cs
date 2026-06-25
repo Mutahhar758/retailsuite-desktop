@@ -1,4 +1,4 @@
-﻿namespace ERP
+namespace ERP
 {
     partial class frmItemCatagory
     {
@@ -43,6 +43,9 @@
             this.clnActive = new System.Windows.Forms.DataGridViewCheckBoxColumn();
             this.clnStatus = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnIsEdit = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnMediaId = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnMediaUrl = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.profileImage1 = new ERP.Controls.ProfileImage();
             ((System.ComponentModel.ISupportInitialize)(this.dgvItemCatagory)).BeginInit();
             this.panel1.SuspendLayout();
             this.SuspendLayout();
@@ -70,7 +73,9 @@
             this.clnItemCatagory,
             this.clnActive,
             this.clnStatus,
-            this.clnIsEdit});
+            this.clnIsEdit,
+            this.clnMediaId,
+            this.clnMediaUrl});
             this.dgvItemCatagory.Location = new System.Drawing.Point(10, 77);
             this.dgvItemCatagory.MultiSelect = false;
             this.dgvItemCatagory.Name = "dgvItemCatagory";
@@ -88,7 +93,7 @@
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Controls.Add(this.btnClose);
             this.panel1.Controls.Add(this.btnSave);
-            this.panel1.Location = new System.Drawing.Point(466, 334);
+            this.panel1.Location = new System.Drawing.Point(680, 334);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(170, 41);
             this.panel1.TabIndex = 169;
@@ -189,16 +194,41 @@
             this.clnIsEdit.ReadOnly = true;
             this.clnIsEdit.Visible = false;
             // 
+            // clnMediaId
+            // 
+            this.clnMediaId.HeaderText = "MediaId";
+            this.clnMediaId.Name = "clnMediaId";
+            this.clnMediaId.ReadOnly = true;
+            this.clnMediaId.Visible = false;
+            // 
+            // clnMediaUrl
+            // 
+            this.clnMediaUrl.HeaderText = "MediaUrl";
+            this.clnMediaUrl.Name = "clnMediaUrl";
+            this.clnMediaUrl.ReadOnly = true;
+            this.clnMediaUrl.Visible = false;
+            // 
+            // profileImage1
+            // 
+            this.profileImage1.Image = null;
+            this.profileImage1.Location = new System.Drawing.Point(645, 77);
+            this.profileImage1.MediaId = null;
+            this.profileImage1.MediaUrl = null;
+            this.profileImage1.Name = "profileImage1";
+            this.profileImage1.Size = new System.Drawing.Size(200, 250);
+            this.profileImage1.TabIndex = 200;
+            // 
             // frmItemCatagory
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.ClientSize = new System.Drawing.Size(641, 389);
+            this.ClientSize = new System.Drawing.Size(860, 389);
+            this.Controls.Add(this.profileImage1);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.dgvItemCatagory);
             this.Name = "frmItemCatagory";
-            this.Text = "frmNarration";
+            this.Text = "Item Category Management";
             this.Load += new System.EventHandler(this.frmNarration_Load);
             ((System.ComponentModel.ISupportInitialize)(this.dgvItemCatagory)).EndInit();
             this.panel1.ResumeLayout(false);
@@ -223,5 +253,8 @@
         private System.Windows.Forms.DataGridViewCheckBoxColumn clnActive;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnStatus;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnIsEdit;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnMediaId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnMediaUrl;
+        private ERP.Controls.ProfileImage profileImage1;
     }
 }
