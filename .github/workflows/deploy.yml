@@ -36,7 +36,7 @@ jobs:
         $appRevision = 38 + $runNumber
         Write-Output "Publishing with version: 1.0.0.$appRevision"
         
-        & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform=x86 /p:ApplicationVersion="1.0.0.$appRevision"
+        & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform="AnyCPU" /p:ApplicationVersion="1.0.0.$appRevision"
       working-directory: ./
 
     - name: Deploy ClickOnce Files to IIS
@@ -46,5 +46,5 @@ jobs:
         New-Item -ItemType Directory -Force -Path "D:\Websites\RetailSuite_Desktop"
         
         # Copy the ClickOnce publish files to the deployment folder
-        Copy-Item -Path "./ERP/bin/Release/app.publish/*" -Destination "D:\Websites\RetailSuite_Desktop" -Recurse -Force
+        Copy-Item -Path "./ERP/publish/*" -Destination "D:\Websites\RetailSuite_Desktop" -Recurse -Force
       working-directory: ./
