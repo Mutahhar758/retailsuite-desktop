@@ -98,12 +98,13 @@ namespace ERP
             dtItemDetail.Columns.Add("DefaultUnit", typeof(string));
             dtItemDetail.Columns.Add("QtyInPack", typeof(decimal));
             dtItemDetail.Columns.Add("Alert", typeof(string));
-            dtItemDetail.Columns.Add("LowStockAlert", typeof(decimal));
+            dtItemDetail.Columns.Add("LowStockAlert", typeof(bool));
             dtItemDetail.Columns.Add("OpnStock", typeof(decimal));
             dtItemDetail.Columns.Add("OpnRate", typeof(decimal));
             dtItemDetail.Columns.Add("status", typeof(string));
             dtItemDetail.Columns.Add("MediaId", typeof(string));
             dtItemDetail.Columns.Add("MediaUrl", typeof(string));
+            dtItemDetail.Columns.Add("ItemType", typeof(int));
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -125,7 +126,8 @@ namespace ERP
                     items[i].OpnRate.HasValue ? (object)items[i].OpnRate.Value : DBNull.Value,
                     "0",
                     items[i].MediaId,
-                    items[i].MediaUrl);
+                    items[i].MediaUrl,
+                    items[i].ItemType == "Service" ? 1 : 0);
             }
         }
         async System.Threading.Tasks.Task FillformAsync(string catagory)
@@ -141,6 +143,7 @@ namespace ERP
                     dtfilter.Rows[i]["fkitemcatagory"].ToString(),
                     dtfilter.Rows[i]["Title"].ToString(),
                     dtfilter.Rows[i]["ItemKey"].ToString(),
+                    dtfilter.Rows[i]["ItemType"] != DBNull.Value ? (int)dtfilter.Rows[i]["ItemType"] : 0,
                     dtfilter.Rows[i]["PriRate"].ToString(),
                     dtfilter.Rows[i]["SecRate"].ToString(),
                     dtfilter.Rows[i]["PrimaryUnit"].ToString().EmptyToNull(),
@@ -174,6 +177,17 @@ namespace ERP
             await fillItemCatagory();
             await LoadItemDetailAsync();
             FillUnits();
+
+            DataTable dtItemTypes = new DataTable();
+            dtItemTypes.Columns.Add("Value", typeof(int));
+            dtItemTypes.Columns.Add("Name", typeof(string));
+            dtItemTypes.Rows.Add(0, "Product");
+            dtItemTypes.Rows.Add(1, "Service");
+
+            clnItemType.DataSource = dtItemTypes;
+            clnItemType.DisplayMember = "Name";
+            clnItemType.ValueMember = "Value";
+
             dgvItemDetail.Rows.Add();
             await FillformAsync((string)cmbItemCatagory.SelectedValue);
             FLogin = false;
@@ -274,7 +288,8 @@ namespace ERP
             dgvItemDetail.Rows[e.RowIndex].Cells[clnstatus.Index].Value = "0";
             if (dgvItemDetail.Rows[e.RowIndex].Cells[clnId.Index].Value == null)
              dgvItemDetail.Rows[e.RowIndex].Cells[clnId.Index].Value = "0";           
-            
+            if (dgvItemDetail.Rows[e.RowIndex].Cells[clnItemType.Index].Value == null)
+                dgvItemDetail.Rows[e.RowIndex].Cells[clnItemType.Index].Value = 0;
         }
         #endregion
         
@@ -285,11 +300,15 @@ namespace ERP
             {
                 foreach (DataGridViewRow row in dgvItemDetail.Rows)
                 {
+                    var rowItemTypeVal = row.Cells[clnItemType.Index].Value;
+                    int rowItemType = rowItemTypeVal != null ? Convert.ToInt32(rowItemTypeVal) : 0;
+                    bool isService = rowItemType == 1;
+
                     if (row.Cells[clnCatagory.Index].Value != null &&
                         row.Cells[clnItem.Index].Value != null &&
                         row.Cells[clnPriRate.Index].Value != null &&
                         row.Cells[clnSecRate.Index].Value != null &&
-                        row.Cells[clnPriUnit.Index].Value != null && 
+                        (isService || row.Cells[clnPriUnit.Index].Value != null) && 
                         row.Cells[clnIsEdit.Index].Value.ToString()   == "1")
                                                 {
                             var request = new InventoryItemUpsertApiRequest
@@ -301,14 +320,15 @@ namespace ERP
                                 ItemKey = Convert.ToString(row.Cells[clnKey.Index].Value),
                                 PriRate = ParseDecimal(row.Cells[clnPriRate.Index].Value),
                                 SecRate = ParseDecimal(row.Cells[clnSecRate.Index].Value),
-                                PrimaryUnit = Convert.ToString(row.Cells[clnPriUnit.Index].Value),
-                                SecondaryUnit = Convert.ToString(row.Cells[clnSecUnit.Index].Value),
-                                DefaultUnit = Convert.ToString(row.Cells[clnDefUnif.Index].Value),
-                                QtyInPack = ParseNullableDecimal(row.Cells[ClnQtyInPack.Index].Value),
+                                PrimaryUnit = isService ? string.Empty : Convert.ToString(row.Cells[clnPriUnit.Index].Value),
+                                SecondaryUnit = isService ? string.Empty : Convert.ToString(row.Cells[clnSecUnit.Index].Value),
+                                DefaultUnit = isService ? string.Empty : Convert.ToString(row.Cells[clnDefUnif.Index].Value),
+                                QtyInPack = isService ? null : ParseNullableDecimal(row.Cells[ClnQtyInPack.Index].Value),
                                 Alert = Validation.ToBool(row.Cells[clnAlert.Index].Value),
-                                LowStockAlert = ParseNullableDecimal(row.Cells[clnLowStockAlert.Index].Value),
-                                OpnStock = ParseNullableDecimal(row.Cells[clnOpnStock.Index].Value),
-                                OpnRate = ParseNullableDecimal(row.Cells[clnOpnRate.Index].Value),
+                                LowStockAlert = isService ? (bool?)null : ParseNullableBool(row.Cells[clnLowStockAlert.Index].Value),
+                                OpnStock = isService ? 0 : ParseNullableDecimal(row.Cells[clnOpnStock.Index].Value),
+                                OpnRate = isService ? 0 : ParseNullableDecimal(row.Cells[clnOpnRate.Index].Value),
+                                ItemType = isService ? "Service" : "Product",
                                 MediaId = row.Cells["clnMediaId"] != null ? Convert.ToString(row.Cells["clnMediaId"].Value) : string.Empty
                             };
 
@@ -371,7 +391,7 @@ namespace ERP
                 if (!IsFind)
                 {
                     object[] Param = new object[]{"0",txtBarcode.Text,cmbItemCatagory.SelectedValue,
-                        "",null,"0","0","003","003","003","1",true,"0","0","0"};  
+                        "",null,0,"0","0","003","003","003","1",true,"0","0","0"};  
                     dgvItemDetail.Rows.Insert (0,Param);
                     dgvItemDetail.CurrentCell = dgvItemDetail[clnBarcode.Index, 0];
                 }
@@ -418,6 +438,22 @@ namespace ERP
 
             decimal ret;
             return decimal.TryParse(text, out ret) ? (decimal?)ret : null;
+        }
+
+        private bool? ParseNullableBool(object value)
+        {
+            var text = Convert.ToString(value);
+            if (string.IsNullOrWhiteSpace(text))
+                return null;
+
+            bool parsed;
+            if (bool.TryParse(text, out parsed))
+                return parsed;
+
+            if (text == "1") return true;
+            if (text == "0") return false;
+
+            return null;
         }
         void CalcTotals()
         {

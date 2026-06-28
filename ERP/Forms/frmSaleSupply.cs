@@ -453,16 +453,21 @@ namespace ERP
         {
             if (cmbItem.SelectedValue != null && rowIndex >= 0 && rowIndex < dgvSale.Rows.Count)
             {
-                if (dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value != null)
+                string Filter = string.Format("Id = '{0}'", cmbItem.SelectedValue.ToString());
+                DataRow dr = dtItems.Select(Filter).FirstOrDefault();
+                if (dr != null)
                 {
-                    string Filter = string.Format("Id = '{0}'", cmbItem.SelectedValue.ToString());
-                    DataRow dr = dtItems.Select(Filter).FirstOrDefault();
-                    if (dr != null)
+                    string rate = "0";
+                    if (dr["PrimaryUnit"] == DBNull.Value || string.IsNullOrWhiteSpace(dr["PrimaryUnit"].ToString()))
+                    {
+                        rate = dr["PriRate"].ToString();
+                    }
+                    else if (dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value != null)
                     {
                         string unitValue = dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value.ToString();
-                        string rate = unitValue == dr["SecondaryUnit"].ToString() ? dr["SecRate"].ToString() : dr["PriRate"].ToString();
-                        dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value = rate;
+                        rate = unitValue == dr["SecondaryUnit"].ToString() ? dr["SecRate"].ToString() : dr["PriRate"].ToString();
                     }
+                    dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value = rate;
                 }
             }
         }

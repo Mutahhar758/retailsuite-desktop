@@ -119,7 +119,7 @@ namespace ERP.Services.Legacy
         public bool Alert { get; set; }
 
         [JsonProperty("lowStockAlert")]
-        public decimal? LowStockAlert { get; set; }
+        public bool? LowStockAlert { get; set; }
 
         [JsonProperty("opnStock")]
         public decimal? OpnStock { get; set; }
@@ -132,6 +132,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("mediaUrl")]
         public string MediaUrl { get; set; }
+
+        [JsonProperty("itemType")]
+        public string ItemType { get; set; }
     }
 
     internal class InventoryItemUpsertApiRequest
@@ -173,7 +176,7 @@ namespace ERP.Services.Legacy
         public bool Alert { get; set; }
 
         [JsonProperty("lowStockAlert")]
-        public decimal? LowStockAlert { get; set; }
+        public bool? LowStockAlert { get; set; }
 
         [JsonProperty("opnStock")]
         public decimal? OpnStock { get; set; }
@@ -183,5 +186,8 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("mediaId")]
         public string MediaId { get; set; }
+
+        [JsonProperty("itemType")]
+        public string ItemType { get; set; }
     }
 }

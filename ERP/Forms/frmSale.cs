@@ -541,9 +541,17 @@ namespace ERP
             cmb.DisplayMember = "Title";
             cmb.ValueMember = "Code";
             cmb.Value = dr["DefaultUnit"];
-            dgvSale[clnRate.Index, rowInd].Value = dr["DefaultUnit"].ToString() == dr["SecondaryUnit"].ToString()
-                ? dr["SecRate"].ToString()
-                : dr["PriRate"].ToString();
+
+            if (dr["PrimaryUnit"] == DBNull.Value || string.IsNullOrWhiteSpace(dr["PrimaryUnit"].ToString()))
+            {
+                dgvSale[clnRate.Index, rowInd].Value = dr["PriRate"].ToString();
+            }
+            else
+            {
+                dgvSale[clnRate.Index, rowInd].Value = dr["DefaultUnit"].ToString() == dr["SecondaryUnit"].ToString()
+                    ? dr["SecRate"].ToString()
+                    : dr["PriRate"].ToString();
+            }
         }
 
         private void dgvPurchase_DataError(object sender, DataGridViewDataErrorEventArgs e)

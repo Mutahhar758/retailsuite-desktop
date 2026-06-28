@@ -70,6 +70,7 @@ namespace ERP
             this.clnCatagory = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnItem = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnKey = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnItemType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnPriRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnSecRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnPriUnit = new System.Windows.Forms.DataGridViewComboBoxColumn();
@@ -135,6 +136,7 @@ namespace ERP
             this.clnCatagory,
             this.clnItem,
             this.clnKey,
+            this.clnItemType,
             this.clnPriRate,
             this.clnSecRate,
             this.clnPriUnit,
@@ -447,6 +449,15 @@ namespace ERP
             this.clnKey.Name = "clnKey";
             this.clnKey.Width = 56;
             // 
+            // clnItemType
+            // 
+            this.clnItemType.HeaderText = "Item Type";
+            this.clnItemType.MinimumWidth = 80;
+            this.clnItemType.Name = "clnItemType";
+            this.clnItemType.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.clnItemType.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            this.clnItemType.Width = 80;
+            // 
             // clnPriRate
             // 
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
@@ -610,6 +621,7 @@ namespace ERP
         private System.Windows.Forms.DataGridViewComboBoxColumn clnCatagory;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnItem;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnKey;
+        private System.Windows.Forms.DataGridViewComboBoxColumn clnItemType;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnPriRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSecRate;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnPriUnit;
