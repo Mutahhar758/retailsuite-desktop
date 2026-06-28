@@ -30,7 +30,13 @@ jobs:
             throw "MSBuild.exe not found under C:\Program Files\Microsoft Visual Studio."
         }
         Write-Output "Found MSBuild at: $msbuild"
-        & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform=x86 /p:ApplicationVersion="1.0.0.${{ github.run_number }}"
+        
+        # Calculate the ClickOnce version starting from revision 35
+        $runNumber = [int]${{ github.run_number }}
+        $appRevision = 34 + $runNumber
+        Write-Output "Publishing with version: 1.0.0.$appRevision"
+        
+        & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform=x86 /p:ApplicationVersion="1.0.0.$appRevision"
       working-directory: ./
 
     - name: Deploy ClickOnce Files to IIS
