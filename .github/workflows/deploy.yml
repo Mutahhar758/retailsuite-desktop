@@ -31,9 +31,9 @@ jobs:
         }
         Write-Output "Found MSBuild at: $msbuild"
         
-        # Calculate the ClickOnce version starting from revision 35
+        # Calculate the ClickOnce version starting from revision 39 (since production is at 38)
         $runNumber = [int]${{ github.run_number }}
-        $appRevision = 34 + $runNumber
+        $appRevision = 38 + $runNumber
         Write-Output "Publishing with version: 1.0.0.$appRevision"
         
         & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform=x86 /p:ApplicationVersion="1.0.0.$appRevision"
