@@ -36,7 +36,7 @@ jobs:
         $appRevision = 38 + $runNumber
         Write-Output "Publishing with version: 1.0.0.$appRevision"
         
-        & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform="AnyCPU" /p:ApplicationVersion="1.0.0.$appRevision"
+        & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform="AnyCPU" /p:PublishDir="publish/" /p:ApplicationVersion="1.0.0.$appRevision"
       working-directory: ./
 
     - name: Deploy ClickOnce Files to IIS
