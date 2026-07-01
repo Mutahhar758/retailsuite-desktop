@@ -1,50 +1,50 @@
-name: Deploy Desktop App (ClickOnce) to IIS
+# name: Deploy Desktop App (ClickOnce) to IIS
 
-on:
-  push:
-    branches: [ "master" ]
+# on:
+#   push:
+#     branches: [ "master" ]
 
-jobs:
-  build-and-deploy:
-    runs-on: self-hosted
+# jobs:
+#   build-and-deploy:
+#     runs-on: self-hosted
 
-    steps:
-    - name: Checkout Code
-      uses: actions/checkout@v4
+#     steps:
+#     - name: Checkout Code
+#       uses: actions/checkout@v4
 
-    - name: Setup NuGet
-      uses: nuget/setup-nuget@v2
+#     - name: Setup NuGet
+#       uses: nuget/setup-nuget@v2
 
-    - name: Restore NuGet Packages
-      run: nuget restore RetailSuite.Desktop.sln
-      working-directory: ./
+#     - name: Restore NuGet Packages
+#       run: nuget restore RetailSuite.Desktop.sln
+#       working-directory: ./
 
-    - name: Publish ClickOnce Application
-      shell: powershell
-      run: |
-        $msbuild = Get-ChildItem "C:\Program Files\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-        if (-not $msbuild) {
-            $msbuild = Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-        }
-        if (-not $msbuild) {
-            throw "MSBuild.exe not found under C:\Program Files\Microsoft Visual Studio."
-        }
-        Write-Output "Found MSBuild at: $msbuild"
+#     - name: Publish ClickOnce Application
+#       shell: powershell
+#       run: |
+#         $msbuild = Get-ChildItem "C:\Program Files\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+#         if (-not $msbuild) {
+#             $msbuild = Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+#         }
+#         if (-not $msbuild) {
+#             throw "MSBuild.exe not found under C:\Program Files\Microsoft Visual Studio."
+#         }
+#         Write-Output "Found MSBuild at: $msbuild"
         
-        # Calculate the ClickOnce version starting from revision 39 (since production is at 38)
-        $runNumber = [int]${{ github.run_number }}
-        $appRevision = 38 + $runNumber
-        Write-Output "Publishing with version: 1.0.0.$appRevision"
+#         # Calculate the ClickOnce version starting from revision 39 (since production is at 38)
+#         $runNumber = [int]${{ github.run_number }}
+#         $appRevision = 38 + $runNumber
+#         Write-Output "Publishing with version: 1.0.0.$appRevision"
         
-        & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform="AnyCPU" /p:PublishDir="publish/" /p:ApplicationVersion="1.0.0.$appRevision"
-      working-directory: ./
+#         & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform="x86" /p:PublishDir="publish/" /p:ApplicationVersion="1.0.0.$appRevision"
+#       working-directory: ./
 
-    - name: Deploy ClickOnce Files to IIS
-      shell: powershell
-      run: |
-        # Ensure destination folder exists
-        New-Item -ItemType Directory -Force -Path "D:\Websites\RetailSuite_Desktop"
+#     - name: Deploy ClickOnce Files to IIS
+#       shell: powershell
+#       run: |
+#         # Ensure destination folder exists
+#         New-Item -ItemType Directory -Force -Path "D:\Websites\RetailSuite_Desktop"
         
-        # Copy the ClickOnce publish files to the deployment folder
-        Copy-Item -Path "./ERP/publish/*" -Destination "D:\Websites\RetailSuite_Desktop" -Recurse -Force
-      working-directory: ./
+#         # Copy the ClickOnce publish files to the deployment folder
+#         Copy-Item -Path "./ERP/publish/*" -Destination "D:\Websites\RetailSuite_Desktop" -Recurse -Force
+#       working-directory: ./
