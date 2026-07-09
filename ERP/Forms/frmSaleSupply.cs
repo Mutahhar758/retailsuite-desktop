@@ -5,6 +5,7 @@ using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
+using ERP.Classes;
 using ERP.Services.Legacy;
 
 namespace ERP
@@ -179,15 +180,37 @@ namespace ERP
                 if (row.Cells[clnCustomer.Index].Value == null)
                     continue;
 
+                decimal secQty = 0;
+                decimal secRate = 0;
+                string secUnit = null;
+                if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                {
+                    secQty = ParseDecimal(row.Cells["clnSecQty"].Value);
+                    secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
+                    
+                    if (cmbItem.SelectedValue != null)
+                    {
+                        string itemId = Convert.ToString(cmbItem.SelectedValue);
+                        DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
+                        if (itemRow != null)
+                        {
+                            secUnit = Convert.ToString(itemRow["SecondaryUnit"]);
+                        }
+                    }
+                }
+
                 lines.Add(new SaleSupplyLineApiRequest
                 {
                     Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
                     CustomerId = Convert.ToString(row.Cells[clnCustomer.Index].Value),
-                    Unit = Convert.ToString(row.Cells[clnUnit.Index].Value),
+                    Unit = ApiSession.HasSecondaryQty ? null : Convert.ToString(row.Cells[clnUnit.Index].Value),
                     Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
                     Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
-                    AddLess = ParseDecimal(row.Cells[clnAddLess.Index].Value)
+                    AddLess = ParseDecimal(row.Cells[clnAddLess.Index].Value),
+                    SecQty = secQty,
+                    SecRate = secRate,
+                    SecUnit = secUnit
                 });
             }
 
@@ -294,17 +317,26 @@ namespace ERP
                 {
                     var line = lines[i];
                     decimal discountPercent = line.Rate == 0 ? 0 : (line.Discount / line.Rate) * 100;
-                    dgvSale.Rows.Add(
-                        line.Seq.ToString(),
-                        line.CustomerId,
-                        line.Unit,
-                        line.Qty.ToString("0.##"),
-                        line.Rate.ToString("0.##"),
-                        line.Discount.ToString("0.##"),
-                        discountPercent.ToString("0.##"),
-                        line.AddLess.ToString("0.##"),
-                        line.Amount.ToString("N2"),
-                        "0");
+                    
+                    int ind = dgvSale.Rows.Add();
+                    var row = dgvSale.Rows[ind];
+                    
+                    row.Cells[clnSeq.Index].Value = line.Seq.ToString();
+                    row.Cells[clnCustomer.Index].Value = line.CustomerId;
+                    row.Cells[clnUnit.Index].Value = line.Unit;
+                    row.Cells[clnQty.Index].Value = line.Qty.ToString("0.##");
+                    row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
+                    row.Cells[clnDiscount.Index].Value = line.Discount.ToString("0.##");
+                    row.Cells[clnDiscPercent.Index].Value = discountPercent.ToString("0.##");
+                    row.Cells[clnAddLess.Index].Value = line.AddLess.ToString("0.##");
+                    row.Cells[clnAmount.Index].Value = line.Amount.ToString("N2");
+                    row.Cells[clnStatus.Index].Value = "0";
+
+                    if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                    {
+                        row.Cells["clnSecQty"].Value = (line.SecQty ?? 0).ToString("0.##");
+                        row.Cells["clnSecRate"].Value = (line.SecRate ?? 0).ToString("0.##");
+                    }
                 }
             }
 
@@ -326,6 +358,35 @@ namespace ERP
             }
         }
 
+        private void SetupSecondaryQtyColumns()
+        {
+            if (ApiSession.HasSecondaryQty)
+            {
+                clnUnit.Visible = false;
+                clnQty.HeaderText = "Single Qty";
+                clnRate.HeaderText = "Single Rate";
+
+                if (!dgvSale.Columns.Contains("clnSecQty"))
+                {
+                    var colSecQty = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnSecQty",
+                        HeaderText = "Pack Qty",
+                        Width = 80
+                    };
+                    var colSecRate = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnSecRate",
+                        HeaderText = "Pack Rate",
+                        Width = 80
+                    };
+                    int insertIndex = clnDiscount.Index;
+                    dgvSale.Columns.Insert(insertIndex, colSecQty);
+                    dgvSale.Columns.Insert(insertIndex + 1, colSecRate);
+                }
+            }
+        }
+
         private async void frmPurchase_Load(object sender, EventArgs e)
         {
             try
@@ -338,6 +399,7 @@ namespace ERP
                 clnProfile.ReadOnly = true;
                 dgvQuery.Columns.Insert(3, clnProfile);
 
+                SetupSecondaryQtyColumns();
                 await LoadLookupsAsync();
                 await FillQueryAsync();
                 FLogIn = false;
@@ -415,7 +477,9 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
-                dgvSale.CurrentCell.ColumnIndex == clnAddLess.Index)
+                dgvSale.CurrentCell.ColumnIndex == clnAddLess.Index ||
+                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
+                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
                 TextBox tbRate = e.Control as TextBox;
                 if (tbRate != null && e.Control.Text != null)
@@ -468,6 +532,12 @@ namespace ERP
                         rate = unitValue == dr["SecondaryUnit"].ToString() ? dr["SecRate"].ToString() : dr["PriRate"].ToString();
                     }
                     dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value = rate;
+
+                    if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                    {
+                        dgvSale.Rows[rowIndex].Cells["clnSecQty"].Value = "0";
+                        dgvSale.Rows[rowIndex].Cells["clnSecRate"].Value = dr["SecRate"].ToString();
+                    }
                 }
             }
         }
@@ -478,7 +548,9 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
                  dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
-                 dgvSale.CurrentCell.ColumnIndex == clnAddLess.Index)
+                 dgvSale.CurrentCell.ColumnIndex == clnAddLess.Index ||
+                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
+                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
                 if ((sender as TextBox).SelectedText.Length > 0)
                 {
@@ -529,19 +601,47 @@ namespace ERP
                 if (dgvSale.CurrentCell != null && dgvSale.CurrentCell.ColumnIndex == clnCustomer.Index)
                 {
                     int rowIndex = dgvSale.CurrentCell.RowIndex;
-                    bool unitFilled = dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value != null &&
-                                     !string.IsNullOrEmpty(dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value.ToString());
-
-                    if (unitFilled)
+                    if (ApiSession.HasSecondaryQty)
                     {
                         dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[clnQty.Index];
                     }
                     else
                     {
-                        SendKeys.Send("{tab}");
+                        bool unitFilled = dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value != null &&
+                                         !string.IsNullOrEmpty(dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value.ToString());
+
+                        if (unitFilled)
+                        {
+                            dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[clnQty.Index];
+                        }
+                        else
+                        {
+                            SendKeys.Send("{tab}");
+                        }
                     }
                 }
                 else if (dgvSale.CurrentCell != null && dgvSale.CurrentCell.ColumnIndex == clnQty.Index)
+                {
+                    int rowIndex = dgvSale.CurrentCell.RowIndex;
+                    if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                    {
+                        dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[dgvSale.Columns["clnSecQty"].Index];
+                    }
+                    else
+                    {
+                        bool rateFilled = dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value != null &&
+                                         !string.IsNullOrEmpty(dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value.ToString());
+                        if (rateFilled && dgvSale.Rows.Count > (rowIndex + 1))
+                        {
+                            dgvSale.CurrentCell = dgvSale.Rows[rowIndex + 1].Cells[clnCustomer.Index];
+                        }
+                        else
+                        {
+                            SendKeys.Send("{tab}");
+                        }
+                    }
+                }
+                else if (dgvSale.CurrentCell != null && ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty") && dgvSale.CurrentCell.ColumnIndex == dgvSale.Columns["clnSecQty"].Index)
                 {
                     int rowIndex = dgvSale.CurrentCell.RowIndex;
                     bool rateFilled = dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value != null &&
@@ -574,11 +674,24 @@ namespace ERP
             decimal DiscountPercent = ParseDecimal(dgvSale[clnDiscPercent.Index, e.RowIndex].Value);
             decimal AddLess = ParseDecimal(dgvSale[clnAddLess.Index, e.RowIndex].Value);
 
+            decimal secQty = 0;
+            decimal secRate = 0;
+            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+            {
+                secQty = ParseDecimal(dgvSale["clnSecQty", e.RowIndex].Value);
+                secRate = ParseDecimal(dgvSale["clnSecRate", e.RowIndex].Value);
+            }
+
             dgvSale[clnQty.Index, e.RowIndex].Value = Qty.ToString();
             dgvSale[clnRate.Index, e.RowIndex].Value = Rate.ToString();
             dgvSale[clnDiscount.Index, e.RowIndex].Value = Discount.ToString();
             dgvSale[clnDiscPercent.Index, e.RowIndex].Value = DiscountPercent.ToString();
             dgvSale[clnAddLess.Index, e.RowIndex].Value = AddLess.ToString();
+            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+            {
+                dgvSale["clnSecQty", e.RowIndex].Value = secQty.ToString();
+                dgvSale["clnSecRate", e.RowIndex].Value = secRate.ToString();
+            }
 
             if (!clnDiscount.Visible)
                 dgvSale[clnDiscount.Index, e.RowIndex].Value = (Rate * (DiscountPercent / 100)).ToString();
@@ -586,7 +699,7 @@ namespace ERP
                 dgvSale[clnDiscPercent.Index, e.RowIndex].Value = Rate == 0 ? "0" : ((Discount / Rate) * 100).ToString();
 
             Rate = Rate - (clnDiscPercent.Visible ? Rate * (DiscountPercent / 100) : Discount);
-            dgvSale[clnAmount.Index, e.RowIndex].Value = decimal.Round((Qty * Rate) + AddLess, 2).ToString();
+            dgvSale[clnAmount.Index, e.RowIndex].Value = decimal.Round((Qty * Rate) + AddLess + (secQty * secRate), 2).ToString();
 
             CalcTotAmount();
         }

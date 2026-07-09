@@ -10,5 +10,7 @@ namespace ERP.Classes
         public static DateTime? RefreshTokenExpiryTime { get; set; }
         public static string DeviceId { get; set; }
         public static string UserEmail { get; set; }
+        public static bool HasSupplyFeature { get; set; } = true;
+        public static bool HasSecondaryQty { get; set; } = false;
     }
 }

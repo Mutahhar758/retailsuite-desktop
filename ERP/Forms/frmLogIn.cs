@@ -97,6 +97,15 @@ namespace ERP
 
                 try
                 {
+                    var features = await _licenseService.GetFeaturesAsync();
+                    ApiSession.HasSupplyFeature = features.HasSupplyFeature;
+                    ApiSession.HasSecondaryQty = features.HasSecondaryQty;
+                    _licenseService.UpdateFeaturesInStore(ApiSession.TenantIdentifier, features.HasSupplyFeature, features.HasSecondaryQty);
+                }
+                catch { }
+
+                try
+                {
                     var profile = await _personalApiService.GetProfileAsync();
                     UserInfo.UserId = string.IsNullOrWhiteSpace(profile.UserName) ? username : profile.UserName;
                     UserInfo.UserName = string.IsNullOrWhiteSpace(profile.UserName) ? username : profile.UserName;
@@ -172,7 +181,7 @@ namespace ERP
         {
             if (cmbOrganization.SelectedItem is OrganizationLicense license)
             {
-                UpdateServices(license.TenantIdentifier);
+                UpdateServices(license);
             }
         }
 
@@ -187,13 +196,15 @@ namespace ERP
             if (licenses.Count > 0)
             {
                 cmbOrganization.SelectedIndex = 0;
-                UpdateServices(licenses[0].TenantIdentifier);
+                UpdateServices(licenses[0]);
             }
         }
 
-        private void UpdateServices(string tenantIdentifier)
+        private void UpdateServices(OrganizationLicense license)
         {
-            ApiSession.TenantIdentifier = tenantIdentifier;
+            ApiSession.TenantIdentifier = license.TenantIdentifier;
+            ApiSession.HasSupplyFeature = license.HasSupplyFeature;
+            ApiSession.HasSecondaryQty = license.HasSecondaryQty;
             _loginService = new LoginService();
             _companyApiService = new CompanyApiService();
             _personalApiService = new PersonalApiService();

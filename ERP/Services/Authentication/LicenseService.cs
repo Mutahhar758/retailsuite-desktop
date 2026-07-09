@@ -16,6 +16,8 @@ namespace ERP.Services.Authentication
         public string LicenseKey { get; set; }
         public string TenantIdentifier { get; set; }
         public string Name { get; set; }
+        public bool HasSupplyFeature { get; set; } = true;
+        public bool HasSecondaryQty { get; set; } = false;
     }
 
     public class LicenseService
@@ -61,14 +63,31 @@ namespace ERP.Services.Authentication
                         string encryptedKey = INIFile.ReadValue(section, "LicenseKey", "", _licensePath);
                         string encryptedTenantIdentifier = INIFile.ReadValue(section, "TenantIdentifier", "", _licensePath);
                         string encryptedName = INIFile.ReadValue(section, "Name", "", _licensePath);
+                        string encryptedHasSupply = INIFile.ReadValue(section, "HasSupplyFeature", "", _licensePath);
+                        string encryptedHasSecondary = INIFile.ReadValue(section, "HasSecondaryQty", "", _licensePath);
 
                         if (!string.IsNullOrEmpty(encryptedKey) && !string.IsNullOrEmpty(encryptedTenantIdentifier))
                         {
+                            bool hasSupply = true;
+                            if (!string.IsNullOrEmpty(encryptedHasSupply))
+                            {
+                                string decryptedHasSupply = SecurityHelper.Decrypt(encryptedHasSupply);
+                                bool.TryParse(decryptedHasSupply, out hasSupply);
+                            }
+                            bool hasSecondary = false;
+                            if (!string.IsNullOrEmpty(encryptedHasSecondary))
+                            {
+                                string decryptedHasSecondary = SecurityHelper.Decrypt(encryptedHasSecondary);
+                                bool.TryParse(decryptedHasSecondary, out hasSecondary);
+                            }
+
                             licenses.Add(new OrganizationLicense
                             {
                                 LicenseKey = SecurityHelper.Decrypt(encryptedKey),
                                 TenantIdentifier = SecurityHelper.Decrypt(encryptedTenantIdentifier),
-                                Name = SecurityHelper.Decrypt(encryptedName) ?? "Unknown Organization"
+                                Name = SecurityHelper.Decrypt(encryptedName) ?? "Unknown Organization",
+                                HasSupplyFeature = hasSupply,
+                                HasSecondaryQty = hasSecondary
                             });
                         }
                     }
@@ -97,7 +116,9 @@ namespace ERP.Services.Authentication
                         {
                             LicenseKey = licenseKey,
                             TenantIdentifier = tenantData["identifier"]?.ToString() ?? tenantData["id"]?.ToString(),
-                            Name = tenantData["name"]?.ToString()
+                            Name = tenantData["name"]?.ToString(),
+                            HasSupplyFeature = tenantData["hasSupplyFeature"]?.ToObject<bool>() ?? true,
+                            HasSecondaryQty = tenantData["hasSecondaryQty"]?.ToObject<bool>() ?? false
                         };
 
                         StoreLicense(license);
@@ -120,10 +141,14 @@ namespace ERP.Services.Authentication
             string encryptedKey = SecurityHelper.Encrypt(license.LicenseKey);
             string encryptedTenantIdentifier = SecurityHelper.Encrypt(license.TenantIdentifier);
             string encryptedName = SecurityHelper.Encrypt(license.Name);
+            string encryptedHasSupply = SecurityHelper.Encrypt(license.HasSupplyFeature.ToString());
+            string encryptedHasSecondary = SecurityHelper.Encrypt(license.HasSecondaryQty.ToString());
 
             INIFile.WriteValue(section, "LicenseKey", encryptedKey, _licensePath);
             INIFile.WriteValue(section, "TenantIdentifier", encryptedTenantIdentifier, _licensePath);
             INIFile.WriteValue(section, "Name", encryptedName, _licensePath);
+            INIFile.WriteValue(section, "HasSupplyFeature", encryptedHasSupply, _licensePath);
+            INIFile.WriteValue(section, "HasSecondaryQty", encryptedHasSecondary, _licensePath);
         }
 
         public bool HasAnyLicense()
@@ -137,5 +162,71 @@ namespace ERP.Services.Authentication
             var licenses = GetAllLicenses();
             return licenses.FirstOrDefault()?.TenantIdentifier;
         }
+
+        public async Task<(bool HasSupplyFeature, bool HasSecondaryQty)> GetFeaturesAsync()
+        {
+            try
+            {
+                var request = new HttpRequestMessage(HttpMethod.Get, "/api/license/features");
+                
+                string targetTenant = !string.IsNullOrEmpty(ApiSession.TenantIdentifier) 
+                    ? ApiSession.TenantIdentifier 
+                    : GetStoredTenantIdentifier();
+
+                if (!string.IsNullOrEmpty(targetTenant))
+                {
+                    request.Headers.Add("X-Tenant-ID", targetTenant);
+                }
+
+                var response = await _httpClient.SendAsync(request);
+                if (response.IsSuccessStatusCode)
+                {
+                    var content = await response.Content.ReadAsStringAsync();
+                    var apiResponse = JsonConvert.DeserializeObject<HttpResponseDto<JObject>>(content);
+                    if (apiResponse != null && apiResponse.Body != null)
+                    {
+                        var body = apiResponse.Body;
+                        var hasSupply = (body["hasSupplyFeature"] ?? body["HasSupplyFeature"])?.ToObject<bool>() ?? true;
+                        var hasSecondary = (body["hasSecondaryQty"] ?? body["HasSecondaryQty"])?.ToObject<bool>() ?? false;
+                        return (hasSupply, hasSecondary);
+                    }
+                }
+            }
+            catch { }
+            return (true, false); // Default values if request fails
+        }
+
+
+        public void UpdateFeaturesInStore(string tenantIdentifier, bool hasSupply, bool hasSecondary)
+        {
+            if (!File.Exists(_licensePath)) return;
+            try
+            {
+                var sections = INIFile.ReadSections(_licensePath);
+                if (sections == null) return;
+
+                foreach (var section in sections)
+                {
+                    if (section.StartsWith("License_"))
+                    {
+                        string encryptedTenant = INIFile.ReadValue(section, "TenantIdentifier", "", _licensePath);
+                        if (!string.IsNullOrEmpty(encryptedTenant))
+                        {
+                            string decryptedTenant = SecurityHelper.Decrypt(encryptedTenant);
+                            if (decryptedTenant == tenantIdentifier)
+                            {
+                                string encryptedHasSupply = SecurityHelper.Encrypt(hasSupply.ToString());
+                                string encryptedHasSecondary = SecurityHelper.Encrypt(hasSecondary.ToString());
+                                INIFile.WriteValue(section, "HasSupplyFeature", encryptedHasSupply, _licensePath);
+                                INIFile.WriteValue(section, "HasSecondaryQty", encryptedHasSecondary, _licensePath);
+                                break;
+                            }
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
     }
 }
+

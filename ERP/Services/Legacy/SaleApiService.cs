@@ -156,6 +156,15 @@ namespace ERP.Services.Legacy
         [JsonProperty("amount")]
         public decimal Amount { get; set; }
 
+        [JsonProperty("secQty")]
+        public decimal? SecQty { get; set; }
+
+        [JsonProperty("secRate")]
+        public decimal? SecRate { get; set; }
+
+        [JsonProperty("secUnit")]
+        public string SecUnit { get; set; }
+
         [JsonProperty("cashReceipt")]
         public decimal CashReceipt { get; set; }
 
@@ -242,5 +251,14 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("discount")]
         public decimal Discount { get; set; }
+
+        [JsonProperty("secQty")]
+        public decimal? SecQty { get; set; }
+
+        [JsonProperty("secRate")]
+        public decimal? SecRate { get; set; }
+
+        [JsonProperty("secUnit")]
+        public string SecUnit { get; set; }
     }
 }

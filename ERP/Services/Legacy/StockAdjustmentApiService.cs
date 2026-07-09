@@ -153,6 +153,18 @@ namespace ERP.Services.Legacy
         [JsonProperty("amount")]
         public decimal Amount { get; set; }
 
+        [JsonProperty("secQtyIn")]
+        public decimal? SecQtyIn { get; set; }
+
+        [JsonProperty("secQtyOut")]
+        public decimal? SecQtyOut { get; set; }
+
+        [JsonProperty("secRate")]
+        public decimal? SecRate { get; set; }
+
+        [JsonProperty("secUnit")]
+        public string SecUnit { get; set; }
+
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
 
@@ -218,5 +230,17 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("rate")]
         public decimal Rate { get; set; }
+
+        [JsonProperty("secQtyIn")]
+        public decimal? SecQtyIn { get; set; }
+
+        [JsonProperty("secQtyOut")]
+        public decimal? SecQtyOut { get; set; }
+
+        [JsonProperty("secRate")]
+        public decimal? SecRate { get; set; }
+
+        [JsonProperty("secUnit")]
+        public string SecUnit { get; set; }
     }
 }
