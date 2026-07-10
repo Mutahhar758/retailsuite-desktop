@@ -1,4 +1,4 @@
-﻿namespace ERP
+namespace ERP
 {
     partial class frmJournalVoucher
     {
@@ -64,6 +64,7 @@
             this.btnSave = new System.Windows.Forms.Button();
             this.btnHome = new System.Windows.Forms.Button();
             this.btnNew = new System.Windows.Forms.Button();
+            this.btnCopyAsNew = new System.Windows.Forms.Button();
             this.grpInvoiceDetail = new System.Windows.Forms.GroupBox();
             this.cmbNarration = new System.Windows.Forms.ComboBox();
             this.lblNarration = new System.Windows.Forms.Label();
@@ -321,6 +322,7 @@
             // panel1
             // 
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.btnCopyAsNew);
             this.panel1.Controls.Add(this.btnDelete);
             this.panel1.Controls.Add(this.btnNext);
             this.panel1.Controls.Add(this.btnClose);
@@ -329,16 +331,16 @@
             this.panel1.Controls.Add(this.btnSave);
             this.panel1.Controls.Add(this.btnHome);
             this.panel1.Controls.Add(this.btnNew);
-            this.panel1.Location = new System.Drawing.Point(298, 405);
+            this.panel1.Location = new System.Drawing.Point(249, 405);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(330, 68);
+            this.panel1.Size = new System.Drawing.Size(428, 68);
             this.panel1.TabIndex = 2;
             // 
             // btnDelete
             // 
             this.btnDelete.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDelete.Location = new System.Drawing.Point(166, 3);
+            this.btnDelete.Location = new System.Drawing.Point(265, 3);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new System.Drawing.Size(73, 29);
             this.btnDelete.TabIndex = 167;
@@ -351,7 +353,7 @@
             this.btnNext.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnNext.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnNext.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnNext.Location = new System.Drawing.Point(167, 35);
+            this.btnNext.Location = new System.Drawing.Point(217, 35);
             this.btnNext.Name = "btnNext";
             this.btnNext.Size = new System.Drawing.Size(36, 29);
             this.btnNext.TabIndex = 164;
@@ -363,7 +365,7 @@
             // 
             this.btnClose.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClose.Location = new System.Drawing.Point(243, 3);
+            this.btnClose.Location = new System.Drawing.Point(342, 3);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(73, 29);
             this.btnClose.TabIndex = 163;
@@ -376,7 +378,7 @@
             this.btnEnd.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnEnd.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnEnd.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnEnd.Location = new System.Drawing.Point(209, 35);
+            this.btnEnd.Location = new System.Drawing.Point(259, 35);
             this.btnEnd.Name = "btnEnd";
             this.btnEnd.Size = new System.Drawing.Size(36, 29);
             this.btnEnd.TabIndex = 163;
@@ -389,7 +391,7 @@
             this.btnPri.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnPri.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPri.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnPri.Location = new System.Drawing.Point(125, 35);
+            this.btnPri.Location = new System.Drawing.Point(175, 35);
             this.btnPri.Name = "btnPri";
             this.btnPri.Size = new System.Drawing.Size(36, 29);
             this.btnPri.TabIndex = 162;
@@ -401,7 +403,7 @@
             // 
             this.btnSave.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnSave.Location = new System.Drawing.Point(89, 3);
+            this.btnSave.Location = new System.Drawing.Point(188, 3);
             this.btnSave.Name = "btnSave";
             this.btnSave.Size = new System.Drawing.Size(73, 29);
             this.btnSave.TabIndex = 0;
@@ -414,7 +416,7 @@
             this.btnHome.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnHome.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnHome.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnHome.Location = new System.Drawing.Point(83, 35);
+            this.btnHome.Location = new System.Drawing.Point(133, 35);
             this.btnHome.Name = "btnHome";
             this.btnHome.Size = new System.Drawing.Size(36, 29);
             this.btnHome.TabIndex = 161;
@@ -433,6 +435,18 @@
             this.btnNew.Text = "&New";
             this.btnNew.UseVisualStyleBackColor = false;
             this.btnNew.Click += new System.EventHandler(this.btnNew_Click);
+            // 
+            // btnCopyAsNew
+            // 
+            this.btnCopyAsNew.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnCopyAsNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCopyAsNew.Location = new System.Drawing.Point(89, 3);
+            this.btnCopyAsNew.Name = "btnCopyAsNew";
+            this.btnCopyAsNew.Size = new System.Drawing.Size(95, 29);
+            this.btnCopyAsNew.TabIndex = 168;
+            this.btnCopyAsNew.Text = "Copy as &New";
+            this.btnCopyAsNew.UseVisualStyleBackColor = false;
+            this.btnCopyAsNew.Click += new System.EventHandler(this.btnCopyAsNew_Click);
             // 
             // grpInvoiceDetail
             // 
@@ -994,5 +1008,6 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn clnExpEditBy;
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.Button btnCopyAsNew;
     }
 }

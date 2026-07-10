@@ -481,6 +481,25 @@ namespace ERP
 
         private void btnClose_Click(object sender, EventArgs e) { this.Close(); }
 
+        void CopyAsNew()
+        {
+            if (txtVoucherNo.Text != "")
+            {
+                txtVoucherNo.Text = "";
+                VoucherNum = null;
+                txtCreatedBy.Text = "";
+                txtEditBy.Text = "";
+                dtpDate.Value = DateTime.Now;
+                dtpDate.Focus();
+            }
+            else
+            {
+                MessageBox.Show("No record to copy. Please load a record first.", "Copy as New", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void btnCopyAsNew_Click(object sender, EventArgs e) => CopyAsNew();
+
         private void btnNew_Click(object sender, EventArgs e)
         {
             dgvJournal.Rows.Clear();
