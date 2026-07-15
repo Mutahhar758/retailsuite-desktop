@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -21,6 +21,7 @@ namespace ERP
         {
             InitializeComponent();
             _narrationApiService = new NarrationApiService();
+            UserInfo.ApplyFormPermissions(this, AppResource.Narrations);
         }
 
         async System.Threading.Tasks.Task FillFormAsync()

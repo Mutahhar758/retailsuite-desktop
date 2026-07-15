@@ -110,13 +110,26 @@ namespace ERP
                     UserInfo.UserId = string.IsNullOrWhiteSpace(profile.UserName) ? username : profile.UserName;
                     UserInfo.UserName = string.IsNullOrWhiteSpace(profile.UserName) ? username : profile.UserName;
                     UserInfo.Email = profile.Email;
+                    UserInfo.IsOwner = profile.IsOwner;
                     ApiSession.UserEmail = profile.Email;
+
+                    try
+                    {
+                        UserInfo.Permissions = await _personalApiService.GetPermissionsAsync();
+                    }
+                    catch (System.Exception exPerm)
+                    {
+                        UserInfo.Permissions = new System.Collections.Generic.List<string>();
+                        MessageBox.Show("Warning: Could not load user permissions: " + exPerm.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    }
                 }
                 catch (Exception ex)
                 {
                     UserInfo.UserId = username;
                     UserInfo.UserName = username;
                     UserInfo.Email = string.Empty;
+                    UserInfo.IsOwner = false;
+                    UserInfo.Permissions = new System.Collections.Generic.List<string>();
                     ApiSession.UserEmail = string.Empty;
                     MessageBox.Show("Warning: Could not load personal info from API: " + ex.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }

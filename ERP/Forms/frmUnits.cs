@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -20,6 +20,7 @@ namespace ERP
         {
             InitializeComponent();
             _unitApiService = new UnitApiService();
+            UserInfo.ApplyFormPermissions(this, AppResource.Units);
         }
 
         async System.Threading.Tasks.Task FillFormAsync()

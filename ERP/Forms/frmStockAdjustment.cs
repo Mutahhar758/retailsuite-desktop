@@ -42,6 +42,7 @@ namespace ERP
             _inventoryApiService = new InventoryApiService();
             InitializeLookupTables();
             dgvSale.Rows.Add();
+            UserInfo.ApplyFormPermissions(this, AppResource.StockAdjustments);
         }
 
         private void InitializeLookupTables()
@@ -69,10 +70,10 @@ namespace ERP
 
         private async System.Threading.Tasks.Task LoadLookupsAsync()
         {
-            var narrationsTask = _narrationApiService.GetActiveNarrationsAsync();
-            var categoriesTask = _itemCategoryApiService.GetActiveAsync();
-            var unitsTask = _unitApiService.GetActiveAsync();
-            var itemsTask = _inventoryApiService.GetItemsAsync(null);
+            var narrationsTask = _narrationApiService.GetLookupAsync();
+            var categoriesTask = _itemCategoryApiService.GetLookupAsync();
+            var unitsTask = _unitApiService.GetLookupAsync();
+            var itemsTask = _inventoryApiService.GetLookupAsync(null);
             await System.Threading.Tasks.Task.WhenAll(narrationsTask, categoriesTask, unitsTask, itemsTask);
 
             dtItems.Rows.Clear();

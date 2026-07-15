@@ -45,6 +45,7 @@ namespace ERP
             _inventoryApiService = new InventoryApiService();
             InitializeLookupTables();
             dgvSale.Rows.Add();
+            UserInfo.ApplyFormPermissions(this, AppResource.SaleSupplies);
         }
 
         private void InitializeLookupTables()
@@ -73,9 +74,9 @@ namespace ERP
         private async System.Threading.Tasks.Task LoadLookupsAsync()
         {
             var customersTask = _chartOfAccountApiService.GetCustomerAccountsAsync();
-            var narrationsTask = _narrationApiService.GetActiveNarrationsAsync();
-            var unitsTask = _unitApiService.GetActiveAsync();
-            var itemsTask = _inventoryApiService.GetItemsAsync(null);
+            var narrationsTask = _narrationApiService.GetLookupAsync();
+            var unitsTask = _unitApiService.GetLookupAsync();
+            var itemsTask = _inventoryApiService.GetLookupAsync(null);
             var supplyOrdersTask = _supplyOrderApiService.GetAsync();
             await System.Threading.Tasks.Task.WhenAll(customersTask, narrationsTask, unitsTask, itemsTask, supplyOrdersTask);
 

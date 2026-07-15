@@ -33,6 +33,7 @@ namespace ERP
             _chartOfAccountApiService = new ChartOfAccountApiService();
             _narrationApiService = new NarrationApiService();
             dgvJournal.Rows.Add();
+            UserInfo.ApplyFormPermissions(this, AppResource.JournalVouchers);
         }
 
         async System.Threading.Tasks.Task ShowDrBalAsync(string title, string account)

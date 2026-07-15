@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -18,6 +18,7 @@ namespace ERP
             _chartOfAccountApiService = new ChartOfAccountApiService();
             _chartAccounts = new List<ChartOfAccountDto>();
             _chartAccountMap = new Dictionary<string, ChartOfAccountDto>();
+            UserInfo.ApplyFormPermissions(this, AppResource.ChartOfAccounts);
         }
 
         bool FlogIn = true;

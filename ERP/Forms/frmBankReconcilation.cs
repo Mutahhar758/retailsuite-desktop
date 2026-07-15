@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
@@ -18,6 +18,7 @@ namespace ERP
             InitializeComponent();
             _apiService = new BankReconciliationApiService();
             _chartOfAccountApiService = new ChartOfAccountApiService();
+            UserInfo.ApplyFormPermissions(this, AppResource.BankReconciliations);
         }
 
         async System.Threading.Tasks.Task LoadLookupsAsync()

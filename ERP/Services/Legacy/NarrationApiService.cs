@@ -25,6 +25,19 @@ namespace ERP.Services.Legacy
             }
         }
 
+        public async Task<List<NarrationDto>> GetLookupAsync()
+        {
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(NarrationEndpoint + "/lookup");
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<NarrationDto>>>(json);
+                return payload != null && payload.Body != null ? payload.Body : new List<NarrationDto>();
+            }
+        }
+
         public async Task CreateAsync(string title)
         {
             using (var client = CreateClient())

@@ -43,6 +43,7 @@ namespace ERP
             _chartOfAccountApiService = new ChartOfAccountApiService();
             _narrationApiService = new NarrationApiService();
             dgvExpenses.Rows.Add();
+            UserInfo.ApplyFormPermissions(this, AppResource.ReceiptVouchers);
         }
 
         async System.Threading.Tasks.Task ShowBalAsync(string title, string account)

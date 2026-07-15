@@ -24,6 +24,19 @@ namespace ERP.Services.Legacy
             }
         }
 
+        public async Task<List<UnitLookupDto>> GetLookupAsync()
+        {
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(Endpoint + "/lookup");
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<UnitLookupDto>>>(json);
+                return payload?.Body ?? new List<UnitLookupDto>();
+            }
+        }
+
         public async Task UpsertAsync(string code, UnitUpsertApiRequest request)
         {
             using (var client = CreateClient())

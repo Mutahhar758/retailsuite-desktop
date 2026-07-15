@@ -22,6 +22,7 @@ namespace ERP
             InitializeComponent();
             _payrollService = new PayrollApiService();
             dgvPayroll.Rows.Add();
+            UserInfo.ApplyFormPermissions(this, AppResource.Payrolls);
         }
 
         private int currentRow;
@@ -356,7 +357,7 @@ namespace ERP
             if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to save this...!", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
 
-            if (UserInfo.UserId != "Admin" && txtVoucherNo.Text != "")
+            if (!UserInfo.HasPermission(AppAction.Update, AppResource.Payrolls) && txtVoucherNo.Text != "")
             {
                 frmAuthentication frm = new frmAuthentication();
                 if (frm.ShowDialog() != System.Windows.Forms.DialogResult.OK)

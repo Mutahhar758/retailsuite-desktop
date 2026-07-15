@@ -140,7 +140,7 @@ namespace ERP
 
         private async System.Threading.Tasks.Task FillItemCategoriesAsync()
         {
-            var categories = await _itemCategoryApiService.GetActiveAsync();
+            var categories = await _itemCategoryApiService.GetLookupAsync();
             cmbItemCatagory.DataSource = ToCategoryDataTable(categories);
             cmbItemCatagory.DisplayMember = "Title";
             cmbItemCatagory.ValueMember = "Code";
@@ -149,7 +149,7 @@ namespace ERP
 
         private async System.Threading.Tasks.Task FillItemsAsync()
         {
-            var items = await _inventoryApiService.GetItemsAsync(null);
+            var items = await _inventoryApiService.GetLookupAsync(null);
             cmbItem.DataSource = ToItemDataTable(items);
             cmbItem.DisplayMember = "Title";
             cmbItem.ValueMember = "ID";

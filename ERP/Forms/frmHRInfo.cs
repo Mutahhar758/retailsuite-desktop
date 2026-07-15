@@ -22,6 +22,7 @@ namespace ERP.Forms
             _hrInfoService = new HRInfoApiService();
             _chartOfAccountService = new ChartOfAccountApiService();
             _employees = new List<HRInfoDto>();
+            UserInfo.ApplyFormPermissions(this, AppResource.HRInfo);
         }
 
         async void FillQuery()
@@ -159,7 +160,11 @@ namespace ERP.Forms
         {
             if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to save this...!", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                if (UserInfo.UserId != "Admin")
+                bool hasPermission = string.IsNullOrEmpty(txtHRID.Text)
+                    ? UserInfo.HasPermission(AppAction.Create, AppResource.HRInfo)
+                    : UserInfo.HasPermission(AppAction.Update, AppResource.HRInfo);
+
+                if (!hasPermission)
                 {
                     frmAuthentication frm = new frmAuthentication();
                     if (frm.ShowDialog() != System.Windows.Forms.DialogResult.OK)
@@ -239,7 +244,7 @@ namespace ERP.Forms
             {
                 if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to Delete this...!", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
                 {
-                    if (UserInfo.UserId != "Admin")
+                    if (!UserInfo.HasPermission(AppAction.Delete, AppResource.HRInfo))
                     {
                         frmAuthentication frm = new frmAuthentication();
                         if (frm.ShowDialog() != System.Windows.Forms.DialogResult.OK)

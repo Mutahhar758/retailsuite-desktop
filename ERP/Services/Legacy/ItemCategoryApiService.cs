@@ -25,6 +25,19 @@ namespace ERP.Services.Legacy
             }
         }
 
+        public async Task<List<ItemCategoryDto>> GetLookupAsync()
+        {
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(Endpoint + "/lookup");
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<ItemCategoryDto>>>(json);
+                return payload != null && payload.Body != null ? payload.Body : new List<ItemCategoryDto>();
+            }
+        }
+
         public async Task CreateAsync(string title, bool active, string mediaId)
         {
             using (var client = CreateClient())

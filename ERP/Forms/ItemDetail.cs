@@ -27,6 +27,7 @@ namespace ERP
             _inventoryApiService = new InventoryApiService();
             _itemCategoryApiService = new ItemCategoryApiService();
             _unitApiService = new UnitApiService();
+            UserInfo.ApplyFormPermissions(this, AppResource.InventoryItems);
         }
         void AllowNewRow()
         {
@@ -40,7 +41,7 @@ namespace ERP
         }
         async System.Threading.Tasks.Task fillItemCatagory()
         {
-            var categories = await _itemCategoryApiService.GetActiveAsync();
+            var categories = await _itemCategoryApiService.GetLookupAsync();
 
             dtCatagory = new DataTable();
             dtCatagory.Columns.Add("Code", typeof(string));
@@ -61,7 +62,7 @@ namespace ERP
         }
         async System.Threading.Tasks.Task LoadUnitsAsync()
         {
-            var units = await _unitApiService.GetActiveAsync();
+            var units = await _unitApiService.GetLookupAsync();
 
             dtUnits = new DataTable();
             dtUnits.Columns.Add("Code", typeof(string));
@@ -191,7 +192,7 @@ namespace ERP
             dgvItemDetail.Rows.Add();
             await FillformAsync((string)cmbItemCatagory.SelectedValue);
             FLogin = false;
-            if (UserInfo.UserId != "Admin" )
+            if (!UserInfo.HasPermission(AppAction.Update, AppResource.OpeningBalances))
             {
                 clnOpnStock.ReadOnly = true;
             }

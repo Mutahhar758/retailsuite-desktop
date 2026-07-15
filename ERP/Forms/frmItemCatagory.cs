@@ -19,6 +19,7 @@ namespace ERP
         {
             InitializeComponent();
             _itemCategoryApiService = new ItemCategoryApiService();
+            UserInfo.ApplyFormPermissions(this, AppResource.ItemCategories);
         }
 
         async System.Threading.Tasks.Task FillFormAsync()

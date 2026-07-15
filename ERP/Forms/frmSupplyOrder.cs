@@ -19,6 +19,7 @@ namespace ERP
             InitializeComponent();
             _supplyOrderApiService = new SupplyOrderApiService();
             _customerApiService = new CustomerApiService();
+            UserInfo.ApplyFormPermissions(this, AppResource.SupplyOrders);
         }
 
         private async void frmSupplyOrder_Load(object sender, EventArgs e)

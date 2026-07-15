@@ -20,6 +20,7 @@ namespace ERP
             _chartAccounts = new List<ChartOfAccountDto>();
             _chartAccountMap = new Dictionary<string, ChartOfAccountDto>();
             _heads = new List<ChartOfAccountHeadDto>();
+            UserInfo.ApplyFormPermissions(this, AppResource.DetailAccounts);
         }
 
         bool FlogIn = true;

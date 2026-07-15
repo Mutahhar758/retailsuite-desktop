@@ -11,7 +11,7 @@ namespace ERP.Classes
         public static async Task FillcmbCatagoryAsync(ComboBox cmb)
         {
             var service = new ItemCategoryApiService();
-            var categories = await service.GetActiveAsync();
+            var categories = await service.GetLookupAsync();
 
             var dt = ToDataTable(categories);
             cmb.DataSource = dt;
@@ -23,7 +23,7 @@ namespace ERP.Classes
         public static async Task FillclnCatagoryAsync(DataGridViewComboBoxColumn cln)
         {
             var service = new ItemCategoryApiService();
-            var categories = await service.GetActiveAsync();
+            var categories = await service.GetLookupAsync();
 
             cln.DataSource = ToDataTable(categories);
             cln.DisplayMember = "Title";
@@ -33,7 +33,7 @@ namespace ERP.Classes
         public static async Task FillcmbUnitAsync(ComboBox cmb)
         {
             var service = new UnitApiService();
-            var units = await service.GetActiveAsync();
+            var units = await service.GetLookupAsync();
 
             var dt = ToUnitDataTable(units);
             cmb.DataSource = dt;
@@ -45,7 +45,7 @@ namespace ERP.Classes
         public static async Task FillclnUnitAsync(DataGridViewComboBoxColumn cln)
         {
             var service = new UnitApiService();
-            var units = await service.GetActiveAsync();
+            var units = await service.GetLookupAsync();
 
             cln.DataSource = ToUnitDataTable(units);
             cln.DisplayMember = "Title";

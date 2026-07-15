@@ -21,6 +21,7 @@ namespace ERP
             InitializeComponent();
             _customerApiService = new CustomerApiService();
             _customers = new List<CustomerDto>();
+            UserInfo.ApplyFormPermissions(this, AppResource.Customers);
         }
 
         // ══════════════════════════════════════════════════════════════════

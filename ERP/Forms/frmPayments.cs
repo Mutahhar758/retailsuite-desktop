@@ -58,6 +58,7 @@ namespace ERP
             _apiService = new PaymentApiService();
             _chartOfAccountApiService = new ChartOfAccountApiService();
             _narrationApiService = new NarrationApiService();
+            UserInfo.ApplyFormPermissions(this, AppResource.PaymentVouchers);
             dgvExpenses.Rows.Add();
         }
 

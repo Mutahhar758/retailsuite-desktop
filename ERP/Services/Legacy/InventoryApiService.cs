@@ -29,6 +29,23 @@ namespace ERP.Services.Legacy
             }
         }
 
+        public async Task<List<InventoryItemDto>> GetLookupAsync(string itemCategoryCode)
+        {
+            using (var client = CreateClient())
+            {
+                var url = Endpoint + "/items/lookup";
+                if (!string.IsNullOrWhiteSpace(itemCategoryCode))
+                    url += "?itemCategoryCode=" + Uri.EscapeDataString(itemCategoryCode);
+
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<InventoryItemDto>>>(json);
+                return payload?.Body ?? new List<InventoryItemDto>();
+            }
+        }
+
         public async Task<string> CreateItemAsync(InventoryItemUpsertApiRequest request)
         {
             using (var client = CreateClient())

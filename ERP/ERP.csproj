@@ -28,7 +28,7 @@
     <InstallUrl>http://retailsuite-desktop.bizgripsolutions.com/</InstallUrl>
     <ProductName>Retail Suite</ProductName>
     <PublisherName>BizGrip Solutions</PublisherName>
-    <ApplicationRevision>51</ApplicationRevision>
+    <ApplicationRevision>52</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>

@@ -60,6 +60,45 @@ namespace ERP
                 frmLogin.Hide();
 
             StConStatus.Text = Application.ProductVersion;
+
+            ApplyPermissions();
+        }
+
+        private void ApplyPermissions()
+        {
+            chartOfAccountToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ChartOfAccounts);
+            detailAccountsToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.DetailAccounts);
+            customerInformationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Customers);
+            supplierInformationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Vendors);
+            narrationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Narrations);
+            itemDetailToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.InventoryItems);
+            unitIndexToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Units);
+            itemCatagoryToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ItemCategories);
+            hRInfoToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.HRInfo);
+            supplyOrderToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SupplyOrders);
+            
+            paymentVoucherToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PaymentVouchers);
+            receiptVoucherToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ReceiptVouchers);
+            journalVoucherToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.JournalVouchers);
+            purchaseToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Purchases);
+            purchaseReturnToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PurchaseReturns);
+            toolStripMenuItem1.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SaleSupplies);
+            saleOrderToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Sales);
+            saleReturnToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SaleReturns);
+            stockAdjustmentToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockAdjustments);
+            bankReconcilationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BankReconciliations);
+            payrollToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Payrolls);
+            
+            accountStatementToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            accountStatementWithDueToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            accountBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            trialBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            stockBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            itemLedgerToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            incomeSummaryToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            balanceSheetToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            
+            configurationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PrinterSettings);
         }
 
         private void customerInformationToolStripMenuItem_Click(object sender, EventArgs e)

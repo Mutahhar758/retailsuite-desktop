@@ -21,6 +21,7 @@ namespace ERP
             InitializeComponent();
             _vendorApiService = new VendorApiService();
             _vendors = new List<VendorDto>();
+            UserInfo.ApplyFormPermissions(this, AppResource.Vendors);
         }
 
         // ══════════════════════════════════════════════════════════════════
