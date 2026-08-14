@@ -12,12 +12,13 @@ namespace ERP.Services.Legacy
     {
         private const string Endpoint = "/api/reports";
 
-        public async Task<DataTable> GetAccountStatementAsync(string account, DateTime fromDate, DateTime toDate)
+        public async Task<DataTable> GetAccountStatementAsync(string account, DateTime fromDate, DateTime toDate, string dateBasis = "VoucherDate")
         {
             var url = Endpoint
                 + "/account-statement?account=" + Uri.EscapeDataString(account ?? string.Empty)
                 + "&fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
-                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"));
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"))
+                + "&dateBasis=" + Uri.EscapeDataString(dateBasis ?? "VoucherDate");
 
             using (var client = CreateClient(includeTenantId: true))
             {
@@ -51,12 +52,13 @@ namespace ERP.Services.Legacy
             }
         }
 
-        public async Task<DataTable> GetAccountStatementWithDueAsync(string account, DateTime fromDate, DateTime toDate)
+        public async Task<DataTable> GetAccountStatementWithDueAsync(string account, DateTime fromDate, DateTime toDate, string dateBasis = "VoucherDate")
         {
             var url = Endpoint
                 + "/account-statement-with-due?account=" + Uri.EscapeDataString(account ?? string.Empty)
                 + "&fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
-                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"));
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"))
+                + "&dateBasis=" + Uri.EscapeDataString(dateBasis ?? "VoucherDate");
 
             using (var client = CreateClient(includeTenantId: true))
             {
@@ -319,12 +321,13 @@ namespace ERP.Services.Legacy
             }
         }
 
-        public async Task<DataSet> GetCustomerBillAsync(string account, DateTime fromDate, DateTime toDate)
+        public async Task<DataSet> GetCustomerBillAsync(string account, DateTime fromDate, DateTime toDate, string dateBasis = "VoucherDate")
         {
             var url = Endpoint
                 + "/customer-bill?account=" + Uri.EscapeDataString(account ?? string.Empty)
                 + "&fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
-                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"));
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"))
+                + "&dateBasis=" + Uri.EscapeDataString(dateBasis ?? "VoucherDate");
 
             using (var client = CreateClient(includeTenantId: true))
             {

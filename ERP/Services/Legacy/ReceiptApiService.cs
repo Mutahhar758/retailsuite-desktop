@@ -114,6 +114,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("date")]
         public DateTime Date { get; set; }
 
+        [JsonProperty("clearingDate")]
+        public DateTime? ClearingDate { get; set; }
+
         [JsonProperty("voucherNo")]
         public string VoucherNo { get; set; }
 
@@ -143,6 +146,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("date")]
         public DateTime Date { get; set; }
+
+        [JsonProperty("clearingDate")]
+        public DateTime? ClearingDate { get; set; }
 
         [JsonProperty("voucherNo")]
         public string VoucherNo { get; set; }
@@ -192,6 +198,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("date")]
         public string Date { get; set; }
 
+        [JsonProperty("clearingDate")]
+        public string ClearingDate { get; set; }
+
         [JsonProperty("cashBankAccount")]
         public string CashBankAccount { get; set; }
 
@@ -206,6 +215,9 @@ namespace ERP.Services.Legacy
     {
         [JsonProperty("date")]
         public string Date { get; set; }
+
+        [JsonProperty("clearingDate")]
+        public string ClearingDate { get; set; }
 
         [JsonProperty("cashBankAccount")]
         public string CashBankAccount { get; set; }

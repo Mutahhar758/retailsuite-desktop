@@ -63,6 +63,9 @@ namespace ERP
             this.grpPrintOption = new System.Windows.Forms.GroupBox();
             this.rdoDirectPrint = new System.Windows.Forms.RadioButton();
             this.rdoViewReport = new System.Windows.Forms.RadioButton();
+            this.grpDateBasis = new System.Windows.Forms.GroupBox();
+            this.rdoVoucherDate = new System.Windows.Forms.RadioButton();
+            this.rdoClearingDate = new System.Windows.Forms.RadioButton();
             this.grpDateRange.SuspendLayout();
             this.grpAsOn.SuspendLayout();
             this.grpAccounts.SuspendLayout();
@@ -402,7 +405,7 @@ namespace ERP
             this.grpSelectedAccounts.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grpSelectedAccounts.Location = new System.Drawing.Point(12, 357);
             this.grpSelectedAccounts.Name = "grpSelectedAccounts";
-            this.grpSelectedAccounts.Size = new System.Drawing.Size(258, 170);
+            this.grpSelectedAccounts.Size = new System.Drawing.Size(391, 170);
             this.grpSelectedAccounts.TabIndex = 204;
             this.grpSelectedAccounts.TabStop = false;
             this.grpSelectedAccounts.Text = "Select Accounts ";
@@ -414,7 +417,7 @@ namespace ERP
             this.cmbSupplyOrder.FormattingEnabled = true;
             this.cmbSupplyOrder.Location = new System.Drawing.Point(5, 20);
             this.cmbSupplyOrder.Name = "cmbSupplyOrder";
-            this.cmbSupplyOrder.Size = new System.Drawing.Size(247, 24);
+            this.cmbSupplyOrder.Size = new System.Drawing.Size(380, 24);
             this.cmbSupplyOrder.TabIndex = 205;
             this.cmbSupplyOrder.SelectedIndexChanged += new System.EventHandler(this.cmbSupplyOrder_SelectedIndexChanged);
             // 
@@ -432,11 +435,10 @@ namespace ERP
             // chklstAccounts
             // 
             this.chklstAccounts.BackColor = System.Drawing.SystemColors.Control;
-            this.chklstAccounts.Dock = System.Windows.Forms.DockStyle.Bottom;
             this.chklstAccounts.FormattingEnabled = true;
-            this.chklstAccounts.Location = new System.Drawing.Point(3, 75);
+            this.chklstAccounts.Location = new System.Drawing.Point(5, 72);
             this.chklstAccounts.Name = "chklstAccounts";
-            this.chklstAccounts.Size = new System.Drawing.Size(252, 89);
+            this.chklstAccounts.Size = new System.Drawing.Size(380, 90);
             this.chklstAccounts.TabIndex = 203;
             // 
             // grpPrintOption
@@ -446,7 +448,7 @@ namespace ERP
             this.grpPrintOption.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grpPrintOption.Location = new System.Drawing.Point(282, 357);
             this.grpPrintOption.Name = "grpPrintOption";
-            this.grpPrintOption.Size = new System.Drawing.Size(258, 55);
+            this.grpPrintOption.Size = new System.Drawing.Size(391, 55);
             this.grpPrintOption.TabIndex = 205;
             this.grpPrintOption.TabStop = false;
             this.grpPrintOption.Text = "Print Option";
@@ -475,6 +477,41 @@ namespace ERP
             this.rdoViewReport.UseVisualStyleBackColor = true;
             this.rdoViewReport.CheckedChanged += new System.EventHandler(this.rdoViewReport_CheckedChanged);
             // 
+            // grpDateBasis
+            // 
+            this.grpDateBasis.Controls.Add(this.rdoClearingDate);
+            this.grpDateBasis.Controls.Add(this.rdoVoucherDate);
+            this.grpDateBasis.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.grpDateBasis.Location = new System.Drawing.Point(12, 357);
+            this.grpDateBasis.Name = "grpDateBasis";
+            this.grpDateBasis.Size = new System.Drawing.Size(391, 55);
+            this.grpDateBasis.TabIndex = 206;
+            this.grpDateBasis.TabStop = false;
+            this.grpDateBasis.Text = "Date Basis";
+            this.grpDateBasis.Visible = false;
+            // 
+            // rdoClearingDate
+            // 
+            this.rdoClearingDate.AutoSize = true;
+            this.rdoClearingDate.Location = new System.Drawing.Point(160, 22);
+            this.rdoClearingDate.Name = "rdoClearingDate";
+            this.rdoClearingDate.Size = new System.Drawing.Size(107, 20);
+            this.rdoClearingDate.TabIndex = 1;
+            this.rdoClearingDate.Text = "Clearing Date";
+            this.rdoClearingDate.UseVisualStyleBackColor = true;
+            // 
+            // rdoVoucherDate
+            // 
+            this.rdoVoucherDate.AutoSize = true;
+            this.rdoVoucherDate.Checked = true;
+            this.rdoVoucherDate.Location = new System.Drawing.Point(20, 22);
+            this.rdoVoucherDate.Name = "rdoVoucherDate";
+            this.rdoVoucherDate.Size = new System.Drawing.Size(107, 20);
+            this.rdoVoucherDate.TabIndex = 0;
+            this.rdoVoucherDate.TabStop = true;
+            this.rdoVoucherDate.Text = "Voucher Date";
+            this.rdoVoucherDate.UseVisualStyleBackColor = true;
+            // 
             // frmReportParameters
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -482,6 +519,7 @@ namespace ERP
             this.ClientSize = new System.Drawing.Size(631, 485);
             this.Controls.Add(this.grpPrintOption);
             this.Controls.Add(this.grpSelectedAccounts);
+            this.Controls.Add(this.grpAccounts);
             this.Controls.Add(this.grpType);
             this.Controls.Add(this.grpItemCatagory);
             this.Controls.Add(this.pnlControl);
@@ -489,7 +527,7 @@ namespace ERP
             this.Controls.Add(this.grpItem);
             this.Controls.Add(this.lblReport);
             this.Controls.Add(this.grpAsOn);
-            this.Controls.Add(this.grpAccounts);
+            this.Controls.Add(this.grpDateBasis);
             this.Controls.Add(this.grpDateRange);
             this.Name = "frmReportParameters";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
@@ -555,5 +593,8 @@ namespace ERP
         private System.Windows.Forms.GroupBox grpPrintOption;
         private System.Windows.Forms.RadioButton rdoDirectPrint;
         private System.Windows.Forms.RadioButton rdoViewReport;
+        public System.Windows.Forms.GroupBox grpDateBasis;
+        public System.Windows.Forms.RadioButton rdoVoucherDate;
+        public System.Windows.Forms.RadioButton rdoClearingDate;
     }
 }

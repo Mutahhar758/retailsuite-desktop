@@ -1,4 +1,4 @@
-﻿namespace ERP
+namespace ERP
 {
     partial class frmPayments
     {
@@ -75,6 +75,8 @@
             this.txtEditBy = new System.Windows.Forms.TextBox();
             this.txtCreatedBy = new System.Windows.Forms.TextBox();
             this.dtpDate = new System.Windows.Forms.DateTimePicker();
+            this.dtpClearingDate = new System.Windows.Forms.DateTimePicker();
+            this.lblClearingDate = new System.Windows.Forms.Label();
             this.txtVoucherNo = new System.Windows.Forms.TextBox();
             this.label9 = new System.Windows.Forms.Label();
             this.label8 = new System.Windows.Forms.Label();
@@ -453,6 +455,8 @@
             this.grpInvoiceDetail.Controls.Add(this.txtEditBy);
             this.grpInvoiceDetail.Controls.Add(this.txtCreatedBy);
             this.grpInvoiceDetail.Controls.Add(this.dtpDate);
+            this.grpInvoiceDetail.Controls.Add(this.dtpClearingDate);
+            this.grpInvoiceDetail.Controls.Add(this.lblClearingDate);
             this.grpInvoiceDetail.Controls.Add(this.txtVoucherNo);
             this.grpInvoiceDetail.Controls.Add(this.label9);
             this.grpInvoiceDetail.Controls.Add(this.label8);
@@ -537,10 +541,30 @@
             // 
             this.dtpDate.CustomFormat = "dd-MMM-yyyy";
             this.dtpDate.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
-            this.dtpDate.Location = new System.Drawing.Point(407, 12);
+            this.dtpDate.Location = new System.Drawing.Point(335, 12);
             this.dtpDate.Name = "dtpDate";
-            this.dtpDate.Size = new System.Drawing.Size(125, 22);
+            this.dtpDate.Size = new System.Drawing.Size(115, 22);
             this.dtpDate.TabIndex = 0;
+            // 
+            // dtpClearingDate
+            // 
+            this.dtpClearingDate.CustomFormat = "dd-MMM-yyyy";
+            this.dtpClearingDate.Format = System.Windows.Forms.DateTimePickerFormat.Custom;
+            this.dtpClearingDate.Location = new System.Drawing.Point(550, 12);
+            this.dtpClearingDate.Name = "dtpClearingDate";
+            this.dtpClearingDate.ShowCheckBox = true;
+            this.dtpClearingDate.Checked = false;
+            this.dtpClearingDate.Size = new System.Drawing.Size(174, 22);
+            this.dtpClearingDate.TabIndex = 1;
+            // 
+            // lblClearingDate
+            // 
+            this.lblClearingDate.AutoSize = true;
+            this.lblClearingDate.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblClearingDate.Location = new System.Drawing.Point(455, 15);
+            this.lblClearingDate.Name = "lblClearingDate";
+            this.lblClearingDate.Size = new System.Drawing.Size(92, 16);
+            this.lblClearingDate.Text = "Clearing Date:";
             // 
             // txtVoucherNo
             // 
@@ -933,6 +957,8 @@
         private System.Windows.Forms.TextBox txtEditBy;
         private System.Windows.Forms.TextBox txtCreatedBy;
         private System.Windows.Forms.DateTimePicker dtpDate;
+        private System.Windows.Forms.DateTimePicker dtpClearingDate;
+        private System.Windows.Forms.Label lblClearingDate;
         private System.Windows.Forms.TextBox txtVoucherNo;
         private System.Windows.Forms.Label label9;
         private System.Windows.Forms.Label label8;

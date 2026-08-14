@@ -34,17 +34,42 @@ namespace ERP
         bool FLogIn = true;
         private void ManageControls(Control[] ctrl)
         {
+            Control[] allGroups = new Control[] { 
+                grpDateRange, grpAsOn, grpAccounts, grpItem, grpFilter, 
+                grpItemCatagory, grpType, grpSelectedAccounts, grpPrintOption, grpDateBasis 
+            };
+            foreach (var g in allGroups)
+            {
+                if (g != null) g.Visible = false;
+            }
+
+            string pName = string.IsNullOrEmpty(Paramname) ? Reportname : Paramname;
+            if (pName == "Customer Bill Date Range")
+            {
+                cmbSupplyOrder.Visible = true;
+                chkSelectAll.Location = new Point(5, 48);
+                chklstAccounts.Location = new Point(5, 72);
+                chklstAccounts.Size = new Size(380, 90);
+            }
+            else
+            {
+                cmbSupplyOrder.Visible = false;
+                chkSelectAll.Location = new Point(5, 20);
+                chklstAccounts.Location = new Point(5, 44);
+                chklstAccounts.Size = new Size(380, 118);
+            }
+
             int LocX = 12, LocY = 60;
             pnlControl.Location = new Point(235, LocY);
             LocY += 50;
             foreach (Control item in ctrl)
             {
+                if (item == null) continue;
                 item.Visible = true;
                 item.Location = new Point(LocX, LocY);
                 LocY += item.Height + 3;
             }
             this.Size = new Size(430, LocY + 50);
-
         }
         private void ManageControlsLocation(Control[] ctrl)
         {
@@ -178,6 +203,7 @@ namespace ERP
         private void btnPrint_Click(object sender, EventArgs e)
         {
             frmReportView frm = new frmReportView();
+            string dateBasis = rdoClearingDate.Checked ? "ClearingDate" : "VoucherDate";
             #region Account Statement
             if (Reportname == "Account Statement")
             {
@@ -186,7 +212,7 @@ namespace ERP
                 {
                     
                     Reports.AccountStatement rpt = new Reports.AccountStatement();
-                    DataTable dt = ReportQuery.AccountStatement((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value);
+                    DataTable dt = ReportQuery.AccountStatement((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value, dateBasis);
                     rpt.SetDataSource(dt);
                     rpt.SetParameterValue("@companyname", CompanyName);
                     rpt.SetParameterValue("@Account", cmbAccount.Text);
@@ -201,7 +227,7 @@ namespace ERP
                         
                         
                         Reports.AccountStatement rpt = new Reports.AccountStatement();
-                        DataTable dt = ReportQuery.AccountStatement(item["Account"].ToString() , dtpFDate.Value, dtpTDate.Value);
+                        DataTable dt = ReportQuery.AccountStatement(item["Account"].ToString() , dtpFDate.Value, dtpTDate.Value, dateBasis);
                         rpt.SetDataSource(dt);
                         rpt.SetParameterValue("@companyname", CompanyName);
                         rpt.SetParameterValue("@Account", item["Title"].ToString());
@@ -217,7 +243,7 @@ namespace ERP
             else if (Reportname == "Account Statement (Urdu)")
             {
                 UrduReports.CrUrAccountStatement rpt = new UrduReports.CrUrAccountStatement();
-                DataTable dt = ReportQuery.AccountStatement((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value);
+                DataTable dt = ReportQuery.AccountStatement((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value, dateBasis);
                 rpt.SetDataSource(dt);
                 rpt.SetParameterValue("@companyname", CompanyInfo.UrCompanyName);
                 rpt.SetParameterValue("@Account", cmbAccount.Text);
@@ -235,7 +261,7 @@ namespace ERP
                 if (rdoViewReport.Checked)
                 {
                     Reports.AccountStatementWithdue rpt = new Reports.AccountStatementWithdue();
-                    DataTable dt = ReportQuery.AccountStatementWithDue((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value);
+                    DataTable dt = ReportQuery.AccountStatementWithDue((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value, dateBasis);
                     rpt.SetDataSource(dt);
                     rpt.SetParameterValue("@companyname", CompanyName);
                     rpt.SetParameterValue("@Account", cmbAccount.Text);
@@ -248,7 +274,7 @@ namespace ERP
                     foreach (DataRowView item in chklstAccounts.CheckedItems)
                     {
                         Reports.AccountStatementWithdue rpt = new Reports.AccountStatementWithdue();
-                        DataTable dt = ReportQuery.AccountStatementWithDue(item["Account"].ToString(), dtpFDate.Value, dtpTDate.Value);
+                        DataTable dt = ReportQuery.AccountStatementWithDue(item["Account"].ToString(), dtpFDate.Value, dtpTDate.Value, dateBasis);
                         rpt.SetDataSource(dt);
                         rpt.SetParameterValue("@companyname", CompanyName);
                         rpt.SetParameterValue("@Account", item["Title"].ToString());
@@ -353,7 +379,7 @@ namespace ERP
             else if (Reportname == "Customer Bill (Urdu)")
             {
                 UrduReports.CrUrSaleBill rpt = new UrduReports.CrUrSaleBill();
-                DataTable dt = ReportQuery.CustomerBill((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value).Tables[0];
+                DataTable dt = ReportQuery.CustomerBill((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value, dateBasis).Tables[0];
                 rpt.SetDataSource(dt);
                 rpt.SetParameterValue("@companyname", CompanyInfo.UrCompanyName);
                 rpt.SetParameterValue("@Account", cmbAccount.Text);
@@ -373,7 +399,7 @@ namespace ERP
                         MessageBox.Show("Please select account..");
                         return;
                     }
-                    DataSet ds = ReportQuery.CustomerBill((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value);
+                    DataSet ds = ReportQuery.CustomerBill((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value, dateBasis);
                     DataTable dt = ds.Tables[0];
                     Reports.SaleReceiptBill rpt = new Reports.SaleReceiptBill();
                     rpt.SetDataSource(dt);
@@ -403,7 +429,7 @@ namespace ERP
                     
                     foreach (DataRowView item in chklstAccounts.CheckedItems)
                     {
-                        DataSet ds = ReportQuery.CustomerBill(item["Code"].ToString(), dtpFDate.Value, dtpTDate.Value);
+                        DataSet ds = ReportQuery.CustomerBill(item["Code"].ToString(), dtpFDate.Value, dtpTDate.Value, dateBasis);
                         DataTable dt = ds.Tables[0];
                         if (dt.Rows.Count > 0)
                         {
@@ -525,7 +551,7 @@ namespace ERP
                 if (Paramname == "Account Statement")
                 {
                     await FillAccouontAsync();
-                    ManageControls(new Control[] { grpDateRange, grpPrintOption, grpAccounts });
+                    ManageControls(new Control[] { grpDateRange, grpDateBasis, grpPrintOption, grpAccounts });
                     await FillCheckedAccountsAsync(false);
                 }
                 #endregion
@@ -533,7 +559,7 @@ namespace ERP
                 if (Paramname == "Account Statement With Due Days")
                 {
                     await FillAccouontAsync();
-                    ManageControls(new Control[] { grpDateRange, grpPrintOption, grpAccounts });
+                    ManageControls(new Control[] { grpDateRange, grpDateBasis, grpPrintOption, grpAccounts });
                     await FillCheckedAccountsAsync(false);
                 }
 
@@ -575,12 +601,7 @@ namespace ERP
                 if (Paramname == "Customer Bill")
                 {
                     await FillCustomersAsync();
-                    grpDateRange.Visible = true;
-                    grpDateRange.Location = new Point(12, 60);
-                    grpAccounts.Visible = true;
-                    grpAccounts.Location = new Point(12, 120);
-                    btnPrint.Location = new Point(btnPrint.Location.X, 180);
-                    this.Size = new Size(this.Size.Width, 250);
+                    ManageControls(new Control[] { grpDateRange, grpDateBasis, grpAccounts });
                 }
                 #endregion
                 #region Customer Bill Date Range
@@ -589,7 +610,7 @@ namespace ERP
                     await FillCustomersAsync();
                     await FillCheckedAccountsAsync(true);
                     await FillSupplyOrdersAsync();
-                    ManageControls(new Control[] { grpDateRange, grpPrintOption, grpAccounts });
+                    ManageControls(new Control[] { grpDateRange, grpDateBasis, grpPrintOption, grpAccounts });
                 }
                 #endregion
                 #region Balance Detail
@@ -648,35 +669,27 @@ namespace ERP
 
         private void rdoViewReport_CheckedChanged(object sender, EventArgs e)
         {
-            if (Reportname == "Account Statement" )
+            string name = string.IsNullOrEmpty(Paramname) ? Reportname : Paramname;
+            if (name == "Account Statement" || name == "Account Statement With Due Days")
             {
                 if (!rdoViewReport.Checked)
                 {
-                    grpSelectedAccounts.Visible = true;
-                    grpAccounts.Visible = false;                 
-                    ManageControls(new Control[] { grpDateRange, grpPrintOption , grpSelectedAccounts });
+                    ManageControls(new Control[] { grpDateRange, grpDateBasis, grpPrintOption, grpSelectedAccounts });
                 }
                 else
                 {
-                    grpSelectedAccounts.Visible = false;
-                    grpAccounts.Visible = true;                 
-                    ManageControls(new Control[] { grpDateRange, grpPrintOption, grpAccounts });
+                    ManageControls(new Control[] { grpDateRange, grpDateBasis, grpPrintOption, grpAccounts });
                 }
-
             }
-            else if (Reportname == "Customer Bill Date Range")
+            else if (name == "Customer Bill" || name == "Customer Bill Date Range")
             {
                 if (!rdoViewReport.Checked)
                 {
-                    grpSelectedAccounts.Visible = true;
-                    grpAccounts.Visible = false;
-                    ManageControls(new Control[] { grpDateRange, grpPrintOption, grpSelectedAccounts });
+                    ManageControls(new Control[] { grpDateRange, grpDateBasis, grpPrintOption, grpSelectedAccounts });
                 }
                 else
                 {
-                    grpSelectedAccounts.Visible = false;
-                    grpAccounts.Visible = true;
-                    ManageControls(new Control[] { grpDateRange, grpPrintOption, grpAccounts });
+                    ManageControls(new Control[] { grpDateRange, grpDateBasis, grpPrintOption, grpAccounts });
                 }
             }
         }

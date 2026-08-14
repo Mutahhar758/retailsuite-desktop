@@ -120,6 +120,15 @@ namespace ERP
             {
                 var first = lines[0];
                 dtpDate.Value = first.Date;
+                if (first.ClearingDate.HasValue)
+                {
+                    dtpClearingDate.Value = first.ClearingDate.Value;
+                    dtpClearingDate.Checked = true;
+                }
+                else
+                {
+                    dtpClearingDate.Checked = false;
+                }
                 cmbCashBanks.SelectedValue = first.CashBankAccountId;
                 if (string.IsNullOrWhiteSpace(first.Narration))
                     cmbNarration.SelectedIndex = -1;
@@ -299,6 +308,7 @@ namespace ERP
                             var createRequest = new ReceiptCreateRequest
                             {
                                 Date            = dtpDate.Value.ToString("yyyy-MM-dd"),
+                                ClearingDate    = dtpClearingDate.Checked ? dtpClearingDate.Value.ToString("yyyy-MM-dd") : null,
                                 CashBankAccount = cmbCashBanks.SelectedValue.ToString(),
                                 Narration       = cmbNarration.SelectedValue?.ToString(),
                                 Lines           = lines
@@ -310,6 +320,7 @@ namespace ERP
                             var updateRequest = new ReceiptUpdateRequest
                             {
                                 Date            = dtpDate.Value.ToString("yyyy-MM-dd"),
+                                ClearingDate    = dtpClearingDate.Checked ? dtpClearingDate.Value.ToString("yyyy-MM-dd") : null,
                                 CashBankAccount = cmbCashBanks.SelectedValue.ToString(),
                                 Narration       = cmbNarration.SelectedValue?.ToString(),
                                 Lines           = lines
@@ -393,7 +404,7 @@ namespace ERP
         private void btnClose_Click(object sender, EventArgs e) { this.Close(); }
 
         private void btnNew_Click(object sender, EventArgs e)
-        { dgvExpenses.Rows.Clear(); Validation.Clear(grpInvoiceDetail); dgvExpenses.Rows.Add(); dtpDate.Focus(); }
+        { dgvExpenses.Rows.Clear(); Validation.Clear(grpInvoiceDetail); dtpClearingDate.Checked = false; dgvExpenses.Rows.Add(); dtpDate.Focus(); }
 
         #region Navigation
         private void btnHome_Click(object sender, EventArgs e) => Navigate(Navigators.Home);

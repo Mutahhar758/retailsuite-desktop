@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -13,14 +13,14 @@ namespace ERP
     {
         private static readonly ReportsApiService _reportsApiService = new ReportsApiService();
 
-        internal  static DataTable AccountStatement(string account ,DateTime Fdate ,DateTime Tdate)
+        internal static DataTable AccountStatement(string account, DateTime Fdate, DateTime Tdate, string dateBasis = "VoucherDate")
         {
-            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetAccountStatementAsync(account, Fdate, Tdate)).GetAwaiter().GetResult();
+            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetAccountStatementAsync(account, Fdate, Tdate, dateBasis)).GetAwaiter().GetResult();
         }
-        internal static DataTable AccountStatementWithDue(string account, DateTime Fdate, DateTime Tdate)
+        internal static DataTable AccountStatementWithDue(string account, DateTime Fdate, DateTime Tdate, string dateBasis = "VoucherDate")
         {
 
-            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetAccountStatementWithDueAsync(account, Fdate, Tdate)).GetAwaiter().GetResult();
+            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetAccountStatementWithDueAsync(account, Fdate, Tdate, dateBasis)).GetAwaiter().GetResult();
         }
         internal static DataTable StockBalance(DateTime Fdate, DateTime Tdate, string Filter, decimal Qty, string Catagory, string Type)
         {
@@ -77,10 +77,10 @@ namespace ERP
 
             return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetSaleRetBillAsync(Vno)).GetAwaiter().GetResult();
         }
-        internal static DataSet CustomerBill(string account, DateTime Fdate, DateTime Tdate)
+        internal static DataSet CustomerBill(string account, DateTime Fdate, DateTime Tdate, string dateBasis = "VoucherDate")
         {
 
-            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetCustomerBillAsync(account, Fdate, Tdate)).GetAwaiter().GetResult();
+            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetCustomerBillAsync(account, Fdate, Tdate, dateBasis)).GetAwaiter().GetResult();
         }
         internal static DataTable EnvelopeDetail(string[] account)
         {
