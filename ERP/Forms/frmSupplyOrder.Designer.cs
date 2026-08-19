@@ -17,6 +17,8 @@ namespace ERP
         {
             this.label1 = new System.Windows.Forms.Label();
             this.txtTitle = new System.Windows.Forms.TextBox();
+            this.lblSearchCustomer = new System.Windows.Forms.Label();
+            this.txtSearchCustomer = new System.Windows.Forms.TextBox();
             this.dgvCustomers = new System.Windows.Forms.DataGridView();
             this.clnCustomer = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnSortOrder = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -26,6 +28,7 @@ namespace ERP
             this.btnDelete = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
+
 
             ((System.ComponentModel.ISupportInitialize)(this.dgvCustomers)).BeginInit();
             ((System.ComponentModel.ISupportInitialize)(this.dgvList)).BeginInit();
@@ -53,20 +56,6 @@ namespace ERP
             this.txtTitle.Size = new System.Drawing.Size(250, 20);
             this.txtTitle.TabIndex = 1;
 
-            //
-            // dgvCustomers
-            //
-            this.dgvCustomers.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvCustomers.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.clnCustomer,
-            this.clnSortOrder});
-            this.dgvCustomers.Location = new System.Drawing.Point(15, 45);
-            this.dgvCustomers.Name = "dgvCustomers";
-            this.dgvCustomers.Size = new System.Drawing.Size(450, 300);
-            this.dgvCustomers.TabIndex = 2;
-            this.dgvCustomers.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
-            | System.Windows.Forms.AnchorStyles.Left)
-            | System.Windows.Forms.AnchorStyles.Right)));
 
             //
             // clnCustomer
@@ -81,6 +70,40 @@ namespace ERP
             this.clnSortOrder.HeaderText = "Sort Order";
             this.clnSortOrder.Name = "clnSortOrder";
             this.clnSortOrder.Width = 100;
+
+            //
+            // lblSearchCustomer
+            //
+            this.lblSearchCustomer.AutoSize = true;
+            this.lblSearchCustomer.Location = new System.Drawing.Point(12, 43);
+            this.lblSearchCustomer.Name = "lblSearchCustomer";
+            this.lblSearchCustomer.Size = new System.Drawing.Size(92, 13);
+            this.lblSearchCustomer.TabIndex = 8;
+            this.lblSearchCustomer.Text = "Search Customer:";
+
+            //
+            // txtSearchCustomer
+            //
+            this.txtSearchCustomer.Location = new System.Drawing.Point(110, 40);
+            this.txtSearchCustomer.Name = "txtSearchCustomer";
+            this.txtSearchCustomer.Size = new System.Drawing.Size(250, 20);
+            this.txtSearchCustomer.TabIndex = 9;
+            this.txtSearchCustomer.TextChanged += new System.EventHandler(this.txtSearchCustomer_TextChanged);
+
+            //
+            // dgvCustomers
+            //
+            this.dgvCustomers.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvCustomers.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.clnCustomer,
+            this.clnSortOrder});
+            this.dgvCustomers.Location = new System.Drawing.Point(15, 68);
+            this.dgvCustomers.Name = "dgvCustomers";
+            this.dgvCustomers.Size = new System.Drawing.Size(450, 280);
+            this.dgvCustomers.TabIndex = 2;
+            this.dgvCustomers.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom)
+            | System.Windows.Forms.AnchorStyles.Left)
+            | System.Windows.Forms.AnchorStyles.Right)));
 
             //
             // dgvList
@@ -156,6 +179,8 @@ namespace ERP
             //
             this.splitContainer1.Panel2.Controls.Add(this.label1);
             this.splitContainer1.Panel2.Controls.Add(this.txtTitle);
+            this.splitContainer1.Panel2.Controls.Add(this.lblSearchCustomer);
+            this.splitContainer1.Panel2.Controls.Add(this.txtSearchCustomer);
             this.splitContainer1.Panel2.Controls.Add(this.dgvCustomers);
             this.splitContainer1.Panel2.Controls.Add(this.btnNew);
             this.splitContainer1.Panel2.Controls.Add(this.btnSave);
@@ -188,6 +213,8 @@ namespace ERP
 
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.TextBox txtTitle;
+        private System.Windows.Forms.Label lblSearchCustomer;
+        private System.Windows.Forms.TextBox txtSearchCustomer;
         private System.Windows.Forms.DataGridView dgvCustomers;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnCustomer;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSortOrder;
@@ -199,3 +226,5 @@ namespace ERP
         private System.Windows.Forms.SplitContainer splitContainer1;
     }
 }
+
+

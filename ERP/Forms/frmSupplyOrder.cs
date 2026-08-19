@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Linq;
 using System.Windows.Forms;
 using ERP.Services.Legacy;
 
@@ -9,6 +10,7 @@ namespace ERP
     {
         private readonly SupplyOrderApiService _supplyOrderApiService;
         private readonly CustomerApiService _customerApiService;
+        private List<CustomerDto> _customers = new List<CustomerDto>();
         private string _id = "0";
         private bool _loadingList;
         private bool _suppressSelectionChanged;
@@ -37,8 +39,8 @@ namespace ERP
 
         private async System.Threading.Tasks.Task FillCustomersAsync()
         {
-            var customers = await _customerApiService.GetAsync();
-            clnCustomer.DataSource = customers;
+            _customers = await _customerApiService.GetAsync() ?? new List<CustomerDto>();
+            clnCustomer.DataSource = _customers;
             clnCustomer.DisplayMember = "Title";
             clnCustomer.ValueMember = "Account";
         }
@@ -69,6 +71,41 @@ namespace ERP
             _loadingList = false;
         }
 
+        private void txtSearchCustomer_TextChanged(object sender, EventArgs e)
+        {
+            ApplyCustomerFilter();
+        }
+
+        private void ApplyCustomerFilter()
+        {
+            string q = (txtSearchCustomer.Text ?? "").Trim();
+            dgvCustomers.CurrentCell = null;
+
+            foreach (DataGridViewRow row in dgvCustomers.Rows)
+            {
+                if (row.IsNewRow)
+                    continue;
+
+                if (string.IsNullOrEmpty(q))
+                {
+                    row.Visible = true;
+                    continue;
+                }
+
+                var customerId = row.Cells[clnCustomer.Index].Value?.ToString();
+                var sortOrder = row.Cells[clnSortOrder.Index].Value?.ToString();
+
+                var customer = _customers.FirstOrDefault(c => c.Account == customerId);
+                var customerTitle = customer?.Title ?? "";
+
+                bool isMatch = customerTitle.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0
+                            || (customerId != null && customerId.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0)
+                            || (sortOrder != null && sortOrder.IndexOf(q, StringComparison.OrdinalIgnoreCase) >= 0);
+
+                row.Visible = isMatch;
+            }
+        }
+
         private void btnNew_Click(object sender, EventArgs e)
         {
             _suppressSelectionChanged = true;
@@ -83,6 +120,7 @@ namespace ERP
 
                 _id = "0";
                 txtTitle.Text = "";
+                txtSearchCustomer.Text = "";
                 dgvCustomers.Rows.Clear();
                 txtTitle.Focus();
             }
@@ -175,6 +213,7 @@ namespace ERP
                 ? dgvList.CurrentRow.Cells["Title"].Value.ToString()
                 : string.Empty;
 
+            txtSearchCustomer.Text = "";
             await LoadDetailsAsync(_id);
         }
 
@@ -228,7 +267,3 @@ namespace ERP
         }
     }
 }
-
-
-
-
