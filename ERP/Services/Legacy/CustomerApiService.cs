@@ -70,6 +70,44 @@ namespace ERP.Services.Legacy
                 return payload?.Body;
             }
         }
+
+        public async Task<List<CustomerSupplyItemDto>> GetSupplyItemsAsync(string customerId = null, string itemId = null)
+        {
+            using (var client = CreateClient())
+            {
+                var query = new List<string>();
+                if (!string.IsNullOrWhiteSpace(customerId))
+                    query.Add("customerId=" + Uri.EscapeDataString(customerId));
+                if (!string.IsNullOrWhiteSpace(itemId))
+                    query.Add("itemId=" + Uri.EscapeDataString(itemId));
+
+                var qs = query.Count > 0 ? "?" + string.Join("&", query) : "";
+                var response = await client.GetAsync(Endpoint + "/supply-items" + qs);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<CustomerSupplyItemDto>>>(json);
+                return payload?.Body ?? new List<CustomerSupplyItemDto>();
+            }
+        }
+    }
+
+    internal class CustomerSupplyItemDto
+    {
+        [JsonProperty("customerAccountId")]
+        public string CustomerAccountId { get; set; }
+
+        [JsonProperty("itemId")]
+        public string ItemId { get; set; }
+
+        [JsonProperty("itemTitle")]
+        public string ItemTitle { get; set; }
+
+        [JsonProperty("qty")]
+        public decimal Qty { get; set; }
+
+        [JsonProperty("secQty")]
+        public decimal? SecQty { get; set; }
     }
 
     internal class CustomerDto
@@ -133,6 +171,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("mediaUrl")]
         public string MediaUrl { get; set; }
+
+        [JsonProperty("supplyItems")]
+        public List<CustomerSupplyItemDto> SupplyItems { get; set; } = new List<CustomerSupplyItemDto>();
     }
 
     internal class CustomerUpsertApiRequest
@@ -178,5 +219,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("mediaId")]
         public string MediaId { get; set; }
+
+        [JsonProperty("supplyItems")]
+        public List<CustomerSupplyItemDto> SupplyItems { get; set; } = new List<CustomerSupplyItemDto>();
     }
 }
+

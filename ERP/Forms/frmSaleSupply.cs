@@ -4,9 +4,11 @@ using System.Data;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
+using System.Threading.Tasks;
 using System.Windows.Forms;
 using ERP.Classes;
 using ERP.Services.Legacy;
+
 
 namespace ERP
 {
@@ -14,6 +16,7 @@ namespace ERP
     {
         private readonly SaleSupplyApiService _apiService;
         private readonly SupplyOrderApiService _supplyOrderApiService;
+        private readonly CustomerApiService _customerApiService;
         private readonly ChartOfAccountApiService _chartOfAccountApiService;
         private readonly NarrationApiService _narrationApiService;
         private readonly UnitApiService _unitApiService;
@@ -39,6 +42,7 @@ namespace ERP
             InitializeComponent();
             _apiService = new SaleSupplyApiService();
             _supplyOrderApiService = new SupplyOrderApiService();
+            _customerApiService = new CustomerApiService();
             _chartOfAccountApiService = new ChartOfAccountApiService();
             _narrationApiService = new NarrationApiService();
             _unitApiService = new UnitApiService();
@@ -47,6 +51,7 @@ namespace ERP
             dgvSale.Rows.Add();
             UserInfo.ApplyFormPermissions(this, AppResource.SaleSupplies);
         }
+
 
         private void InitializeLookupTables()
         {
@@ -1028,7 +1033,21 @@ namespace ERP
                 {
                     dgvSale.Rows.Clear();
                     int supplyOrderId = Convert.ToInt32(cmbSupplyOrder.SelectedValue);
-                    var supplyOrder = await _supplyOrderApiService.GetByIdAsync(supplyOrderId);
+                    string currentItemId = cmbItem.SelectedValue != null ? cmbItem.SelectedValue.ToString() : null;
+
+                    var supplyOrderTask = _supplyOrderApiService.GetByIdAsync(supplyOrderId);
+                    var supplyItemsTask = !string.IsNullOrWhiteSpace(currentItemId) 
+                        ? _customerApiService.GetSupplyItemsAsync(null, currentItemId) 
+                        : Task.FromResult(new List<CustomerSupplyItemDto>());
+
+                    await Task.WhenAll(supplyOrderTask, supplyItemsTask);
+
+                    var supplyOrder = supplyOrderTask.Result;
+                    var customSupplyItems = supplyItemsTask.Result;
+                    var itemQtyMap = (customSupplyItems ?? new List<CustomerSupplyItemDto>())
+                        .Where(x => !string.IsNullOrEmpty(x.CustomerAccountId))
+                        .GroupBy(x => x.CustomerAccountId)
+                        .ToDictionary(g => g.Key, g => g.First());
 
                     if (supplyOrder != null && supplyOrder.Details != null)
                     {
@@ -1036,7 +1055,22 @@ namespace ERP
                         {
                             int idx = dgvSale.Rows.Add();
                             dgvSale.Rows[idx].Cells[clnSeq.Index].Value = (idx + 1).ToString();
-                            dgvSale.Rows[idx].Cells[clnCustomer.Index].Value = supplyOrder.Details[i].CustomerId;
+                            string custId = supplyOrder.Details[i].CustomerId;
+                            dgvSale.Rows[idx].Cells[clnCustomer.Index].Value = custId;
+
+                            decimal qty = 1;
+                            decimal secQty = 0;
+                            if (!string.IsNullOrEmpty(custId) && itemQtyMap.TryGetValue(custId, out var customSetting))
+                            {
+                                qty = customSetting.Qty > 0 ? customSetting.Qty : 1;
+                                secQty = customSetting.SecQty ?? 0;
+                            }
+
+                            dgvSale.Rows[idx].Cells[clnQty.Index].Value = qty.ToString("0.##");
+                            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                            {
+                                dgvSale.Rows[idx].Cells["clnSecQty"].Value = secQty.ToString("0.##");
+                            }
 
                             if (cmbItem.SelectedValue != null)
                             {
@@ -1059,5 +1093,6 @@ namespace ERP
                 }
             }
         }
+
     }
 }
