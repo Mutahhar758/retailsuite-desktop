@@ -85,6 +85,8 @@ namespace ERP
             this.dtpDate = new System.Windows.Forms.DateTimePicker();
             this.txtVoucherNo = new System.Windows.Forms.TextBox();
             this.label7 = new System.Windows.Forms.Label();
+            this.lblSearchCustomer = new System.Windows.Forms.Label();
+            this.txtSearchCustomer = new System.Windows.Forms.TextBox();
             this.tbQuery = new System.Windows.Forms.TabPage();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.txtFilterVoucher = new System.Windows.Forms.TextBox();
@@ -156,6 +158,8 @@ namespace ERP
             this.tbDetail.Controls.Add(this.dgvSale);
             this.tbDetail.Controls.Add(this.txtTotAmount);
             this.tbDetail.Controls.Add(this.grpInvoiceDetail);
+            this.tbDetail.Controls.Add(this.lblSearchCustomer);
+            this.tbDetail.Controls.Add(this.txtSearchCustomer);
             this.tbDetail.Location = new System.Drawing.Point(4, 25);
             this.tbDetail.Name = "tbDetail";
             this.tbDetail.Padding = new System.Windows.Forms.Padding(3);
@@ -339,13 +343,13 @@ namespace ERP
             this.clnAddLess,
             this.clnAmount,
             this.clnStatus});
-            this.dgvSale.Location = new System.Drawing.Point(7, 193);
+            this.dgvSale.Location = new System.Drawing.Point(7, 203);
             this.dgvSale.MultiSelect = false;
             this.dgvSale.Name = "dgvSale";
             this.dgvSale.RowHeadersWidth = 15;
             this.dgvSale.RowTemplate.Height = 25;
             this.dgvSale.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvSale.Size = new System.Drawing.Size(1068, 164);
+            this.dgvSale.Size = new System.Drawing.Size(1068, 154);
             this.dgvSale.TabIndex = 1;
             this.dgvSale.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSale_CellContentClick);
             this.dgvSale.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPurchase_CellEndEdit);
@@ -447,6 +451,11 @@ namespace ERP
             this.txtTotAmount.TabStop = false;
             this.txtTotAmount.Text = "0";
             this.txtTotAmount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtTotAmount.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
             // 
             // grpInvoiceDetail
             // 
@@ -522,27 +531,6 @@ namespace ERP
             this.cmbNarration.Size = new System.Drawing.Size(320, 24);
             this.cmbNarration.TabIndex = 3;
             // 
-            // cmbSupplyOrder
-            //
-            this.cmbSupplyOrder.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
-            this.cmbSupplyOrder.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.cmbSupplyOrder.FormattingEnabled = true;
-            this.cmbSupplyOrder.Location = new System.Drawing.Point(92, 124);
-            this.cmbSupplyOrder.Name = "cmbSupplyOrder";
-            this.cmbSupplyOrder.Size = new System.Drawing.Size(320, 24);
-            this.cmbSupplyOrder.TabIndex = 4;
-            this.cmbSupplyOrder.Leave += new System.EventHandler(this.cmbSupplyOrder_Leave);
-            //
-            // lblSupplyOrder
-            //
-            this.lblSupplyOrder.AutoSize = true;
-            this.lblSupplyOrder.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSupplyOrder.Location = new System.Drawing.Point(10, 127);
-            this.lblSupplyOrder.Name = "lblSupplyOrder";
-            this.lblSupplyOrder.Size = new System.Drawing.Size(90, 16);
-            this.lblSupplyOrder.TabIndex = 222;
-            this.lblSupplyOrder.Text = "Supply Order :";
-            //
             // lblNarration
             // 
             this.lblNarration.AutoSize = true;
@@ -552,6 +540,27 @@ namespace ERP
             this.lblNarration.Size = new System.Drawing.Size(68, 16);
             this.lblNarration.TabIndex = 217;
             this.lblNarration.Text = "Narration :";
+            // 
+            // cmbSupplyOrder
+            // 
+            this.cmbSupplyOrder.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
+            this.cmbSupplyOrder.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbSupplyOrder.FormattingEnabled = true;
+            this.cmbSupplyOrder.Location = new System.Drawing.Point(92, 124);
+            this.cmbSupplyOrder.Name = "cmbSupplyOrder";
+            this.cmbSupplyOrder.Size = new System.Drawing.Size(320, 24);
+            this.cmbSupplyOrder.TabIndex = 4;
+            this.cmbSupplyOrder.Leave += new System.EventHandler(this.cmbSupplyOrder_Leave);
+            // 
+            // lblSupplyOrder
+            // 
+            this.lblSupplyOrder.AutoSize = true;
+            this.lblSupplyOrder.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSupplyOrder.Location = new System.Drawing.Point(10, 127);
+            this.lblSupplyOrder.Name = "lblSupplyOrder";
+            this.lblSupplyOrder.Size = new System.Drawing.Size(92, 16);
+            this.lblSupplyOrder.TabIndex = 222;
+            this.lblSupplyOrder.Text = "Supply Order :";
             // 
             // label2
             // 
@@ -630,6 +639,26 @@ namespace ERP
             this.label7.Size = new System.Drawing.Size(73, 16);
             this.label7.TabIndex = 208;
             this.label7.Text = "Voucher # :";
+            // 
+            // lblSearchCustomer
+            // 
+            this.lblSearchCustomer.AutoSize = true;
+            this.lblSearchCustomer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSearchCustomer.Location = new System.Drawing.Point(7, 178);
+            this.lblSearchCustomer.Name = "lblSearchCustomer";
+            this.lblSearchCustomer.Size = new System.Drawing.Size(113, 16);
+            this.lblSearchCustomer.TabIndex = 220;
+            this.lblSearchCustomer.Text = "Search Customer:";
+            this.lblSearchCustomer.Click += new System.EventHandler(this.lblSearchCustomer_Click);
+            // 
+            // txtSearchCustomer
+            // 
+            this.txtSearchCustomer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSearchCustomer.Location = new System.Drawing.Point(126, 175);
+            this.txtSearchCustomer.Name = "txtSearchCustomer";
+            this.txtSearchCustomer.Size = new System.Drawing.Size(260, 22);
+            this.txtSearchCustomer.TabIndex = 221;
+            this.txtSearchCustomer.TextChanged += new System.EventHandler(this.txtSearchCustomer_TextChanged);
             // 
             // tbQuery
             // 
@@ -1146,5 +1175,7 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn clnAddLess;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnAmount;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnStatus;
+        private System.Windows.Forms.Label lblSearchCustomer;
+        private System.Windows.Forms.TextBox txtSearchCustomer;
     }
 }

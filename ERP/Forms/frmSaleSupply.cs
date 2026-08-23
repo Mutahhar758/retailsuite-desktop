@@ -296,6 +296,7 @@ namespace ERP
             txtVoucherNo.Text = "SP-" + vno;
             VoucherNum = vno;
             dgvSale.Rows.Clear();
+            txtSearchCustomer.Text = ""; // clear any active customer filter when loading a voucher
 
             if (lines.Count > 0)
             {
@@ -849,6 +850,7 @@ namespace ERP
             cmbItem.SelectedIndex = -1;
             cmbNarration.SelectedIndex = dtNarration.Rows.Count > 0 ? 0 : -1;
             cmbSupplyOrder.SelectedIndex = -1;
+            txtSearchCustomer.Text = "";
             CalcTotAmount();
         }
 
@@ -997,6 +999,37 @@ namespace ERP
             this.Close();
         }
 
+        private void txtSearchCustomer_TextChanged(object sender, EventArgs e)
+        {
+            string search = txtSearchCustomer.Text.Trim();
+
+            foreach (DataGridViewRow row in dgvSale.Rows)
+            {
+                if (row.IsNewRow) continue;
+
+                if (string.IsNullOrEmpty(search))
+                {
+                    row.Visible = true;
+                    continue;
+                }
+
+                // Resolve display text for the customer ComboBox column
+                string customerDisplay = string.Empty;
+                object cellValue = row.Cells[clnCustomer.Index].Value;
+                if (cellValue != null && !string.IsNullOrEmpty(cellValue.ToString()))
+                {
+                    // Look up the title from dtCustomers using the stored account id
+                    DataRow[] matches = dtCustomers.Select("Account = '" + cellValue.ToString().Replace("'", "''") + "'");
+                    if (matches.Length > 0)
+                        customerDisplay = matches[0]["Title"].ToString();
+                    else
+                        customerDisplay = cellValue.ToString();
+                }
+
+                row.Visible = customerDisplay.IndexOf(search, StringComparison.OrdinalIgnoreCase) >= 0;
+            }
+        }
+
         private void tbDetail_Click(object sender, EventArgs e)
         {
         }
@@ -1075,13 +1108,27 @@ namespace ERP
                         row.Cells[clnUnit.Index].Value = primaryUnit;
                         SetRateForRow(row.Index);
 
-                        string custId = row.Cells[clnCustomer.Index].Value?.ToString();
-                        if (!string.IsNullOrEmpty(custId) && itemQtyMap.TryGetValue(custId, out var customSetting))
+                        // Only apply the prefill default qty when the row does not already
+                        // have a qty value. This prevents overwriting manually-entered or
+                        // previously-saved quantities when an existing voucher is loaded
+                        // and cmbItem.SelectedValue is set, which re-triggers this event.
+                        bool hasExistingQty = row.Cells[clnQty.Index].Value != null &&
+                                              !string.IsNullOrWhiteSpace(row.Cells[clnQty.Index].Value.ToString()) &&
+                                              ParseDecimal(row.Cells[clnQty.Index].Value) != 0;
+
+                        if (!hasExistingQty)
                         {
-                            row.Cells[clnQty.Index].Value = (customSetting.Qty > 0 ? customSetting.Qty : 1).ToString("0.##");
-                            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                            string custId = row.Cells[clnCustomer.Index].Value?.ToString();
+                            if (!string.IsNullOrEmpty(custId) && itemQtyMap.TryGetValue(custId, out var customSetting))
                             {
-                                row.Cells["clnSecQty"].Value = (customSetting.SecQty ?? 0).ToString("0.##");
+                                row.Cells[clnQty.Index].Value = (customSetting.Qty > 0 ? customSetting.Qty : 1).ToString("0.##");
+                                if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                                {
+                                    bool hasExistingSecQty = row.Cells["clnSecQty"].Value != null &&
+                                                             !string.IsNullOrWhiteSpace(row.Cells["clnSecQty"].Value.ToString());
+                                    if (!hasExistingSecQty)
+                                        row.Cells["clnSecQty"].Value = (customSetting.SecQty ?? 0).ToString("0.##");
+                                }
                             }
                         }
 
@@ -1172,5 +1219,9 @@ namespace ERP
             }
         }
 
+        private void lblSearchCustomer_Click(object sender, EventArgs e)
+        {
+
+        }
     }
 }
