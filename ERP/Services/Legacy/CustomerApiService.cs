@@ -108,6 +108,15 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("secQty")]
         public decimal? SecQty { get; set; }
+
+        [JsonProperty("rate")]
+        public decimal? Rate { get; set; }
+
+        [JsonProperty("addLess")]
+        public decimal? AddLess { get; set; }
+
+        [JsonProperty("discount")]
+        public decimal? Discount { get; set; }
     }
 
     internal class CustomerDto

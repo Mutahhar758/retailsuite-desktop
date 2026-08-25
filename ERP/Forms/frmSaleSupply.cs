@@ -521,6 +521,10 @@ namespace ERP
                                 {
                                     dgvSale["clnSecQty", rowIndex].Value = (customSetting.SecQty ?? 0).ToString("0.##");
                                 }
+                                if (customSetting.Discount.HasValue)
+                                    dgvSale[clnDiscount.Index, rowIndex].Value = customSetting.Discount.Value.ToString("0.##");
+                                if (customSetting.AddLess.HasValue)
+                                    dgvSale[clnAddLess.Index, rowIndex].Value = customSetting.AddLess.Value.ToString("0.##");
                             }
                         }
                         catch
@@ -528,6 +532,17 @@ namespace ERP
                         }
 
                         SetRateForRow(rowIndex);
+
+                        // Apply rate override AFTER SetRateForRow so it wins over the item default
+                        try
+                        {
+                            var customItems = await _customerApiService.GetSupplyItemsAsync(custId, cmbItem.SelectedValue.ToString());
+                            var customSetting = customItems?.FirstOrDefault();
+                            if (customSetting?.Rate.HasValue == true)
+                                dgvSale[clnRate.Index, rowIndex].Value = customSetting.Rate.Value.ToString("0.##");
+                        }
+                        catch { }
+
                         RecalculateRow(rowIndex);
                         CalcTotAmount();
                     }
@@ -580,7 +595,7 @@ namespace ERP
             }
         }
 
-        private void RecalculateRow(int rowIndex)
+        private void RecalculateRow(int rowIndex, int editedColumnIndex = -1)
         {
             if (rowIndex < 0 || rowIndex >= dgvSale.Rows.Count)
                 return;
@@ -603,6 +618,17 @@ namespace ERP
                 secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
             }
 
+            if (editedColumnIndex == clnDiscPercent.Index || (!clnDiscount.Visible && clnDiscPercent.Visible))
+            {
+                Discount = decimal.Round(Rate * (DiscountPercent / 100), 2);
+                row.Cells[clnDiscount.Index].Value = Discount.ToString("0.##");
+            }
+            else
+            {
+                DiscountPercent = Rate == 0 ? 0 : decimal.Round((Discount / Rate) * 100, 2);
+                row.Cells[clnDiscPercent.Index].Value = DiscountPercent.ToString("0.##");
+            }
+
             row.Cells[clnQty.Index].Value = Qty.ToString();
             row.Cells[clnRate.Index].Value = Rate.ToString();
             row.Cells[clnDiscount.Index].Value = Discount.ToString();
@@ -614,12 +640,7 @@ namespace ERP
                 row.Cells["clnSecRate"].Value = secRate.ToString();
             }
 
-            if (!clnDiscount.Visible)
-                row.Cells[clnDiscount.Index].Value = (Rate * (DiscountPercent / 100)).ToString();
-            else
-                row.Cells[clnDiscPercent.Index].Value = Rate == 0 ? "0" : ((Discount / Rate) * 100).ToString();
-
-            decimal netRate = Rate - (clnDiscPercent.Visible ? Rate * (DiscountPercent / 100) : Discount);
+            decimal netRate = Rate - Discount;
             row.Cells[clnAmount.Index].Value = decimal.Round((Qty * netRate) + AddLess + (secQty * secRate), 2).ToString();
         }
 
@@ -750,7 +771,7 @@ namespace ERP
             resetRow = true;
             currentRow = e.RowIndex;
 
-            RecalculateRow(e.RowIndex);
+            RecalculateRow(e.RowIndex, e.ColumnIndex);
             CalcTotAmount();
         }
 
@@ -1130,7 +1151,19 @@ namespace ERP
                                     if (!hasExistingSecQty)
                                         row.Cells["clnSecQty"].Value = (customSetting.SecQty ?? 0).ToString("0.##");
                                 }
+                                if (customSetting.Discount.HasValue)
+                                    row.Cells[clnDiscount.Index].Value = customSetting.Discount.Value.ToString("0.##");
+                                if (customSetting.AddLess.HasValue)
+                                    row.Cells[clnAddLess.Index].Value = customSetting.AddLess.Value.ToString("0.##");
                             }
+                        }
+
+                        // SetRateForRow sets item default; override with custom rate afterwards if defined
+                        if (!string.IsNullOrEmpty(row.Cells[clnCustomer.Index].Value?.ToString()) &&
+                            itemQtyMap.TryGetValue(row.Cells[clnCustomer.Index].Value.ToString(), out var rateSetting) &&
+                            rateSetting.Rate.HasValue)
+                        {
+                            row.Cells[clnRate.Index].Value = rateSetting.Rate.Value.ToString("0.##");
                         }
 
                         RecalculateRow(row.Index);
@@ -1204,6 +1237,17 @@ namespace ERP
                                     dgvSale.Rows[idx].Cells[clnUnit.Index].Value = itemDr["PrimaryUnit"].ToString();
                                     SetRateForRow(idx);
                                 }
+                            }
+
+                            // Apply rate / discount / addLess overrides after SetRateForRow
+                            if (!string.IsNullOrEmpty(custId) && itemQtyMap.TryGetValue(custId, out var overrideSetting))
+                            {
+                                if (overrideSetting.Rate.HasValue)
+                                    dgvSale.Rows[idx].Cells[clnRate.Index].Value = overrideSetting.Rate.Value.ToString("0.##");
+                                if (overrideSetting.Discount.HasValue)
+                                    dgvSale.Rows[idx].Cells[clnDiscount.Index].Value = overrideSetting.Discount.Value.ToString("0.##");
+                                if (overrideSetting.AddLess.HasValue)
+                                    dgvSale.Rows[idx].Cells[clnAddLess.Index].Value = overrideSetting.AddLess.Value.ToString("0.##");
                             }
 
                             RecalculateRow(idx);
