@@ -1112,9 +1112,10 @@ namespace ERP
                         // have a qty value. This prevents overwriting manually-entered or
                         // previously-saved quantities when an existing voucher is loaded
                         // and cmbItem.SelectedValue is set, which re-triggers this event.
+                        // Note: a user-entered zero is still a valid qty, so we only check
+                        // for null/whitespace — NOT for non-zero.
                         bool hasExistingQty = row.Cells[clnQty.Index].Value != null &&
-                                              !string.IsNullOrWhiteSpace(row.Cells[clnQty.Index].Value.ToString()) &&
-                                              ParseDecimal(row.Cells[clnQty.Index].Value) != 0;
+                                              !string.IsNullOrWhiteSpace(row.Cells[clnQty.Index].Value.ToString());
 
                         if (!hasExistingQty)
                         {
