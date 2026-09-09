@@ -651,6 +651,116 @@ namespace ERP.Services.Legacy
                 return ds;
             }
         }
+
+        public async Task<DataTable> GetPurchaseSupplyComparisonAsync(DateTime fromDate, DateTime toDate, string itemId = null)
+        {
+            var url = Endpoint
+                + "/purchase-supply-comparison?fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"));
+
+            if (!string.IsNullOrWhiteSpace(itemId))
+            {
+                url += "&itemId=" + Uri.EscapeDataString(itemId);
+            }
+
+            using (var client = CreateClient(includeTenantId: true))
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<PurchaseSupplyComparisonDto>>(json);
+                var body = payload != null ? payload.Body : null;
+                var rows = body != null && body.Lines != null ? body.Lines : new List<PurchaseSupplyComparisonLineDto>();
+
+                var dt = new DataTable();
+                dt.Columns.Add("Date", typeof(DateTime));
+                dt.Columns.Add("DayName", typeof(string));
+                dt.Columns.Add("PurchaseQty", typeof(decimal));
+                dt.Columns.Add("PurchaseAvgRate", typeof(decimal));
+                dt.Columns.Add("PurchaseAmount", typeof(decimal));
+                dt.Columns.Add("SupplyQty", typeof(decimal));
+                dt.Columns.Add("SupplyAvgRate", typeof(decimal));
+                dt.Columns.Add("SupplyAmount", typeof(decimal));
+                dt.Columns.Add("DiffQty", typeof(decimal));
+                dt.Columns.Add("DiffAmount", typeof(decimal));
+                dt.Columns.Add("Status", typeof(string));
+
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    dt.Rows.Add(
+                        rows[i].Date,
+                        rows[i].DayName ?? string.Empty,
+                        rows[i].PurchaseQty,
+                        rows[i].PurchaseAvgRate,
+                        rows[i].PurchaseAmount,
+                        rows[i].SupplyQty,
+                        rows[i].SupplyAvgRate,
+                        rows[i].SupplyAmount,
+                        rows[i].DiffQty,
+                        rows[i].DiffAmount,
+                        rows[i].Status ?? string.Empty);
+                }
+
+                return dt;
+            }
+        }
+
+        public async Task<DataTable> GetCustomerBalanceRecoveryAsync(DateTime fromDate, DateTime toDate, string customerAccountId = null, string dateBasis = "ClearingDate", string balanceFilter = "All")
+        {
+            var url = Endpoint
+                + "/customer-balance-recovery?fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"))
+                + "&dateBasis=" + Uri.EscapeDataString(dateBasis ?? "ClearingDate")
+                + "&balanceFilter=" + Uri.EscapeDataString(balanceFilter ?? "All");
+
+            if (!string.IsNullOrWhiteSpace(customerAccountId))
+            {
+                url += "&customerAccountId=" + Uri.EscapeDataString(customerAccountId);
+            }
+
+            using (var client = CreateClient(includeTenantId: true))
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<CustomerBalanceRecoveryDto>>(json);
+                var body = payload != null ? payload.Body : null;
+                var rows = body != null && body.Lines != null ? body.Lines : new List<CustomerBalanceRecoveryLineDto>();
+
+                var dt = new DataTable();
+                dt.Columns.Add("CustomerAccountId", typeof(string));
+                dt.Columns.Add("CustomerTitle", typeof(string));
+                dt.Columns.Add("Phone", typeof(string));
+                dt.Columns.Add("Address", typeof(string));
+                dt.Columns.Add("PreviousBalance", typeof(decimal));
+                dt.Columns.Add("CurrentBilling", typeof(decimal));
+                dt.Columns.Add("TotalDue", typeof(decimal));
+                dt.Columns.Add("RecoveryAmount", typeof(decimal));
+                dt.Columns.Add("ClosingBalance", typeof(decimal));
+                dt.Columns.Add("RecoveryPercentage", typeof(decimal));
+                dt.Columns.Add("Status", typeof(string));
+
+                for (int i = 0; i < rows.Count; i++)
+                {
+                    dt.Rows.Add(
+                        rows[i].CustomerAccountId ?? string.Empty,
+                        rows[i].CustomerTitle ?? string.Empty,
+                        rows[i].Phone ?? string.Empty,
+                        rows[i].Address ?? string.Empty,
+                        rows[i].PreviousBalance,
+                        rows[i].CurrentBilling,
+                        rows[i].TotalDue,
+                        rows[i].RecoveryAmount,
+                        rows[i].ClosingBalance,
+                        rows[i].RecoveryPercentage,
+                        rows[i].Status ?? string.Empty);
+                }
+
+                return dt;
+            }
+        }
     }
 
     internal class AccountStatementLineDto
@@ -1039,6 +1149,51 @@ namespace ERP.Services.Legacy
         public string AccAddress { get; set; }
     }
 
+    internal class PurchaseSupplyComparisonDto
+    {
+        [JsonProperty("itemTitle")]
+        public string ItemTitle { get; set; }
+
+        [JsonProperty("lines")]
+        public List<PurchaseSupplyComparisonLineDto> Lines { get; set; }
+    }
+
+    internal class PurchaseSupplyComparisonLineDto
+    {
+        [JsonProperty("date")]
+        public DateTime Date { get; set; }
+
+        [JsonProperty("dayName")]
+        public string DayName { get; set; }
+
+        [JsonProperty("purchaseQty")]
+        public decimal PurchaseQty { get; set; }
+
+        [JsonProperty("purchaseAvgRate")]
+        public decimal PurchaseAvgRate { get; set; }
+
+        [JsonProperty("purchaseAmount")]
+        public decimal PurchaseAmount { get; set; }
+
+        [JsonProperty("supplyQty")]
+        public decimal SupplyQty { get; set; }
+
+        [JsonProperty("supplyAvgRate")]
+        public decimal SupplyAvgRate { get; set; }
+
+        [JsonProperty("supplyAmount")]
+        public decimal SupplyAmount { get; set; }
+
+        [JsonProperty("diffQty")]
+        public decimal DiffQty { get; set; }
+
+        [JsonProperty("diffAmount")]
+        public decimal DiffAmount { get; set; }
+
+        [JsonProperty("status")]
+        public string Status { get; set; }
+    }
+
     internal class PurchaseBillLineDto
     {
 
@@ -1077,5 +1232,47 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("netAmount")]
         public decimal NetAmount { get; set; }
+    }
+
+    internal class CustomerBalanceRecoveryDto
+    {
+        [JsonProperty("lines")]
+        public List<CustomerBalanceRecoveryLineDto> Lines { get; set; } = new List<CustomerBalanceRecoveryLineDto>();
+    }
+
+    internal class CustomerBalanceRecoveryLineDto
+    {
+        [JsonProperty("customerAccountId")]
+        public string CustomerAccountId { get; set; }
+
+        [JsonProperty("customerTitle")]
+        public string CustomerTitle { get; set; }
+
+        [JsonProperty("phone")]
+        public string Phone { get; set; }
+
+        [JsonProperty("address")]
+        public string Address { get; set; }
+
+        [JsonProperty("previousBalance")]
+        public decimal PreviousBalance { get; set; }
+
+        [JsonProperty("currentBilling")]
+        public decimal CurrentBilling { get; set; }
+
+        [JsonProperty("totalDue")]
+        public decimal TotalDue { get; set; }
+
+        [JsonProperty("recoveryAmount")]
+        public decimal RecoveryAmount { get; set; }
+
+        [JsonProperty("closingBalance")]
+        public decimal ClosingBalance { get; set; }
+
+        [JsonProperty("recoveryPercentage")]
+        public decimal RecoveryPercentage { get; set; }
+
+        [JsonProperty("status")]
+        public string Status { get; set; }
     }
 }
