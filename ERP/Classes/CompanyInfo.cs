@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
@@ -60,6 +60,10 @@ namespace ERP
             set { CompanyInfo._ContactHead = value; }
         }
 
-        
+        public static string ThankyouLine
+        {
+            get { return ConfigInfo.ThankyouLine; }
+            set { ConfigInfo.ThankyouLine = value; }
+        }
     }
 }

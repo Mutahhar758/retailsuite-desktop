@@ -175,6 +175,7 @@
     <Compile Include="Services\Legacy\SaleSupplyApiService.cs" />
     <Compile Include="Services\Legacy\StockAdjustmentApiService.cs" />
     <Compile Include="Services\Legacy\SupplyOrderApiService.cs" />
+    <Compile Include="Services\Legacy\SettingsApiService.cs" />
     <Compile Include="Services\Legacy\UnitApiService.cs" />
     <Compile Include="Services\Legacy\VendorApiService.cs" />
     <Compile Include="Classes\SecurityHelper.cs" />

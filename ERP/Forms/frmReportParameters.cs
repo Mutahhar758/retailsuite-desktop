@@ -414,6 +414,7 @@ namespace ERP
                     rpt.SetParameterValue("@PreviousBalance", (decimal)ds.Tables[1].Rows[0]["PreviousBalance"]);
                     rpt.SetParameterValue("@Payment", (decimal)ds.Tables[1].Rows[0]["Payment"]);
                     rpt.SetParameterValue("@NetBalance", (decimal)ds.Tables[1].Rows[0]["Balance"]);
+                    rpt.SetParameterValue("@ThankyouLine", ConfigInfo.ThankyouLine);
                     frm.rptViewer.ReportSource = rpt;
                 }
                 else
@@ -446,6 +447,7 @@ namespace ERP
                             rpt.SetParameterValue("@PreviousBalance", ds.Tables[1].Rows[0]["PreviousBalance"]);
                             rpt.SetParameterValue("@Payment", ds.Tables[1].Rows[0]["Payment"]);
                             rpt.SetParameterValue("@NetBalance", ds.Tables[1].Rows[0]["Balance"]);
+                            rpt.SetParameterValue("@ThankyouLine", ConfigInfo.ThankyouLine);
 
                             rpt.PrintOptions.PrinterName = ConfigInfo.ThermalPrinterName;
                             rpt.PrintToPrinter(1, true, 0, 0);

@@ -798,6 +798,7 @@ namespace ERP
                     rpt.SetParameterValue("@ServerDate", DateTime.Now);
                     rpt.SetParameterValue("@CashPaid", (Decimal)ds.Tables[1].Rows[0]["CashReceipt"]);
                     rpt.SetParameterValue("@CashBack", (Decimal)ds.Tables[1].Rows[0]["CashBack"]);
+                    rpt.SetParameterValue("@ThankyouLine", ConfigInfo.ThankyouLine);
                     rpt.PrintOptions.PrinterName = ConfigInfo.ThermalPrinterName;
                     rpt.PrintToPrinter(1, true, 0, 0);
                 }

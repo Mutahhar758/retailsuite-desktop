@@ -13,6 +13,7 @@ namespace ERP
         private readonly LicenseService _licenseService;
         private CompanyApiService _companyApiService;
         private PersonalApiService _personalApiService;
+        private SettingsApiService _settingsApiService;
 
         public frmLogIn()
         {
@@ -21,6 +22,7 @@ namespace ERP
             _loginService = new LoginService();
             _companyApiService = new CompanyApiService();
             _personalApiService = new PersonalApiService();
+            _settingsApiService = new SettingsApiService();
             
             // Ensure icon is set
             pictureBox1.Image = global::ERP.Properties.Resources.if_lock_318582;
@@ -148,6 +150,18 @@ namespace ERP
                 catch (Exception ex)
                 {
                     MessageBox.Show("Warning: Could not load company info from API: " + ex.Message, "Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
+
+                try
+                {
+                    var thankYou = await _settingsApiService.GetSettingValueAsync("Bill.ThankYouMessage");
+                    if (!string.IsNullOrWhiteSpace(thankYou))
+                    {
+                        ConfigInfo.ThankyouLine = thankYou;
+                    }
+                }
+                catch
+                {
                 }
 
                 frmMainMenu frm = new frmMainMenu();

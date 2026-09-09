@@ -1015,6 +1015,7 @@ namespace ERP
                     rpt.SetParameterValue("@User", UserInfo.UserName);
                     rpt.SetParameterValue("@Address", CompanyInfo.Address);
                     rpt.SetParameterValue("@ContactHeader", CompanyInfo.ContactHead);
+                    rpt.SetParameterValue("@ThankyouLine", ConfigInfo.ThankyouLine);
                     Cursor.Current = Cursors.Default;
                     if (IsDirect)
                     {
