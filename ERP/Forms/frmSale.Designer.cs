@@ -66,6 +66,7 @@ namespace ERP
             this.btnSave = new System.Windows.Forms.Button();
             this.btnHome = new System.Windows.Forms.Button();
             this.btnNew = new System.Windows.Forms.Button();
+            this.btnCopyAsNew = new System.Windows.Forms.Button();
             this.dgvSale = new System.Windows.Forms.DataGridView();
             this.clnSeq = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnItemKey = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -302,6 +303,7 @@ namespace ERP
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Controls.Add(this.btnPreview);
             this.panel1.Controls.Add(this.btnDelete);
+            this.panel1.Controls.Add(this.btnCopyAsNew);
             this.panel1.Controls.Add(this.btnPrint);
             this.panel1.Controls.Add(this.btnNext);
             this.panel1.Controls.Add(this.btnClose);
@@ -312,14 +314,26 @@ namespace ERP
             this.panel1.Controls.Add(this.btnNew);
             this.panel1.Location = new System.Drawing.Point(7, 363);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(485, 38);
+            this.panel1.Size = new System.Drawing.Size(602, 38);
             this.panel1.TabIndex = 3;
+            // 
+            // btnCopyAsNew
+            // 
+            this.btnCopyAsNew.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnCopyAsNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCopyAsNew.Location = new System.Drawing.Point(166, 3);
+            this.btnCopyAsNew.Name = "btnCopyAsNew";
+            this.btnCopyAsNew.Size = new System.Drawing.Size(114, 29);
+            this.btnCopyAsNew.TabIndex = 170;
+            this.btnCopyAsNew.Text = "Copy as &New";
+            this.btnCopyAsNew.UseVisualStyleBackColor = false;
+            this.btnCopyAsNew.Click += new System.EventHandler(this.btnNewCopy_Click);
             // 
             // btnPreview
             // 
             this.btnPreview.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnPreview.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnPreview.Location = new System.Drawing.Point(244, 3);
+            this.btnPreview.Location = new System.Drawing.Point(363, 3);
             this.btnPreview.Name = "btnPreview";
             this.btnPreview.Size = new System.Drawing.Size(73, 29);
             this.btnPreview.TabIndex = 169;
@@ -331,7 +345,7 @@ namespace ERP
             // 
             this.btnDelete.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDelete.Location = new System.Drawing.Point(322, 3);
+            this.btnDelete.Location = new System.Drawing.Point(441, 3);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new System.Drawing.Size(73, 29);
             this.btnDelete.TabIndex = 168;
@@ -343,7 +357,7 @@ namespace ERP
             // 
             this.btnPrint.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnPrint.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnPrint.Location = new System.Drawing.Point(166, 3);
+            this.btnPrint.Location = new System.Drawing.Point(285, 3);
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(73, 29);
             this.btnPrint.TabIndex = 165;
@@ -369,7 +383,7 @@ namespace ERP
             // 
             this.btnClose.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClose.Location = new System.Drawing.Point(401, 3);
+            this.btnClose.Location = new System.Drawing.Point(519, 3);
             this.btnClose.Name = "btnClose";
             this.btnClose.Size = new System.Drawing.Size(73, 29);
             this.btnClose.TabIndex = 163;
@@ -1223,6 +1237,7 @@ namespace ERP
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnHome;
         private System.Windows.Forms.Button btnNew;
+        private System.Windows.Forms.Button btnCopyAsNew;
         private System.Windows.Forms.GroupBox grpInvoiceDetail;
         private System.Windows.Forms.TextBox txtEditBy;
         private System.Windows.Forms.TextBox txtCreatedBy;

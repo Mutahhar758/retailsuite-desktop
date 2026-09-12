@@ -762,6 +762,31 @@ namespace ERP
             dtpDate.Focus();
         }
 
+        void CopyAsNew()
+        {
+            if (txtVoucherNo.Text != "")
+            {
+                txtVoucherNo.Text = "";
+                txtCreatedBy.Text = "";
+                txtEditBy.Text = "";
+                dtpDate.Value = DateTime.Now;
+                MessageBox.Show("Record copied for new entry. Click Save to create a new record.", "Copy as New", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                dtpDate.Focus();
+            }
+            else
+            {
+                MessageBox.Show("No record to copy. Please load a record first.", "Copy as New", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void btnNewCopy_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("This will copy the current record as a new entry." + Environment.NewLine + "Do you want to continue?", "Copy as New", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                CopyAsNew();
+            }
+        }
+
         private void btnPrint_Click(object sender, EventArgs e)
         {
         }
