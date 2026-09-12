@@ -168,6 +168,12 @@ namespace ERP.Services.Legacy
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
 
+        [JsonProperty("cashPaid")]
+        public decimal? CashPaid { get; set; }
+
+        [JsonProperty("cashBack")]
+        public decimal? CashBack { get; set; }
+
         [JsonProperty("createdOn")]
         public DateTime CreatedOn { get; set; }
 
@@ -192,6 +198,12 @@ namespace ERP.Services.Legacy
         [JsonProperty("narration")]
         public string Narration { get; set; }
 
+        [JsonProperty("cashPaid")]
+        public decimal CashPaid { get; set; }
+
+        [JsonProperty("cashBack")]
+        public decimal CashBack { get; set; }
+
         [JsonProperty("lines")]
         public List<PurchaseLineRequest> Lines { get; set; } = new List<PurchaseLineRequest>();
     }
@@ -209,6 +221,12 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("narration")]
         public string Narration { get; set; }
+
+        [JsonProperty("cashPaid")]
+        public decimal CashPaid { get; set; }
+
+        [JsonProperty("cashBack")]
+        public decimal CashBack { get; set; }
 
         [JsonProperty("lines")]
         public List<PurchaseLineRequest> Lines { get; set; } = new List<PurchaseLineRequest>();

@@ -175,6 +175,8 @@ namespace ERP
                 txtCreatedBy.Text = first.CreatedBy + " | " + first.CreatedOn.ToString("dd-MMM-yyyy hh:mm:ss tt");
                 txtEditBy.Text = !string.IsNullOrWhiteSpace(first.LastModifiedBy)
                     ? first.LastModifiedBy + " | " + first.LastModifiedOn.Value.ToString("dd-MMM-yyyy hh:mm:ss tt") : null;
+                txtCashReceipt.Text = (first.CashPaid ?? 0).ToString("N2");
+                txtCashBack.Text = (first.CashBack ?? 0).ToString("N2");
 
                 for (int i = 0; i < lines.Count; i++)
                 {
@@ -239,6 +241,7 @@ namespace ERP
             catch { }
 
             lblTotAmount.Text = totAmount.ToString();
+            txtTotAmount.Text = totAmount.ToString("N2");
         }
 
         private static decimal ParseDecimal(object value)
@@ -667,6 +670,8 @@ namespace ERP
                         Account = cmbAccounts.SelectedValue.ToString(),
                         Description = txtDescription.Text,
                         Narration = cmbNarration.SelectedValue?.ToString(),
+                        CashPaid = txtCashReceipt.Value,
+                        CashBack = txtCashBack.Value,
                         Lines = lines
                     };
                     voucher = await _apiService.CreateAsync(createRequest);
@@ -679,6 +684,8 @@ namespace ERP
                         Account = cmbAccounts.SelectedValue.ToString(),
                         Description = txtDescription.Text,
                         Narration = cmbNarration.SelectedValue?.ToString(),
+                        CashPaid = txtCashReceipt.Value,
+                        CashBack = txtCashBack.Value,
                         Lines = lines
                     };
                     await _apiService.UpdateAsync(voucher, updateRequest);
@@ -758,8 +765,29 @@ namespace ERP
             txtEditBy.Text = "";
             txtBarcode.Text = "";
             lblTotAmount.Text = "0";
+            txtTotAmount.Text = "0";
+            txtCashReceipt.Text = "0";
+            txtCashBack.Text = "0";
+            txtBalance.Text = "0";
             dgvSale.Rows.Add();
             dtpDate.Focus();
+        }
+
+        private void txtCashReceipt_TextChanged(object sender, EventArgs e)
+        {
+            txtCashBack.Text = (txtCashReceipt.Value - txtTotAmount.Value <= 0 ? 0 : txtCashReceipt.Value - txtTotAmount.Value).ToString("N2");
+            txtBalance.Text = (txtTotAmount.Value - (txtCashReceipt.Value - txtCashBack.Value)).ToString("N2");
+        }
+
+        private void txtTotAmount_TextChanged(object sender, EventArgs e)
+        {
+            txtCashBack.Text = (txtCashReceipt.Value - txtTotAmount.Value <= 0 ? 0 : txtCashReceipt.Value - txtTotAmount.Value).ToString("N2");
+            txtBalance.Text = (txtTotAmount.Value - (txtCashReceipt.Value - txtCashBack.Value)).ToString("N2");
+        }
+
+        private void txtCashBack_TextChanged(object sender, EventArgs e)
+        {
+            txtBalance.Text = (txtTotAmount.Value - (txtCashReceipt.Value - txtCashBack.Value)).ToString("N2");
         }
 
         void CopyAsNew()
