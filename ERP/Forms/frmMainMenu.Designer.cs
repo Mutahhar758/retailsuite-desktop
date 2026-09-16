@@ -61,6 +61,23 @@ namespace ERP
             this.statisticsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.usersStatsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reportsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.reports2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.accountStatement2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.accountStatementWithDue2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.stockBalance2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.trialBalance2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.accountBalance2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.itemLedger2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.incomeSummary2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.balanceSheet2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.customerBill2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.milkComparison2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.customerBalanceRecovery2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStripSeparatorReports2 = new System.Windows.Forms.ToolStripSeparator();
+            this.miscReports2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.envelope2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.barcode2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.shipmentLabelTag2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.accountStatementToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.accountStatementWithDueToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.accountBalanceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -100,6 +117,7 @@ namespace ERP
             this.dailyEntryToolStripMenuItem,
             this.statisticsToolStripMenuItem,
             this.reportsToolStripMenuItem,
+            this.reports2ToolStripMenuItem,
             this.settingToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -439,6 +457,139 @@ namespace ERP
             this.customerBillToolStripMenuItem.Text = "Customer Bill";
             this.customerBillToolStripMenuItem.Click += new System.EventHandler(this.customerBillToolStripMenuItem_Click_1);
             // 
+            // reports2ToolStripMenuItem
+            // 
+            this.reports2ToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.accountStatement2ToolStripMenuItem,
+            this.accountStatementWithDue2ToolStripMenuItem,
+            this.stockBalance2ToolStripMenuItem,
+            this.trialBalance2ToolStripMenuItem,
+            this.accountBalance2ToolStripMenuItem,
+            this.itemLedger2ToolStripMenuItem,
+            this.incomeSummary2ToolStripMenuItem,
+            this.balanceSheet2ToolStripMenuItem,
+            this.customerBill2ToolStripMenuItem,
+            this.milkComparison2ToolStripMenuItem,
+            this.customerBalanceRecovery2ToolStripMenuItem,
+            this.toolStripSeparatorReports2,
+            this.miscReports2ToolStripMenuItem});
+            this.reports2ToolStripMenuItem.Name = "reports2ToolStripMenuItem";
+            this.reports2ToolStripMenuItem.Size = new System.Drawing.Size(68, 20);
+            this.reports2ToolStripMenuItem.Text = "Reports 2";
+            // 
+            // accountStatement2ToolStripMenuItem
+            // 
+            this.accountStatement2ToolStripMenuItem.Name = "accountStatement2ToolStripMenuItem";
+            this.accountStatement2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.accountStatement2ToolStripMenuItem.Text = "Account Statement";
+            this.accountStatement2ToolStripMenuItem.Click += new System.EventHandler(this.accountStatement2ToolStripMenuItem_Click);
+            // 
+            // accountStatementWithDue2ToolStripMenuItem
+            // 
+            this.accountStatementWithDue2ToolStripMenuItem.Name = "accountStatementWithDue2ToolStripMenuItem";
+            this.accountStatementWithDue2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.accountStatementWithDue2ToolStripMenuItem.Text = "Account Statement With Due";
+            this.accountStatementWithDue2ToolStripMenuItem.Click += new System.EventHandler(this.accountStatementWithDue2ToolStripMenuItem_Click);
+            // 
+            // stockBalance2ToolStripMenuItem
+            // 
+            this.stockBalance2ToolStripMenuItem.Name = "stockBalance2ToolStripMenuItem";
+            this.stockBalance2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.stockBalance2ToolStripMenuItem.Text = "Stock Balance";
+            this.stockBalance2ToolStripMenuItem.Click += new System.EventHandler(this.stockBalance2ToolStripMenuItem_Click);
+            // 
+            // trialBalance2ToolStripMenuItem
+            // 
+            this.trialBalance2ToolStripMenuItem.Name = "trialBalance2ToolStripMenuItem";
+            this.trialBalance2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.trialBalance2ToolStripMenuItem.Text = "Trial Balance";
+            this.trialBalance2ToolStripMenuItem.Click += new System.EventHandler(this.trialBalance2ToolStripMenuItem_Click);
+            // 
+            // accountBalance2ToolStripMenuItem
+            // 
+            this.accountBalance2ToolStripMenuItem.Name = "accountBalance2ToolStripMenuItem";
+            this.accountBalance2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.accountBalance2ToolStripMenuItem.Text = "Account Balance";
+            this.accountBalance2ToolStripMenuItem.Click += new System.EventHandler(this.accountBalance2ToolStripMenuItem_Click);
+            // 
+            // itemLedger2ToolStripMenuItem
+            // 
+            this.itemLedger2ToolStripMenuItem.Name = "itemLedger2ToolStripMenuItem";
+            this.itemLedger2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.itemLedger2ToolStripMenuItem.Text = "Item Ledger";
+            this.itemLedger2ToolStripMenuItem.Click += new System.EventHandler(this.itemLedger2ToolStripMenuItem_Click);
+            // 
+            // incomeSummary2ToolStripMenuItem
+            // 
+            this.incomeSummary2ToolStripMenuItem.Name = "incomeSummary2ToolStripMenuItem";
+            this.incomeSummary2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.incomeSummary2ToolStripMenuItem.Text = "Income Summary";
+            this.incomeSummary2ToolStripMenuItem.Click += new System.EventHandler(this.incomeSummary2ToolStripMenuItem_Click);
+            // 
+            // balanceSheet2ToolStripMenuItem
+            // 
+            this.balanceSheet2ToolStripMenuItem.Name = "balanceSheet2ToolStripMenuItem";
+            this.balanceSheet2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.balanceSheet2ToolStripMenuItem.Text = "Balance Sheet";
+            this.balanceSheet2ToolStripMenuItem.Click += new System.EventHandler(this.balanceSheet2ToolStripMenuItem_Click);
+            // 
+            // customerBill2ToolStripMenuItem
+            // 
+            this.customerBill2ToolStripMenuItem.Name = "customerBill2ToolStripMenuItem";
+            this.customerBill2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.customerBill2ToolStripMenuItem.Text = "Customer Bill";
+            this.customerBill2ToolStripMenuItem.Click += new System.EventHandler(this.customerBill2ToolStripMenuItem_Click);
+            // 
+            // milkComparison2ToolStripMenuItem
+            // 
+            this.milkComparison2ToolStripMenuItem.Name = "milkComparison2ToolStripMenuItem";
+            this.milkComparison2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.milkComparison2ToolStripMenuItem.Text = "Milk Comparison";
+            this.milkComparison2ToolStripMenuItem.Click += new System.EventHandler(this.milkComparison2ToolStripMenuItem_Click);
+            // 
+            // customerBalanceRecovery2ToolStripMenuItem
+            // 
+            this.customerBalanceRecovery2ToolStripMenuItem.Name = "customerBalanceRecovery2ToolStripMenuItem";
+            this.customerBalanceRecovery2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.customerBalanceRecovery2ToolStripMenuItem.Text = "Customer Balance & Recovery";
+            this.customerBalanceRecovery2ToolStripMenuItem.Click += new System.EventHandler(this.customerBalanceRecovery2ToolStripMenuItem_Click);
+            // 
+            // toolStripSeparatorReports2
+            // 
+            this.toolStripSeparatorReports2.Name = "toolStripSeparatorReports2";
+            this.toolStripSeparatorReports2.Size = new System.Drawing.Size(225, 6);
+            // 
+            // miscReports2ToolStripMenuItem
+            // 
+            this.miscReports2ToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.envelope2ToolStripMenuItem,
+            this.barcode2ToolStripMenuItem,
+            this.shipmentLabelTag2ToolStripMenuItem});
+            this.miscReports2ToolStripMenuItem.Name = "miscReports2ToolStripMenuItem";
+            this.miscReports2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.miscReports2ToolStripMenuItem.Text = "Miscellaneous";
+            // 
+            // envelope2ToolStripMenuItem
+            // 
+            this.envelope2ToolStripMenuItem.Name = "envelope2ToolStripMenuItem";
+            this.envelope2ToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.envelope2ToolStripMenuItem.Text = "Envelope";
+            this.envelope2ToolStripMenuItem.Click += new System.EventHandler(this.envelope2ToolStripMenuItem_Click);
+            // 
+            // barcode2ToolStripMenuItem
+            // 
+            this.barcode2ToolStripMenuItem.Name = "barcode2ToolStripMenuItem";
+            this.barcode2ToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.barcode2ToolStripMenuItem.Text = "Barcode";
+            this.barcode2ToolStripMenuItem.Click += new System.EventHandler(this.barcode2ToolStripMenuItem_Click);
+            // 
+            // shipmentLabelTag2ToolStripMenuItem
+            // 
+            this.shipmentLabelTag2ToolStripMenuItem.Name = "shipmentLabelTag2ToolStripMenuItem";
+            this.shipmentLabelTag2ToolStripMenuItem.Size = new System.Drawing.Size(188, 22);
+            this.shipmentLabelTag2ToolStripMenuItem.Text = "Shipment Label Tag";
+            this.shipmentLabelTag2ToolStripMenuItem.Click += new System.EventHandler(this.shipmentLabelTag2ToolStripMenuItem_Click);
+            // 
             // settingToolStripMenuItem
             // 
             this.settingToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -681,5 +832,22 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem customerBillToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem supplyOrderToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem reports2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem accountStatement2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem accountStatementWithDue2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem stockBalance2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem trialBalance2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem accountBalance2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem itemLedger2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem incomeSummary2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem balanceSheet2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem customerBill2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem milkComparison2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem customerBalanceRecovery2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripSeparator toolStripSeparatorReports2;
+        private System.Windows.Forms.ToolStripMenuItem miscReports2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem envelope2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem barcode2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem shipmentLabelTag2ToolStripMenuItem;
     }
 }

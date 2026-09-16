@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
@@ -13,6 +13,9 @@ namespace ERP
         [STAThread]
         static void Main()
         {
+            // Set QuestPDF Community license
+            QuestPDF.Settings.License = QuestPDF.Infrastructure.LicenseType.Community;
+
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
             Application.Run(new frmLogIn   ());

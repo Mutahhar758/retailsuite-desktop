@@ -90,6 +90,22 @@ namespace ERP
             payrollToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Payrolls);
             
             accountStatementToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            reports2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            accountStatement2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            accountStatementWithDue2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            stockBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            trialBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            accountBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            itemLedger2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            incomeSummary2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            balanceSheet2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            customerBill2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            milkComparison2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            customerBalanceRecovery2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            miscReports2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            envelope2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            barcode2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            shipmentLabelTag2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
             accountStatementWithDueToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
             accountBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
             trialBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
@@ -177,6 +193,104 @@ namespace ERP
             frm.MdiParent = this;
             frm.Show();
 
+        }
+
+        private void accountStatement2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.ReportViewer viewer = new ERP.Reporting.ReportViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void accountStatementWithDue2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.ReportViewer viewer = new ERP.Reporting.ReportViewer(ERP.Reporting.ReportViewerMode.AccountStatementWithDue);
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void stockBalance2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.StockBalanceViewer viewer = new ERP.Reporting.StockBalanceViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void trialBalance2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.TrialBalanceViewer viewer = new ERP.Reporting.TrialBalanceViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void accountBalance2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.AccountBalanceViewer viewer = new ERP.Reporting.AccountBalanceViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void itemLedger2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.ItemLedgerViewer viewer = new ERP.Reporting.ItemLedgerViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void incomeSummary2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.IncomeSummaryViewer viewer = new ERP.Reporting.IncomeSummaryViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void balanceSheet2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.BalanceSheetViewer viewer = new ERP.Reporting.BalanceSheetViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void customerBill2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.CustomerBillViewer viewer = new ERP.Reporting.CustomerBillViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void milkComparison2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.MilkComparisonViewer viewer = new ERP.Reporting.MilkComparisonViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void customerBalanceRecovery2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.CustomerBalanceRecoveryViewer viewer = new ERP.Reporting.CustomerBalanceRecoveryViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void envelope2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.EnvelopeViewer viewer = new ERP.Reporting.EnvelopeViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void barcode2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.BarcodeViewer viewer = new ERP.Reporting.BarcodeViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void shipmentLabelTag2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.ShipmentTagViewer viewer = new ERP.Reporting.ShipmentTagViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
         }
 
         private void purchaseToolStripMenuItem_Click(object sender, EventArgs e)

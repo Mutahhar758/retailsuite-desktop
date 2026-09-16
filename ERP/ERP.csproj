@@ -36,6 +36,7 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <BootstrapperComponentsLocation>Relative</BootstrapperComponentsLocation>
     <BootstrapperComponentsUrl>C:\My Repos\Mutahhar758\JwelleryWholeSeller\Desktop App\Prerequisites</BootstrapperComponentsUrl>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
@@ -127,6 +128,60 @@
     <Reference Include="WindowsBase" />
     <Reference Include="Newtonsoft.Json, Version=13.0.0.0, Culture=neutral, PublicKeyToken=30ad4fe6b2a6aeed, processorArchitecture=MSIL">
       <HintPath>..\packages\Newtonsoft.Json.13.0.3\lib\net45\Newtonsoft.Json.dll</HintPath>
+    </Reference>
+    <Reference Include="ClosedXML">
+      <HintPath>..\packages\ClosedXML.0.105.1\lib\netstandard2.0\ClosedXML.dll</HintPath>
+    </Reference>
+    <Reference Include="ClosedXML.Parser">
+      <HintPath>..\packages\ClosedXML.Parser.2.0.0\lib\netstandard2.0\ClosedXML.Parser.dll</HintPath>
+    </Reference>
+    <Reference Include="DocumentFormat.OpenXml">
+      <HintPath>..\packages\DocumentFormat.OpenXml.3.1.1\lib\net46\DocumentFormat.OpenXml.dll</HintPath>
+    </Reference>
+    <Reference Include="DocumentFormat.OpenXml.Framework">
+      <HintPath>..\packages\DocumentFormat.OpenXml.Framework.3.1.1\lib\net46\DocumentFormat.OpenXml.Framework.dll</HintPath>
+    </Reference>
+    <Reference Include="ExcelNumberFormat">
+      <HintPath>..\packages\ExcelNumberFormat.1.1.0\lib\net20\ExcelNumberFormat.dll</HintPath>
+    </Reference>
+    <Reference Include="RBush">
+      <HintPath>..\packages\RBush.Signed.4.0.0\lib\netstandard2.0\RBush.dll</HintPath>
+    </Reference>
+    <Reference Include="SixLabors.Fonts">
+      <HintPath>..\packages\SixLabors.Fonts.1.0.0\lib\netstandard2.0\SixLabors.Fonts.dll</HintPath>
+    </Reference>
+    <Reference Include="CsvHelper">
+      <HintPath>..\packages\CsvHelper.33.1.0\lib\net48\CsvHelper.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.AsyncInterfaces">
+      <HintPath>..\packages\Microsoft.Bcl.AsyncInterfaces.8.0.0\lib\net462\Microsoft.Bcl.AsyncInterfaces.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Bcl.HashCode">
+      <HintPath>..\packages\Microsoft.Bcl.HashCode.1.1.1\lib\net461\Microsoft.Bcl.HashCode.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Buffers">
+      <HintPath>..\packages\System.Buffers.4.5.1\lib\net461\System.Buffers.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Memory">
+      <HintPath>..\packages\System.Memory.4.5.5\lib\net461\System.Memory.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Numerics.Vectors">
+      <HintPath>..\packages\System.Numerics.Vectors.4.5.0\lib\net46\System.Numerics.Vectors.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Runtime.CompilerServices.Unsafe">
+      <HintPath>..\packages\System.Runtime.CompilerServices.Unsafe.6.0.0\lib\net461\System.Runtime.CompilerServices.Unsafe.dll</HintPath>
+    </Reference>
+    <Reference Include="System.Threading.Tasks.Extensions">
+      <HintPath>..\packages\System.Threading.Tasks.Extensions.4.5.4\lib\net461\System.Threading.Tasks.Extensions.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.Core">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.Core.dll</HintPath>
+    </Reference>
+    <Reference Include="Microsoft.Web.WebView2.WinForms">
+      <HintPath>..\packages\Microsoft.Web.WebView2.1.0.4191.47\lib\net462\Microsoft.Web.WebView2.WinForms.dll</HintPath>
+    </Reference>
+    <Reference Include="QuestPDF">
+      <HintPath>..\packages\QuestPDF.2026.8.0\lib\netstandard2.0\QuestPDF.dll</HintPath>
     </Reference>
   </ItemGroup>
   <ItemGroup>
@@ -555,6 +610,73 @@
       <DesignTime>True</DesignTime>
       <DependentUpon>CrUrSaleBill.rpt</DependentUpon>
       <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\AccountStatementReportItem.cs" />
+    <Compile Include="Reporting\Models\AccountStatementWithDueReportItem.cs" />
+    <Compile Include="Reporting\Models\StockBalanceReportItem.cs" />
+    <Compile Include="Reporting\Models\TrialBalanceReportItem.cs" />
+    <Compile Include="Reporting\Documents\AccountStatementDocument.cs" />
+    <Compile Include="Reporting\Documents\AccountStatementWithDueDocument.cs" />
+    <Compile Include="Reporting\Documents\StockBalanceDocument.cs" />
+    <Compile Include="Reporting\Documents\TrialBalanceDocument.cs" />
+    <Compile Include="Reporting\ReportViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\StockBalanceViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\TrialBalanceViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\AccountBalanceReportItem.cs" />
+    <Compile Include="Reporting\Documents\AccountBalanceDocument.cs" />
+    <Compile Include="Reporting\AccountBalanceViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\ItemLedgerReportItem.cs" />
+    <Compile Include="Reporting\Documents\ItemLedgerDocument.cs" />
+    <Compile Include="Reporting\ItemLedgerViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\IncomeSummaryReportItem.cs" />
+    <Compile Include="Reporting\Documents\IncomeSummaryDocument.cs" />
+    <Compile Include="Reporting\IncomeSummaryViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\BalanceSheetReportItem.cs" />
+    <Compile Include="Reporting\Documents\BalanceSheetDocument.cs" />
+    <Compile Include="Reporting\BalanceSheetViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\CustomerBillReportItem.cs" />
+    <Compile Include="Reporting\Documents\CustomerBillDocument.cs" />
+    <Compile Include="Reporting\CustomerBillViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\EnvelopeReportItem.cs" />
+    <Compile Include="Reporting\Documents\EnvelopeDocument.cs" />
+    <Compile Include="Reporting\EnvelopeViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\BarcodeReportItem.cs" />
+    <Compile Include="Reporting\Documents\BarcodeDocument.cs" />
+    <Compile Include="Reporting\BarcodeViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\ShipmentTagReportItem.cs" />
+    <Compile Include="Reporting\Documents\ShipmentTagDocument.cs" />
+    <Compile Include="Reporting\ShipmentTagViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\MilkComparisonReportItem.cs" />
+    <Compile Include="Reporting\Documents\MilkComparisonDocument.cs" />
+    <Compile Include="Reporting\MilkComparisonViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\Models\CustomerBalanceRecoveryReportItem.cs" />
+    <Compile Include="Reporting\Documents\CustomerBalanceRecoveryDocument.cs" />
+    <Compile Include="Reporting\CustomerBalanceRecoveryViewer.cs">
+      <SubType>Form</SubType>
     </Compile>
     <EmbeddedResource Include="Component1.resx">
       <DependentUpon>Component1.cs</DependentUpon>
@@ -1081,8 +1203,40 @@
   </ItemGroup>
   <ItemGroup>
     <Content Include="favicon.ico" />
+    <Content Include="..\packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\x86\WebView2Loader.dll">
+      <Link>x86\WebView2Loader.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\x64\WebView2Loader.dll">
+      <Link>x64\WebView2Loader.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\Microsoft.Web.WebView2.1.0.4191.47\build\native\arm64\WebView2Loader.dll">
+      <Link>arm64\WebView2Loader.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-x86\native\WebView2Loader.dll">
+      <Link>runtimes\win-x86\native\WebView2Loader.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-x64\native\WebView2Loader.dll">
+      <Link>runtimes\win-x64\native\WebView2Loader.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-arm64\native\WebView2Loader.dll">
+      <Link>runtimes\win-arm64\native\WebView2Loader.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
+  <Import Project="..\packages\Microsoft.Web.WebView2.1.0.4191.47\build\Microsoft.Web.WebView2.targets" Condition="Exists('..\packages\Microsoft.Web.WebView2.1.0.4191.47\build\Microsoft.Web.WebView2.targets')" />
+  <Import Project="..\packages\QuestPDF.2026.8.0\build\net4\QuestPDF.targets" Condition="Exists('..\packages\QuestPDF.2026.8.0\build\net4\QuestPDF.targets')" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
        Other similar extension points exist, see Microsoft.Common.targets.
   <Target Name="BeforeBuild">
