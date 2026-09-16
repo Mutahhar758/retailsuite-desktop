@@ -29,7 +29,7 @@
     <InstallUrl>http://retailsuite-desktop.bizgripsolutions.com/</InstallUrl>
     <ProductName>Retail Suite</ProductName>
     <PublisherName>BizGrip Solutions</PublisherName>
-    <ApplicationRevision>67</ApplicationRevision>
+    <ApplicationRevision>68</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
@@ -965,7 +965,7 @@
       <ProductName>Windows Installer 3.1</ProductName>
       <Install>true</Install>
     </BootstrapperPackage>
-    <BootstrapperPackage Include="SAP.CrystalReports14.NET.2.0">
+    <BootstrapperPackage Include="SAP.CrystalReports14.NET.4.0">
       <Visible>False</Visible>
       <ProductName>SAP Crystal Reports Runtime Engine for .NET Framework</ProductName>
       <Install>true</Install>
@@ -1230,6 +1230,36 @@
     </Content>
     <Content Include="..\packages\Microsoft.Web.WebView2.1.0.4191.47\runtimes\win-arm64\native\WebView2Loader.dll">
       <Link>runtimes\win-arm64\native\WebView2Loader.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\QuestPDF.2026.8.0\runtimes\win-x86\native\QuestPdfSkia.dll">
+      <Link>runtimes\win-x86\native\QuestPdfSkia.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\QuestPDF.2026.8.0\runtimes\win-x86\native\qpdf.dll">
+      <Link>runtimes\win-x86\native\qpdf.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\QuestPDF.2026.8.0\runtimes\win-x64\native\QuestPdfSkia.dll">
+      <Link>runtimes\win-x64\native\QuestPdfSkia.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\QuestPDF.2026.8.0\runtimes\win-x64\native\qpdf.dll">
+      <Link>runtimes\win-x64\native\qpdf.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\QuestPDF.2026.8.0\runtimes\win-x86\native\QuestPdfSkia.dll">
+      <Link>QuestPdfSkia.dll</Link>
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+      <Visible>False</Visible>
+    </Content>
+    <Content Include="..\packages\QuestPDF.2026.8.0\runtimes\win-x86\native\qpdf.dll">
+      <Link>qpdf.dll</Link>
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
       <Visible>False</Visible>
     </Content>
