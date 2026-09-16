@@ -15,6 +15,7 @@
     </TargetFrameworkProfile>
     <FileAlignment>512</FileAlignment>
     <IsWebBootstrapper>true</IsWebBootstrapper>
+    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
     <PublishUrl>publish\</PublishUrl>
     <Install>true</Install>
     <InstallFrom>Web</InstallFrom>
@@ -28,7 +29,7 @@
     <InstallUrl>http://retailsuite-desktop.bizgripsolutions.com/</InstallUrl>
     <ProductName>Retail Suite</ProductName>
     <PublisherName>BizGrip Solutions</PublisherName>
-    <ApplicationRevision>66</ApplicationRevision>
+    <ApplicationRevision>67</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
@@ -36,7 +37,6 @@
     <BootstrapperEnabled>true</BootstrapperEnabled>
     <BootstrapperComponentsLocation>Relative</BootstrapperComponentsLocation>
     <BootstrapperComponentsUrl>C:\My Repos\Mutahhar758\JwelleryWholeSeller\Desktop App\Prerequisites</BootstrapperComponentsUrl>
-    <AutoGenerateBindingRedirects>true</AutoGenerateBindingRedirects>
   </PropertyGroup>
   <PropertyGroup Condition=" '$(Configuration)|$(Platform)' == 'Debug|x86' ">
     <PlatformTarget>AnyCPU</PlatformTarget>
