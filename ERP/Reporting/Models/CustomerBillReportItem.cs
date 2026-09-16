@@ -22,9 +22,9 @@ namespace ERP.Reporting.Models
 
         public string FormattedDate => Date != DateTime.MinValue ? Date.ToString("dd-MMM-yyyy") : string.Empty;
         public string FormattedQty => Qty.ToString("#,##0.##");
-        public string FormattedRate => "Rs. " + Rate.ToString("#,##0.00");
-        public string FormattedAddLess => AddLess != 0 ? "Rs. " + AddLess.ToString("#,##0.00") : "-";
-        public string FormattedAmount => "Rs. " + Amount.ToString("#,##0.00");
+        public string FormattedRate => Rate.ToString("#,##0.00");
+        public string FormattedAddLess => AddLess != 0 ? AddLess.ToString("#,##0.00") : "-";
+        public string FormattedAmount => Amount.ToString("#,##0.00");
     }
 
     /// <summary>
@@ -55,11 +55,11 @@ namespace ERP.Reporting.Models
         public string GeneratedBy { get; set; }
         public DateTime GeneratedAt { get; set; } = DateTime.Now;
 
-        public string FormattedPreviousBalance => "Rs. " + PreviousBalance.ToString("#,##0.00");
-        public string FormattedCurrentBillTotal => "Rs. " + CurrentBillTotal.ToString("#,##0.00");
-        public string FormattedGrossTotal => "Rs. " + GrossTotal.ToString("#,##0.00");
-        public string FormattedPaymentsReceived => "Rs. " + PaymentsReceived.ToString("#,##0.00");
-        public string FormattedNetBalance => "Rs. " + NetBalance.ToString("#,##0.00");
+        public string FormattedPreviousBalance => PreviousBalance.ToString("#,##0.00");
+        public string FormattedCurrentBillTotal => CurrentBillTotal.ToString("#,##0.00");
+        public string FormattedGrossTotal => GrossTotal.ToString("#,##0.00");
+        public string FormattedPaymentsReceived => PaymentsReceived.ToString("#,##0.00");
+        public string FormattedNetBalance => NetBalance.ToString("#,##0.00");
     }
 
     /// <summary>

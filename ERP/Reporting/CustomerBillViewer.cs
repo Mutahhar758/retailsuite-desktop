@@ -45,10 +45,13 @@ namespace ERP.Reporting
         private DateTimePicker dtpToDate;
         private Label lblDateBasis;
         private ComboBox cmbDateBasis;
+        private Label lblLayout;
+        private ComboBox cmbLayout;
         private Button btnGenerateSingle;
         private Button btnExportExcel;
         private Button btnExportCsv;
         private Button btnPrintPreview;
+        private Button btnPrintThermalSingle;
         private Button btnPrintDirectSingle;
 
         // UI Controls - Bulk Mode Left Panel
@@ -65,6 +68,8 @@ namespace ERP.Reporting
         private Label lblBulkDates;
         private DateTimePicker dtpBulkFromDate;
         private DateTimePicker dtpBulkToDate;
+        private Label lblBulkFormat;
+        private ComboBox cmbBulkFormat;
         private Button btnBulkPrintDirect;
         private Button btnBulkPreviewBatch;
         private Button btnCancelBulk;
@@ -246,18 +251,43 @@ namespace ERP.Reporting
             cmbDateBasis = new ComboBox
             {
                 Location = new Point(501, 28),
-                Width = 110,
+                Width = 100,
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9F)
             };
             cmbDateBasis.Items.AddRange(new object[] { "VoucherDate", "EntryDate" });
             cmbDateBasis.SelectedIndex = 0;
 
+            lblLayout = new Label
+            {
+                Text = "FORMAT",
+                AutoSize = true,
+                Location = new Point(610, 10),
+                Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139)
+            };
+            cmbLayout = new ComboBox
+            {
+                Location = new Point(610, 28),
+                Width = 106,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 9F)
+            };
+            cmbLayout.Items.AddRange(new object[] { "A4 Sheet", "80mm Thermal" });
+            cmbLayout.SelectedIndex = 0;
+            cmbLayout.SelectedIndexChanged += async (s, e) =>
+            {
+                if (_currentResult != null)
+                {
+                    await LoadAndRenderSingleBillAsync();
+                }
+            };
+
             btnGenerateSingle = new Button
             {
                 Text = "Preview",
-                Location = new Point(622, 26),
-                Width = 78,
+                Location = new Point(724, 26),
+                Width = 68,
                 Height = 28,
                 BackColor = Color.FromArgb(37, 99, 235),
                 ForeColor = Color.White,
@@ -271,8 +301,8 @@ namespace ERP.Reporting
             btnExportExcel = new Button
             {
                 Text = "Excel",
-                Location = new Point(706, 26),
-                Width = 62,
+                Location = new Point(796, 26),
+                Width = 52,
                 Height = 28,
                 BackColor = Color.FromArgb(16, 149, 193),
                 ForeColor = Color.White,
@@ -286,8 +316,8 @@ namespace ERP.Reporting
             btnExportCsv = new Button
             {
                 Text = "CSV",
-                Location = new Point(773, 26),
-                Width = 52,
+                Location = new Point(852, 26),
+                Width = 46,
                 Height = 28,
                 BackColor = Color.FromArgb(71, 85, 105),
                 ForeColor = Color.White,
@@ -300,9 +330,9 @@ namespace ERP.Reporting
 
             btnPrintPreview = new Button
             {
-                Text = "Print Preview",
-                Location = new Point(831, 26),
-                Width = 92,
+                Text = "Print",
+                Location = new Point(902, 26),
+                Width = 52,
                 Height = 28,
                 BackColor = Color.FromArgb(15, 23, 42),
                 ForeColor = Color.White,
@@ -313,10 +343,25 @@ namespace ERP.Reporting
             btnPrintPreview.FlatAppearance.BorderSize = 0;
             btnPrintPreview.Click += (s, e) => TriggerPrintPreview();
 
+            btnPrintThermalSingle = new Button
+            {
+                Text = "🖨 Thermal",
+                Location = new Point(958, 26),
+                Width = 96,
+                Height = 28,
+                BackColor = Color.FromArgb(217, 119, 6),
+                ForeColor = Color.White,
+                FlatStyle = FlatStyle.Flat,
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnPrintThermalSingle.FlatAppearance.BorderSize = 0;
+            btnPrintThermalSingle.Click += (s, e) => TriggerDirectThermalPrint();
+
             btnPrintDirectSingle = new Button
             {
-                Text = "Print Direct",
-                Location = new Point(929, 26),
+                Text = "🖨 Direct A4",
+                Location = new Point(1058, 26),
                 Width = 88,
                 Height = 28,
                 BackColor = Color.FromArgb(5, 150, 105),
@@ -333,7 +378,8 @@ namespace ERP.Reporting
                 lblFromDate, dtpFromDate,
                 lblToDate, dtpToDate,
                 lblDateBasis, cmbDateBasis,
-                btnGenerateSingle, btnExportExcel, btnExportCsv, btnPrintPreview, btnPrintDirectSingle
+                lblLayout, cmbLayout,
+                btnGenerateSingle, btnExportExcel, btnExportCsv, btnPrintPreview, btnPrintThermalSingle, btnPrintDirectSingle
             });
 
             this.Controls.Add(pnlSingleControls);
@@ -503,6 +549,29 @@ namespace ERP.Reporting
             };
             pnlBulkSidebar.Controls.Add(dtpBulkToDate);
             curY += 36;
+
+            lblBulkFormat = new Label
+            {
+                Text = "PRINT FORMAT:",
+                Location = new Point(12, curY),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139)
+            };
+            pnlBulkSidebar.Controls.Add(lblBulkFormat);
+            curY += 18;
+
+            cmbBulkFormat = new ComboBox
+            {
+                Location = new Point(12, curY),
+                Width = 370,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 9F)
+            };
+            cmbBulkFormat.Items.AddRange(new object[] { "A4 Commercial Invoice (Full Page)", "80mm Thermal Receipt (POS Roll)" });
+            cmbBulkFormat.SelectedIndex = 1; // Default to 80mm thermal receipt for bulk printing
+            pnlBulkSidebar.Controls.Add(cmbBulkFormat);
+            curY += 34;
 
             // Action Buttons
             btnBulkPrintDirect = new Button
@@ -830,13 +899,15 @@ namespace ERP.Reporting
                 }
 
                 _currentResult = result;
-                var doc = new CustomerBillDocument(result.Summary, result.Lines);
+                var layout = (cmbLayout != null && cmbLayout.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
+                var doc = new CustomerBillDocument(result.Summary, result.Lines, layout);
                 _currentPdfPath = await doc.GeneratePdfToTempFileAsync();
 
                 webView.CoreWebView2.Navigate(_currentPdfPath);
                 webView.Visible = true;
-                lblStatus.Text = string.Format("Customer Bill: {0} ({1:dd-MMM-yyyy} - {2:dd-MMM-yyyy}) • Net Due: Rs. {3:#,##0.00}",
-                    result.Summary.CustomerName, result.Summary.FromDate, result.Summary.ToDate, result.Summary.NetBalance);
+                string layoutLabel = layout == CustomerBillPrintLayout.Thermal80mm ? "80mm Thermal Receipt" : "A4 Invoice";
+                lblStatus.Text = string.Format("Customer Bill ({0}): {1} ({2:dd-MMM-yyyy} - {3:dd-MMM-yyyy}) • Net Due: {4:#,##0.00}",
+                    layoutLabel, result.Summary.CustomerName, result.Summary.FromDate, result.Summary.ToDate, result.Summary.NetBalance);
                 lblStatus.ForeColor = Color.FromArgb(30, 41, 59);
             }
             catch (Exception ex)
@@ -858,6 +929,36 @@ namespace ERP.Reporting
             }
         }
 
+        private void TriggerDirectThermalPrint()
+        {
+            if (_currentResult == null)
+            {
+                MessageBox.Show("Please preview or generate the customer bill first.", "Thermal Print", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            string printer = !string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName) 
+                ? ConfigInfo.ThermalPrinterName 
+                : (cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : null);
+
+            if (string.IsNullOrWhiteSpace(printer))
+            {
+                MessageBox.Show("Thermal printer name is not configured in settings. Please configure your thermal printer.", "Printer Not Configured", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            try
+            {
+                var doc = new CustomerBillDocument(_currentResult.Summary, _currentResult.Lines, CustomerBillPrintLayout.Thermal80mm);
+                CustomerBillDocument.PrintDirectToPrinter(doc, printer);
+                MessageBox.Show(string.Format("80mm Thermal Receipt sent silently to '{0}' successfully!", printer), "Print Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Thermal print error: " + ex.Message, "Print Failed", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void TriggerDirectSinglePrint()
         {
             if (_currentResult == null)
@@ -867,9 +968,10 @@ namespace ERP.Reporting
             }
 
             string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : ConfigInfo.ThermalPrinterName;
+            var layout = (cmbLayout != null && cmbLayout.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
             try
             {
-                var doc = new CustomerBillDocument(_currentResult.Summary, _currentResult.Lines);
+                var doc = new CustomerBillDocument(_currentResult.Summary, _currentResult.Lines, layout);
                 CustomerBillDocument.PrintDirectToPrinter(doc, printer);
                 MessageBox.Show(string.Format("Customer bill sent silently to '{0}' successfully!", printer), "Print Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -901,9 +1003,11 @@ namespace ERP.Reporting
             DateTime fromDate = dtpBulkFromDate.Value.Date;
             DateTime toDate = dtpBulkToDate.Value.Date;
             string dateBasis = "VoucherDate";
+            var layout = (cmbBulkFormat != null && cmbBulkFormat.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
+            string formatName = layout == CustomerBillPrintLayout.Thermal80mm ? "80mm Thermal Receipt" : "A4 Commercial Invoice";
 
             var confirm = MessageBox.Show(
-                string.Format("Are you sure you want to silently print {0} customer bill(s) directly to '{1}'?", checkedItems.Count, printer),
+                string.Format("Are you sure you want to silently print {0} customer bill(s) in {1} format directly to '{2}'?", checkedItems.Count, formatName, printer),
                 "Confirm Silent Bulk Print",
                 MessageBoxButtons.YesNo,
                 MessageBoxIcon.Question);
@@ -942,7 +1046,7 @@ namespace ERP.Reporting
                             // Only print if there are line items or a non-zero balance
                             if (result.Lines.Count > 0 || Math.Abs(result.Summary.NetBalance) > 0.01m)
                             {
-                                var doc = new CustomerBillDocument(result.Summary, result.Lines);
+                                var doc = new CustomerBillDocument(result.Summary, result.Lines, layout);
                                 CustomerBillDocument.PrintDirectToPrinter(doc, printer);
                                 printedCount++;
                             }
@@ -988,6 +1092,7 @@ namespace ERP.Reporting
             DateTime fromDate = dtpBulkFromDate.Value.Date;
             DateTime toDate = dtpBulkToDate.Value.Date;
             string dateBasis = "VoucherDate";
+            var layout = (cmbBulkFormat != null && cmbBulkFormat.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
 
             SetLoading(true, string.Format("Compiling batch preview for {0} customers...", checkedItems.Count));
 
@@ -1014,7 +1119,7 @@ namespace ERP.Reporting
                     }
                 });
 
-                var batchDoc = new CustomerBillBatchDocument(batch);
+                var batchDoc = new CustomerBillBatchDocument(batch, layout);
                 _currentPdfPath = await batchDoc.GeneratePdfToTempFileAsync();
 
                 webView.CoreWebView2.Navigate(_currentPdfPath);
@@ -1066,7 +1171,7 @@ namespace ERP.Reporting
                             ws.Cell("A2").Style.Font.FontSize = 11;
 
                             ws.Cell("A3").Value = string.Format("Billing Period: {0:dd-MMM-yyyy} to {1:dd-MMM-yyyy}", _currentResult.Summary.FromDate, _currentResult.Summary.ToDate);
-                            ws.Cell("A4").Value = string.Format("Customer: {0} ({1})", _currentResult.Summary.CustomerName, _currentResult.Summary.CustomerCode);
+                            ws.Cell("A4").Value = string.Format("Customer: {0}", _currentResult.Summary.CustomerName);
 
                             int row = 6;
                             // Table Headers
