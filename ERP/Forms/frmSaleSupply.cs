@@ -49,6 +49,7 @@ namespace ERP
             _inventoryApiService = new InventoryApiService();
             InitializeLookupTables();
             dgvSale.Rows.Add();
+            dgvSale.RowsRemoved += (s, e) => CalcTotals();
             UserInfo.ApplyFormPermissions(this, AppResource.SaleSupplies);
         }
 
@@ -157,19 +158,72 @@ namespace ERP
             return decimal.TryParse(Convert.ToString(value), out parsed) ? parsed : 0;
         }
 
-        void CalcTotAmount()
+        void CalcTotals()
         {
-            decimal TotAmount = 0;
+            int count = 0;
+            decimal totQty = 0;
+            decimal totSecQty = 0;
+            decimal totAddLess = 0;
+            decimal totAmount = 0;
+
             try
             {
-                TotAmount = (from DataGridViewRow row in dgvSale.Rows
-                             where row.Cells[clnAmount.Index].Value != null
-                             select ParseDecimal(row.Cells[clnAmount.Index].Value)).Sum();
+                foreach (DataGridViewRow row in dgvSale.Rows)
+                {
+                    if (row.IsNewRow) continue;
+
+                    bool hasCustomer = row.Cells[clnCustomer.Index].Value != null &&
+                                       !string.IsNullOrWhiteSpace(row.Cells[clnCustomer.Index].Value.ToString());
+                    if (hasCustomer)
+                    {
+                        count++;
+                    }
+
+                    totQty += ParseDecimal(row.Cells[clnQty.Index].Value);
+                    if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                    {
+                        totSecQty += ParseDecimal(row.Cells["clnSecQty"].Value);
+                    }
+                    totAddLess += ParseDecimal(row.Cells[clnAddLess.Index].Value);
+                    totAmount += ParseDecimal(row.Cells[clnAmount.Index].Value);
+                }
             }
             catch
             {
             }
-            txtTotAmount.Text = TotAmount.ToString("N2");
+
+            txtTotCount.Text = count.ToString();
+            if (ApiSession.HasSecondaryQty && totSecQty > 0)
+            {
+                txtTotQty.Text = totQty.ToString("N2") + " (" + totSecQty.ToString("N2") + ")";
+            }
+            else
+            {
+                txtTotQty.Text = totQty.ToString("N2");
+            }
+
+            if (totAddLess > 0)
+            {
+                txtTotAddLess.Text = "+" + totAddLess.ToString("N2");
+                txtTotAddLess.ForeColor = System.Drawing.Color.DarkGreen;
+            }
+            else if (totAddLess < 0)
+            {
+                txtTotAddLess.Text = totAddLess.ToString("N2");
+                txtTotAddLess.ForeColor = System.Drawing.Color.Red;
+            }
+            else
+            {
+                txtTotAddLess.Text = "0.00";
+                txtTotAddLess.ForeColor = System.Drawing.SystemColors.WindowText;
+            }
+
+            txtTotAmount.Text = totAmount.ToString("N2");
+        }
+
+        void CalcTotAmount()
+        {
+            CalcTotals();
         }
 
         private async System.Threading.Tasks.Task SaveAsync()
@@ -410,6 +464,7 @@ namespace ERP
                 await LoadLookupsAsync();
                 await FillQueryAsync();
                 FLogIn = false;
+                CalcTotals();
             }
             catch (Exception ex)
             {
@@ -444,6 +499,7 @@ namespace ERP
                     }
                 }
             }
+            CalcTotals();
         }
 
         private async void frmPurchase_KeyDown(object sender, KeyEventArgs e)

@@ -67,6 +67,14 @@ namespace ERP
             this.clnAddLess = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnStatus = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.pnlTotals = new System.Windows.Forms.Panel();
+            this.lblTotCount = new System.Windows.Forms.Label();
+            this.txtTotCount = new System.Windows.Forms.TextBox();
+            this.lblTotQty = new System.Windows.Forms.Label();
+            this.txtTotQty = new System.Windows.Forms.TextBox();
+            this.lblTotAddLess = new System.Windows.Forms.Label();
+            this.txtTotAddLess = new System.Windows.Forms.TextBox();
+            this.label15 = new System.Windows.Forms.Label();
             this.txtTotAmount = new ERP.DecimalTextbox(this.components);
             this.grpInvoiceDetail = new System.Windows.Forms.GroupBox();
             this.txtEditBy = new System.Windows.Forms.TextBox();
@@ -127,6 +135,7 @@ namespace ERP
             this.tbSaleQuery.SuspendLayout();
             this.tbDetail.SuspendLayout();
             this.panel1.SuspendLayout();
+            this.pnlTotals.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvSale)).BeginInit();
             this.grpInvoiceDetail.SuspendLayout();
             this.tbQuery.SuspendLayout();
@@ -153,10 +162,9 @@ namespace ERP
             // 
             // tbDetail
             // 
-            this.tbDetail.Controls.Add(this.label15);
+            this.tbDetail.Controls.Add(this.pnlTotals);
             this.tbDetail.Controls.Add(this.panel1);
             this.tbDetail.Controls.Add(this.dgvSale);
-            this.tbDetail.Controls.Add(this.txtTotAmount);
             this.tbDetail.Controls.Add(this.grpInvoiceDetail);
             this.tbDetail.Controls.Add(this.lblSearchCustomer);
             this.tbDetail.Controls.Add(this.txtSearchCustomer);
@@ -168,16 +176,6 @@ namespace ERP
             this.tbDetail.Text = "Detail";
             this.tbDetail.UseVisualStyleBackColor = true;
             this.tbDetail.Click += new System.EventHandler(this.tbDetail_Click);
-            // 
-            // label15
-            // 
-            this.label15.AutoSize = true;
-            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.Location = new System.Drawing.Point(870, 368);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(61, 16);
-            this.label15.TabIndex = 218;
-            this.label15.Text = "Amount : ";
             // 
             // panel1
             // 
@@ -440,14 +438,106 @@ namespace ERP
             this.clnStatus.ReadOnly = true;
             this.clnStatus.Visible = false;
             // 
+            // pnlTotals
+            // 
+            this.pnlTotals.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.pnlTotals.Controls.Add(this.lblTotCount);
+            this.pnlTotals.Controls.Add(this.txtTotCount);
+            this.pnlTotals.Controls.Add(this.lblTotQty);
+            this.pnlTotals.Controls.Add(this.txtTotQty);
+            this.pnlTotals.Controls.Add(this.lblTotAddLess);
+            this.pnlTotals.Controls.Add(this.txtTotAddLess);
+            this.pnlTotals.Controls.Add(this.label15);
+            this.pnlTotals.Controls.Add(this.txtTotAmount);
+            this.pnlTotals.Location = new System.Drawing.Point(458, 363);
+            this.pnlTotals.Name = "pnlTotals";
+            this.pnlTotals.Size = new System.Drawing.Size(617, 38);
+            this.pnlTotals.TabIndex = 219;
+            // 
+            // lblTotCount
+            // 
+            this.lblTotCount.AutoSize = true;
+            this.lblTotCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTotCount.Location = new System.Drawing.Point(3, 10);
+            this.lblTotCount.Name = "lblTotCount";
+            this.lblTotCount.Size = new System.Drawing.Size(51, 16);
+            this.lblTotCount.TabIndex = 0;
+            this.lblTotCount.Text = "Count : ";
+            // 
+            // txtTotCount
+            // 
+            this.txtTotCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotCount.Location = new System.Drawing.Point(58, 6);
+            this.txtTotCount.Name = "txtTotCount";
+            this.txtTotCount.ReadOnly = true;
+            this.txtTotCount.Size = new System.Drawing.Size(50, 24);
+            this.txtTotCount.TabIndex = 1;
+            this.txtTotCount.TabStop = false;
+            this.txtTotCount.Text = "0";
+            this.txtTotCount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // lblTotQty
+            // 
+            this.lblTotQty.AutoSize = true;
+            this.lblTotQty.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTotQty.Location = new System.Drawing.Point(114, 10);
+            this.lblTotQty.Name = "lblTotQty";
+            this.lblTotQty.Size = new System.Drawing.Size(37, 16);
+            this.lblTotQty.TabIndex = 2;
+            this.lblTotQty.Text = "Qty : ";
+            // 
+            // txtTotQty
+            // 
+            this.txtTotQty.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotQty.Location = new System.Drawing.Point(155, 6);
+            this.txtTotQty.Name = "txtTotQty";
+            this.txtTotQty.ReadOnly = true;
+            this.txtTotQty.Size = new System.Drawing.Size(85, 24);
+            this.txtTotQty.TabIndex = 3;
+            this.txtTotQty.TabStop = false;
+            this.txtTotQty.Text = "0.00";
+            this.txtTotQty.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // lblTotAddLess
+            // 
+            this.lblTotAddLess.AutoSize = true;
+            this.lblTotAddLess.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTotAddLess.Location = new System.Drawing.Point(245, 10);
+            this.lblTotAddLess.Name = "lblTotAddLess";
+            this.lblTotAddLess.Size = new System.Drawing.Size(71, 16);
+            this.lblTotAddLess.TabIndex = 4;
+            this.lblTotAddLess.Text = "Add/Less : ";
+            // 
+            // txtTotAddLess
+            // 
+            this.txtTotAddLess.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotAddLess.Location = new System.Drawing.Point(320, 6);
+            this.txtTotAddLess.Name = "txtTotAddLess";
+            this.txtTotAddLess.ReadOnly = true;
+            this.txtTotAddLess.Size = new System.Drawing.Size(85, 24);
+            this.txtTotAddLess.TabIndex = 5;
+            this.txtTotAddLess.TabStop = false;
+            this.txtTotAddLess.Text = "0.00";
+            this.txtTotAddLess.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.Location = new System.Drawing.Point(410, 10);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(61, 16);
+            this.label15.TabIndex = 6;
+            this.label15.Text = "Amount : ";
+            // 
             // txtTotAmount
             // 
             this.txtTotAmount.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotAmount.Location = new System.Drawing.Point(951, 363);
+            this.txtTotAmount.Location = new System.Drawing.Point(475, 6);
             this.txtTotAmount.Name = "txtTotAmount";
             this.txtTotAmount.ReadOnly = true;
-            this.txtTotAmount.Size = new System.Drawing.Size(121, 24);
-            this.txtTotAmount.TabIndex = 217;
+            this.txtTotAmount.Size = new System.Drawing.Size(138, 24);
+            this.txtTotAmount.TabIndex = 7;
             this.txtTotAmount.TabStop = false;
             this.txtTotAmount.Text = "0";
             this.txtTotAmount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
@@ -1080,6 +1170,8 @@ namespace ERP
             this.tbDetail.ResumeLayout(false);
             this.tbDetail.PerformLayout();
             this.panel1.ResumeLayout(false);
+            this.pnlTotals.ResumeLayout(false);
+            this.pnlTotals.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvSale)).EndInit();
             this.grpInvoiceDetail.ResumeLayout(false);
             this.grpInvoiceDetail.PerformLayout();
@@ -1154,6 +1246,13 @@ namespace ERP
         private System.Windows.Forms.Label label17;
         private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn11;
+        private System.Windows.Forms.Panel pnlTotals;
+        private System.Windows.Forms.Label lblTotCount;
+        private System.Windows.Forms.TextBox txtTotCount;
+        private System.Windows.Forms.Label lblTotQty;
+        private System.Windows.Forms.TextBox txtTotQty;
+        private System.Windows.Forms.Label lblTotAddLess;
+        private System.Windows.Forms.TextBox txtTotAddLess;
         private System.Windows.Forms.Label label15;
         private ERP.DecimalTextbox txtTotAmount;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn12;
