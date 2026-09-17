@@ -109,10 +109,6 @@ namespace ERP.Reporting
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9F)
             };
-            cmbCustomer.SelectedIndexChanged += (s, e) =>
-            {
-                if (!_isPopulatingCustomers) _ = LoadAndRenderReportAsync();
-            };
 
             // From Date
             lblFrom = new Label
@@ -163,14 +159,12 @@ namespace ERP.Reporting
             {
                 dtpFrom.Value = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
                 dtpTo.Value = DateTime.Today;
-                _ = LoadAndRenderReportAsync();
             });
             btnPresetLastMonth = CreatePresetButton("Last Mo", 410, presetY, () =>
             {
                 var prev = DateTime.Today.AddMonths(-1);
                 dtpFrom.Value = new DateTime(prev.Year, prev.Month, 1);
                 dtpTo.Value = new DateTime(prev.Year, prev.Month, DateTime.DaysInMonth(prev.Year, prev.Month));
-                _ = LoadAndRenderReportAsync();
             });
 
             // Date Basis
@@ -192,10 +186,6 @@ namespace ERP.Reporting
             };
             cmbDateBasis.Items.AddRange(new object[] { "Clearing Date", "Voucher Date" });
             cmbDateBasis.SelectedIndex = 0;
-            cmbDateBasis.SelectedIndexChanged += (s, e) =>
-            {
-                if (!_isPopulatingCustomers) _ = LoadAndRenderReportAsync();
-            };
 
             // Status Filter
             lblFilter = new Label
@@ -216,10 +206,6 @@ namespace ERP.Reporting
             };
             cmbFilter.Items.AddRange(new object[] { "All Balances", "Outstanding Only", "Cleared Only", "Unpaid Only" });
             cmbFilter.SelectedIndex = 0;
-            cmbFilter.SelectedIndexChanged += (s, e) =>
-            {
-                if (!_isPopulatingCustomers) _ = LoadAndRenderReportAsync();
-            };
 
             // Action Buttons
             btnGenerate = new Button
@@ -346,7 +332,7 @@ namespace ERP.Reporting
             {
                 await InitializeWebViewAsync();
                 await PopulateCustomersAsync();
-                await LoadAndRenderReportAsync();
+                if (lblStatus != null) lblStatus.Text = "Ready. Select customer & date range, then click 'Generate'.";
             };
 
             this.FormClosing += (s, e) => CleanupTempFile();
@@ -376,7 +362,6 @@ namespace ERP.Reporting
             dtpFrom.Value = new DateTime(DateTime.Today.Year, DateTime.Today.Month, startDay);
             int maxDays = DateTime.DaysInMonth(DateTime.Today.Year, DateTime.Today.Month);
             dtpTo.Value = new DateTime(DateTime.Today.Year, DateTime.Today.Month, Math.Min(endDay, maxDays));
-            _ = LoadAndRenderReportAsync();
         }
 
         private async Task InitializeWebViewAsync()
@@ -414,13 +399,6 @@ namespace ERP.Reporting
                 if (_allCustomers.Count > 0)
                 {
                     foreach (var c in _allCustomers) dt.Rows.Add(c.Account, c.Title);
-                }
-                else
-                {
-                    dt.Rows.Add("05-01-0001", "Al-Madina Super Mart & Wholesale");
-                    dt.Rows.Add("05-01-0002", "Bismillah Cash & Carry (Model Town)");
-                    dt.Rows.Add("05-01-0003", "Save & Mart Departmental Store");
-                    dt.Rows.Add("05-01-0004", "Chaudhry Dairy & Bakers");
                 }
 
                 cmbCustomer.DisplayMember = "Title";

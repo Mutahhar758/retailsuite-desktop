@@ -64,33 +64,5 @@ namespace ERP.Reporting.Models
             }
             return list;
         }
-
-        public static ShipmentTagItem GetMockData()
-        {
-            string shipperName = !string.IsNullOrWhiteSpace(CompanyInfo.CompanyName) ? CompanyInfo.CompanyName : "Retail Suite Enterprise";
-            string shipperAddress = !string.IsNullOrWhiteSpace(CompanyInfo.Address) ? CompanyInfo.Address : "Plot 42-B, Commercial Area, Lahore";
-            string shipperPhone = !string.IsNullOrWhiteSpace(CompanyInfo.ContactHead) ? CompanyInfo.ContactHead : "+92 42 35789000";
-
-            return new ShipmentTagItem
-            {
-                TrackingNo = "TRK-" + DateTime.Today.ToString("yyyyMM") + "-8821",
-                InvoiceNo = "SAL-10821",
-                DispatchDate = DateTime.Today,
-                ShipperName = shipperName,
-                ShipperAddress = shipperAddress,
-                ShipperPhone = shipperPhone,
-                ConsigneeAccount = "001002001",
-                ConsigneeName = "Muhammad Rashid (Proprietor)",
-                ConsigneeCompany = "Al-Madina Cash & Carry",
-                ConsigneeAddress = "Main Market, Block 5, Gulberg III",
-                ConsigneeCity = "Lahore, Punjab",
-                ConsigneePhone = "0300-1234567",
-                PackageNumber = 1,
-                TotalPackages = 3,
-                WeightKg = 18.5m,
-                CourierService = "TCS Express Cargo",
-                Remarks = "HANDLE WITH CARE • FRAGILE • CONTAINS GLASS/LIQUIDS"
-            };
-        }
     }
 }

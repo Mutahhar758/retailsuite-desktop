@@ -745,11 +745,9 @@ namespace ERP.Reporting
                 // Initialize WebView2
                 await EnsureWebViewInitializedAsync();
 
-                // Generate initial single bill
-                if (cmbCustomer.SelectedValue != null)
-                {
-                    await LoadAndRenderSingleBillAsync();
-                }
+                // Ready state: Do not auto-generate bill on form load; wait for user to click Generate Bill
+                lblStatus.Text = "Ready. Select customer & date range, then click 'Generate Bill'.";
+                lblStatus.ForeColor = Color.FromArgb(71, 85, 105);
             }
             catch (Exception ex)
             {
@@ -886,17 +884,8 @@ namespace ERP.Reporting
             {
                 await EnsureWebViewInitializedAsync();
 
-                CustomerBillDataResult result = null;
-                try
-                {
-                    DataSet ds = await Task.Run(() => ReportQuery.CustomerBill(customerCode, fromDate, toDate, dateBasis));
-                    result = CustomerBillDataService.ConvertDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis);
-                }
-                catch
-                {
-                    // Fallback to sample data if offline/development
-                    result = CustomerBillDataService.GetMockData(fromDate, toDate, customerCode, customerTitle);
-                }
+                DataSet ds = await Task.Run(() => ReportQuery.CustomerBill(customerCode, fromDate, toDate, dateBasis));
+                CustomerBillDataResult result = CustomerBillDataService.ConvertDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis);
 
                 _currentResult = result;
                 var layout = (cmbLayout != null && cmbLayout.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
@@ -1114,7 +1103,7 @@ namespace ERP.Reporting
                         }
                         catch
                         {
-                            batch.Add(CustomerBillDataService.GetMockData(fromDate, toDate, cust.Account, cust.Title));
+                            // Skip customer if database query fails
                         }
                     }
                 });

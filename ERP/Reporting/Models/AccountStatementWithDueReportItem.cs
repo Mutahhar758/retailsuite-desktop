@@ -69,8 +69,7 @@ namespace ERP.Reporting.Models
     }
 
     /// <summary>
-    /// Service to transform ReportQuery.AccountStatementWithDue DataTable results
-    /// and provide realistic sample mock data for offline/fallback mode.
+    /// Service to transform DataTable records into AccountStatementWithDue report items.
     /// </summary>
     public static class AccountStatementWithDueDataService
     {
@@ -125,74 +124,6 @@ namespace ERP.Reporting.Models
             }
 
             return items;
-        }
-
-        /// <summary>
-        /// Generates 15+ realistic retail account ledger transactions with due days and due dates.
-        /// </summary>
-        public static AccountStatementWithDueDataResult GetSampleAccountStatementWithDue(string companyName = null)
-        {
-            decimal openingBal = 25000.00m;
-            var header = new AccountStatementWithDueHeader
-            {
-                CompanyName = !string.IsNullOrWhiteSpace(companyName)
-                    ? companyName
-                    : (!string.IsNullOrWhiteSpace(ERP.CompanyInfo.CompanyName) ? ERP.CompanyInfo.CompanyName : "Retail Suite Enterprise"),
-                AccountTitle = "Prime Wholesale Distribution Ledger",
-                AccountCode = "001-002-001-001",
-                FromDate = DateTime.Today.AddDays(-45),
-                ToDate = DateTime.Today,
-                OpeningBalance = openingBal,
-                DateBasis = "Voucher Date"
-            };
-
-            var items = new List<AccountStatementWithDueReportItem>();
-            decimal currentBal = openingBal;
-
-            void AddRow(int dayOffset, string vno, int seq, string desc, decimal dr, decimal cr, int? dueDays)
-            {
-                DateTime dt = header.FromDate.AddDays(dayOffset);
-                currentBal += (dr - cr);
-                items.Add(new AccountStatementWithDueReportItem
-                {
-                    Date = dt,
-                    VoucherNo = vno,
-                    Sequence = seq,
-                    Particular = desc,
-                    Debit = dr,
-                    Credit = cr,
-                    DueDays = dueDays,
-                    Balance = currentBal
-                });
-            }
-
-            AddRow(1, "SL-10142", 1, "Wholesale Invoice - Fast Moving Consumer Goods (FMCG)", 42500.00m, 0m, 30);
-            AddRow(3, "RV-05210", 1, "Direct Bank Wire Settlement - HBL Corporate Portal", 0m, 35000.00m, null);
-            AddRow(6, "SL-10189", 1, "Bulk Merchandise Shipment - Batch #49021", 58900.00m, 0m, 30);
-            AddRow(8, "SR-01124", 1, "Authorized Credit Note - Defective Outer Packaging Returned", 0m, 4200.00m, null);
-            AddRow(11, "RV-05244", 1, "Clearing Cheque #992812 - Standard Chartered Bank", 0m, 40000.00m, null);
-            AddRow(14, "SL-10235", 1, "Commercial Supply - Central Distribution Center Depot", 71250.00m, 0m, 45);
-            AddRow(17, "JV-08311", 1, "Year-End Volume Rebate & Promotional Loyalty Allowance", 0m, 5000.00m, null);
-            AddRow(20, "SL-10290", 1, "Standard Consignment - Dairy & Cold Chain SKU Replenishment", 33400.00m, 0m, 15);
-            AddRow(23, "RV-05302", 1, "Interbank Electronic Funds Transfer (1LINK FT)", 0m, 50000.00m, null);
-            AddRow(26, "SL-10344", 1, "Enterprise Order - Specialized Institutional Supplies", 86000.00m, 0m, 30);
-            AddRow(29, "SL-10398", 1, "Supplementary Invoicing - Express Pallet Delivery", 12800.00m, 0m, 15);
-            AddRow(32, "RV-05389", 1, "Cashier Counter Receipt - Partial Advance Payment", 0m, 25000.00m, null);
-            AddRow(35, "SL-10442", 1, "Retailer Store Distribution Stocking Order", 64350.00m, 0m, 30);
-            AddRow(38, "RV-05421", 1, "RTGS High-Value Institutional Settlement", 0m, 60000.00m, null);
-            AddRow(41, "SL-10490", 1, "Monthly Bulk Confectionery & Beverage Supply", 38750.00m, 0m, 20);
-            AddRow(44, "RV-05490", 1, "Weekly Balance Reconciliation Transfer", 0m, 30000.00m, null);
-
-            header.TotalDebit = 0m;
-            header.TotalCredit = 0m;
-            foreach (var item in items)
-            {
-                header.TotalDebit += item.Debit;
-                header.TotalCredit += item.Credit;
-            }
-            header.ClosingBalance = currentBal;
-
-            return new AccountStatementWithDueDataResult(header, items);
         }
     }
 }

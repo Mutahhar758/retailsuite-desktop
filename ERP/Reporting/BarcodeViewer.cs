@@ -363,8 +363,8 @@ namespace ERP.Reporting
                 if (cmbItem.Items.Count > 0)
                 {
                     cmbItem.SelectedIndex = 0;
-                    await LoadAndRenderBarcodeAsync();
                 }
+                lblStatus.Text = "Ready. Select item & click 'Generate Preview'.";
             }
             catch (Exception ex)
             {

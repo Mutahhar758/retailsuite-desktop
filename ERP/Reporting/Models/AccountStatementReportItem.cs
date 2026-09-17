@@ -37,7 +37,7 @@ namespace ERP.Reporting.Models
     }
 
     /// <summary>
-    /// Service to transform DataTable data and produce realistic mock ledger data.
+    /// Service to transform DataTable data into typed ledger items.
     /// </summary>
     public static class AccountStatementDataService
     {
@@ -82,75 +82,6 @@ namespace ERP.Reporting.Models
             }
 
             return items;
-        }
-
-        /// <summary>
-        /// Generates 15+ realistic retail account ledger transactions for preview and offline testing.
-        /// </summary>
-        public static AccountStatementDataResult GetSampleAccountStatement(string companyName = null)
-        {
-            decimal openingBal = 15000.00m;
-            var header = new AccountStatementHeader
-            {
-                CompanyName = !string.IsNullOrWhiteSpace(companyName)
-                    ? companyName
-                    : (!string.IsNullOrWhiteSpace(ERP.CompanyInfo.CompanyName) ? ERP.CompanyInfo.CompanyName : "Retail Suite Enterprise"),
-                AccountTitle = "General Trading & Distribution A/C",
-                AccountCode = "001-002-001-001",
-                FromDate = DateTime.Today.AddDays(-30),
-                ToDate = DateTime.Today,
-                OpeningBalance = openingBal
-            };
-
-            var rawTransactions = new[]
-            {
-                new { Day = -28, VNo = "OB-001", Desc = "Opening Balance Carried Forward", Dr = 0m, Cr = 0m },
-                new { Day = -27, VNo = "SL-1021", Desc = "Sale of Groceries & Packaged Goods", Dr = 4500.00m, Cr = 0m },
-                new { Day = -25, VNo = "RV-2041", Desc = "Customer Payment Received (Cash)", Dr = 0m, Cr = 3000.00m },
-                new { Day = -24, VNo = "SL-1028", Desc = "Wholesale Beverage Supply Batch #401", Dr = 7800.00m, Cr = 0m },
-                new { Day = -22, VNo = "PV-3012", Desc = "Payment to Vendor - Freight & Logistics", Dr = 0m, Cr = 1250.00m },
-                new { Day = -20, VNo = "JV-4005", Desc = "Adjustment for Damaged Goods Return", Dr = 0m, Cr = 650.00m },
-                new { Day = -19, VNo = "SL-1035", Desc = "Counter Sale - Electronics & Hardware", Dr = 6200.00m, Cr = 0m },
-                new { Day = -17, VNo = "RV-2055", Desc = "Direct Bank Transfer from Customer A/C", Dr = 0m, Cr = 5000.00m },
-                new { Day = -15, VNo = "SL-1042", Desc = "Invoice #1042 - Monthly Provision Supplies", Dr = 9450.00m, Cr = 0m },
-                new { Day = -13, VNo = "PR-5011", Desc = "Purchase Return - Dairy Products", Dr = 1100.00m, Cr = 0m },
-                new { Day = -11, VNo = "PV-3029", Desc = "Utility Bill Payment via Cheque #4412", Dr = 0m, Cr = 2100.00m },
-                new { Day = -9,  VNo = "SL-1051", Desc = "Sale of Household & Cleaning Supplies", Dr = 3850.00m, Cr = 0m },
-                new { Day = -7,  VNo = "RV-2068", Desc = "Settlement of Invoice #1028 in full", Dr = 0m, Cr = 4800.00m },
-                new { Day = -5,  VNo = "SL-1060", Desc = "Retail Counter Sale - Assorted Items", Dr = 5250.00m, Cr = 0m },
-                new { Day = -3,  VNo = "JV-4018", Desc = "Inter-branch Stock Transfer Reconciled", Dr = 1800.00m, Cr = 0m },
-                new { Day = -1,  VNo = "RV-2079", Desc = "Online Merchant Gateway Settlement", Dr = 0m, Cr = 3500.00m }
-            };
-
-            var items = new List<AccountStatementReportItem>();
-            decimal runningBalance = openingBal;
-            decimal totalDebit = 0m;
-            decimal totalCredit = 0m;
-            int seq = 1;
-
-            foreach (var t in rawTransactions)
-            {
-                runningBalance += (t.Dr - t.Cr);
-                totalDebit += t.Dr;
-                totalCredit += t.Cr;
-
-                items.Add(new AccountStatementReportItem
-                {
-                    Date = DateTime.Today.AddDays(t.Day),
-                    VoucherNo = t.VNo,
-                    Sequence = seq++,
-                    Particular = t.Desc,
-                    Debit = t.Dr,
-                    Credit = t.Cr,
-                    Balance = runningBalance
-                });
-            }
-
-            header.TotalDebit = totalDebit;
-            header.TotalCredit = totalCredit;
-            header.ClosingBalance = runningBalance;
-
-            return new AccountStatementDataResult(header, items);
         }
     }
 

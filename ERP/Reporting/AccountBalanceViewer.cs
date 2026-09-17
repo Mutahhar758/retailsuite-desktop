@@ -276,7 +276,8 @@ namespace ERP.Reporting
             {
                 await InitializeWebViewAsync();
                 await PopulateAccountHeadsAsync();
-                await LoadAndRenderReportAsync();
+                lblStatus.Text = "Ready. Select an account head, then click 'Generate'.";
+                lblStatus.ForeColor = Color.FromArgb(71, 85, 105);
             };
 
             this.FormClosing += (s, e) =>
@@ -322,14 +323,6 @@ namespace ERP.Reporting
                         dt.Rows.Add(h.Account, h.Title);
                     }
                 }
-                else
-                {
-                    // Fallback heads for offline testing
-                    dt.Rows.Add("01-01-001-0001", "Customers / Trade Debtors");
-                    dt.Rows.Add("01-01-001-0002", "Suppliers / Trade Creditors");
-                    dt.Rows.Add("01-01-001-0003", "Cash in Hand Accounts");
-                    dt.Rows.Add("01-01-001-0004", "Bank Accounts");
-                }
 
                 cmbAccountHead.DataSource = dt;
                 cmbAccountHead.DisplayMember = "Title";
@@ -340,21 +333,9 @@ namespace ERP.Reporting
                     cmbAccountHead.SelectedIndex = 0;
                 }
             }
-            catch
+            catch (Exception ex)
             {
-                // Offline fallback
-                var dt = new DataTable();
-                dt.Columns.Add("Account", typeof(string));
-                dt.Columns.Add("Title", typeof(string));
-                dt.Rows.Add("01-01-001-0001", "Customers / Trade Debtors");
-                dt.Rows.Add("01-01-001-0002", "Suppliers / Trade Creditors");
-                dt.Rows.Add("01-01-001-0003", "Cash in Hand Accounts");
-                dt.Rows.Add("01-01-001-0004", "Bank Accounts");
-
-                cmbAccountHead.DataSource = dt;
-                cmbAccountHead.DisplayMember = "Title";
-                cmbAccountHead.ValueMember = "Account";
-                cmbAccountHead.SelectedIndex = 0;
+                lblStatus.Text = "Error loading account heads: " + ex.Message;
             }
             finally
             {
@@ -373,27 +354,8 @@ namespace ERP.Reporting
             SetLoading(true);
             try
             {
-                AccountBalanceDataResult result = null;
-
-                // 1. Fetch live data
-                try
-                {
-                    DataTable dt = await Task.Run(() => ReportQuery.Balance(selectedHeadId, asOn));
-                    if (dt != null && dt.Rows.Count > 0)
-                    {
-                        result = AccountBalanceDataService.ConvertDataTable(dt, selectedHeadId, selectedHeadTitle, asOn);
-                    }
-                }
-                catch
-                {
-                    result = null;
-                }
-
-                // 2. Fallback to realistic mock data if offline or empty
-                if (result == null || result.Items.Count == 0)
-                {
-                    result = AccountBalanceDataService.GetMockData(selectedHeadId, selectedHeadTitle, asOn);
-                }
+                DataTable dt = await Task.Run(() => ReportQuery.Balance(selectedHeadId, asOn));
+                var result = AccountBalanceDataService.ConvertDataTable(dt, selectedHeadId, selectedHeadTitle, asOn);
 
                 _currentHeader = result.Header;
                 _allItems = result.Items ?? new List<AccountBalanceReportItem>();

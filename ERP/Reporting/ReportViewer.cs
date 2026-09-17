@@ -304,12 +304,12 @@ namespace ERP.Reporting
             this.Controls.Add(webView);
             this.Controls.Add(pnlTopBar);
 
-            // Form Load Event: Asynchronously initialize WebView2, load accounts, then generate report
+            // Form Load Event: Asynchronously initialize WebView2 and populate account heads
             this.Load += async (s, e) =>
             {
                 await InitializeWebView2Async();
                 await LoadAccountsAsync();
-                await LoadAndRenderReportAsync();
+                SetLoadingState(false, "Ready. Select account & date range, then click 'Filter' to view statement.");
             };
         }
 
@@ -353,45 +353,30 @@ namespace ERP.Reporting
             try
             {
                 var accounts = await _chartOfAccountService.GetDetailAccountsAsync();
+                var dt = new DataTable();
+                dt.Columns.Add("Code", typeof(string));
+                dt.Columns.Add("Title", typeof(string));
+
                 if (accounts != null && accounts.Count > 0)
                 {
-                    var dt = new DataTable();
-                    dt.Columns.Add("Code", typeof(string));
-                    dt.Columns.Add("Title", typeof(string));
-
                     foreach (var acc in accounts)
                     {
                         dt.Rows.Add(acc.Account, acc.Title);
                     }
-
-                    cmbAccount.DisplayMember = "Title";
-                    cmbAccount.ValueMember = "Code";
-                    cmbAccount.DataSource = dt;
-                    return;
                 }
+
+                cmbAccount.DisplayMember = "Title";
+                cmbAccount.ValueMember = "Code";
+                cmbAccount.DataSource = dt;
             }
-            catch
+            catch (Exception ex)
             {
-                // Fall back gracefully to sample account options
+                lblStatus.Text = "Error loading accounts: " + ex.Message;
             }
-
-            // Fallback list of accounts for standalone testing or offline demo
-            var sampleDt = new DataTable();
-            sampleDt.Columns.Add("Code", typeof(string));
-            sampleDt.Columns.Add("Title", typeof(string));
-            sampleDt.Rows.Add("001-002-001-001", "General Trading & Distribution A/C");
-            sampleDt.Rows.Add("001-002-001-002", "Corporate Bank Account (Current)");
-            sampleDt.Rows.Add("002-001-001-001", "Primary Wholesale Supplier Ledger");
-            sampleDt.Rows.Add("003-001-001-001", "Retail Customer Receivables");
-            sampleDt.Rows.Add("004-001-001-001", "Operating Expense - Logistics & Freight");
-
-            cmbAccount.DisplayMember = "Title";
-            cmbAccount.ValueMember = "Code";
-            cmbAccount.DataSource = sampleDt;
         }
 
         /// <summary>
-        /// Loads report data (or mock statement fallback), compiles the QuestPDF document,
+        /// Loads report data from database, compiles the QuestPDF document,
         /// and navigates WebView2 to the resulting PDF file.
         /// </summary>
         public async Task LoadAndRenderReportAsync()
@@ -402,7 +387,7 @@ namespace ERP.Reporting
 
             try
             {
-                string accountCode = cmbAccount.SelectedValue != null ? cmbAccount.SelectedValue.ToString() : "001-002-001-001";
+                string accountCode = cmbAccount.SelectedValue != null ? cmbAccount.SelectedValue.ToString() : string.Empty;
                 string accountTitle = cmbAccount.Text ?? "General Ledger Account";
                 DateTime from = dtpFrom.Value.Date;
                 DateTime to = dtpTo.Value.Date.AddDays(1).AddSeconds(-1);
@@ -413,44 +398,28 @@ namespace ERP.Reporting
 
                 if (_mode == ReportViewerMode.AccountStatementWithDue)
                 {
-                    // Fetch Account Statement With Due asynchronously
+                    // Fetch Account Statement With Due asynchronously directly from DB
                     var reportData = await Task.Run(() =>
                     {
-                        try
-                        {
-                            DataTable dt = ReportQuery.AccountStatementWithDue(accountCode, from, to, dateBasisQueryParam);
-                            if (dt != null && dt.Rows.Count > 0)
-                            {
-                                var items = AccountStatementWithDueDataService.FromDataTable(dt, 0m);
-                                var header = new AccountStatementWithDueHeader
-                                {
-                                    CompanyName = CompanyInfo.CompanyName,
-                                    AccountTitle = accountTitle,
-                                    AccountCode = accountCode,
-                                    FromDate = from,
-                                    ToDate = to,
-                                    DateBasis = selectedDateBasis,
-                                    OpeningBalance = 0m,
-                                    TotalDebit = items.Sum(x => x.Debit),
-                                    TotalCredit = items.Sum(x => x.Credit),
-                                    ClosingBalance = items.Count > 0 ? items.Last().Balance : 0m
-                                };
-                                return new AccountStatementWithDueDataResult(header, items);
-                            }
-                        }
-                        catch
-                        {
-                            // Fallback on network/API failure
-                        }
+                        DataTable dt = ReportQuery.AccountStatementWithDue(accountCode, from, to, dateBasisQueryParam);
+                        var items = (dt != null && dt.Rows.Count > 0)
+                            ? AccountStatementWithDueDataService.FromDataTable(dt, 0m)
+                            : new List<AccountStatementWithDueReportItem>();
 
-                        // Provide realistic mock data if live endpoint returns empty or fails
-                        var sample = AccountStatementWithDueDataService.GetSampleAccountStatementWithDue(CompanyInfo.CompanyName);
-                        sample.Header.AccountCode = accountCode;
-                        sample.Header.AccountTitle = accountTitle;
-                        sample.Header.FromDate = from;
-                        sample.Header.ToDate = to;
-                        sample.Header.DateBasis = selectedDateBasis;
-                        return sample;
+                        var header = new AccountStatementWithDueHeader
+                        {
+                            CompanyName = CompanyInfo.CompanyName,
+                            AccountTitle = accountTitle,
+                            AccountCode = accountCode,
+                            FromDate = from,
+                            ToDate = to,
+                            DateBasis = selectedDateBasis,
+                            OpeningBalance = 0m,
+                            TotalDebit = items.Sum(x => x.Debit),
+                            TotalCredit = items.Sum(x => x.Credit),
+                            ClosingBalance = items.Count > 0 ? items.Last().Balance : 0m
+                        };
+                        return new AccountStatementWithDueDataResult(header, items);
                     });
 
                     _currentDueHeader = reportData.Header;
@@ -462,44 +431,28 @@ namespace ERP.Reporting
                 }
                 else
                 {
-                    // Standard Account Statement
+                    // Standard Account Statement directly from DB
                     var reportData = await Task.Run(() =>
                     {
-                        try
-                        {
-                            DataTable dt = ReportQuery.AccountStatement(accountCode, from, to, dateBasisQueryParam);
-                            if (dt != null && dt.Rows.Count > 0)
-                            {
-                                var items = AccountStatementDataService.FromDataTable(dt, 0m);
-                                var header = new AccountStatementHeader
-                                {
-                                    CompanyName = CompanyInfo.CompanyName,
-                                    AccountTitle = accountTitle,
-                                    AccountCode = accountCode,
-                                    FromDate = from,
-                                    ToDate = to,
-                                    DateBasis = selectedDateBasis,
-                                    OpeningBalance = 0m,
-                                    TotalDebit = items.Sum(x => x.Debit),
-                                    TotalCredit = items.Sum(x => x.Credit),
-                                    ClosingBalance = items.Count > 0 ? items.Last().Balance : 0m
-                                };
-                                return new AccountStatementDataResult(header, items);
-                            }
-                        }
-                        catch
-                        {
-                            // Fallback on network/API failure
-                        }
+                        DataTable dt = ReportQuery.AccountStatement(accountCode, from, to, dateBasisQueryParam);
+                        var items = (dt != null && dt.Rows.Count > 0)
+                            ? AccountStatementDataService.FromDataTable(dt, 0m)
+                            : new List<AccountStatementReportItem>();
 
-                        // Provide realistic mock data if live endpoint returns empty or fails
-                        var sample = AccountStatementDataService.GetSampleAccountStatement(CompanyInfo.CompanyName);
-                        sample.Header.AccountCode = accountCode;
-                        sample.Header.AccountTitle = accountTitle;
-                        sample.Header.FromDate = from;
-                        sample.Header.ToDate = to;
-                        sample.Header.DateBasis = selectedDateBasis;
-                        return sample;
+                        var header = new AccountStatementHeader
+                        {
+                            CompanyName = CompanyInfo.CompanyName,
+                            AccountTitle = accountTitle,
+                            AccountCode = accountCode,
+                            FromDate = from,
+                            ToDate = to,
+                            DateBasis = selectedDateBasis,
+                            OpeningBalance = 0m,
+                            TotalDebit = items.Sum(x => x.Debit),
+                            TotalCredit = items.Sum(x => x.Credit),
+                            ClosingBalance = items.Count > 0 ? items.Last().Balance : 0m
+                        };
+                        return new AccountStatementDataResult(header, items);
                     });
 
                     _currentHeader = reportData.Header;

@@ -219,7 +219,8 @@ namespace ERP.Reporting
             this.Load += async (s, e) =>
             {
                 await InitializeWebViewAsync();
-                await LoadAndRenderReportAsync();
+                lblStatus.Text = "Ready. Select date range and click 'Generate'.";
+                lblStatus.ForeColor = Color.FromArgb(71, 85, 105);
             };
 
             this.FormClosing += (s, e) =>
@@ -257,27 +258,8 @@ namespace ERP.Reporting
             SetLoading(true);
             try
             {
-                IncomeSummaryDataResult result = null;
-
-                // 1. Fetch live data
-                try
-                {
-                    DataTable dt = await Task.Run(() => ReportQuery.IncomeSummery(fromDate, toDate));
-                    if (dt != null && dt.Rows.Count > 0)
-                    {
-                        result = IncomeSummaryDataService.ConvertDataTable(dt, fromDate, toDate);
-                    }
-                }
-                catch
-                {
-                    result = null;
-                }
-
-                // 2. Fallback to realistic mock data if offline or empty
-                if (result == null || (result.SalesItems.Count == 0 && result.ExpenseItems.Count == 0))
-                {
-                    result = IncomeSummaryDataService.GetMockData(fromDate, toDate);
-                }
+                DataTable dt = await Task.Run(() => ReportQuery.IncomeSummery(fromDate, toDate));
+                var result = IncomeSummaryDataService.ConvertDataTable(dt, fromDate, toDate);
 
                 _currentResult = result;
 

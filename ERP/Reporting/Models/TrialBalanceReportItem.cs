@@ -69,8 +69,7 @@ namespace ERP.Reporting.Models
     }
 
     /// <summary>
-    /// Service to transform ReportQuery.TrialBalance DataTable results into typed trial balance items,
-    /// and generate realistic balanced mock data for offline/preview testing.
+    /// Service to transform ReportQuery.TrialBalance DataTable results into typed trial balance items.
     /// </summary>
     public static class TrialBalanceDataService
     {
@@ -130,65 +129,6 @@ namespace ERP.Reporting.Models
             }
 
             return items;
-        }
-
-        /// <summary>
-        /// Generates 16+ realistic, mathematically balanced general ledger accounts for preview.
-        /// Total debits strictly equal total credits.
-        /// </summary>
-        public static TrialBalanceDataResult GetSampleTrialBalance(string companyName = null)
-        {
-            var header = new TrialBalanceHeader
-            {
-                CompanyName = !string.IsNullOrWhiteSpace(companyName)
-                    ? companyName
-                    : (!string.IsNullOrWhiteSpace(ERP.CompanyInfo.CompanyName) ? ERP.CompanyInfo.CompanyName : "Retail Suite Enterprise"),
-                ToDate = DateTime.Today
-            };
-
-            var items = new List<TrialBalanceReportItem>
-            {
-                // Current Assets (Debit)
-                new TrialBalanceReportItem { AccountCode = "001-001-001", AccountTitle = "Cash in Hand - Main Vault", Level1 = "Assets", Level2 = "Current Assets", OpeningBalance = 45000m, Debit = 285000m, Credit = 260000m, ClosingBalance = 70000m },
-                new TrialBalanceReportItem { AccountCode = "001-001-002", AccountTitle = "HBL Corporate Current Account", Level1 = "Assets", Level2 = "Current Assets", OpeningBalance = 250000m, Debit = 540000m, Credit = 490000m, ClosingBalance = 300000m },
-                new TrialBalanceReportItem { AccountCode = "001-002-001", AccountTitle = "Trade Accounts Receivable (Debtors)", Level1 = "Assets", Level2 = "Current Assets", OpeningBalance = 180000m, Debit = 420000m, Credit = 390000m, ClosingBalance = 210000m },
-                new TrialBalanceReportItem { AccountCode = "001-003-001", AccountTitle = "Merchandise Inventory (At Cost)", Level1 = "Assets", Level2 = "Current Assets", OpeningBalance = 320000m, Debit = 350000m, Credit = 310000m, ClosingBalance = 360000m },
-
-                // Non-Current Assets (Debit)
-                new TrialBalanceReportItem { AccountCode = "002-001-001", AccountTitle = "Store Fixtures & Display Equipment", Level1 = "Assets", Level2 = "Fixed Assets", OpeningBalance = 150000m, Debit = 25000m, Credit = 0m, ClosingBalance = 175000m },
-                new TrialBalanceReportItem { AccountCode = "002-002-001", AccountTitle = "Point of Sale & IT Infrastructure", Level1 = "Assets", Level2 = "Fixed Assets", OpeningBalance = 85000m, Debit = 15000m, Credit = 0m, ClosingBalance = 100000m },
-
-                // Current Liabilities (Credit)
-                new TrialBalanceReportItem { AccountCode = "003-001-001", AccountTitle = "Trade Accounts Payable (Suppliers)", Level1 = "Liabilities", Level2 = "Current Liabilities", OpeningBalance = -210000m, Debit = 310000m, Credit = 340000m, ClosingBalance = -240000m },
-                new TrialBalanceReportItem { AccountCode = "003-002-001", AccountTitle = "Accrued Utilities & Operating Expenses", Level1 = "Liabilities", Level2 = "Current Liabilities", OpeningBalance = -18000m, Debit = 18000m, Credit = 22000m, ClosingBalance = -22000m },
-                new TrialBalanceReportItem { AccountCode = "003-003-001", AccountTitle = "Short-Term Bank Credit Facility", Level1 = "Liabilities", Level2 = "Current Liabilities", OpeningBalance = -100000m, Debit = 50000m, Credit = 50000m, ClosingBalance = -100000m },
-
-                // Equity (Credit)
-                new TrialBalanceReportItem { AccountCode = "004-001-001", AccountTitle = "Owner Capital Share Account", Level1 = "Equity", Level2 = "Capital", OpeningBalance = -550000m, Debit = 0m, Credit = 0m, ClosingBalance = -550000m },
-                new TrialBalanceReportItem { AccountCode = "004-002-001", AccountTitle = "Retained Earnings - Brought Forward", Level1 = "Equity", Level2 = "Reserves", OpeningBalance = -152000m, Debit = 0m, Credit = 0m, ClosingBalance = -152000m },
-
-                // Revenue / Sales (Credit)
-                new TrialBalanceReportItem { AccountCode = "005-001-001", AccountTitle = "Gross Sales Revenue - Retail Store", Level1 = "Revenue", Level2 = "Operating Revenue", OpeningBalance = 0m, Debit = 0m, Credit = 490000m, ClosingBalance = -490000m },
-                new TrialBalanceReportItem { AccountCode = "005-002-001", AccountTitle = "Sales Returns & Customer Allowances", Level1 = "Revenue", Level2 = "Contra Revenue", OpeningBalance = 0m, Debit = 15000m, Credit = 0m, ClosingBalance = 15000m },
-
-                // Cost of Sales (Debit)
-                new TrialBalanceReportItem { AccountCode = "006-001-001", AccountTitle = "Cost of Goods Sold (COGS)", Level1 = "Cost of Sales", Level2 = "Direct Costs", OpeningBalance = 0m, Debit = 310000m, Credit = 0m, ClosingBalance = 310000m },
-
-                // Operating Expenses (Debit)
-                new TrialBalanceReportItem { AccountCode = "007-001-001", AccountTitle = "Salaries, Wages & Staff Benefits", Level1 = "Expenses", Level2 = "Operating Expenses", OpeningBalance = 0m, Debit = 85000m, Credit = 0m, ClosingBalance = 85000m },
-                new TrialBalanceReportItem { AccountCode = "007-002-001", AccountTitle = "Commercial Property Rent & Taxes", Level1 = "Expenses", Level2 = "Operating Expenses", OpeningBalance = 0m, Debit = 45000m, Credit = 0m, ClosingBalance = 45000m },
-                new TrialBalanceReportItem { AccountCode = "007-003-001", AccountTitle = "Electricity, Water & Power Utilities", Level1 = "Expenses", Level2 = "Operating Expenses", OpeningBalance = 0m, Debit = 22000m, Credit = 0m, ClosingBalance = 22000m },
-                new TrialBalanceReportItem { AccountCode = "007-004-001", AccountTitle = "Depreciation Expense - POS & Fixtures", Level1 = "Expenses", Level2 = "Non-Cash Expenses", OpeningBalance = 0m, Debit = 7000m, Credit = 0m, ClosingBalance = 7000m }
-            };
-
-            header.TotalAccounts = items.Count;
-            header.TotalOpeningBalance = items.Sum(x => x.OpeningBalance);
-            header.TotalDebit = items.Sum(x => x.Debit);
-            header.TotalCredit = items.Sum(x => x.Credit);
-            header.TotalClosingDebit = items.Sum(x => x.ClosingDebit);
-            header.TotalClosingCredit = items.Sum(x => x.ClosingCredit);
-
-            return new TrialBalanceDataResult(header, items);
         }
     }
 }

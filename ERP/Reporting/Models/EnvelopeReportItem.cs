@@ -57,49 +57,5 @@ namespace ERP.Reporting.Models
 
             return list;
         }
-
-        public static List<EnvelopeItem> GetMockData()
-        {
-            string senderCompany = !string.IsNullOrWhiteSpace(CompanyInfo.CompanyName) ? CompanyInfo.CompanyName : "Retail Suite Enterprise";
-            string senderAddress = !string.IsNullOrWhiteSpace(CompanyInfo.Address) ? CompanyInfo.Address : "Plot 42-B, Commercial Area, Lahore";
-            string senderPhone = !string.IsNullOrWhiteSpace(CompanyInfo.ContactHead) ? CompanyInfo.ContactHead : "+92 42 35789000";
-
-            return new List<EnvelopeItem>
-            {
-                new EnvelopeItem
-                {
-                    SenderCompany = senderCompany,
-                    SenderAddress = senderAddress,
-                    SenderPhone = senderPhone,
-                    RecipientAccount = "001002001",
-                    RecipientName = "Muhammad Rashid (Owner)",
-                    RecipientCompany = "Al-Madina Cash & Carry",
-                    RecipientAddress = "Shop # 14-18, Main Market, Gulberg III, Lahore",
-                    RecipientPhone = "0300-1234567"
-                },
-                new EnvelopeItem
-                {
-                    SenderCompany = senderCompany,
-                    SenderAddress = senderAddress,
-                    SenderPhone = senderPhone,
-                    RecipientAccount = "001002002",
-                    RecipientName = "Haji Abdul Ghaffar",
-                    RecipientCompany = "Bismillah Super Mart",
-                    RecipientAddress = "Plot 82, Sector G-9 Markaz, Islamabad",
-                    RecipientPhone = "0321-9876543"
-                },
-                new EnvelopeItem
-                {
-                    SenderCompany = senderCompany,
-                    SenderAddress = senderAddress,
-                    SenderPhone = senderPhone,
-                    RecipientAccount = "001002003",
-                    RecipientName = "Tariq Mehmood",
-                    RecipientCompany = "Lahore General Store",
-                    RecipientAddress = "24 Commercial Zone, DHA Phase 5, Lahore",
-                    RecipientPhone = "0333-5554321"
-                }
-            };
-        }
     }
 }

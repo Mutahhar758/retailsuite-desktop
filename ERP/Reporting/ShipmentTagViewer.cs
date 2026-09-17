@@ -460,8 +460,8 @@ namespace ERP.Reporting
                 {
                     cmbCustomer.SelectedIndex = 0;
                     OnCustomerSelected();
-                    await LoadAndRenderTagsAsync();
                 }
+                lblStatus.Text = "Ready. Configure options & click 'Preview Tags'.";
             }
             catch (Exception ex)
             {

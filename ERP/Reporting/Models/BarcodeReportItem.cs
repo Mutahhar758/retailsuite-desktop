@@ -82,18 +82,5 @@ namespace ERP.Reporting.Models
                 }
             }
         }
-
-        public static List<BarcodeLabelItem> GetMockData()
-        {
-            return new List<BarcodeLabelItem>
-            {
-                new BarcodeLabelItem { ItemId = "ITM-001", Title = "Nestle MilkPak 1000ml", Barcode = "896101400231", Rate = 295.00m, Category = "Dairy", Copies = 12 },
-                new BarcodeLabelItem { ItemId = "ITM-002", Title = "Tapal Danedar Tea 950g", Barcode = "896400010452", Rate = 1420.00m, Category = "Beverages", Copies = 6 },
-                new BarcodeLabelItem { ItemId = "ITM-003", Title = "Dalda Cooking Oil 5L Tin", Barcode = "896200055104", Rate = 2850.00m, Category = "Edible Oil", Copies = 4 },
-                new BarcodeLabelItem { ItemId = "ITM-004", Title = "Ariel Washing Powder 1kg", Barcode = "896300098214", Rate = 680.00m, Category = "Laundry", Copies = 8 },
-                new BarcodeLabelItem { ItemId = "ITM-005", Title = "Shan Biryani Masala 50g", Barcode = "896100078129", Rate = 110.00m, Category = "Spices", Copies = 24 },
-                new BarcodeLabelItem { ItemId = "ITM-006", Title = "Olpers Milk 1000ml", Barcode = "896100554312", Rate = 290.00m, Category = "Dairy", Copies = 12 }
-            };
-        }
     }
 }

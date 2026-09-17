@@ -105,13 +105,7 @@ namespace ERP.Reporting
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9F)
             };
-            cmbItem.SelectedIndexChanged += (s, e) =>
-            {
-                if (!_isPopulatingItems)
-                {
-                    _ = LoadAndRenderReportAsync();
-                }
-            };
+
 
             // From Date Control
             lblFrom = new Label
@@ -300,7 +294,7 @@ namespace ERP.Reporting
             {
                 await InitializeWebViewAsync();
                 await PopulateItemsAsync();
-                await LoadAndRenderReportAsync();
+                if (lblStatus != null) lblStatus.Text = "Ready. Select item & date range, then click 'Generate Report'.";
             };
 
             this.FormClosing += (s, e) =>
@@ -346,14 +340,6 @@ namespace ERP.Reporting
                         dt.Rows.Add(itm.Id, itm.Title);
                     }
                 }
-                else
-                {
-                    // Fallback items for offline testing
-                    dt.Rows.Add("ITM-00101", "Shan Biryani Masala 50g x 12 (Carton)");
-                    dt.Rows.Add("ITM-00102", "National Tomato Ketchup 800g Pouch");
-                    dt.Rows.Add("ITM-00103", "Dalda Cooking Oil 5 Litre Can");
-                    dt.Rows.Add("ITM-00104", "Tapal Danedar Tea 950g Family Pack");
-                }
 
                 cmbItem.DataSource = dt;
                 cmbItem.DisplayMember = "Title";
@@ -366,18 +352,7 @@ namespace ERP.Reporting
             }
             catch
             {
-                var dt = new DataTable();
-                dt.Columns.Add("ID", typeof(string));
-                dt.Columns.Add("Title", typeof(string));
-                dt.Rows.Add("ITM-00101", "Shan Biryani Masala 50g x 12 (Carton)");
-                dt.Rows.Add("ITM-00102", "National Tomato Ketchup 800g Pouch");
-                dt.Rows.Add("ITM-00103", "Dalda Cooking Oil 5 Litre Can");
-                dt.Rows.Add("ITM-00104", "Tapal Danedar Tea 950g Family Pack");
-
-                cmbItem.DataSource = dt;
-                cmbItem.DisplayMember = "Title";
-                cmbItem.ValueMember = "ID";
-                cmbItem.SelectedIndex = 0;
+                // Leave empty on error
             }
             finally
             {
@@ -400,23 +375,27 @@ namespace ERP.Reporting
                 ItemLedgerDataResult result = null;
 
                 // 1. Fetch live data
-                try
+                DataTable dt = await Task.Run(() => ReportQuery.StockLedger(selectedItemId, fromDate, toDate));
+                if (dt != null && dt.Rows.Count > 0)
                 {
-                    DataTable dt = await Task.Run(() => ReportQuery.StockLedger(selectedItemId, fromDate, toDate));
-                    if (dt != null && dt.Rows.Count > 0)
+                    result = ItemLedgerDataService.ConvertDataTable(dt, selectedItemId, selectedItemTitle, fromDate, toDate);
+                }
+                else
+                {
+                    var emptyHeader = new ItemLedgerHeader
                     {
-                        result = ItemLedgerDataService.ConvertDataTable(dt, selectedItemId, selectedItemTitle, fromDate, toDate);
-                    }
-                }
-                catch
-                {
-                    result = null;
-                }
-
-                // 2. Fallback to realistic mock data if offline or empty
-                if (result == null || result.Items.Count == 0)
-                {
-                    result = ItemLedgerDataService.GetMockData(selectedItemId, selectedItemTitle, fromDate, toDate);
+                        CompanyName = !string.IsNullOrWhiteSpace(CompanyInfo.CompanyName) ? CompanyInfo.CompanyName : "Retail Suite Enterprise",
+                        ItemId = selectedItemId ?? string.Empty,
+                        ItemTitle = !string.IsNullOrWhiteSpace(selectedItemTitle) ? selectedItemTitle : "Inventory Item",
+                        FromDate = fromDate,
+                        ToDate = toDate,
+                        OpeningBalance = 0,
+                        TotalIn = 0,
+                        TotalOut = 0,
+                        ClosingBalance = 0,
+                        GeneratedAt = DateTime.Now
+                    };
+                    result = new ItemLedgerDataResult(emptyHeader, new List<ItemLedgerReportItem>());
                 }
 
                 _currentHeader = result.Header;

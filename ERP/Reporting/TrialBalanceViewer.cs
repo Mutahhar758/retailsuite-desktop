@@ -240,7 +240,7 @@ namespace ERP.Reporting
             this.Load += async (s, e) =>
             {
                 await InitializeWebView2Async();
-                await LoadAndRenderReportAsync();
+                SetLoadingState(false, "Ready. Select dates & filters, then click 'Filter' to view Trial Balance.");
             };
         }
 
@@ -286,54 +286,28 @@ namespace ERP.Reporting
 
                 var reportData = await Task.Run(() =>
                 {
-                    try
-                    {
-                        DataTable dt = ReportQuery.TrialBalance(from, to);
-                        if (dt != null && dt.Rows.Count > 0)
-                        {
-                            var items = TrialBalanceDataService.FromDataTable(dt);
-
-                            if (hideZero)
-                            {
-                                items = items.Where(x => x.OpeningBalance != 0 || x.Debit != 0 || x.Credit != 0 || x.ClosingBalance != 0).ToList();
-                            }
-
-                            var header = new TrialBalanceHeader
-                            {
-                                CompanyName = CompanyInfo.CompanyName,
-                                FromDate = from,
-                                ToDate = to,
-                                TotalAccounts = items.Count,
-                                TotalOpeningBalance = items.Sum(x => x.OpeningBalance),
-                                TotalDebit = items.Sum(x => x.Debit),
-                                TotalCredit = items.Sum(x => x.Credit),
-                                TotalClosingDebit = items.Sum(x => x.ClosingDebit),
-                                TotalClosingCredit = items.Sum(x => x.ClosingCredit)
-                            };
-
-                            return new TrialBalanceDataResult(header, items);
-                        }
-                    }
-                    catch
-                    {
-                        // Fallback on network/API failure
-                    }
-
-                    // Fallback to sample data for preview
-                    var sample = TrialBalanceDataService.GetSampleTrialBalance(CompanyInfo.CompanyName);
-                    sample.Header.FromDate = from;
-                    sample.Header.ToDate = to;
+                    DataTable dt = ReportQuery.TrialBalance(from, to);
+                    var items = (dt != null && dt.Rows.Count > 0) ? TrialBalanceDataService.FromDataTable(dt) : new List<TrialBalanceReportItem>();
 
                     if (hideZero)
                     {
-                        sample.Items = sample.Items.Where(x => x.OpeningBalance != 0 || x.Debit != 0 || x.Credit != 0 || x.ClosingBalance != 0).ToList();
+                        items = items.Where(x => x.OpeningBalance != 0 || x.Debit != 0 || x.Credit != 0 || x.ClosingBalance != 0).ToList();
                     }
 
-                    sample.Header.TotalAccounts = sample.Items.Count;
-                    sample.Header.TotalDebit = sample.Items.Sum(x => x.Debit);
-                    sample.Header.TotalCredit = sample.Items.Sum(x => x.Credit);
+                    var header = new TrialBalanceHeader
+                    {
+                        CompanyName = CompanyInfo.CompanyName,
+                        FromDate = from,
+                        ToDate = to,
+                        TotalAccounts = items.Count,
+                        TotalOpeningBalance = items.Sum(x => x.OpeningBalance),
+                        TotalDebit = items.Sum(x => x.Debit),
+                        TotalCredit = items.Sum(x => x.Credit),
+                        TotalClosingDebit = items.Sum(x => x.ClosingDebit),
+                        TotalClosingCredit = items.Sum(x => x.ClosingCredit)
+                    };
 
-                    return sample;
+                    return new TrialBalanceDataResult(header, items);
                 });
 
                 _currentHeader = reportData.Header;

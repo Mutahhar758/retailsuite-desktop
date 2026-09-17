@@ -195,7 +195,8 @@ namespace ERP.Reporting
             this.Load += async (s, e) =>
             {
                 await InitializeWebViewAsync();
-                await LoadAndRenderReportAsync();
+                lblStatus.Text = "Ready. Select 'As On' date and click 'Generate'.";
+                lblStatus.ForeColor = Color.FromArgb(71, 85, 105);
             };
 
             this.FormClosing += (s, e) =>
@@ -232,27 +233,8 @@ namespace ERP.Reporting
             SetLoading(true);
             try
             {
-                BalanceSheetDataResult result = null;
-
-                // 1. Fetch live data
-                try
-                {
-                    DataTable dt = await Task.Run(() => ReportQuery.BalanceSheet(asOn));
-                    if (dt != null && dt.Rows.Count > 0)
-                    {
-                        result = BalanceSheetDataService.ConvertDataTable(dt, asOn);
-                    }
-                }
-                catch
-                {
-                    result = null;
-                }
-
-                // 2. Fallback to realistic mock data if offline or empty
-                if (result == null || result.AssetItems.Count == 0)
-                {
-                    result = BalanceSheetDataService.GetMockData(asOn);
-                }
+                DataTable dt = await Task.Run(() => ReportQuery.BalanceSheet(asOn));
+                var result = BalanceSheetDataService.ConvertDataTable(dt, asOn);
 
                 _currentResult = result;
 

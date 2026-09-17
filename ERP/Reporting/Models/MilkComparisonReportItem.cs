@@ -124,13 +124,12 @@ namespace ERP.Reporting.Models
             }
             catch
             {
-                // Fallback to sample data for offline mode / initial preview
+                // Return empty if database query fails or returns nothing
             }
 
-            // Generate realistic sample dataset matching date range
-            var sampleLines = GenerateSampleLines(fromDate, toDate);
-            var sampleSummary = CalculateSummary(sampleLines);
-            return (header, sampleLines, sampleSummary);
+            var emptyLines = new List<MilkComparisonLineItem>();
+            var emptySummary = CalculateSummary(emptyLines);
+            return (header, emptyLines, emptySummary);
         }
 
         public static MilkComparisonSummary CalculateSummary(List<MilkComparisonLineItem> lines)
@@ -155,64 +154,6 @@ namespace ERP.Reporting.Models
             summary.TotalNetDiffQty = summary.TotalPurchaseQty - summary.TotalDispatchedQty;
 
             return summary;
-        }
-
-        private static List<MilkComparisonLineItem> GenerateSampleLines(DateTime fromDate, DateTime toDate)
-        {
-            var list = new List<MilkComparisonLineItem>();
-            int days = (int)(toDate.Date - fromDate.Date).TotalDays + 1;
-            if (days <= 0) days = 10;
-            if (days > 31) days = 31;
-
-            decimal runningNetDiff = 0m;
-            var rand = new Random(42);
-
-            for (int i = 0; i < days; i++)
-            {
-                var dt = fromDate.Date.AddDays(i);
-                decimal purchQty = 140m + (rand.Next(0, 7) * 5m); // 140 - 170 Litres
-                decimal purchRate = 175.0m;
-                decimal purchAmt = purchQty * purchRate;
-
-                decimal supplyQty = purchQty - (rand.Next(-2, 4) * 2.5m); // near purchase qty
-                decimal supplyRate = 210.0m;
-                decimal supplyAmt = supplyQty * supplyRate;
-
-                decimal regularSaleQty = rand.Next(0, 3) * 5m; // 0, 5, 10
-                decimal regularSaleAmt = regularSaleQty * 215.0m;
-
-                decimal totalDispatched = supplyQty + regularSaleQty;
-                decimal diffQty = purchQty - totalDispatched;
-                decimal diffAmt = (supplyAmt + regularSaleAmt) - purchAmt; // revenue - cost
-
-                runningNetDiff += diffQty;
-
-                string status;
-                if (diffQty > 0.5m) status = "Surplus";
-                else if (diffQty < -0.5m) status = "Shortage";
-                else status = "Equal";
-
-                list.Add(new MilkComparisonLineItem
-                {
-                    Date = dt,
-                    DayName = dt.ToString("ddd"),
-                    PurchaseQty = purchQty,
-                    PurchaseAvgRate = purchRate,
-                    PurchaseAmount = purchAmt,
-                    SupplyQty = supplyQty,
-                    SupplyAvgRate = supplyRate,
-                    SupplyAmount = supplyAmt,
-                    RegularSaleQty = regularSaleQty,
-                    RegularSaleAmount = regularSaleAmt,
-                    TotalDispatchedQty = totalDispatched,
-                    DiffQty = diffQty,
-                    DiffAmount = diffAmt,
-                    NetDiffQty = runningNetDiff,
-                    Status = status
-                });
-            }
-
-            return list;
         }
     }
 }

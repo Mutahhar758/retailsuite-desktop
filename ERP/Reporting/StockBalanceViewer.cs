@@ -277,7 +277,7 @@ namespace ERP.Reporting
             {
                 await InitializeWebView2Async();
                 await LoadCategoriesAsync();
-                await LoadAndRenderReportAsync();
+                SetLoadingState(false, "Ready. Select category & filters, then click 'Filter' to view stock balance.");
             };
         }
 
@@ -334,16 +334,10 @@ namespace ERP.Reporting
             }
             catch
             {
-                // Fallback default
                 var dt = new DataTable();
                 dt.Columns.Add("Code", typeof(string));
                 dt.Columns.Add("Title", typeof(string));
                 dt.Rows.Add("", "All Categories");
-                dt.Rows.Add("CAT-01", "Beverages & Drinks");
-                dt.Rows.Add("CAT-02", "Confectionery & Snacks");
-                dt.Rows.Add("CAT-03", "Dairy & Chilled");
-                dt.Rows.Add("CAT-04", "Personal Care & Hygiene");
-                dt.Rows.Add("CAT-05", "Household & Detergents");
 
                 cmbCategory.DisplayMember = "Title";
                 cmbCategory.ValueMember = "Code";
@@ -356,77 +350,49 @@ namespace ERP.Reporting
         {
             if (!_isWebViewReady) return;
 
-            SetLoadingState(true, "Fetching stock balances & generating PDF...");
+            SetLoadingState(true, "Calculating inventory valuation & generating PDF...");
 
             try
             {
-                string categoryCode = cmbCategory.SelectedValue != null ? cmbCategory.SelectedValue.ToString() : null;
+                string categoryCode = cmbCategory.SelectedValue != null ? cmbCategory.SelectedValue.ToString() : string.Empty;
                 string categoryTitle = cmbCategory.Text ?? "All Categories";
                 DateTime from = dtpFrom.Value.Date;
                 DateTime to = dtpTo.Value.Date.AddDays(1).AddSeconds(-1);
-                string filterSelection = cmbFilter?.SelectedItem?.ToString() ?? "All Stock";
-
+                string filterSelection = cmbFilter.SelectedItem?.ToString() ?? "All Items";
                 string queryFilter = "All";
-                if (filterSelection == "Positive (> 0)") queryFilter = "> 0";
-                else if (filterSelection == "Negative (< 0)") queryFilter = "< 0";
-                else if (filterSelection == "Zero (= 0)") queryFilter = "= 0";
+                if (filterSelection == "Closing Qty > 0") queryFilter = "> 0";
+                else if (filterSelection == "Closing Qty < 0") queryFilter = "< 0";
+                else if (filterSelection == "Closing Qty = 0") queryFilter = "= 0";
 
                 var reportData = await Task.Run(() =>
                 {
-                    try
+                    DataTable dt = ReportQuery.StockBalance(from, to, queryFilter, 0m, categoryCode, null);
+                    var items = (dt != null && dt.Rows.Count > 0) ? StockBalanceDataService.FromDataTable(dt) : new List<StockBalanceReportItem>();
+
+                    // Apply client-side quantity filter safeguard
+                    if (queryFilter == "> 0") items = items.Where(x => x.ClosingQty > 0).ToList();
+                    else if (queryFilter == "< 0") items = items.Where(x => x.ClosingQty < 0).ToList();
+                    else if (queryFilter == "= 0") items = items.Where(x => x.ClosingQty == 0).ToList();
+
+                    // Re-index
+                    for (int i = 0; i < items.Count; i++) items[i].Index = i + 1;
+
+                    var header = new StockBalanceHeader
                     {
-                        DataTable dt = ReportQuery.StockBalance(from, to, queryFilter, 0m, categoryCode, null);
-                        if (dt != null && dt.Rows.Count > 0)
-                        {
-                            var items = StockBalanceDataService.FromDataTable(dt);
+                        CompanyName = CompanyInfo.CompanyName,
+                        CategoryName = categoryTitle,
+                        Filter = filterSelection,
+                        FromDate = from,
+                        ToDate = to,
+                        TotalItems = items.Count,
+                        TotalOpeningQty = items.Sum(x => x.OpeningQty),
+                        TotalQtyIn = items.Sum(x => x.QtyIn),
+                        TotalQtyOut = items.Sum(x => x.QtyOut),
+                        TotalClosingQty = items.Sum(x => x.ClosingQty),
+                        TotalStockValue = items.Sum(x => x.TotalValue)
+                    };
 
-                            // Apply client-side quantity filter safeguard
-                            if (queryFilter == "> 0") items = items.Where(x => x.ClosingQty > 0).ToList();
-                            else if (queryFilter == "< 0") items = items.Where(x => x.ClosingQty < 0).ToList();
-                            else if (queryFilter == "= 0") items = items.Where(x => x.ClosingQty == 0).ToList();
-
-                            // Re-index
-                            for (int i = 0; i < items.Count; i++) items[i].Index = i + 1;
-
-                            var header = new StockBalanceHeader
-                            {
-                                CompanyName = CompanyInfo.CompanyName,
-                                CategoryName = categoryTitle,
-                                Filter = filterSelection,
-                                FromDate = from,
-                                ToDate = to,
-                                TotalItems = items.Count,
-                                TotalOpeningQty = items.Sum(x => x.OpeningQty),
-                                TotalQtyIn = items.Sum(x => x.QtyIn),
-                                TotalQtyOut = items.Sum(x => x.QtyOut),
-                                TotalClosingQty = items.Sum(x => x.ClosingQty),
-                                TotalStockValue = items.Sum(x => x.TotalValue)
-                            };
-
-                            return new StockBalanceDataResult(header, items);
-                        }
-                    }
-                    catch
-                    {
-                        // Fallback on network/API failure
-                    }
-
-                    // Fallback to sample data for preview
-                    var sample = StockBalanceDataService.GetSampleStockBalance(CompanyInfo.CompanyName);
-                    sample.Header.CategoryName = categoryTitle;
-                    sample.Header.Filter = filterSelection;
-                    sample.Header.FromDate = from;
-                    sample.Header.ToDate = to;
-
-                    if (queryFilter == "> 0") sample.Items = sample.Items.Where(x => x.ClosingQty > 0).ToList();
-                    else if (queryFilter == "< 0") sample.Items = sample.Items.Where(x => x.ClosingQty < 0).ToList();
-                    else if (queryFilter == "= 0") sample.Items = sample.Items.Where(x => x.ClosingQty == 0).ToList();
-
-                    sample.Header.TotalItems = sample.Items.Count;
-                    sample.Header.TotalClosingQty = sample.Items.Sum(x => x.ClosingQty);
-                    sample.Header.TotalStockValue = sample.Items.Sum(x => x.TotalValue);
-
-                    return sample;
+                    return new StockBalanceDataResult(header, items);
                 });
 
                 _currentHeader = reportData.Header;

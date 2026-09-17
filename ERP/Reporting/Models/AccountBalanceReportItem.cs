@@ -59,7 +59,7 @@ namespace ERP.Reporting.Models
     }
 
     /// <summary>
-    /// Service to transform raw DataTables and provide mock testing datasets for Account Balance.
+    /// Service to transform raw DataTables for Account Balance.
     /// </summary>
     public static class AccountBalanceDataService
     {
@@ -110,74 +110,6 @@ namespace ERP.Reporting.Models
                 CompanyName = !string.IsNullOrWhiteSpace(CompanyInfo.CompanyName) ? CompanyInfo.CompanyName : "Retail Suite Enterprise",
                 AccountHeadTitle = !string.IsNullOrWhiteSpace(accountHeadTitle) ? accountHeadTitle : "Account Head",
                 AccountHeadId = accountHeadId ?? string.Empty,
-                AsOnDate = asOnDate,
-                TotalAccounts = items.Count,
-                TotalDebit = items.Sum(x => x.Debit),
-                TotalCredit = items.Sum(x => x.Credit),
-                GeneratedAt = DateTime.Now
-            };
-
-            return new AccountBalanceDataResult(header, items);
-        }
-
-        public static AccountBalanceDataResult GetMockData(
-            string accountHeadId,
-            string accountHeadTitle,
-            DateTime asOnDate,
-            string balanceFilter = "All")
-        {
-            var mockEntries = new List<(string Title, decimal Balance)>
-            {
-                ("Al-Madina Superstore - Faisalabad", 45000.00m),
-                ("Bismillah Traders - Gujranwala", 128500.00m),
-                ("Chenab Valley General Store", -15000.00m),
-                ("Crown Cash & Carry - Lahore", 89400.00m),
-                ("Diamond Mart - Islamabad", 23100.00m),
-                ("Faisal Wholesale Center", -8400.00m),
-                ("Ghazi Traders & Distributors", 67800.00m),
-                ("Haseeb Provision Store - Rawalpindi", 14350.00m),
-                ("Ittifaq Departmental Store", 92000.00m),
-                ("Jinnah Super Market", 54100.00m),
-                ("Khyber Trading Agency - Peshawar", 112000.00m),
-                ("Lahore General Store", -32000.00m),
-                ("Metro Mega Mart - Sialkot", 76400.00m),
-                ("National Mart & Bakery", 18900.00m),
-                ("Pak Pearl Cash & Carry", 42750.00m),
-                ("Rehman & Sons Enterprise", 98300.00m),
-                ("Siddiqui Mart - Multan", 31200.00m),
-                ("United Wholesale Agency", -11500.00m),
-                ("Vertex Retail Outlet", 27600.00m),
-                ("Zubair Brothers Provision", 58900.00m)
-            };
-
-            var items = new List<AccountBalanceReportItem>();
-            int idx = 1;
-
-            foreach (var entry in mockEntries)
-            {
-                decimal debit = entry.Balance > 0 ? entry.Balance : 0m;
-                decimal credit = entry.Balance < 0 ? Math.Abs(entry.Balance) : 0m;
-
-                if (balanceFilter == "Debit" && debit <= 0) continue;
-                if (balanceFilter == "Credit" && credit <= 0) continue;
-
-                items.Add(new AccountBalanceReportItem
-                {
-                    Index = idx++,
-                    AccountTitle = entry.Title,
-                    Debit = debit,
-                    Credit = credit,
-                    Balance = entry.Balance
-                });
-            }
-
-            string headName = !string.IsNullOrWhiteSpace(accountHeadTitle) ? accountHeadTitle : "Customers / Trade Debtors";
-
-            var header = new AccountBalanceHeader
-            {
-                CompanyName = !string.IsNullOrWhiteSpace(CompanyInfo.CompanyName) ? CompanyInfo.CompanyName : "Retail Suite Enterprise",
-                AccountHeadTitle = headName,
-                AccountHeadId = !string.IsNullOrWhiteSpace(accountHeadId) ? accountHeadId : "01-01-001-0001",
                 AsOnDate = asOnDate,
                 TotalAccounts = items.Count,
                 TotalDebit = items.Sum(x => x.Debit),

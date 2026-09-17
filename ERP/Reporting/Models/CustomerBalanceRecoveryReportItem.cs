@@ -120,12 +120,12 @@ namespace ERP.Reporting.Models
             }
             catch
             {
-                // Fallback to sample data for offline mode
+                // Return empty if database query fails or returns nothing
             }
 
-            var sampleLines = GenerateSampleLines(balanceFilter);
-            var sampleSummary = CalculateSummary(sampleLines);
-            return (header, sampleLines, sampleSummary);
+            var emptyLines = new List<CustomerBalanceRecoveryLineItem>();
+            var emptySummary = CalculateSummary(emptyLines);
+            return (header, emptyLines, emptySummary);
         }
 
         private static List<CustomerBalanceRecoveryLineItem> ApplyClientFilter(List<CustomerBalanceRecoveryLineItem> list, string filter)
@@ -154,135 +154,6 @@ namespace ERP.Reporting.Models
             summary.OverallRecoveryRate = summary.TotalDue > 0 ? ((summary.TotalRecovery / summary.TotalDue) * 100m) : 0m;
 
             return summary;
-        }
-
-        private static List<CustomerBalanceRecoveryLineItem> GenerateSampleLines(string filter)
-        {
-            var all = new List<CustomerBalanceRecoveryLineItem>
-            {
-                new CustomerBalanceRecoveryLineItem
-                {
-                    CustomerAccountId = "05-01-0001",
-                    CustomerTitle = "Al-Madina Super Mart & Wholesale",
-                    Phone = "0300-1234567",
-                    Address = "Main Boulevard, Gulberg III, Lahore",
-                    PreviousBalance = 125000m,
-                    CurrentBilling = 88000m,
-                    TotalDue = 213000m,
-                    RecoveryAmount = 150000m,
-                    Discount = 0m,
-                    ClosingBalance = 63000m,
-                    RecoveryPercentage = 70.4m,
-                    Status = "Partial"
-                },
-                new CustomerBalanceRecoveryLineItem
-                {
-                    CustomerAccountId = "05-01-0002",
-                    CustomerTitle = "Bismillah Cash & Carry (Model Town)",
-                    Phone = "0321-7654321",
-                    Address = "C-Block Commercial Area, Model Town",
-                    PreviousBalance = 45000m,
-                    CurrentBilling = 95000m,
-                    TotalDue = 140000m,
-                    RecoveryAmount = 140000m,
-                    Discount = 0m,
-                    ClosingBalance = 0m,
-                    RecoveryPercentage = 100m,
-                    Status = "Cleared"
-                },
-                new CustomerBalanceRecoveryLineItem
-                {
-                    CustomerAccountId = "05-01-0003",
-                    CustomerTitle = "Save & Mart Departmental Store",
-                    Phone = "0333-4455667",
-                    Address = "Y-Block Commercial, DHA Phase 3, Lahore",
-                    PreviousBalance = 210000m,
-                    CurrentBilling = 145000m,
-                    TotalDue = 355000m,
-                    RecoveryAmount = 250000m,
-                    Discount = 5000m,
-                    ClosingBalance = 100000m,
-                    RecoveryPercentage = 70.4m,
-                    Status = "Partial"
-                },
-                new CustomerBalanceRecoveryLineItem
-                {
-                    CustomerAccountId = "05-01-0004",
-                    CustomerTitle = "Chaudhry Dairy & Bakers",
-                    Phone = "0302-8899001",
-                    Address = "G.T. Road, Baghbanpura, Lahore",
-                    PreviousBalance = 80000m,
-                    CurrentBilling = 60000m,
-                    TotalDue = 140000m,
-                    RecoveryAmount = 0m,
-                    Discount = 0m,
-                    ClosingBalance = 140000m,
-                    RecoveryPercentage = 0m,
-                    Status = "Unpaid"
-                },
-                new CustomerBalanceRecoveryLineItem
-                {
-                    CustomerAccountId = "05-01-0005",
-                    CustomerTitle = "Mian Sons General Order Supplier",
-                    Phone = "0312-9988776",
-                    Address = "Shah Alam Market, Lahore",
-                    PreviousBalance = 0m,
-                    CurrentBilling = 75000m,
-                    TotalDue = 75000m,
-                    RecoveryAmount = 75000m,
-                    Discount = 0m,
-                    ClosingBalance = 0m,
-                    RecoveryPercentage = 100m,
-                    Status = "Cleared"
-                },
-                new CustomerBalanceRecoveryLineItem
-                {
-                    CustomerAccountId = "05-01-0006",
-                    CustomerTitle = "Green Valley Grocery & Pantry",
-                    Phone = "0305-1122334",
-                    Address = "Mall of Lahore, Cantt",
-                    PreviousBalance = 90000m,
-                    CurrentBilling = 110000m,
-                    TotalDue = 200000m,
-                    RecoveryAmount = 180000m,
-                    Discount = 0m,
-                    ClosingBalance = 20000m,
-                    RecoveryPercentage = 90.0m,
-                    Status = "Partial"
-                },
-                new CustomerBalanceRecoveryLineItem
-                {
-                    CustomerAccountId = "05-01-0007",
-                    CustomerTitle = "Kareem Kiryana & Tea Stall",
-                    Phone = "0323-5566778",
-                    Address = "Ferozepur Road, Ichhra, Lahore",
-                    PreviousBalance = 35000m,
-                    CurrentBilling = 42000m,
-                    TotalDue = 77000m,
-                    RecoveryAmount = 0m,
-                    Discount = 0m,
-                    ClosingBalance = 77000m,
-                    RecoveryPercentage = 0m,
-                    Status = "Unpaid"
-                },
-                new CustomerBalanceRecoveryLineItem
-                {
-                    CustomerAccountId = "05-01-0008",
-                    CustomerTitle = "Punjab Super Store (Johar Town)",
-                    Phone = "0300-3344556",
-                    Address = "G-1 Market, Johar Town, Lahore",
-                    PreviousBalance = 160000m,
-                    CurrentBilling = 120000m,
-                    TotalDue = 280000m,
-                    RecoveryAmount = 280000m,
-                    Discount = 0m,
-                    ClosingBalance = 0m,
-                    RecoveryPercentage = 100m,
-                    Status = "Cleared"
-                }
-            };
-
-            return ApplyClientFilter(all, filter);
         }
     }
 }

@@ -178,50 +178,5 @@ namespace ERP.Reporting.Models
 
             return new IncomeSummaryDataResult(header, sales, cogs, expenses);
         }
-
-        public static IncomeSummaryDataResult GetMockData(DateTime fromDate, DateTime toDate)
-        {
-            var sales = new List<IncomeSummaryLineItem>
-            {
-                new IncomeSummaryLineItem { Category = "Sales", Title = "Counter Retail Sales", Debit = 45000.00m, Credit = 3120000.00m, Amount = 3075000.00m },
-                new IncomeSummaryLineItem { Category = "Sales", Title = "Corporate & Wholesale Sales", Debit = 12000.00m, Credit = 1485000.00m, Amount = 1473000.00m },
-                new IncomeSummaryLineItem { Category = "Sales", Title = "Online Delivery Orders", Debit = 3500.00m, Credit = 345000.00m, Amount = 341500.00m }
-            };
-
-            var cogs = new List<IncomeSummaryLineItem>
-            {
-                new IncomeSummaryLineItem { Category = "Cost of Goods Sold", Title = "Opening Inventory Balance", Debit = 1250000.00m, Credit = 0m, Amount = 1250000.00m },
-                new IncomeSummaryLineItem { Category = "Cost of Goods Sold", Title = "Purchases (Net of Returns)", Debit = 3420000.00m, Credit = 85000.00m, Amount = 3335000.00m },
-                new IncomeSummaryLineItem { Category = "Cost of Goods Sold", Title = "Less: Closing Inventory Balance", Debit = -1480000.00m, Credit = 0m, Amount = -1480000.00m }
-            };
-
-            var expenses = new List<IncomeSummaryLineItem>
-            {
-                new IncomeSummaryLineItem { Category = "Expenses", Title = "Salaries & Staff Allowances", Debit = 340000.00m, Credit = 0m, Amount = 340000.00m },
-                new IncomeSummaryLineItem { Category = "Expenses", Title = "Building & Store Rent", Debit = 120000.00m, Credit = 0m, Amount = 120000.00m },
-                new IncomeSummaryLineItem { Category = "Expenses", Title = "Electricity & Utility Bills", Debit = 85400.00m, Credit = 0m, Amount = 85400.00m },
-                new IncomeSummaryLineItem { Category = "Expenses", Title = "Freight & Delivery Charges", Debit = 42500.00m, Credit = 0m, Amount = 42500.00m },
-                new IncomeSummaryLineItem { Category = "Expenses", Title = "Marketing, Packaging & Promotion", Debit = 28600.00m, Credit = 0m, Amount = 28600.00m },
-                new IncomeSummaryLineItem { Category = "Expenses", Title = "Store Maintenance & Repair", Debit = 14300.00m, Credit = 0m, Amount = 14300.00m },
-                new IncomeSummaryLineItem { Category = "Expenses", Title = "Office Supplies & Software", Debit = 9800.00m, Credit = 0m, Amount = 9800.00m }
-            };
-
-            decimal totalSales = sales.Sum(x => x.Amount);
-            decimal totalCogs = cogs.Sum(x => x.Amount);
-            decimal totalExpenses = expenses.Sum(x => x.Amount);
-
-            var header = new IncomeSummaryHeader
-            {
-                CompanyName = !string.IsNullOrWhiteSpace(CompanyInfo.CompanyName) ? CompanyInfo.CompanyName : "Retail Suite Enterprise",
-                FromDate = fromDate,
-                ToDate = toDate,
-                TotalSales = totalSales,
-                TotalCogs = totalCogs,
-                TotalExpenses = totalExpenses,
-                GeneratedAt = DateTime.Now
-            };
-
-            return new IncomeSummaryDataResult(header, sales, cogs, expenses);
-        }
     }
 }

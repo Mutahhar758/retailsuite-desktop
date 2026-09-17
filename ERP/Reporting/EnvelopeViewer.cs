@@ -298,14 +298,9 @@ namespace ERP.Reporting
                 await webView.EnsureCoreWebView2Async(env);
                 _isWebViewReady = true;
 
-                // Pre-check first 3 if available and preview
-                if (chklstAccounts.Items.Count > 0)
-                {
-                    int toCheck = Math.Min(3, chklstAccounts.Items.Count);
-                    for (int i = 0; i < toCheck; i++) chklstAccounts.SetItemChecked(i, true);
-                    UpdateSelectedCount();
-                    await LoadAndRenderEnvelopesAsync();
-                }
+                // Do not pre-check or auto-render
+                UpdateSelectedCount();
+                lblStatus.Text = "Ready. Select customers & click 'Preview Envelopes'.";
             }
             catch (Exception ex)
             {
@@ -368,7 +363,7 @@ namespace ERP.Reporting
                 }
                 catch
                 {
-                    envelopes = EnvelopeDataService.GetMockData();
+                    envelopes = null;
                 }
 
                 if (envelopes == null || envelopes.Count == 0)
