@@ -199,6 +199,31 @@ namespace ERP.Reporting.Documents
                         r.AutoItem().Text(_summary.NetBalance.ToString("N2")).Bold().FontSize(8f);
                     });
 
+                    if (_summary.ShowQrPayment)
+                    {
+                        col.Item().PaddingTop(2).LineHorizontal(0.5f).LineColor(QuestPDF.Helpers.Colors.Grey.Lighten1);
+                        col.Item().AlignCenter().Text("SCAN TO PAY (ALL BANKS / RAAST)").FontSize(6.5f).Bold();
+                        try
+                        {
+                            var qrBytes = ERP.Classes.QrCodeHelper.GeneratePng(_summary.QrPayment.BuildEmvCoPayload(_summary.NetBalance), 3);
+                            if (qrBytes != null && qrBytes.Length > 0)
+                            {
+                                col.Item().AlignCenter().Width(90).Image(qrBytes);
+                            }
+                        }
+                        catch { }
+                        if (!string.IsNullOrWhiteSpace(_summary.QrPayment.BankName))
+                            col.Item().AlignCenter().Text(_summary.QrPayment.BankName).FontSize(6f).SemiBold();
+                        if (!string.IsNullOrWhiteSpace(_summary.QrPayment.AccountTitle))
+                            col.Item().AlignCenter().Text(_summary.QrPayment.AccountTitle).FontSize(6f);
+                        if (!string.IsNullOrWhiteSpace(_summary.QrPayment.AccountNumber))
+                        {
+                            string dispIban = ERP.Classes.QrPaymentInfo.FormatIban(ERP.Classes.QrPaymentInfo.NormalizeToIban(_summary.QrPayment.AccountNumber, _summary.QrPayment.BankName));
+                            col.Item().AlignCenter().Text(dispIban).FontSize(6f).Bold();
+                        }
+                        col.Item().AlignCenter().Text("Amount: PKR " + _summary.NetBalance.ToString("N2")).FontSize(6.5f).Bold();
+                    }
+
                     col.Item().PaddingVertical(2).LineHorizontal(0.5f).LineColor(QuestPDF.Helpers.Colors.Grey.Medium);
 
                     // 6. Thankyou & Signatures
@@ -393,6 +418,11 @@ namespace ERP.Reporting.Documents
                                     msgCol.Item().PaddingTop(2).Text("Please clear outstanding balances within the agreed credit terms.").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
                                 });
                         }
+
+                        if (_summary.ShowQrPayment)
+                        {
+                            notesCol.Item().PaddingTop(6).Element(ComposeQrPaymentSection);
+                        }
                     });
 
                     summaryRow.ConstantItem(260).AlignRight().Column(recCol =>
@@ -549,6 +579,72 @@ namespace ERP.Reporting.Documents
                 .PaddingVertical(5)
                 .PaddingHorizontal(4)
                 .DefaultTextStyle(x => x.FontSize(9.5f).Bold().FontColor(QuestPDF.Helpers.Colors.Blue.Darken3));
+        }
+
+        private void ComposeQrPaymentSection(IContainer container)
+        {
+            byte[] qrBytes = null;
+            try
+            {
+                qrBytes = ERP.Classes.QrCodeHelper.GeneratePng(_summary.QrPayment.BuildEmvCoPayload(_summary.NetBalance), 4);
+            }
+            catch
+            {
+                qrBytes = null;
+            }
+
+            container.Border(1f).BorderColor(QuestPDF.Helpers.Colors.Grey.Lighten2)
+                .Background(QuestPDF.Helpers.Colors.Grey.Lighten5)
+                .Padding(8)
+                .Row(row =>
+                {
+                    if (qrBytes != null && qrBytes.Length > 0)
+                    {
+                        row.ConstantItem(90).AlignCenter().Image(qrBytes);
+                    }
+
+                    row.RelativeItem().PaddingLeft(10).Column(infoCol =>
+                    {
+                        infoCol.Item().Text("SCAN TO PAY VIA ANY BANK APP").FontSize(8.5f).Bold().FontColor(QuestPDF.Helpers.Colors.Blue.Darken3);
+
+                        if (!string.IsNullOrWhiteSpace(_summary.QrPayment.BankName))
+                        {
+                            infoCol.Item().PaddingTop(2).Text(t =>
+                            {
+                                t.Span("Bank: ").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                                t.Span(_summary.QrPayment.BankName).FontSize(7.5f).Bold();
+                            });
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(_summary.QrPayment.AccountTitle))
+                        {
+                            infoCol.Item().Text(t =>
+                            {
+                                t.Span("Title: ").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                                t.Span(_summary.QrPayment.AccountTitle).FontSize(7.5f).SemiBold();
+                            });
+                        }
+
+                        if (!string.IsNullOrWhiteSpace(_summary.QrPayment.AccountNumber))
+                        {
+                            string dispIban = ERP.Classes.QrPaymentInfo.FormatIban(ERP.Classes.QrPaymentInfo.NormalizeToIban(_summary.QrPayment.AccountNumber, _summary.QrPayment.BankName));
+                            infoCol.Item().Text(t =>
+                            {
+                                t.Span("A/C or IBAN: ").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                                t.Span(dispIban).FontSize(7.5f).Bold();
+                            });
+                        }
+
+                        infoCol.Item().PaddingTop(1).Text(t =>
+                        {
+                            t.Span("Amount Pre-filled: ").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                            t.Span("PKR " + _summary.NetBalance.ToString("#,##0.00")).FontSize(8f).Bold().FontColor(QuestPDF.Helpers.Colors.Green.Darken3);
+                        });
+
+                        infoCol.Item().PaddingTop(3).Text("Works with Meezan, HBL, Alfalah, Easypaisa, JazzCash & all Raast banks")
+                            .FontSize(6.5f).Italic().FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
+                    });
+                });
         }
 
         /// <summary>

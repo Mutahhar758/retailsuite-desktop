@@ -30,9 +30,30 @@ namespace ERP.Services.Legacy
                 return null;
             }
         }
+
+        public async Task<bool> BatchUpsertAsync(System.Collections.Generic.IEnumerable<SettingItemDto> settings)
+        {
+            try
+            {
+                using (var client = CreateClient(includeTenantId: true))
+                {
+                    var json = JsonConvert.SerializeObject(settings);
+                    using (var content = new StringContent(json, System.Text.Encoding.UTF8, "application/json"))
+                    {
+                        var response = await client.PostAsync(SettingsEndpoint + "/batch", content);
+                        await EnsureSuccessWithServerMessageAsync(response);
+                        return response.IsSuccessStatusCode;
+                    }
+                }
+            }
+            catch
+            {
+                return false;
+            }
+        }
     }
 
-    internal class SettingItemDto
+    public class SettingItemDto
     {
         [JsonProperty("key")]
         public string Key { get; set; }

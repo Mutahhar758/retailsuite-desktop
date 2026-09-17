@@ -49,7 +49,8 @@ namespace ERP.Reporting.Models
         public decimal CurrentBillTotal { get; set; }
         public decimal GrossTotal => PreviousBalance + CurrentBillTotal;
         public decimal PaymentsReceived { get; set; }
-        public decimal NetBalance => GrossTotal - PaymentsReceived;
+        public decimal? ExplicitNetBalance { get; set; }
+        public decimal NetBalance => ExplicitNetBalance ?? (GrossTotal - PaymentsReceived);
 
         public string ThankyouLine { get; set; }
         public string GeneratedBy { get; set; }
@@ -60,6 +61,9 @@ namespace ERP.Reporting.Models
         public string FormattedGrossTotal => GrossTotal.ToString("#,##0.00");
         public string FormattedPaymentsReceived => PaymentsReceived.ToString("#,##0.00");
         public string FormattedNetBalance => NetBalance.ToString("#,##0.00");
+
+        public QrPaymentInfo QrPayment { get; set; }
+        public bool ShowQrPayment => QrPayment != null && QrPayment.IsEnabled && NetBalance > 0;
     }
 
     /// <summary>
@@ -178,10 +182,12 @@ namespace ERP.Reporting.Models
                 PreviousBalance = prevBalance,
                 CurrentBillTotal = currentBillTotal,
                 PaymentsReceived = payment,
+                ExplicitNetBalance = netBal,
 
                 ThankyouLine = !string.IsNullOrWhiteSpace(ConfigInfo.ThankyouLine) ? ConfigInfo.ThankyouLine : "Thank you for your business!",
                 GeneratedBy = !string.IsNullOrWhiteSpace(UserInfo.UserName) ? UserInfo.UserName : "System Operator",
-                GeneratedAt = DateTime.Now
+                GeneratedAt = DateTime.Now,
+                QrPayment = QrPaymentInfo.GetCached()
             };
 
             return new CustomerBillDataResult(summary, lines);

@@ -29,7 +29,7 @@
     <InstallUrl>http://retailsuite-desktop.bizgripsolutions.com/</InstallUrl>
     <ProductName>Retail Suite</ProductName>
     <PublisherName>BizGrip Solutions</PublisherName>
-    <ApplicationRevision>71</ApplicationRevision>
+    <ApplicationRevision>72</ApplicationRevision>
     <ApplicationVersion>1.0.0.%2a</ApplicationVersion>
     <UseApplicationTrust>false</UseApplicationTrust>
     <CreateDesktopShortcut>true</CreateDesktopShortcut>
@@ -183,6 +183,9 @@
     <Reference Include="QuestPDF">
       <HintPath>..\packages\QuestPDF.2026.8.0\lib\netstandard2.0\QuestPDF.dll</HintPath>
     </Reference>
+    <Reference Include="QRCoder">
+      <HintPath>..\packages\QRCoder.1.6.0\lib\net40\QRCoder.dll</HintPath>
+    </Reference>
   </ItemGroup>
   <ItemGroup>
     <Compile Include="Class1.cs">
@@ -234,6 +237,8 @@
     <Compile Include="Services\Legacy\UnitApiService.cs" />
     <Compile Include="Services\Legacy\VendorApiService.cs" />
     <Compile Include="Classes\SecurityHelper.cs" />
+    <Compile Include="Classes\QrPaymentInfo.cs" />
+    <Compile Include="Classes\QrCodeHelper.cs" />
     <Compile Include="Services\Authentication\LicenseService.cs" />
     <Compile Include="Services\\Authentication\\LoginService.cs" />
     <Compile Include="Component1.cs">
