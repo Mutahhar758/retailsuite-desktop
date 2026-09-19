@@ -232,7 +232,7 @@ namespace ERP.Reporting.Documents
                         : "Thank you for your valued business!";
 
                     col.Item().AlignCenter().PaddingTop(2).Text(thankLine).Italic().FontSize(6.5f);
-                    col.Item().AlignCenter().PaddingTop(1).Text("Software Powered by Retail Suite").FontSize(5.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
+                    col.Item().AlignCenter().PaddingTop(1).Text("Software powered by Bizgrip Solutions (Contact: 03228258734)").FontSize(5.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
                 });
             });
         }
@@ -467,7 +467,7 @@ namespace ERP.Reporting.Documents
                 col.Item().LineHorizontal(0.5f).LineColor(QuestPDF.Helpers.Colors.Grey.Lighten2);
                 col.Item().PaddingTop(4).Row(row =>
                 {
-                    row.RelativeItem().Text("Commercial Customer Bill • Generated electronically by Retail Suite")
+                    row.RelativeItem().Text("Software powered by Bizgrip Solutions (Contact: 03228258734)")
                         .FontSize(7.5f)
                         .FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
 

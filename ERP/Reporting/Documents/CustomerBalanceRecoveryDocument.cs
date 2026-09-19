@@ -163,7 +163,7 @@ namespace ERP.Reporting.Documents
                 table.Header(header =>
                 {
                     header.Cell().Element(HeaderCellStyle).Text("#");
-                    header.Cell().Element(HeaderCellStyle).Text("CUSTOMER ACCOUNT & TITLE");
+                    header.Cell().Element(HeaderCellStyle).Text("CUSTOMER NAME");
                     header.Cell().Element(HeaderCellStyle).Text("CONTACT / PHONE");
                     header.Cell().Element(HeaderCellStyleRight).Text("PREV BALANCE");
                     header.Cell().Element(HeaderCellStyleRight).Text("CURRENT BILL");
@@ -188,10 +188,6 @@ namespace ERP.Reporting.Documents
                     table.Cell().Element(c => CellStyle(c, rowBg)).Column(cc =>
                     {
                         cc.Item().Text(item.CustomerTitle).Bold().FontSize(8.5f);
-                        if (!string.IsNullOrWhiteSpace(item.CustomerAccountId))
-                        {
-                            cc.Item().Text(item.CustomerAccountId).FontSize(7f).FontColor(Colors.Grey.Darken1);
-                        }
                     });
 
                     // Phone & Address
@@ -275,15 +271,16 @@ namespace ERP.Reporting.Documents
         {
             container.Row(row =>
             {
-                row.RelativeItem().Text(string.Format("Retail Suite Financial Audit Core • Customer Recovery Schedule • {0:yyyy}", DateTime.Today))
+                row.RelativeItem().Text("Software powered by Bizgrip Solutions (Contact: 03228258734)")
                     .FontSize(7.5f)
-                    .FontColor(Colors.Grey.Medium);
+                    .FontColor(Colors.Grey.Darken1);
 
                 row.RelativeItem().AlignRight().Text(text =>
                 {
-                    text.CurrentPageNumber().FontSize(8).Bold();
-                    text.Span(" / ").FontSize(8);
-                    text.TotalPages().FontSize(8);
+                    text.Span("Page ").FontSize(7.5f).FontColor(Colors.Grey.Darken1);
+                    text.CurrentPageNumber().FontSize(7.5f).SemiBold().FontColor(Colors.Grey.Darken3);
+                    text.Span(" of ").FontSize(7.5f).FontColor(Colors.Grey.Darken1);
+                    text.TotalPages().FontSize(7.5f).SemiBold().FontColor(Colors.Grey.Darken3);
                 });
             });
         }

@@ -125,9 +125,9 @@ namespace ERP.Reporting.Documents
             {
                 table.ColumnsDefinition(columns =>
                 {
-                    columns.ConstantColumn(75);   // Account Code
-                    columns.RelativeColumn(3.5f); // Account Title
-                    columns.ConstantColumn(70);   // Opening Balance
+                    columns.ConstantColumn(32);   // #
+                    columns.RelativeColumn(4f);   // Account Title
+                    columns.ConstantColumn(75);   // Opening Balance
                     columns.ConstantColumn(75);   // Period Debit
                     columns.ConstantColumn(75);   // Period Credit
                     columns.ConstantColumn(80);   // Closing Balance
@@ -135,7 +135,7 @@ namespace ERP.Reporting.Documents
 
                 table.Header(header =>
                 {
-                    header.Cell().Element(HeaderCell).Text("Code");
+                    header.Cell().Element(HeaderCell).AlignCenter().Text("#");
                     header.Cell().Element(HeaderCell).Text("Account Title / Head");
                     header.Cell().Element(HeaderCell).AlignRight().Text("Opening");
                     header.Cell().Element(HeaderCell).AlignRight().Text("Debit (Dr)");
@@ -149,7 +149,7 @@ namespace ERP.Reporting.Documents
                     var isEven = (i % 2 == 0);
                     var bg = isEven ? Colors.White : Colors.Grey.Lighten5;
 
-                    table.Cell().Element(c => BodyCell(c, bg)).Text(item.AccountCode ?? string.Empty).FontSize(7.5f).FontColor(Colors.Grey.Darken2);
+                    table.Cell().Element(c => BodyCell(c, bg)).AlignCenter().Text((i + 1).ToString()).FontSize(7.5f).FontColor(Colors.Grey.Darken1);
                     table.Cell().Element(c => BodyCell(c, bg)).Text(item.AccountTitle ?? string.Empty).SemiBold();
 
                     // Opening
@@ -242,12 +242,9 @@ namespace ERP.Reporting.Documents
                 col.Item().LineHorizontal(0.5f).LineColor(Colors.Grey.Lighten2);
                 col.Item().PaddingTop(4).Row(row =>
                 {
-                    row.RelativeItem().Text(x =>
-                    {
-                        x.Span("Confidential • RetailSuite General Ledger • Computer-Generated Financial Statement")
-                            .FontSize(7f)
-                            .FontColor(Colors.Grey.Darken1);
-                    });
+                    row.RelativeItem().Text("Software powered by Bizgrip Solutions (Contact: 03228258734)")
+                        .FontSize(7.5f)
+                        .FontColor(Colors.Grey.Darken1);
 
                     row.RelativeItem().AlignRight().Text(x =>
                     {

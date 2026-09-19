@@ -207,7 +207,7 @@ namespace ERP.Reporting.Documents
                 col.Item().LineHorizontal(0.5f).LineColor(Colors.Grey.Lighten2);
                 col.Item().PaddingTop(4).Row(row =>
                 {
-                    row.RelativeItem().Text("Confidential • Retail Suite Financial Intelligence")
+                    row.RelativeItem().Text("Software powered by Bizgrip Solutions (Contact: 03228258734)")
                         .FontSize(7.5f)
                         .FontColor(Colors.Grey.Darken1);
 

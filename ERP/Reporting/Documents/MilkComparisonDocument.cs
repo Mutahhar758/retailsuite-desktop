@@ -254,15 +254,16 @@ namespace ERP.Reporting.Documents
         {
             container.Row(row =>
             {
-                row.RelativeItem().Text(string.Format("Retail Suite Financial Audit Core • Milk Reconciliation Engine • {0:yyyy}", DateTime.Today))
+                row.RelativeItem().Text("Software powered by Bizgrip Solutions (Contact: 03228258734)")
                     .FontSize(7.5f)
-                    .FontColor(Colors.Grey.Medium);
+                    .FontColor(Colors.Grey.Darken1);
 
                 row.RelativeItem().AlignRight().Text(text =>
                 {
-                    text.CurrentPageNumber().FontSize(8).Bold();
-                    text.Span(" / ").FontSize(8);
-                    text.TotalPages().FontSize(8);
+                    text.Span("Page ").FontSize(7.5f).FontColor(Colors.Grey.Darken1);
+                    text.CurrentPageNumber().FontSize(7.5f).SemiBold().FontColor(Colors.Grey.Darken3);
+                    text.Span(" of ").FontSize(7.5f).FontColor(Colors.Grey.Darken1);
+                    text.TotalPages().FontSize(7.5f).SemiBold().FontColor(Colors.Grey.Darken3);
                 });
             });
         }
