@@ -58,8 +58,14 @@ namespace ERP
         public static bool HasPermission(string action, string resource)
         {
             if (IsOwner) return true;
+            if (_Permissions == null) return false;
             string permissionName = $"Permissions.{resource}.{action}";
-            return _Permissions != null && _Permissions.Contains(permissionName);
+            if (_Permissions.Contains(permissionName)) return true;
+            if (resource == AppResource.EnvelopeReport || resource == AppResource.BarcodeReport || resource == AppResource.ShipmentLabelReport)
+            {
+                if (_Permissions.Contains($"Permissions.{AppResource.MiscReports}.{action}")) return true;
+            }
+            return false;
         }
 
         public static void ApplyFormPermissions(System.Windows.Forms.Form form, string resourceName)
@@ -116,7 +122,6 @@ namespace ERP
         public const string Users = "Users";
         public const string Roles = "Roles";
         public const string Dashboard = "Dashboard";
-        public const string Reports = "Reports";
         public const string PrinterSettings = "PrinterSettings";
         public const string ChartOfAccounts = "ChartOfAccounts";
         public const string DetailAccounts = "DetailAccounts";
@@ -141,5 +146,20 @@ namespace ERP
         public const string StockAdjustments = "StockAdjustments";
         public const string BankReconciliations = "BankReconciliations";
         public const string Payrolls = "Payrolls";
+        public const string AccountStatement = "AccountStatement";
+        public const string AccountStatementWithDue = "AccountStatementWithDue";
+        public const string AccountBalance = "AccountBalance";
+        public const string TrialBalance = "TrialBalance";
+        public const string StockBalance = "StockBalance";
+        public const string StockLedger = "StockLedger";
+        public const string IncomeSummary = "IncomeSummary";
+        public const string BalanceSheet = "BalanceSheet";
+        public const string CustomerBill = "CustomerBill";
+        public const string MilkComparison = "MilkComparison";
+        public const string CustomerBalanceRecovery = "CustomerBalanceRecovery";
+        public const string EnvelopeReport = "EnvelopeReport";
+        public const string BarcodeReport = "BarcodeReport";
+        public const string ShipmentLabelReport = "ShipmentLabelReport";
+        public const string MiscReports = "MiscReports";
     }
 }

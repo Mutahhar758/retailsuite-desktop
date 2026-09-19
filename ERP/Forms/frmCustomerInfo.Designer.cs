@@ -21,6 +21,20 @@ namespace ERP
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmCustomerInfo));
             this.tabControl = new System.Windows.Forms.TabControl();
             this.tpList = new System.Windows.Forms.TabPage();
+            this.tpSupplyItems = new System.Windows.Forms.TabPage();
+            this.pnlSupplyBanner = new System.Windows.Forms.Panel();
+            this.lblSupplyBannerTitle = new System.Windows.Forms.Label();
+            this.pnlSupplyToolbar = new System.Windows.Forms.Panel();
+            this.lblSupplyCustomerInfo = new System.Windows.Forms.Label();
+            this.btnAddSupplyItem = new System.Windows.Forms.Button();
+            this.btnDeleteSupplyItem = new System.Windows.Forms.Button();
+            this.dgvSupplyItems = new System.Windows.Forms.DataGridView();
+            this.clnSupplyItemId = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.clnSupplyQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnSupplySecQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnSupplyRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnSupplyDiscount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnSupplyAddLess = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dgvCustomers = new System.Windows.Forms.DataGridView();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -81,12 +95,17 @@ namespace ERP
             this.groupBox1.SuspendLayout();
             this.panel2.SuspendLayout();
             this.pnlDetailBanner.SuspendLayout();
+            this.tpSupplyItems.SuspendLayout();
+            this.pnlSupplyBanner.SuspendLayout();
+            this.pnlSupplyToolbar.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvSupplyItems)).BeginInit();
             this.SuspendLayout();
             // 
             // tabControl
             // 
             this.tabControl.Controls.Add(this.tpList);
             this.tabControl.Controls.Add(this.tpDetails);
+            this.tabControl.Controls.Add(this.tpSupplyItems);
             this.tabControl.Dock = System.Windows.Forms.DockStyle.Fill;
             this.tabControl.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F);
             this.tabControl.Location = new System.Drawing.Point(0, 0);
@@ -733,6 +752,158 @@ namespace ERP
             this.lblBannerTitle.TabIndex = 0;
             this.lblBannerTitle.Text = "Customer Information";
             // 
+            // tpSupplyItems
+            // 
+            this.tpSupplyItems.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(251)))), ((int)(((byte)(253)))));
+            this.tpSupplyItems.Controls.Add(this.dgvSupplyItems);
+            this.tpSupplyItems.Controls.Add(this.pnlSupplyToolbar);
+            this.tpSupplyItems.Controls.Add(this.pnlSupplyBanner);
+            this.tpSupplyItems.Location = new System.Drawing.Point(4, 25);
+            this.tpSupplyItems.Name = "tpSupplyItems";
+            this.tpSupplyItems.Padding = new System.Windows.Forms.Padding(3);
+            this.tpSupplyItems.Size = new System.Drawing.Size(831, 531);
+            this.tpSupplyItems.TabIndex = 2;
+            this.tpSupplyItems.Text = "Supply Order Defaults";
+            // 
+            // pnlSupplyBanner
+            // 
+            this.pnlSupplyBanner.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(57)))), ((int)(((byte)(85)))));
+            this.pnlSupplyBanner.Controls.Add(this.lblSupplyBannerTitle);
+            this.pnlSupplyBanner.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlSupplyBanner.Location = new System.Drawing.Point(3, 3);
+            this.pnlSupplyBanner.Name = "pnlSupplyBanner";
+            this.pnlSupplyBanner.Size = new System.Drawing.Size(825, 40);
+            this.pnlSupplyBanner.TabIndex = 0;
+            // 
+            // lblSupplyBannerTitle
+            // 
+            this.lblSupplyBannerTitle.AutoSize = true;
+            this.lblSupplyBannerTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 10F, System.Drawing.FontStyle.Bold);
+            this.lblSupplyBannerTitle.ForeColor = System.Drawing.Color.White;
+            this.lblSupplyBannerTitle.Location = new System.Drawing.Point(12, 10);
+            this.lblSupplyBannerTitle.Name = "lblSupplyBannerTitle";
+            this.lblSupplyBannerTitle.Size = new System.Drawing.Size(430, 17);
+            this.lblSupplyBannerTitle.TabIndex = 0;
+            this.lblSupplyBannerTitle.Text = "Customer Supply Order Defaults (Default Quantities && Rates)";
+            // 
+            // pnlSupplyToolbar
+            // 
+            this.pnlSupplyToolbar.BackColor = System.Drawing.Color.White;
+            this.pnlSupplyToolbar.Controls.Add(this.btnDeleteSupplyItem);
+            this.pnlSupplyToolbar.Controls.Add(this.btnAddSupplyItem);
+            this.pnlSupplyToolbar.Controls.Add(this.lblSupplyCustomerInfo);
+            this.pnlSupplyToolbar.Dock = System.Windows.Forms.DockStyle.Top;
+            this.pnlSupplyToolbar.Location = new System.Drawing.Point(3, 43);
+            this.pnlSupplyToolbar.Name = "pnlSupplyToolbar";
+            this.pnlSupplyToolbar.Size = new System.Drawing.Size(825, 42);
+            this.pnlSupplyToolbar.TabIndex = 1;
+            // 
+            // lblSupplyCustomerInfo
+            // 
+            this.lblSupplyCustomerInfo.AutoSize = true;
+            this.lblSupplyCustomerInfo.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.5F, System.Drawing.FontStyle.Bold);
+            this.lblSupplyCustomerInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(41)))), ((int)(((byte)(57)))), ((int)(((byte)(85)))));
+            this.lblSupplyCustomerInfo.Location = new System.Drawing.Point(12, 12);
+            this.lblSupplyCustomerInfo.Name = "lblSupplyCustomerInfo";
+            this.lblSupplyCustomerInfo.Size = new System.Drawing.Size(240, 16);
+            this.lblSupplyCustomerInfo.TabIndex = 0;
+            this.lblSupplyCustomerInfo.Text = "Customer: (No Customer Selected)";
+            // 
+            // btnAddSupplyItem
+            // 
+            this.btnAddSupplyItem.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnAddSupplyItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(99)))), ((int)(((byte)(235)))));
+            this.btnAddSupplyItem.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAddSupplyItem.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.btnAddSupplyItem.ForeColor = System.Drawing.Color.White;
+            this.btnAddSupplyItem.Location = new System.Drawing.Point(620, 7);
+            this.btnAddSupplyItem.Name = "btnAddSupplyItem";
+            this.btnAddSupplyItem.Size = new System.Drawing.Size(95, 28);
+            this.btnAddSupplyItem.TabIndex = 1;
+            this.btnAddSupplyItem.Text = "+ Add Item";
+            this.btnAddSupplyItem.UseVisualStyleBackColor = false;
+            this.btnAddSupplyItem.Click += new System.EventHandler(this.btnAddSupplyItem_Click);
+            // 
+            // btnDeleteSupplyItem
+            // 
+            this.btnDeleteSupplyItem.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.btnDeleteSupplyItem.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(239)))), ((int)(((byte)(68)))), ((int)(((byte)(68)))));
+            this.btnDeleteSupplyItem.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnDeleteSupplyItem.Font = new System.Drawing.Font("Microsoft Sans Serif", 9F);
+            this.btnDeleteSupplyItem.ForeColor = System.Drawing.Color.White;
+            this.btnDeleteSupplyItem.Location = new System.Drawing.Point(722, 7);
+            this.btnDeleteSupplyItem.Name = "btnDeleteSupplyItem";
+            this.btnDeleteSupplyItem.Size = new System.Drawing.Size(95, 28);
+            this.btnDeleteSupplyItem.TabIndex = 2;
+            this.btnDeleteSupplyItem.Text = "- Remove";
+            this.btnDeleteSupplyItem.UseVisualStyleBackColor = false;
+            this.btnDeleteSupplyItem.Click += new System.EventHandler(this.btnDeleteSupplyItem_Click);
+            // 
+            // dgvSupplyItems
+            // 
+            this.dgvSupplyItems.AllowUserToAddRows = false;
+            this.dgvSupplyItems.BackgroundColor = System.Drawing.Color.White;
+            this.dgvSupplyItems.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.dgvSupplyItems.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvSupplyItems.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.clnSupplyItemId,
+            this.clnSupplyQty,
+            this.clnSupplySecQty,
+            this.clnSupplyRate,
+            this.clnSupplyDiscount,
+            this.clnSupplyAddLess});
+            this.dgvSupplyItems.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.dgvSupplyItems.Location = new System.Drawing.Point(3, 85);
+            this.dgvSupplyItems.Name = "dgvSupplyItems";
+            this.dgvSupplyItems.RowHeadersWidth = 30;
+            this.dgvSupplyItems.RowTemplate.Height = 24;
+            this.dgvSupplyItems.Size = new System.Drawing.Size(825, 443);
+            this.dgvSupplyItems.TabIndex = 2;
+            // 
+            // clnSupplyItemId
+            // 
+            this.clnSupplyItemId.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.clnSupplyItemId.DisplayStyle = System.Windows.Forms.DataGridViewComboBoxDisplayStyle.ComboBox;
+            this.clnSupplyItemId.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.clnSupplyItemId.HeaderText = "Supply Item";
+            this.clnSupplyItemId.MinimumWidth = 180;
+            this.clnSupplyItemId.Name = "clnSupplyItemId";
+            // 
+            // clnSupplyQty
+            // 
+            this.clnSupplyQty.HeaderText = "Default Qty";
+            this.clnSupplyQty.MinimumWidth = 90;
+            this.clnSupplyQty.Name = "clnSupplyQty";
+            this.clnSupplyQty.Width = 100;
+            // 
+            // clnSupplySecQty
+            // 
+            this.clnSupplySecQty.HeaderText = "Pack Qty";
+            this.clnSupplySecQty.MinimumWidth = 90;
+            this.clnSupplySecQty.Name = "clnSupplySecQty";
+            this.clnSupplySecQty.Width = 100;
+            // 
+            // clnSupplyRate
+            // 
+            this.clnSupplyRate.HeaderText = "Custom Rate";
+            this.clnSupplyRate.MinimumWidth = 100;
+            this.clnSupplyRate.Name = "clnSupplyRate";
+            this.clnSupplyRate.Width = 110;
+            // 
+            // clnSupplyDiscount
+            // 
+            this.clnSupplyDiscount.HeaderText = "Discount";
+            this.clnSupplyDiscount.MinimumWidth = 80;
+            this.clnSupplyDiscount.Name = "clnSupplyDiscount";
+            this.clnSupplyDiscount.Width = 90;
+            // 
+            // clnSupplyAddLess
+            // 
+            this.clnSupplyAddLess.HeaderText = "Add / Less";
+            this.clnSupplyAddLess.MinimumWidth = 80;
+            this.clnSupplyAddLess.Name = "clnSupplyAddLess";
+            this.clnSupplyAddLess.Width = 90;
+            // 
             // frmCustomerInfo
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -757,6 +928,12 @@ namespace ERP
             this.panel2.ResumeLayout(false);
             this.pnlDetailBanner.ResumeLayout(false);
             this.pnlDetailBanner.PerformLayout();
+            this.tpSupplyItems.ResumeLayout(false);
+            this.pnlSupplyBanner.ResumeLayout(false);
+            this.pnlSupplyBanner.PerformLayout();
+            this.pnlSupplyToolbar.ResumeLayout(false);
+            this.pnlSupplyToolbar.PerformLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvSupplyItems)).EndInit();
             this.ResumeLayout(false);
 
         }
@@ -817,5 +994,19 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
+        private System.Windows.Forms.TabPage tpSupplyItems;
+        private System.Windows.Forms.Panel pnlSupplyBanner;
+        private System.Windows.Forms.Label lblSupplyBannerTitle;
+        private System.Windows.Forms.Panel pnlSupplyToolbar;
+        private System.Windows.Forms.Label lblSupplyCustomerInfo;
+        private System.Windows.Forms.Button btnAddSupplyItem;
+        private System.Windows.Forms.Button btnDeleteSupplyItem;
+        private System.Windows.Forms.DataGridView dgvSupplyItems;
+        private System.Windows.Forms.DataGridViewComboBoxColumn clnSupplyItemId;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplyQty;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplySecQty;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplyRate;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplyDiscount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplyAddLess;
     }
 }

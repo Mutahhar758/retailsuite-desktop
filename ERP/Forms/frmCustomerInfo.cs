@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using ERP.Classes;
 using ERP.Services.Legacy;
 
 namespace ERP
@@ -11,6 +12,7 @@ namespace ERP
         // ── Data / state fields (UI controls live in Designer.cs) ─────────
         bool Flogin = true;
         private readonly CustomerApiService _customerApiService;
+        private readonly InventoryApiService _inventoryApiService;
         private List<CustomerDto> _customers;
         private bool _isSaving;
         private bool _isDeleting;
@@ -20,6 +22,7 @@ namespace ERP
         {
             InitializeComponent();
             _customerApiService = new CustomerApiService();
+            _inventoryApiService = new InventoryApiService();
             _customers = new List<CustomerDto>();
             UserInfo.ApplyFormPermissions(this, AppResource.Customers);
         }
@@ -58,6 +61,9 @@ namespace ERP
             chkActive.Checked = true;
             chkSMSAlert.Checked = chkEmailAlert.Checked = false;
             profileImage1?.ClearImage();
+            dgvSupplyItems?.Rows.Clear();
+            if (lblSupplyCustomerInfo != null)
+                lblSupplyCustomerInfo.Text = "Customer: (New Customer)";
         }
 
         // ══════════════════════════════════════════════════════════════════
@@ -118,6 +124,39 @@ namespace ERP
                 profileImage1.MediaUrl = c.MediaUrl;
                 await profileImage1.LoadImageAsync(c.MediaUrl);
             }
+
+            dgvSupplyItems?.Rows.Clear();
+            if (lblSupplyCustomerInfo != null)
+                lblSupplyCustomerInfo.Text = $"Customer: {c.Title} ({code})";
+
+            var supplyList = c.SupplyItems;
+            if (supplyList == null || supplyList.Count == 0)
+            {
+                try
+                {
+                    supplyList = await _customerApiService.GetSupplyItemsAsync(code);
+                }
+                catch
+                {
+                    supplyList = new List<CustomerSupplyItemDto>();
+                }
+            }
+
+            if (supplyList != null && dgvSupplyItems != null)
+            {
+                foreach (var item in supplyList)
+                {
+                    int rowIdx = dgvSupplyItems.Rows.Add();
+                    var r = dgvSupplyItems.Rows[rowIdx];
+                    r.Cells[clnSupplyItemId.Index].Value = item.ItemId;
+                    r.Cells[clnSupplyQty.Index].Value = (item.Qty > 0 ? item.Qty : 1).ToString("0.##");
+                    if (clnSupplySecQty.Visible)
+                        r.Cells[clnSupplySecQty.Index].Value = (item.SecQty ?? 0).ToString("0.##");
+                    r.Cells[clnSupplyRate.Index].Value = item.Rate.HasValue ? item.Rate.Value.ToString("0.##") : string.Empty;
+                    r.Cells[clnSupplyDiscount.Index].Value = item.Discount.HasValue ? item.Discount.Value.ToString("0.##") : string.Empty;
+                    r.Cells[clnSupplyAddLess.Index].Value = item.AddLess.HasValue ? item.AddLess.Value.ToString("0.##") : string.Empty;
+                }
+            }
         }
 
         private static string FormatAudit(string by, DateTime? on) =>
@@ -125,23 +164,57 @@ namespace ERP
                 ? "-"
                 : by + "  |  " + on.Value.ToString("dd-MMM-yyyy hh:mm tt");
 
-        private CustomerUpsertApiRequest BuildRequest() => new CustomerUpsertApiRequest
+        private CustomerUpsertApiRequest BuildRequest()
         {
-            Title         = txtTitle.Text,
-            Email         = txtEmail.Text,
-            Fax           = txtFax.Text,
-            Cnic          = txtNic.Text,
-            Address       = txtAddress.Text,
-            Qualification = txtQualification.Text,
-            Phone1        = txtPhone1.Text,
-            Phone2        = txtPhone2.Text,
-            SmsNumber     = txtSMSNumber.Text,
-            Iban          = txtIBAN.Text,
-            SmsAlert      = chkSMSAlert.Checked,
-            EmailAlert    = chkEmailAlert.Checked,
-            Active        = chkActive.Checked,
-            MediaId       = profileImage1?.MediaId
-        };
+            var supplyItems = new List<CustomerSupplyItemDto>();
+            if (dgvSupplyItems != null)
+            {
+                foreach (DataGridViewRow r in dgvSupplyItems.Rows)
+                {
+                    if (r.IsNewRow) continue;
+                    var itemIdObj = r.Cells[clnSupplyItemId.Index].Value;
+                    if (itemIdObj == null || string.IsNullOrWhiteSpace(itemIdObj.ToString())) continue;
+
+                    decimal.TryParse(Convert.ToString(r.Cells[clnSupplyQty.Index].Value), out decimal qty);
+                    decimal? secQty = null;
+                    if (decimal.TryParse(Convert.ToString(r.Cells[clnSupplySecQty.Index].Value), out decimal sqVal))
+                        secQty = sqVal;
+
+                    decimal? rate = decimal.TryParse(Convert.ToString(r.Cells[clnSupplyRate.Index].Value), out decimal rVal) ? (decimal?)rVal : null;
+                    decimal? discount = decimal.TryParse(Convert.ToString(r.Cells[clnSupplyDiscount.Index].Value), out decimal dVal) ? (decimal?)dVal : null;
+                    decimal? addLess = decimal.TryParse(Convert.ToString(r.Cells[clnSupplyAddLess.Index].Value), out decimal aVal) ? (decimal?)aVal : null;
+
+                    supplyItems.Add(new CustomerSupplyItemDto
+                    {
+                        ItemId = itemIdObj.ToString(),
+                        Qty = qty > 0 ? qty : 1,
+                        SecQty = secQty,
+                        Rate = rate,
+                        Discount = discount,
+                        AddLess = addLess
+                    });
+                }
+            }
+
+            return new CustomerUpsertApiRequest
+            {
+                Title         = txtTitle.Text,
+                Email         = txtEmail.Text,
+                Fax           = txtFax.Text,
+                Cnic          = txtNic.Text,
+                Address       = txtAddress.Text,
+                Qualification = txtQualification.Text,
+                Phone1        = txtPhone1.Text,
+                Phone2        = txtPhone2.Text,
+                SmsNumber     = txtSMSNumber.Text,
+                Iban          = txtIBAN.Text,
+                SmsAlert      = chkSMSAlert.Checked,
+                EmailAlert    = chkEmailAlert.Checked,
+                Active        = chkActive.Checked,
+                MediaId       = profileImage1?.MediaId,
+                SupplyItems   = supplyItems
+            };
+        }
 
         // ══════════════════════════════════════════════════════════════════
         //  List-tab events
@@ -283,6 +356,14 @@ namespace ERP
             {
                 profileImage1.SearchButton.Click += btnCustomerSearch_Click;
                 profileImage1.CancelButton.Click += btnCustomerCancel_Click;
+                dgvSupplyItems.DataError += dgvSupplyItems_DataError;
+
+                var items = await _inventoryApiService.GetLookupAsync(null);
+                clnSupplyItemId.DataSource = items;
+                clnSupplyItemId.DisplayMember = "Title";
+                clnSupplyItemId.ValueMember = "Id";
+                clnSupplySecQty.Visible = ApiSession.HasSecondaryQty;
+
                 await FillCustomersAsync();
                 Flogin = false;
                 string code = cmbCustomerCode.SelectedValue?.ToString();
@@ -294,6 +375,27 @@ namespace ERP
                 btnDelete.Enabled = !string.IsNullOrEmpty(code);
             }
             catch (Exception ex) { ShowError(ex); }
+        }
+
+        private void dgvSupplyItems_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            e.ThrowException = false;
+        }
+
+        private void btnAddSupplyItem_Click(object sender, EventArgs e)
+        {
+            int idx = dgvSupplyItems.Rows.Add();
+            dgvSupplyItems.Rows[idx].Cells[clnSupplyQty.Index].Value = "1";
+            if (clnSupplySecQty.Visible)
+                dgvSupplyItems.Rows[idx].Cells[clnSupplySecQty.Index].Value = "0";
+        }
+
+        private void btnDeleteSupplyItem_Click(object sender, EventArgs e)
+        {
+            if (dgvSupplyItems.CurrentRow != null && !dgvSupplyItems.CurrentRow.IsNewRow)
+            {
+                dgvSupplyItems.Rows.Remove(dgvSupplyItems.CurrentRow);
+            }
         }
 
         private void frmCustomerInfo_KeyDown(object sender, KeyEventArgs e)

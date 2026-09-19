@@ -89,30 +89,50 @@ namespace ERP
             bankReconcilationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BankReconciliations);
             payrollToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Payrolls);
             
-            accountStatementToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            reports2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            accountStatement2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            accountStatementWithDue2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            stockBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            trialBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            accountBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            itemLedger2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            incomeSummary2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            balanceSheet2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            customerBill2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            milkComparison2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            customerBalanceRecovery2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            miscReports2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            envelope2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            barcode2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            shipmentLabelTag2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            accountStatementWithDueToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            accountBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            trialBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            stockBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            itemLedgerToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            incomeSummaryToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
-            balanceSheetToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Reports);
+            // Reports (Urdu / Classic)
+            accountStatementToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatement);
+            accountStatementWithDueToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatementWithDue);
+            accountBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountBalance);
+            trialBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.TrialBalance);
+            stockBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockBalance);
+            itemLedgerToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockLedger);
+            incomeSummaryToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.IncomeSummary);
+            balanceSheetToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BalanceSheet);
+            customerBillToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBill);
+            enToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.EnvelopeReport);
+            barcodeToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BarcodeReport);
+            shipmentLabelTagToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ShipmentLabelReport);
+            reportsToolStripMenuItem.Visible = UserInfo.IsOwner ||
+                accountStatementToolStripMenuItem.Visible || accountStatementWithDueToolStripMenuItem.Visible ||
+                accountBalanceToolStripMenuItem.Visible || trialBalanceToolStripMenuItem.Visible ||
+                stockBalanceToolStripMenuItem.Visible || itemLedgerToolStripMenuItem.Visible ||
+                incomeSummaryToolStripMenuItem.Visible || balanceSheetToolStripMenuItem.Visible ||
+                customerBillToolStripMenuItem.Visible || enToolStripMenuItem.Visible ||
+                barcodeToolStripMenuItem.Visible || shipmentLabelTagToolStripMenuItem.Visible;
+
+            // Reports 2 (English / Modern)
+            accountStatement2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatement);
+            accountStatementWithDue2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatementWithDue);
+            stockBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockBalance);
+            trialBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.TrialBalance);
+            accountBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountBalance);
+            itemLedger2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockLedger);
+            incomeSummary2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.IncomeSummary);
+            balanceSheet2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BalanceSheet);
+            customerBill2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBill);
+            milkComparison2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.MilkComparison);
+            customerBalanceRecovery2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBalanceRecovery);
+            envelope2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.EnvelopeReport);
+            barcode2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BarcodeReport);
+            shipmentLabelTag2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ShipmentLabelReport);
+            miscReports2ToolStripMenuItem.Visible = UserInfo.IsOwner || UserInfo.HasPermission(AppAction.View, AppResource.MiscReports) || envelope2ToolStripMenuItem.Visible || barcode2ToolStripMenuItem.Visible || shipmentLabelTag2ToolStripMenuItem.Visible;
+            reports2ToolStripMenuItem.Visible = UserInfo.IsOwner ||
+                accountStatement2ToolStripMenuItem.Visible || accountStatementWithDue2ToolStripMenuItem.Visible ||
+                stockBalance2ToolStripMenuItem.Visible || trialBalance2ToolStripMenuItem.Visible ||
+                accountBalance2ToolStripMenuItem.Visible || itemLedger2ToolStripMenuItem.Visible ||
+                incomeSummary2ToolStripMenuItem.Visible || balanceSheet2ToolStripMenuItem.Visible ||
+                customerBill2ToolStripMenuItem.Visible || milkComparison2ToolStripMenuItem.Visible ||
+                customerBalanceRecovery2ToolStripMenuItem.Visible || miscReports2ToolStripMenuItem.Visible;
             
             configurationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PrinterSettings);
         }
