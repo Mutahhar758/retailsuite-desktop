@@ -69,8 +69,9 @@ namespace ERP.Reporting.Documents
         {
             container.Page(page =>
             {
-                page.ContinuousSize(72, Unit.Millimetre);
-                page.Margin(2, Unit.Millimetre);
+                page.ContinuousSize(80, Unit.Millimetre);
+                page.MarginVertical(2, Unit.Millimetre);
+                page.MarginHorizontal(4, Unit.Millimetre);
                 page.PageColor(QuestPDF.Helpers.Colors.White);
                 page.DefaultTextStyle(x => x.FontSize(8f).FontFamily("Arial").FontColor(QuestPDF.Helpers.Colors.Black));
 
@@ -689,6 +690,16 @@ namespace ERP.Reporting.Documents
                 // Explicitly zero out GDI+ margins to prevent Windows from applying default 1-inch (100-unit) borders
                 pd.DefaultPageSettings.Margins = new System.Drawing.Printing.Margins(0, 0, 0, 0);
                 pd.OriginAtMargins = false;
+
+                // If thermal receipt roll, auto-detect and select 80mm paper size from printer driver
+                foreach (System.Drawing.Printing.PaperSize ps in pd.PrinterSettings.PaperSizes)
+                {
+                    if (ps.Width >= 270 && ps.Width <= 325)
+                    {
+                        pd.DefaultPageSettings.PaperSize = ps;
+                        break;
+                    }
+                }
 
                 pd.PrintController = new StandardPrintController(); // Silent mode: suppresses "Printing page X..." pop-up
                 pd.PrintPage += (sender, ev) =>

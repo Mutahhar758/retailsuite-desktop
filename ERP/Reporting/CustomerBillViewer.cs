@@ -914,6 +914,26 @@ namespace ERP.Reporting
         {
             if (webView != null && _isWebViewReady)
             {
+                bool isThermal = cmbLayout != null && cmbLayout.SelectedIndex == 1;
+                if (isThermal && !string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName))
+                {
+                    var choice = MessageBox.Show(
+                        string.Format("80mm Thermal format is selected.\n\nWould you like to print directly to your configured thermal printer '{0}' with 80mm roll dimensions?\n\n• Yes: Print directly with 80mm thermal settings (Recommended)\n• No: Open browser print dialog", ConfigInfo.ThermalPrinterName),
+                        "Thermal Print",
+                        MessageBoxButtons.YesNoCancel,
+                        MessageBoxIcon.Question);
+
+                    if (choice == DialogResult.Yes)
+                    {
+                        TriggerDirectThermalPrint();
+                        return;
+                    }
+                    else if (choice == DialogResult.Cancel)
+                    {
+                        return;
+                    }
+                }
+
                 webView.CoreWebView2.ShowPrintUI(Microsoft.Web.WebView2.Core.CoreWebView2PrintDialogKind.Browser);
             }
         }
