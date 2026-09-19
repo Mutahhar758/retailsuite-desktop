@@ -70,9 +70,9 @@ namespace ERP.Reporting.Documents
             container.Page(page =>
             {
                 page.ContinuousSize(72, Unit.Millimetre);
-                page.Margin(3, Unit.Millimetre);
+                page.Margin(2, Unit.Millimetre);
                 page.PageColor(QuestPDF.Helpers.Colors.White);
-                page.DefaultTextStyle(x => x.FontSize(8.5f).FontFamily("Segoe UI").FontColor(QuestPDF.Helpers.Colors.Black));
+                page.DefaultTextStyle(x => x.FontSize(8f).FontFamily("Arial").FontColor(QuestPDF.Helpers.Colors.Black));
 
                 page.Content().Column(col =>
                 {
@@ -80,8 +80,8 @@ namespace ERP.Reporting.Documents
                         ? _summary.CompanyName
                         : (!string.IsNullOrWhiteSpace(ERP.CompanyInfo.CompanyName) ? ERP.CompanyInfo.CompanyName : "Retail Suite Enterprise");
 
-                    // 1. Store Header
-                    col.Item().AlignCenter().Text(compName).FontSize(12.5f).Bold();
+                    // 1. Store Header (Bold for emphasis)
+                    col.Item().AlignCenter().Text(compName).FontSize(12f).Bold();
 
                     if (!string.IsNullOrWhiteSpace(_summary?.CompanyAddress))
                     {
@@ -90,13 +90,13 @@ namespace ERP.Reporting.Documents
 
                     if (!string.IsNullOrWhiteSpace(_summary?.CompanyPhone))
                     {
-                        col.Item().AlignCenter().PaddingTop(1).Text("Tel: " + _summary.CompanyPhone).FontSize(8f).Bold();
+                        col.Item().AlignCenter().PaddingTop(1).Text("Tel: " + _summary.CompanyPhone).FontSize(8f).SemiBold();
                     }
 
                     col.Item().PaddingVertical(2).LineHorizontal(1f).LineColor(QuestPDF.Helpers.Colors.Black);
 
                     // 2. Receipt Title
-                    col.Item().AlignCenter().Text("CUSTOMER BILL / RECEIPT").FontSize(9.5f).Bold();
+                    col.Item().AlignCenter().Text("CUSTOMER BILL / RECEIPT").FontSize(9f).Bold();
 
                     // 3. Customer & Meta
                     col.Item().PaddingTop(2).Row(r =>
@@ -107,28 +107,28 @@ namespace ERP.Reporting.Documents
 
                     col.Item().Row(r =>
                     {
-                        r.AutoItem().Text("Period: ").Bold().FontSize(8f);
-                        r.RelativeItem().Text(string.Format("{0:dd/MM/yy} to {1:dd/MM/yy}", _summary.FromDate, _summary.ToDate)).Bold().FontSize(8f);
+                        r.AutoItem().Text("Period: ").FontSize(8f).SemiBold();
+                        r.RelativeItem().Text(string.Format("{0:dd/MM/yy} to {1:dd/MM/yy}", _summary.FromDate, _summary.ToDate)).FontSize(8f).SemiBold();
                     });
 
                     col.Item().Row(r =>
                     {
-                        r.AutoItem().Text("Printed: ").Bold().FontSize(8f);
-                        r.RelativeItem().Text(DateTime.Now.ToString("dd-MMM-yy HH:mm")).Bold().FontSize(8f);
+                        r.AutoItem().Text("Printed: ").FontSize(8f).SemiBold();
+                        r.RelativeItem().Text(DateTime.Now.ToString("dd-MMM-yy HH:mm")).FontSize(8f).SemiBold();
                     });
 
                     col.Item().PaddingVertical(2).LineHorizontal(1f).LineColor(QuestPDF.Helpers.Colors.Black);
 
-                    // 4. Line Items Table with Adj Column
+                    // 4. Line Items Table with Adj Column (Clean, sharp SemiBold weight)
                     col.Item().Table(table =>
                     {
                         table.ColumnsDefinition(columns =>
                         {
-                            columns.RelativeColumn(3.0f); // Item & Date
-                            columns.RelativeColumn(0.8f); // Qty
+                            columns.RelativeColumn(2.6f); // Item & Date
+                            columns.RelativeColumn(0.9f); // Qty
                             columns.RelativeColumn(1.0f); // Rate
-                            columns.RelativeColumn(0.9f); // Adj
-                            columns.RelativeColumn(1.2f); // Total
+                            columns.RelativeColumn(1.0f); // Adj
+                            columns.RelativeColumn(1.3f); // Total
                         });
 
                         table.Header(header =>
@@ -137,7 +137,7 @@ namespace ERP.Reporting.Documents
                             header.Cell().AlignRight().Text("QTY").Bold().FontSize(8f);
                             header.Cell().AlignRight().Text("RATE").Bold().FontSize(8f);
                             header.Cell().AlignRight().Text("ADJ").Bold().FontSize(8f);
-                            header.Cell().AlignRight().Text("TOTAL").Bold().FontSize(8f);
+                            header.Cell().AlignRight().Text("TOTAL").Bold().FontSize(8.5f);
 
                             header.Cell().ColumnSpan(5).PaddingVertical(1).LineHorizontal(0.75f).LineColor(QuestPDF.Helpers.Colors.Black);
                         });
@@ -148,20 +148,20 @@ namespace ERP.Reporting.Documents
                             {
                                 var line = _lines[i];
 
-                                table.Cell().PaddingVertical(1.5f).Text(t =>
+                                table.Cell().PaddingVertical(1.2f).Text(t =>
                                 {
-                                    t.Span(line.Date.ToString("dd/MM") + " ").FontSize(7.5f).Bold().FontColor(QuestPDF.Helpers.Colors.Black);
-                                    t.Span(line.Item).FontSize(8f).Bold();
+                                    t.Span(line.Date.ToString("dd/MM") + " ").FontSize(8.5f).SemiBold().FontColor(QuestPDF.Helpers.Colors.Black);
+                                    t.Span(line.Item).FontSize(8.5f).SemiBold();
                                 });
-                                table.Cell().AlignRight().PaddingVertical(1.5f).Text(line.FormattedQty).FontSize(8f).Bold();
-                                table.Cell().AlignRight().PaddingVertical(1.5f).Text(line.FormattedRate).FontSize(8f).Bold();
-                                table.Cell().AlignRight().PaddingVertical(1.5f).Text(line.FormattedAddLess).FontSize(8f).Bold();
-                                table.Cell().AlignRight().PaddingVertical(1.5f).Text(line.FormattedAmount).FontSize(8f).Bold();
+                                table.Cell().AlignRight().PaddingVertical(1.2f).Text(line.FormattedQty).FontSize(9f).SemiBold();
+                                table.Cell().AlignRight().PaddingVertical(1.2f).Text(line.FormattedRate).FontSize(9f).SemiBold();
+                                table.Cell().AlignRight().PaddingVertical(1.2f).Text(line.FormattedAddLess).FontSize(9f).SemiBold();
+                                table.Cell().AlignRight().PaddingVertical(1.2f).Text(line.FormattedAmount).FontSize(9.5f).SemiBold();
                             }
                         }
                         else
                         {
-                            table.Cell().ColumnSpan(5).AlignCenter().PaddingVertical(3).Text("No line transactions in period.").FontSize(8f).Bold();
+                            table.Cell().ColumnSpan(5).AlignCenter().PaddingVertical(3).Text("No line transactions in period.").FontSize(8.5f).SemiBold();
                         }
                     });
 
@@ -170,31 +170,32 @@ namespace ERP.Reporting.Documents
                     // 5. Financial Summary
                     col.Item().Row(r =>
                     {
-                        r.RelativeItem().Text("Previous Balance:").FontSize(8.5f).Bold();
-                        r.AutoItem().Text(_summary.PreviousBalance.ToString("N2")).FontSize(8.5f).Bold();
+                        r.RelativeItem().Text("Previous Balance:").FontSize(9f).SemiBold();
+                        r.AutoItem().Text(_summary.PreviousBalance.ToString("#,##0")).FontSize(9.5f).SemiBold();
                     });
 
                     col.Item().Row(r =>
                     {
-                        r.RelativeItem().Text("Current Invoiced:").FontSize(8.5f).Bold();
-                        r.AutoItem().Text(_summary.CurrentBillTotal.ToString("N2")).FontSize(8.5f).Bold();
+                        r.RelativeItem().Text("Current Invoiced:").FontSize(9f).SemiBold();
+                        r.AutoItem().Text(_summary.CurrentBillTotal.ToString("#,##0")).FontSize(9.5f).SemiBold();
                     });
 
                     if (_summary.PaymentsReceived != 0)
                     {
                         col.Item().Row(r =>
                         {
-                            r.RelativeItem().Text("Payment / Recovery:").FontSize(8.5f).Bold();
-                            r.AutoItem().Text(string.Format("({0:N2})", _summary.PaymentsReceived)).FontSize(8.5f).Bold();
+                            r.RelativeItem().Text("Payment / Recovery:").FontSize(9f).SemiBold();
+                            r.AutoItem().Text(string.Format("({0:#,##0})", _summary.PaymentsReceived)).FontSize(9.5f).SemiBold();
                         });
                     }
 
                     col.Item().PaddingTop(1).LineHorizontal(0.75f).LineColor(QuestPDF.Helpers.Colors.Black);
 
+                    // Major focal point: NET DUE BALANCE in Bold
                     col.Item().PaddingTop(2).Row(r =>
                     {
-                        r.RelativeItem().Text("NET DUE BALANCE:").Bold().FontSize(10.5f);
-                        r.AutoItem().Text(_summary.NetBalance.ToString("N2")).Bold().FontSize(10.5f);
+                        r.RelativeItem().Text("NET DUE BALANCE:").Bold().FontSize(11f);
+                        r.AutoItem().Text(_summary.NetBalance.ToString("#,##0")).Bold().FontSize(12f);
                     });
 
                     if (_summary.ShowQrPayment)
@@ -206,7 +207,7 @@ namespace ERP.Reporting.Documents
                             var qrBytes = ERP.Classes.QrCodeHelper.GeneratePng(_summary.QrPayment.BuildEmvCoPayload(_summary.NetBalance), 4);
                             if (qrBytes != null && qrBytes.Length > 0)
                             {
-                                col.Item().AlignCenter().Width(105).Image(qrBytes);
+                                col.Item().AlignCenter().Width(100).Image(qrBytes);
                             }
                         }
                         catch { }
@@ -219,7 +220,7 @@ namespace ERP.Reporting.Documents
                             string dispIban = ERP.Classes.QrPaymentInfo.FormatIban(ERP.Classes.QrPaymentInfo.NormalizeToIban(_summary.QrPayment.AccountNumber, _summary.QrPayment.BankName));
                             col.Item().AlignCenter().Text(dispIban).FontSize(7.5f).Bold();
                         }
-                        col.Item().AlignCenter().Text("Amount: PKR " + _summary.NetBalance.ToString("N2")).FontSize(8.5f).Bold();
+                        col.Item().AlignCenter().Text("Amount: PKR " + _summary.NetBalance.ToString("#,##0")).FontSize(9.5f).Bold();
                     }
 
                     col.Item().PaddingVertical(2).LineHorizontal(1f).LineColor(QuestPDF.Helpers.Colors.Black);
@@ -229,8 +230,8 @@ namespace ERP.Reporting.Documents
                         ? ConfigInfo.ThankyouLine
                         : "Thank you for your valued business!";
 
-                    col.Item().AlignCenter().PaddingTop(2).Text(thankLine).Italic().FontSize(8f).Bold();
-                    col.Item().AlignCenter().PaddingTop(2).Text("Software powered by Bizgrip Solutions (Contact: 03228258734)").FontSize(7.5f).Bold().FontColor(QuestPDF.Helpers.Colors.Black);
+                    col.Item().AlignCenter().PaddingTop(2).Text(thankLine).Italic().FontSize(8f);
+                    col.Item().AlignCenter().PaddingTop(1).Text("Software powered by Bizgrip Solutions (Contact: 03228258734)").FontSize(5.8f).SemiBold().FontColor(QuestPDF.Helpers.Colors.Black);
                 });
             });
         }
@@ -397,7 +398,7 @@ namespace ERP.Reporting.Documents
 
                     // Total Current Bill Subtotal
                     table.Cell().ColumnSpan(8).Element(SubtotalCell).Text("CURRENT PERIOD BILL TOTAL:").Bold().FontColor(QuestPDF.Helpers.Colors.Grey.Darken3);
-                    table.Cell().Element(SubtotalCell).AlignRight().Text(_summary.CurrentBillTotal.ToString("#,##0.00")).Bold().FontColor(QuestPDF.Helpers.Colors.Grey.Darken4);
+                    table.Cell().Element(SubtotalCell).AlignRight().Text(_summary.CurrentBillTotal.ToString("#,##0")).Bold().FontColor(QuestPDF.Helpers.Colors.Grey.Darken4);
                 });
 
                 col.Item().PaddingTop(12);
@@ -435,23 +436,23 @@ namespace ERP.Reporting.Documents
 
                             // Previous Balance
                             recTable.Cell().Element(RecLabelCell).Text("Previous Balance:");
-                            recTable.Cell().Element(RecValueCell).Text(_summary.PreviousBalance.ToString("#,##0.00"));
+                            recTable.Cell().Element(RecValueCell).Text(_summary.PreviousBalance.ToString("#,##0"));
 
                             // Current Bill
                             recTable.Cell().Element(RecLabelCell).Text("Current Period Bill:");
-                            recTable.Cell().Element(RecValueCell).Text(_summary.CurrentBillTotal.ToString("#,##0.00"));
+                            recTable.Cell().Element(RecValueCell).Text(_summary.CurrentBillTotal.ToString("#,##0"));
 
                             // Gross Total
                             recTable.Cell().Element(RecLabelBoldCell).Text("Gross Total Payable:");
-                            recTable.Cell().Element(RecValueBoldCell).Text(_summary.GrossTotal.ToString("#,##0.00"));
+                            recTable.Cell().Element(RecValueBoldCell).Text(_summary.GrossTotal.ToString("#,##0"));
 
                             // Payments
                             recTable.Cell().Element(RecLabelCell).Text("Less Payments Received:");
-                            recTable.Cell().Element(RecValueCell).Text("(" + _summary.PaymentsReceived.ToString("#,##0.00") + ")").FontColor(QuestPDF.Helpers.Colors.Green.Darken3);
+                            recTable.Cell().Element(RecValueCell).Text("(" + _summary.PaymentsReceived.ToString("#,##0") + ")").FontColor(QuestPDF.Helpers.Colors.Green.Darken3);
 
                             // Net Balance Due
                             recTable.Cell().Element(GrandNetLabelCell).Text("NET BALANCE DUE:").Bold();
-                            recTable.Cell().Element(GrandNetValueCell).Text(_summary.NetBalance.ToString("#,##0.00")).Bold();
+                            recTable.Cell().Element(GrandNetValueCell).Text(_summary.NetBalance.ToString("#,##0")).Bold();
                         });
                     });
                 });
@@ -636,7 +637,7 @@ namespace ERP.Reporting.Documents
                         infoCol.Item().PaddingTop(1).Text(t =>
                         {
                             t.Span("Amount Pre-filled: ").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
-                            t.Span("PKR " + _summary.NetBalance.ToString("#,##0.00")).FontSize(8f).Bold().FontColor(QuestPDF.Helpers.Colors.Green.Darken3);
+                            t.Span("PKR " + _summary.NetBalance.ToString("#,##0")).FontSize(8f).Bold().FontColor(QuestPDF.Helpers.Colors.Green.Darken3);
                         });
 
                         infoCol.Item().PaddingTop(3).Text("Works with Meezan, HBL, Alfalah, Easypaisa, JazzCash & all Raast banks")
@@ -685,6 +686,10 @@ namespace ERP.Reporting.Documents
                     pd.PrinterSettings.PrinterName = printerName;
                 }
 
+                // Explicitly zero out GDI+ margins to prevent Windows from applying default 1-inch (100-unit) borders
+                pd.DefaultPageSettings.Margins = new System.Drawing.Printing.Margins(0, 0, 0, 0);
+                pd.OriginAtMargins = false;
+
                 pd.PrintController = new StandardPrintController(); // Silent mode: suppresses "Printing page X..." pop-up
                 pd.PrintPage += (sender, ev) =>
                 {
@@ -701,19 +706,21 @@ namespace ERP.Reporting.Documents
                             // If continuous/tall roll layout (e.g. 80mm thermal receipt)
                             if (img.Height > img.Width * 1.3f)
                             {
-                                float targetWidth = ev.PageBounds.Width;
-                                if (targetWidth <= 0) targetWidth = ev.MarginBounds.Width;
-                                if (targetWidth <= 0) targetWidth = 280;
-
+                                // Physical printhead on 80mm thermal printers is 72mm (~283 hundredths of an inch).
+                                // Total roll width is 80mm (~315 hundredths of an inch).
+                                // Using targetWidth = 275 hundredths of an inch (~70mm):
+                                // 1. Guarantees it never shrinks to 1 inch (we never check ev.MarginBounds).
+                                // 2. Prevents the right-side columns (ADJ and TOTAL) from falling outside the 72mm thermal printhead.
+                                float targetWidth = 275f;
                                 float targetHeight = img.Width > 0 ? (float)img.Height * (targetWidth / (float)img.Width) : ev.PageBounds.Height;
                                 ev.Graphics.DrawImage(img, new System.Drawing.RectangleF(0, 0, targetWidth, targetHeight));
                             }
                             else
                             {
-                                System.Drawing.Rectangle bounds = ev.MarginBounds;
+                                System.Drawing.Rectangle bounds = ev.PageBounds;
                                 if (bounds.Width <= 0 || bounds.Height <= 0)
                                 {
-                                    bounds = ev.PageBounds;
+                                    bounds = ev.MarginBounds;
                                 }
                                 ev.Graphics.DrawImage(img, bounds);
                             }

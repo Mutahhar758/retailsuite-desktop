@@ -1045,6 +1045,9 @@ namespace ERP.Reporting
                             errorCount++;
                         }
                     });
+
+                    // Allow thermal printer buffer and auto-cutter to cycle cleanly between jobs
+                    await Task.Delay(350);
                 }
 
                 if (_bulkCts.IsCancellationRequested)
