@@ -90,6 +90,7 @@ namespace ERP.Reporting
         private bool _isWebViewReady = false;
         private bool _isBulkMode = false;
         private CancellationTokenSource _bulkCts;
+        private string _initialCustomerCode;
 
         public CustomerBillViewer()
         {
@@ -103,6 +104,7 @@ namespace ERP.Reporting
         public CustomerBillViewer(string initialCustomerCode, DateTime fromDate, DateTime toDate)
             : this()
         {
+            _initialCustomerCode = initialCustomerCode;
             dtpFromDate.Value = fromDate;
             dtpToDate.Value = toDate;
             dtpBulkFromDate.Value = fromDate;
@@ -748,6 +750,12 @@ namespace ERP.Reporting
                 // Ready state: Do not auto-generate bill on form load; wait for user to click Generate Bill
                 lblStatus.Text = "Ready. Select customer & date range, then click 'Generate Bill'.";
                 lblStatus.ForeColor = Color.FromArgb(71, 85, 105);
+
+                if (!string.IsNullOrWhiteSpace(_initialCustomerCode))
+                {
+                    cmbCustomer.SelectedValue = _initialCustomerCode;
+                    await LoadAndRenderSingleBillAsync();
+                }
             }
             catch (Exception ex)
             {

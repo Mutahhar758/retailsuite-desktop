@@ -289,6 +289,12 @@
     <Compile Include="Forms\frmSaleSupply.designer.cs">
       <DependentUpon>frmSaleSupply.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\frmCustomerSupplyRegister.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmCustomerSupplyRegister.Designer.cs">
+      <DependentUpon>frmCustomerSupplyRegister.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\frmSupplyOrder.cs">
       <SubType>Form</SubType>
     </Compile>

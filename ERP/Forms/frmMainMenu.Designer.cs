@@ -51,6 +51,7 @@ namespace ERP
             this.purchaseReturnToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
+            this.customerSupplyRegisterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saleOrderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saleReturnToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
@@ -232,6 +233,7 @@ namespace ERP
             this.purchaseReturnToolStripMenuItem,
             this.toolStripSeparator2,
             this.toolStripMenuItem1,
+            this.customerSupplyRegisterToolStripMenuItem,
             this.saleOrderToolStripMenuItem,
             this.saleReturnToolStripMenuItem,
             this.toolStripSeparator3,
@@ -291,9 +293,16 @@ namespace ERP
             // toolStripMenuItem1
             // 
             this.toolStripMenuItem1.Name = "toolStripMenuItem1";
-            this.toolStripMenuItem1.Size = new System.Drawing.Size(175, 22);
+            this.toolStripMenuItem1.Size = new System.Drawing.Size(205, 22);
             this.toolStripMenuItem1.Text = "Sale Supply";
             this.toolStripMenuItem1.Click += new System.EventHandler(this.toolStripMenuItem1_Click);
+            // 
+            // customerSupplyRegisterToolStripMenuItem
+            // 
+            this.customerSupplyRegisterToolStripMenuItem.Name = "customerSupplyRegisterToolStripMenuItem";
+            this.customerSupplyRegisterToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.customerSupplyRegisterToolStripMenuItem.Text = "Customer Supply Register";
+            this.customerSupplyRegisterToolStripMenuItem.Click += new System.EventHandler(this.customerSupplyRegisterToolStripMenuItem_Click);
             // 
             // saleOrderToolStripMenuItem
             // 
@@ -830,6 +839,7 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem barcodeToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem shipmentLabelTagToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
+        private System.Windows.Forms.ToolStripMenuItem customerSupplyRegisterToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerBillToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem supplyOrderToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem reports2ToolStripMenuItem;

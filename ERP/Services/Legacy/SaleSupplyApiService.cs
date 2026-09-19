@@ -86,6 +86,47 @@ namespace ERP.Services.Legacy
                 await EnsureSuccessWithServerMessageAsync(response);
             }
         }
+
+        public async Task<List<SaleSupplyLineDto>> GetCustomerLinesAsync(
+            string customerId, string fromDate = "", string toDate = "", string itemId = "")
+        {
+            var qs = new List<string>();
+            if (!string.IsNullOrWhiteSpace(customerId)) qs.Add("customerId=" + Uri.EscapeDataString(customerId));
+            if (!string.IsNullOrWhiteSpace(fromDate)) qs.Add("fromDate=" + Uri.EscapeDataString(fromDate));
+            if (!string.IsNullOrWhiteSpace(toDate)) qs.Add("toDate=" + Uri.EscapeDataString(toDate));
+            if (!string.IsNullOrWhiteSpace(itemId)) qs.Add("itemId=" + Uri.EscapeDataString(itemId));
+
+            var url = Endpoint + "/customer-records" + (qs.Count > 0 ? "?" + string.Join("&", qs) : "");
+
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<SaleSupplyLineDto>>>(json);
+                return payload != null && payload.Body != null ? payload.Body : new List<SaleSupplyLineDto>();
+            }
+        }
+
+        public async Task UpdateLineAsync(string voucherNo, int seq, SaleSupplyLineApiRequest request)
+        {
+            using (var client = CreateClient())
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+                var response = await client.PutAsync(Endpoint + "/" + Uri.EscapeDataString(voucherNo) + "/lines/" + seq, content);
+                await EnsureSuccessWithServerMessageAsync(response);
+            }
+        }
+
+        public async Task UpdateCustomerLinesAsync(List<SaleSupplyCustomerLineUpdateRequest> requests)
+        {
+            using (var client = CreateClient())
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(requests), Encoding.UTF8, "application/json");
+                var response = await client.PutAsync(Endpoint + "/customer-lines", content);
+                await EnsureSuccessWithServerMessageAsync(response);
+            }
+        }
     }
 
     internal class SaleSupplyDto
@@ -131,6 +172,18 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("itemId")]
         public string ItemId { get; set; }
+
+        [JsonProperty("itemTitle")]
+        public string ItemTitle { get; set; }
+
+        [JsonProperty("customerTitle")]
+        public string CustomerTitle { get; set; }
+
+        [JsonProperty("qtyInPack")]
+        public decimal? QtyInPack { get; set; }
+
+        [JsonProperty("packing")]
+        public decimal? Packing { get; set; }
 
         [JsonProperty("narration")]
         public string Narration { get; set; }
@@ -260,5 +313,17 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("secUnit")]
         public string SecUnit { get; set; }
+    }
+
+    internal class SaleSupplyCustomerLineUpdateRequest
+    {
+        [JsonProperty("voucherNo")]
+        public string VoucherNo { get; set; }
+
+        [JsonProperty("seq")]
+        public int Seq { get; set; }
+
+        [JsonProperty("line")]
+        public SaleSupplyLineApiRequest Line { get; set; }
     }
 }

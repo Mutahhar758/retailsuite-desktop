@@ -83,6 +83,7 @@ namespace ERP
             purchaseToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Purchases);
             purchaseReturnToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PurchaseReturns);
             toolStripMenuItem1.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SaleSupplies);
+            customerSupplyRegisterToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SaleSupplies);
             saleOrderToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Sales);
             saleReturnToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SaleReturns);
             stockAdjustmentToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockAdjustments);
@@ -706,6 +707,13 @@ namespace ERP
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
             frmSaleSupply frm = new frmSaleSupply();
+            frm.MdiParent = this;
+            frm.Show();
+        }
+
+        private void customerSupplyRegisterToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmCustomerSupplyRegister frm = new frmCustomerSupplyRegister();
             frm.MdiParent = this;
             frm.Show();
         }
