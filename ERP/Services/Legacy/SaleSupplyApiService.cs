@@ -290,9 +290,6 @@ namespace ERP.Services.Legacy
         [JsonProperty("customerId")]
         public string CustomerId { get; set; }
 
-        [JsonProperty("unit")]
-        public string Unit { get; set; }
-
         [JsonProperty("qty")]
         public decimal Qty { get; set; }
 

@@ -45,12 +45,17 @@ namespace ERP.Forms
             this.txtBankName = new System.Windows.Forms.TextBox();
             this.lblBankName = new System.Windows.Forms.Label();
             this.chkQrEnabled = new System.Windows.Forms.CheckBox();
+            this.tabInventory = new System.Windows.Forms.TabPage();
+            this.chkEnableSecondaryQty = new System.Windows.Forms.CheckBox();
+            this.lblSecQtyTitle = new System.Windows.Forms.Label();
+            this.lblSecQtyInfo = new System.Windows.Forms.Label();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
             this.tabControl1.SuspendLayout();
             this.tabPrinter.SuspendLayout();
             this.tabQrPayment.SuspendLayout();
+            this.tabInventory.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picQrPreview)).BeginInit();
             this.SuspendLayout();
             // 
@@ -58,6 +63,7 @@ namespace ERP.Forms
             // 
             this.tabControl1.Controls.Add(this.tabPrinter);
             this.tabControl1.Controls.Add(this.tabQrPayment);
+            this.tabControl1.Controls.Add(this.tabInventory);
             this.tabControl1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabControl1.Location = new System.Drawing.Point(12, 12);
             this.tabControl1.Name = "tabControl1";
@@ -246,6 +252,50 @@ namespace ERP.Forms
             this.chkQrEnabled.UseVisualStyleBackColor = true;
             this.chkQrEnabled.CheckedChanged += new System.EventHandler(this.chkQrEnabled_CheckedChanged);
             // 
+            // tabInventory
+            // 
+            this.tabInventory.BackColor = System.Drawing.SystemColors.Window;
+            this.tabInventory.Controls.Add(this.chkEnableSecondaryQty);
+            this.tabInventory.Controls.Add(this.lblSecQtyTitle);
+            this.tabInventory.Controls.Add(this.lblSecQtyInfo);
+            this.tabInventory.Location = new System.Drawing.Point(4, 24);
+            this.tabInventory.Name = "tabInventory";
+            this.tabInventory.Padding = new System.Windows.Forms.Padding(3);
+            this.tabInventory.Size = new System.Drawing.Size(476, 307);
+            this.tabInventory.TabIndex = 2;
+            this.tabInventory.Text = "Quantity & Invoicing";
+            // 
+            // lblSecQtyTitle
+            // 
+            this.lblSecQtyTitle.AutoSize = true;
+            this.lblSecQtyTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSecQtyTitle.Location = new System.Drawing.Point(20, 19);
+            this.lblSecQtyTitle.Name = "lblSecQtyTitle";
+            this.lblSecQtyTitle.Size = new System.Drawing.Size(188, 17);
+            this.lblSecQtyTitle.TabIndex = 0;
+            this.lblSecQtyTitle.Text = "Secondary Quantity (Single & Pack)";
+            // 
+            // chkEnableSecondaryQty
+            // 
+            this.chkEnableSecondaryQty.AutoSize = true;
+            this.chkEnableSecondaryQty.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkEnableSecondaryQty.Location = new System.Drawing.Point(23, 46);
+            this.chkEnableSecondaryQty.Name = "chkEnableSecondaryQty";
+            this.chkEnableSecondaryQty.Size = new System.Drawing.Size(315, 19);
+            this.chkEnableSecondaryQty.TabIndex = 1;
+            this.chkEnableSecondaryQty.Text = "Enable Secondary Quantity (Single && Pack Qty / Rate)";
+            this.chkEnableSecondaryQty.UseVisualStyleBackColor = true;
+            // 
+            // lblSecQtyInfo
+            // 
+            this.lblSecQtyInfo.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSecQtyInfo.ForeColor = System.Drawing.SystemColors.GrayText;
+            this.lblSecQtyInfo.Location = new System.Drawing.Point(20, 72);
+            this.lblSecQtyInfo.Name = "lblSecQtyInfo";
+            this.lblSecQtyInfo.Size = new System.Drawing.Size(430, 130);
+            this.lblSecQtyInfo.TabIndex = 2;
+            this.lblSecQtyInfo.Text = "• When ENABLED: Invoices and transaction entries (Sales, Purchases, Supplies, Adjustments) display both Primary (Single) and Secondary (Pack) Quantity and Rate columns.\r\n\r\n• When DISABLED: Transaction forms show only standard Primary Quantity and Rate columns.\r\n\r\n• Unit selection dropdown is omitted from transaction forms. Printed bills and statements automatically display each item\'s configured Default Unit.";
+            // 
             // btnSave
             // 
             this.btnSave.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(118)))), ((int)(((byte)(210)))));
@@ -312,6 +362,8 @@ namespace ERP.Forms
             this.tabPrinter.PerformLayout();
             this.tabQrPayment.ResumeLayout(false);
             this.tabQrPayment.PerformLayout();
+            this.tabInventory.ResumeLayout(false);
+            this.tabInventory.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picQrPreview)).EndInit();
             this.ResumeLayout(false);
 
@@ -322,6 +374,10 @@ namespace ERP.Forms
         private System.Windows.Forms.TabControl tabControl1;
         private System.Windows.Forms.TabPage tabPrinter;
         private System.Windows.Forms.TabPage tabQrPayment;
+        private System.Windows.Forms.TabPage tabInventory;
+        private System.Windows.Forms.CheckBox chkEnableSecondaryQty;
+        private System.Windows.Forms.Label lblSecQtyTitle;
+        private System.Windows.Forms.Label lblSecQtyInfo;
         private System.Windows.Forms.ComboBox cmbPrinter;
         private System.Windows.Forms.Label lblNarration;
         private System.Windows.Forms.Label lblPrinterInfo;

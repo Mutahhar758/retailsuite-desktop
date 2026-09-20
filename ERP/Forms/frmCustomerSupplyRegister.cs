@@ -185,6 +185,10 @@ namespace ERP
                     cmbCustomer.SelectedIndex = 0;
                 }
 
+                colUnit.Visible = false;
+                colSecQty.Visible = ApiSession.HasSecondaryQty;
+                colSecRate.Visible = ApiSession.HasSecondaryQty;
+
                 _isLoading = false;
                 prgProgress.Visible = false;
 
@@ -480,7 +484,6 @@ namespace ERP
                 {
                     Seq = model.Seq,
                     CustomerId = model.CustomerId,
-                    Unit = model.Unit,
                     Qty = model.Qty,
                     Rate = model.Rate,
                     Discount = model.Discount,
@@ -532,7 +535,6 @@ namespace ERP
                     {
                         Seq = m.Seq,
                         CustomerId = m.CustomerId,
-                        Unit = m.Unit,
                         Qty = m.Qty,
                         Rate = m.Rate,
                         Discount = m.Discount,
@@ -695,7 +697,6 @@ namespace ERP
             private readonly SaleSupplyApiService _apiService;
             private DateTimePicker dtpDate;
             private ComboBox cmbItem;
-            private ComboBox cmbUnit;
             private TextBox txtQty;
             private TextBox txtRate;
             private TextBox txtDiscount;
@@ -752,22 +753,9 @@ namespace ERP
                     if (cmbItem.SelectedItem is InventoryItemDto sel)
                     {
                         txtRate.Text = sel.PriRate.ToString("N2");
-                        if (!string.IsNullOrWhiteSpace(sel.DefaultUnit) && cmbUnit.Items.Count > 0)
-                        {
-                            cmbUnit.SelectedValue = sel.DefaultUnit;
-                        }
                     }
                 };
                 this.Controls.Add(cmbItem);
-                y += 34;
-
-                // Unit
-                AddLabel("Unit:", 16, y);
-                cmbUnit = new ComboBox { Location = new Point(130, y), Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
-                cmbUnit.DisplayMember = "Title";
-                cmbUnit.ValueMember = "Code";
-                cmbUnit.DataSource = new List<UnitLookupDto>(units);
-                this.Controls.Add(cmbUnit);
                 y += 34;
 
                 // Qty
@@ -911,7 +899,6 @@ namespace ERP
 
                     string dateStr = dtpDate.Value.ToString("yyyy-MM-dd");
                     string itemId = cmbItem.SelectedValue.ToString();
-                    string unit = cmbUnit.SelectedValue != null ? cmbUnit.SelectedValue.ToString() : null;
                     decimal rate = Parse(txtRate);
                     decimal disc = Parse(txtDiscount);
                     decimal addLess = Parse(txtAddLess);
@@ -930,7 +917,6 @@ namespace ERP
                         {
                             Seq = d.Seq,
                             CustomerId = d.CustomerId,
-                            Unit = d.Unit,
                             Qty = d.Qty,
                             Rate = d.Rate,
                             Discount = d.Discount,
@@ -944,7 +930,6 @@ namespace ERP
                         {
                             Seq = nextSeq,
                             CustomerId = _customerId,
-                            Unit = unit,
                             Qty = qty,
                             Rate = rate,
                             Discount = disc,
@@ -975,7 +960,6 @@ namespace ERP
                                 {
                                     Seq = 1,
                                     CustomerId = _customerId,
-                                    Unit = unit,
                                     Qty = qty,
                                     Rate = rate,
                                     Discount = disc,

@@ -219,9 +219,6 @@ namespace ERP.Services.Legacy
         [JsonProperty("itemId")]
         public string ItemId { get; set; }
 
-        [JsonProperty("unit")]
-        public string Unit { get; set; }
-
         [JsonProperty("qty")]
         public decimal Qty { get; set; }
 

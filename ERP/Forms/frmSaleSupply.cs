@@ -263,7 +263,6 @@ namespace ERP
                 {
                     Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
                     CustomerId = Convert.ToString(row.Cells[clnCustomer.Index].Value),
-                    Unit = ApiSession.HasSecondaryQty ? null : Convert.ToString(row.Cells[clnUnit.Index].Value),
                     Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
                     Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
@@ -421,9 +420,10 @@ namespace ERP
 
         private void SetupSecondaryQtyColumns()
         {
+            clnUnit.Visible = false;
+
             if (ApiSession.HasSecondaryQty)
             {
-                clnUnit.Visible = false;
                 clnQty.HeaderText = "Single Qty";
                 clnRate.HeaderText = "Single Rate";
 
@@ -445,6 +445,16 @@ namespace ERP
                     dgvSale.Columns.Insert(insertIndex, colSecQty);
                     dgvSale.Columns.Insert(insertIndex + 1, colSecRate);
                 }
+            }
+            else
+            {
+                clnQty.HeaderText = "Quantity";
+                clnRate.HeaderText = "Rate";
+
+                if (dgvSale.Columns.Contains("clnSecQty"))
+                    dgvSale.Columns.Remove("clnSecQty");
+                if (dgvSale.Columns.Contains("clnSecRate"))
+                    dgvSale.Columns.Remove("clnSecRate");
             }
         }
 
@@ -528,14 +538,6 @@ namespace ERP
                     cmbCustomer.SelectedIndexChanged += CmbCustomer_SelectedIndexChanged;
                 }
             }
-            else if (dgvSale.CurrentCellAddress.X == clnUnit.DisplayIndex)
-            {
-                ComboBox cmbunit = e.Control as ComboBox;
-                if (cmbunit != null)
-                {
-                    cmbunit.SelectedIndexChanged += new EventHandler(cmbunit_SelectedIndexChanged);
-                }
-            }
             else if (dgvSale.CurrentCell.ColumnIndex == clnRate.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
@@ -606,19 +608,6 @@ namespace ERP
             }
         }
 
-        void cmbunit_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (dgvSale.CurrentCellAddress.X == clnUnit.DisplayIndex)
-            {
-                if ((sender as ComboBox).SelectedIndex != -1)
-                {
-                    SetRateForRow(dgvSale.CurrentCellAddress.Y);
-                    RecalculateRow(dgvSale.CurrentCellAddress.Y);
-                    CalcTotAmount();
-                }
-            }
-        }
-
         void SetRateForRow(int rowIndex)
         {
             if (cmbItem.SelectedValue != null && rowIndex >= 0 && rowIndex < dgvSale.Rows.Count)
@@ -627,17 +616,7 @@ namespace ERP
                 DataRow dr = dtItems.Select(Filter).FirstOrDefault();
                 if (dr != null)
                 {
-                    string rate = "0";
-                    if (dr["PrimaryUnit"] == DBNull.Value || string.IsNullOrWhiteSpace(dr["PrimaryUnit"].ToString()))
-                    {
-                        rate = dr["PriRate"].ToString();
-                    }
-                    else if (dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value != null)
-                    {
-                        string unitValue = dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value.ToString();
-                        rate = unitValue == dr["SecondaryUnit"].ToString() ? dr["SecRate"].ToString() : dr["PriRate"].ToString();
-                    }
-                    dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value = rate;
+                    dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value = dr["PriRate"]?.ToString() ?? "0";
 
                     if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
                     {
@@ -645,7 +624,7 @@ namespace ERP
                         {
                             dgvSale.Rows[rowIndex].Cells["clnSecQty"].Value = "0";
                         }
-                        dgvSale.Rows[rowIndex].Cells["clnSecRate"].Value = dr["SecRate"].ToString();
+                        dgvSale.Rows[rowIndex].Cells["clnSecRate"].Value = dr["SecRate"]?.ToString() ?? "0";
                     }
                 }
             }
@@ -733,17 +712,6 @@ namespace ERP
 
         private void SetclnUnitSource()
         {
-            DataTable dt = dtUnits.Copy();
-            dt.Rows.Clear();
-            if (cmbItem.SelectedValue != null)
-            {
-                DataRowView dr = (DataRowView)cmbItem.SelectedItem;
-                dt = dtUnits.Select("Code in ('" + dr["PrimaryUnit"].ToString() + "','" + dr["SecondaryUnit"].ToString() + "')").Count() == 0 ? dt :
-                    dtUnits.Select("Code in ('" + dr["PrimaryUnit"].ToString() + "','" + dr["SecondaryUnit"].ToString() + "')").CopyToDataTable();
-            }
-            clnUnit.DataSource = dt;
-            clnUnit.DisplayMember = "Title";
-            clnUnit.ValueMember = "Code";
         }
 
         private void dgvPurchase_DataError(object sender, DataGridViewDataErrorEventArgs e)
@@ -760,24 +728,7 @@ namespace ERP
                 if (dgvSale.CurrentCell != null && dgvSale.CurrentCell.ColumnIndex == clnCustomer.Index)
                 {
                     int rowIndex = dgvSale.CurrentCell.RowIndex;
-                    if (ApiSession.HasSecondaryQty)
-                    {
-                        dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[clnQty.Index];
-                    }
-                    else
-                    {
-                        bool unitFilled = dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value != null &&
-                                         !string.IsNullOrEmpty(dgvSale.Rows[rowIndex].Cells[clnUnit.Index].Value.ToString());
-
-                        if (unitFilled)
-                        {
-                            dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[clnQty.Index];
-                        }
-                        else
-                        {
-                            SendKeys.Send("{tab}");
-                        }
-                    }
+                    dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[clnQty.Index];
                 }
                 else if (dgvSale.CurrentCell != null && dgvSale.CurrentCell.ColumnIndex == clnQty.Index)
                 {

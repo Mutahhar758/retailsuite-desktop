@@ -292,7 +292,6 @@ namespace ERP
                 {
                     Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
                     ItemId = Convert.ToString(row.Cells[clnItemNo.Index].Value),
-                    Unit = ApiSession.HasSecondaryQty ? null : Convert.ToString(row.Cells[clnUnit.Index].Value),
                     Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
                     Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
@@ -368,9 +367,10 @@ namespace ERP
 
         private void SetupSecondaryQtyColumns()
         {
+            clnUnit.Visible = false;
+
             if (ApiSession.HasSecondaryQty)
             {
-                clnUnit.Visible = false;
                 clnQty.HeaderText = "Single Qty";
                 clnRate.HeaderText = "Single Rate";
 
@@ -392,6 +392,21 @@ namespace ERP
                     dgvSale.Columns.Insert(insertIndex, colSecQty);
                     dgvSale.Columns.Insert(insertIndex + 1, colSecRate);
                 }
+                else
+                {
+                    dgvSale.Columns["clnSecQty"].Visible = true;
+                    dgvSale.Columns["clnSecRate"].Visible = true;
+                }
+            }
+            else
+            {
+                clnQty.HeaderText = "Qty";
+                clnRate.HeaderText = "Rate";
+
+                if (dgvSale.Columns.Contains("clnSecQty"))
+                    dgvSale.Columns["clnSecQty"].Visible = false;
+                if (dgvSale.Columns.Contains("clnSecRate"))
+                    dgvSale.Columns["clnSecRate"].Visible = false;
             }
         }
 
@@ -484,12 +499,6 @@ namespace ERP
                     cmbCatagory.SelectedIndexChanged += new EventHandler(cmbCatagory_SelectedIndexChanged);
                 }
             }
-            else if (dgvSale.CurrentCellAddress.X == clnUnit.DisplayIndex)
-            {
-                ComboBox cmbunit = e.Control as ComboBox;
-                if (cmbunit != null)
-                    cmbunit.SelectedIndexChanged += new EventHandler(cmbunit_SelectedIndexChanged);
-            }
             else if (dgvSale.CurrentCell.ColumnIndex == clnRate.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
@@ -500,25 +509,6 @@ namespace ERP
                 TextBox tbRate = e.Control as TextBox;
                 if (tbRate != null && e.Control.Text != null)
                     tbRate.KeyPress += new KeyPressEventHandler(tbRate_KeyPress);
-            }
-        }
-
-        void cmbunit_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (dgvSale.CurrentCellAddress.X == clnUnit.DisplayIndex && (sender as ComboBox).SelectedIndex != -1)
-            {
-                if (dgvSale[clnItemNo.Index, dgvSale.CurrentCellAddress.Y].Value == null)
-                    return;
-
-                string itemId = dgvSale[clnItemNo.Index, dgvSale.CurrentCellAddress.Y].Value.ToString();
-                DataRow dr = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
-                if (dr != null)
-                {
-                    dgvSale[clnRate.Index, dgvSale.CurrentCellAddress.Y].Value =
-                        (sender as ComboBox).SelectedValue.ToString() == dr["SecondaryUnit"].ToString()
-                            ? dr["SecRate"].ToString()
-                            : dr["PriRate"].ToString();
-                }
             }
         }
 
@@ -550,10 +540,6 @@ namespace ERP
 
         private void SetAllUnitsSource(int rowInd)
         {
-            DataGridViewComboBoxCell cmb = dgvSale[clnUnit.Index, rowInd] as DataGridViewComboBoxCell;
-            cmb.DataSource = dtUnits.Copy();
-            cmb.DisplayMember = "Title";
-            cmb.ValueMember = "Code";
         }
 
         void tbQty_KeyPress(object sender, KeyPressEventArgs e)
@@ -603,35 +589,12 @@ namespace ERP
 
         private void SetcmbUnitSource(DataRowView dr, int rowInd)
         {
-            DataTable dt = dtUnits.Clone();
-            string primaryUnit = Convert.ToString(dr["PrimaryUnit"]);
-            string secondaryUnit = Convert.ToString(dr["SecondaryUnit"]);
-            DataRow[] rows = dtUnits.Select("Code in ('" + primaryUnit.Replace("'", "''") + "','" + secondaryUnit.Replace("'", "''") + "')");
-            if (rows.Length > 0)
-            {
-                for (int i = 0; i < rows.Length; i++)
-                    dt.ImportRow(rows[i]);
-            }
-
-            DataGridViewComboBoxCell cmb = dgvSale[clnUnit.Index, rowInd] as DataGridViewComboBoxCell;
-            cmb.DataSource = dt;
-            cmb.DisplayMember = "Title";
-            cmb.ValueMember = "Code";
-            cmb.Value = dr["DefaultUnit"];
-            if (ApiSession.HasSecondaryQty)
-            {
-                dgvSale[clnRate.Index, rowInd].Value = dr["PriRate"].ToString();
-            }
-            else
-            {
-                dgvSale[clnRate.Index, rowInd].Value = dr["DefaultUnit"].ToString() == dr["SecondaryUnit"].ToString()
-                    ? dr["SecRate"].ToString()
-                    : dr["PriRate"].ToString();
-            }
+            dgvSale[clnRate.Index, rowInd].Value = dr["PriRate"].ToString();
 
             if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
             {
-                dgvSale["clnSecQty", rowInd].Value = "0";
+                if (dgvSale["clnSecQty", rowInd].Value == null || string.IsNullOrWhiteSpace(dgvSale["clnSecQty", rowInd].Value.ToString()))
+                    dgvSale["clnSecQty", rowInd].Value = "0";
                 dgvSale["clnSecRate", rowInd].Value = dr["SecRate"].ToString();
             }
         }

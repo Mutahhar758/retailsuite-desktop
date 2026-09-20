@@ -38,14 +38,35 @@ namespace ERP.Forms
                     cmbPrinter.SelectedIndex = 0;
                 }
 
-                // 2. Load QR Payment settings from API
+                // 2. Load QR Payment & Inventory settings from API
                 lblStatus.Text = "Loading settings...";
                 await LoadQrSettingsAsync();
+                await LoadInventorySettingsAsync();
                 lblStatus.Text = "Ready";
             }
             catch (Exception ex)
             {
                 lblStatus.Text = "Error loading settings: " + ex.Message;
+            }
+        }
+
+        private async Task LoadInventorySettingsAsync()
+        {
+            try
+            {
+                string secQtyStr = await _settingsService.GetSettingValueAsync("Inventory.EnableSecondaryQty");
+                if (!string.IsNullOrWhiteSpace(secQtyStr))
+                {
+                    chkEnableSecondaryQty.Checked = string.Equals(secQtyStr, "true", StringComparison.OrdinalIgnoreCase);
+                }
+                else
+                {
+                    chkEnableSecondaryQty.Checked = ApiSession.HasSecondaryQty;
+                }
+            }
+            catch
+            {
+                chkEnableSecondaryQty.Checked = ApiSession.HasSecondaryQty;
             }
         }
 
@@ -186,10 +207,20 @@ namespace ERP.Forms
                         Value = txtAccountNumber.Text.Trim(),
                         Description = "IBAN or RAAST Alias for QR payment",
                         Category = "Bill.QrPayment"
+                    },
+                    new SettingItemDto
+                    {
+                        Key = "Inventory.EnableSecondaryQty",
+                        Value = chkEnableSecondaryQty.Checked ? "true" : "false",
+                        Description = "Enable secondary quantity (pack/single) on transaction forms",
+                        Category = "Inventory"
                     }
                 };
 
                 bool apiSuccess = await _settingsService.BatchUpsertAsync(settingsToSave);
+
+                // Update active session flag immediately
+                ApiSession.HasSecondaryQty = chkEnableSecondaryQty.Checked;
 
                 // Clear cached QrPaymentInfo so new bills immediately use updated settings
                 QrPaymentInfo.ClearCache();
@@ -198,8 +229,8 @@ namespace ERP.Forms
 
                 MessageBox.Show(
                     apiSuccess
-                        ? "Configuration and QR payment settings saved successfully!"
-                        : "Printer setting saved, but failed to sync QR settings with the server. Please check your network connection.",
+                        ? "Configuration and settings saved successfully!"
+                        : "Printer setting saved, but failed to sync settings with the server. Please check your network connection.",
                     "Configuration",
                     MessageBoxButtons.OK,
                     apiSuccess ? MessageBoxIcon.Information : MessageBoxIcon.Warning);

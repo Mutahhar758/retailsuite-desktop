@@ -159,6 +159,12 @@ namespace ERP
                     {
                         ConfigInfo.ThankyouLine = thankYou;
                     }
+
+                    var secQtySetting = await _settingsApiService.GetSettingValueAsync("Inventory.EnableSecondaryQty");
+                    if (!string.IsNullOrWhiteSpace(secQtySetting))
+                    {
+                        ApiSession.HasSecondaryQty = string.Equals(secQtySetting, "true", StringComparison.OrdinalIgnoreCase);
+                    }
                 }
                 catch
                 {
