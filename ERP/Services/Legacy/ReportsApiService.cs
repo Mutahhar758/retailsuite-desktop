@@ -168,12 +168,13 @@ namespace ERP.Services.Legacy
             }
         }
 
-        public async Task<DataTable> GetStockLedgerAsync(string itemId, DateTime fromDate, DateTime toDate)
+        public async Task<DataTable> GetStockLedgerAsync(string itemId, DateTime fromDate, DateTime toDate, bool showCostPrice = false)
         {
             var url = Endpoint
                 + "/stock-ledger?fkItem=" + Uri.EscapeDataString(itemId ?? string.Empty)
                 + "&fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
-                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"));
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"))
+                + "&showCostPrice=" + showCostPrice.ToString().ToLowerInvariant();
 
             using (var client = CreateClient(includeTenantId: true))
             {
@@ -191,6 +192,7 @@ namespace ERP.Services.Legacy
                 dt.Columns.Add("qtyin", typeof(decimal));
                 dt.Columns.Add("qtyout", typeof(decimal));
                 dt.Columns.Add("rate", typeof(decimal));
+                dt.Columns.Add("costprice", typeof(decimal));
 
                 for (int i = 0; i < rows.Count; i++)
                 {
@@ -200,7 +202,8 @@ namespace ERP.Services.Legacy
                         rows[i].Particular ?? string.Empty,
                         rows[i].QtyIn,
                         rows[i].QtyOut,
-                        rows[i].Rate.HasValue ? (object)rows[i].Rate.Value : DBNull.Value);
+                        rows[i].Rate.HasValue ? (object)rows[i].Rate.Value : DBNull.Value,
+                        rows[i].CostPrice.HasValue ? (object)rows[i].CostPrice.Value : DBNull.Value);
                 }
 
                 return dt;
@@ -866,6 +869,12 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("rate")]
         public decimal? Rate { get; set; }
+
+        [JsonProperty("costPrice")]
+        public decimal? CostPrice { get; set; }
+
+        [JsonProperty("costAmount")]
+        public decimal? CostAmount { get; set; }
     }
 
     internal class StockBalanceLineDto

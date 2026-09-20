@@ -26,10 +26,9 @@ namespace ERP
         {
             return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetStockBalanceAsync(Fdate, Tdate, Filter, Qty, Catagory, Type)).GetAwaiter().GetResult();
         }
-        internal static DataTable StockLedger( string Item, DateTime Fdate, DateTime Tdate)
+        internal static DataTable StockLedger(string Item, DateTime Fdate, DateTime Tdate, bool showCostPrice = false)
         {
-
-            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetStockLedgerAsync(Item, Fdate, Tdate)).GetAwaiter().GetResult();
+            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetStockLedgerAsync(Item, Fdate, Tdate, showCostPrice)).GetAwaiter().GetResult();
         }
         internal static DataTable IncomeSummery(DateTime Fdate, DateTime Tdate)
         {

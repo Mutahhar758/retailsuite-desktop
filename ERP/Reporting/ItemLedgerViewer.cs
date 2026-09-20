@@ -35,6 +35,7 @@ namespace ERP.Reporting
         private ComboBox cmbFilter;
         private Label lblSearch;
         private TextBox txtSearch;
+        private CheckBox chkShowCost;
         private Button btnGenerate;
         private Button btnExportExcel;
         private Button btnExportCsv;
@@ -186,11 +187,29 @@ namespace ERP.Reporting
             };
             txtSearch.TextChanged += (s, e) => ApplyClientFilter();
 
+            // Show Cost Checkbox
+            chkShowCost = new CheckBox
+            {
+                Text = "Cost Price",
+                Location = new Point(781, 33),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Cursor = Cursors.Hand
+            };
+            chkShowCost.CheckedChanged += async (s, e) =>
+            {
+                if (cmbItem.SelectedValue != null && !string.IsNullOrWhiteSpace(cmbItem.SelectedValue.ToString()))
+                {
+                    await LoadAndRenderReportAsync();
+                }
+            };
+
             // Generate Button
             btnGenerate = new Button
             {
                 Text = "Generate",
-                Location = new Point(781, 30),
+                Location = new Point(875, 30),
                 Width = 80,
                 Height = 28,
                 BackColor = Color.FromArgb(37, 99, 235),
@@ -206,7 +225,7 @@ namespace ERP.Reporting
             btnExportExcel = new Button
             {
                 Text = "Excel",
-                Location = new Point(867, 30),
+                Location = new Point(960, 30),
                 Width = 65,
                 Height = 28,
                 BackColor = Color.FromArgb(16, 149, 193),
@@ -222,7 +241,7 @@ namespace ERP.Reporting
             btnExportCsv = new Button
             {
                 Text = "CSV",
-                Location = new Point(937, 30),
+                Location = new Point(1030, 30),
                 Width = 55,
                 Height = 28,
                 BackColor = Color.FromArgb(71, 85, 105),
@@ -238,7 +257,7 @@ namespace ERP.Reporting
             btnPrint = new Button
             {
                 Text = "Print",
-                Location = new Point(997, 30),
+                Location = new Point(1090, 30),
                 Width = 60,
                 Height = 28,
                 BackColor = Color.FromArgb(15, 23, 42),
@@ -253,7 +272,7 @@ namespace ERP.Reporting
             // Status Label
             lblStatus = new Label
             {
-                Location = new Point(1067, 35),
+                Location = new Point(1155, 35),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(16, 185, 129)
@@ -266,6 +285,7 @@ namespace ERP.Reporting
                 lblTo, dtpTo,
                 lblFilter, cmbFilter,
                 lblSearch, txtSearch,
+                chkShowCost,
                 btnGenerate,
                 btnExportExcel, btnExportCsv, btnPrint,
                 lblStatus
@@ -368,6 +388,7 @@ namespace ERP.Reporting
             string selectedItemTitle = cmbItem.Text ?? "Inventory Item";
             DateTime fromDate = dtpFrom.Value;
             DateTime toDate = dtpTo.Value;
+            bool showCostPrice = chkShowCost != null && chkShowCost.Checked;
 
             SetLoading(true);
             try
@@ -375,10 +396,10 @@ namespace ERP.Reporting
                 ItemLedgerDataResult result = null;
 
                 // 1. Fetch live data
-                DataTable dt = await Task.Run(() => ReportQuery.StockLedger(selectedItemId, fromDate, toDate));
+                DataTable dt = await Task.Run(() => ReportQuery.StockLedger(selectedItemId, fromDate, toDate, showCostPrice));
                 if (dt != null && dt.Rows.Count > 0)
                 {
-                    result = ItemLedgerDataService.ConvertDataTable(dt, selectedItemId, selectedItemTitle, fromDate, toDate);
+                    result = ItemLedgerDataService.ConvertDataTable(dt, selectedItemId, selectedItemTitle, fromDate, toDate, "All", showCostPrice);
                 }
                 else
                 {
@@ -393,6 +414,7 @@ namespace ERP.Reporting
                         TotalIn = 0,
                         TotalOut = 0,
                         ClosingBalance = 0,
+                        ShowCostPrice = showCostPrice,
                         GeneratedAt = DateTime.Now
                     };
                     result = new ItemLedgerDataResult(emptyHeader, new List<ItemLedgerReportItem>());
@@ -466,6 +488,7 @@ namespace ERP.Reporting
                     TotalIn = totalIn,
                     TotalOut = totalOut,
                     ClosingBalance = closingBal,
+                    ShowCostPrice = _currentHeader != null && _currentHeader.ShowCostPrice,
                     GeneratedAt = DateTime.Now
                 };
 
@@ -548,9 +571,14 @@ namespace ERP.Reporting
                             ws.Cell(3, 1).Style.Font.Italic = true;
                             ws.Cell(3, 1).Style.Font.FontColor = XLColor.FromArgb(100, 116, 139);
 
+                            bool showCostPrice = _currentHeader?.ShowCostPrice == true;
+
                             // Columns Table Header
                             int row = 5;
-                            string[] headers = { "Date", "Voucher #", "Particular / Narrative", "Rate", "Inward (+)", "Outward (-)", "Balance Qty" };
+                            string[] headers = showCostPrice
+                                ? new string[] { "Date", "Voucher #", "Particular / Narrative", "Rate", "Cost Price", "Inward (+)", "Outward (-)", "Balance Qty" }
+                                : new string[] { "Date", "Voucher #", "Particular / Narrative", "Rate", "Inward (+)", "Outward (-)", "Balance Qty" };
+
                             for (int col = 1; col <= headers.Length; col++)
                             {
                                 var cell = ws.Cell(row, col);
@@ -584,54 +612,85 @@ namespace ERP.Reporting
                                     ws.Cell(row, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                                 }
 
+                                int inwardCol = showCostPrice ? 6 : 5;
+                                int outwardCol = showCostPrice ? 7 : 6;
+                                int balCol = showCostPrice ? 8 : 7;
+
+                                if (showCostPrice)
+                                {
+                                    if (item.CostPrice.HasValue && item.CostPrice.Value > 0)
+                                    {
+                                        ws.Cell(row, 5).Value = item.CostPrice.Value;
+                                        ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00";
+                                    }
+                                    else
+                                    {
+                                        ws.Cell(row, 5).Value = "-";
+                                        ws.Cell(row, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                    }
+                                }
+
                                 if (item.QtyIn > 0)
                                 {
-                                    ws.Cell(row, 5).Value = item.QtyIn;
-                                    ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00";
+                                    ws.Cell(row, inwardCol).Value = item.QtyIn;
+                                    ws.Cell(row, inwardCol).Style.NumberFormat.Format = "#,##0.00";
                                 }
                                 else
                                 {
-                                    ws.Cell(row, 5).Value = "-";
-                                    ws.Cell(row, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                    ws.Cell(row, inwardCol).Value = "-";
+                                    ws.Cell(row, inwardCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                                 }
 
                                 if (item.QtyOut > 0)
                                 {
-                                    ws.Cell(row, 6).Value = item.QtyOut;
-                                    ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
+                                    ws.Cell(row, outwardCol).Value = item.QtyOut;
+                                    ws.Cell(row, outwardCol).Style.NumberFormat.Format = "#,##0.00";
                                 }
                                 else
                                 {
-                                    ws.Cell(row, 6).Value = "-";
-                                    ws.Cell(row, 6).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                    ws.Cell(row, outwardCol).Value = "-";
+                                    ws.Cell(row, outwardCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
                                 }
 
-                                ws.Cell(row, 7).Value = item.Balance;
-                                ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00";
-                                ws.Cell(row, 7).Style.Font.Bold = true;
+                                ws.Cell(row, balCol).Value = item.Balance;
+                                ws.Cell(row, balCol).Style.NumberFormat.Format = "#,##0.00";
+                                ws.Cell(row, balCol).Style.Font.Bold = true;
 
                                 if (row % 2 == 1)
                                 {
-                                    ws.Range(row, 1, row, 7).Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
+                                    ws.Range(row, 1, row, balCol).Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
                                 }
 
                                 row++;
                             }
 
                             // Summary Row
-                            var summaryRange = ws.Range(row, 1, row, 7);
+                            int lastCol = showCostPrice ? 8 : 7;
+                            var summaryRange = ws.Range(row, 1, row, lastCol);
                             summaryRange.Style.Border.TopBorder = XLBorderStyleValues.Thin;
                             summaryRange.Style.Border.BottomBorder = XLBorderStyleValues.Double;
                             summaryRange.Style.Font.Bold = true;
                             summaryRange.Style.Fill.BackgroundColor = XLColor.FromArgb(241, 245, 249);
 
                             ws.Cell(row, 1).Value = "TOTALS";
-                            ws.Cell(row, 5).FormulaA1 = string.Format("SUM(E6:E{0})", row - 1);
-                            ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00";
-                            ws.Cell(row, 6).FormulaA1 = string.Format("SUM(F6:F{0})", row - 1);
-                            ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
-                            ws.Cell(row, 7).Value = _currentHeader?.ClosingBalance ?? 0m;
-                            ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00";
+                            if (showCostPrice)
+                            {
+                                ws.Cell(row, 6).FormulaA1 = string.Format("SUM(F6:F{0})", row - 1);
+                                ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
+                                ws.Cell(row, 7).FormulaA1 = string.Format("SUM(G6:G{0})", row - 1);
+                                ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00";
+                                ws.Cell(row, 8).Value = _currentHeader?.ClosingBalance ?? 0m;
+                                ws.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00";
+                            }
+                            else
+                            {
+                                ws.Cell(row, 5).FormulaA1 = string.Format("SUM(E6:E{0})", row - 1);
+                                ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00";
+                                ws.Cell(row, 6).FormulaA1 = string.Format("SUM(F6:F{0})", row - 1);
+                                ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
+                                ws.Cell(row, 7).Value = _currentHeader?.ClosingBalance ?? 0m;
+                                ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00";
+                            }
 
                             ws.Columns().AdjustToContents();
                             workbook.SaveAs(sfd.FileName);
@@ -668,18 +727,36 @@ namespace ERP.Reporting
                         using (var writer = new StreamWriter(sfd.FileName))
                         using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                         {
-                            var exportRows = _filteredItems.Select(x => new
+                            bool showCostPrice = _currentHeader?.ShowCostPrice == true;
+                            if (showCostPrice)
                             {
-                                Date = x.FormattedDate,
-                                VoucherNo = x.VoucherNo,
-                                Particular = x.Particular,
-                                Rate = x.Rate,
-                                Inward = x.QtyIn,
-                                Outward = x.QtyOut,
-                                Balance = x.Balance
-                            }).ToList();
-
-                            csv.WriteRecords(exportRows);
+                                var exportRows = _filteredItems.Select(x => new
+                                {
+                                    Date = x.FormattedDate,
+                                    VoucherNo = x.VoucherNo,
+                                    Particular = x.Particular,
+                                    Rate = x.Rate,
+                                    CostPrice = x.CostPrice,
+                                    Inward = x.QtyIn,
+                                    Outward = x.QtyOut,
+                                    Balance = x.Balance
+                                }).ToList();
+                                csv.WriteRecords(exportRows);
+                            }
+                            else
+                            {
+                                var exportRows = _filteredItems.Select(x => new
+                                {
+                                    Date = x.FormattedDate,
+                                    VoucherNo = x.VoucherNo,
+                                    Particular = x.Particular,
+                                    Rate = x.Rate,
+                                    Inward = x.QtyIn,
+                                    Outward = x.QtyOut,
+                                    Balance = x.Balance
+                                }).ToList();
+                                csv.WriteRecords(exportRows);
+                            }
                         }
 
                         MessageBox.Show("Item Ledger exported successfully to CSV.", "Export Succeeded", MessageBoxButtons.OK, MessageBoxIcon.Information);

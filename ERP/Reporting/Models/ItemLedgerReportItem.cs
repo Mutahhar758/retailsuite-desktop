@@ -14,12 +14,18 @@ namespace ERP.Reporting.Models
         public string VoucherNo { get; set; }
         public string Particular { get; set; }
         public decimal? Rate { get; set; }
+        public decimal? CostPrice { get; set; }
         public decimal QtyIn { get; set; }
         public decimal QtyOut { get; set; }
         public decimal Balance { get; set; }
 
         public string FormattedDate => Date.ToString("dd-MMM-yyyy");
         public string FormattedRate => Rate.HasValue && Rate.Value > 0 ? Rate.Value.ToString("N2") : "-";
+        public string FormattedCostPrice => CostPrice.HasValue && CostPrice.Value > 0
+            ? CostPrice.Value.ToString("N2")
+            : (QtyIn > 0 && Rate.HasValue && Rate.Value > 0
+                ? Rate.Value.ToString("N2")
+                : (CostPrice.HasValue ? "0.00" : "-"));
         public string FormattedQtyIn => QtyIn > 0 ? QtyIn.ToString("N2") : "-";
         public string FormattedQtyOut => QtyOut > 0 ? QtyOut.ToString("N2") : "-";
         public string FormattedBalance => Balance.ToString("N2");
@@ -39,6 +45,7 @@ namespace ERP.Reporting.Models
         public decimal TotalIn { get; set; }
         public decimal TotalOut { get; set; }
         public decimal ClosingBalance { get; set; }
+        public bool ShowCostPrice { get; set; }
         public DateTime GeneratedAt { get; set; } = DateTime.Now;
     }
 
@@ -68,7 +75,8 @@ namespace ERP.Reporting.Models
             string itemTitle,
             DateTime fromDate,
             DateTime toDate,
-            string movementFilter = "All")
+            string movementFilter = "All",
+            bool showCostPrice = false)
         {
             var rawItems = new List<ItemLedgerReportItem>();
             decimal openingBalance = 0m;
@@ -116,6 +124,16 @@ namespace ERP.Reporting.Models
                         }
                     }
 
+                    decimal? costPrice = null;
+                    if (row.Table.Columns.Contains("costprice") && row["costprice"] != DBNull.Value)
+                    {
+                        decimal parsedCost;
+                        if (decimal.TryParse(row["costprice"].ToString(), out parsedCost))
+                        {
+                            costPrice = parsedCost;
+                        }
+                    }
+
                     // Check if opening stock row
                     bool isOpening = i == 0 && (string.IsNullOrWhiteSpace(vno) || particular.IndexOf("Openning", StringComparison.OrdinalIgnoreCase) >= 0 || particular.IndexOf("Opening", StringComparison.OrdinalIgnoreCase) >= 0);
 
@@ -130,6 +148,7 @@ namespace ERP.Reporting.Models
                             VoucherNo = "-",
                             Particular = "Opening Stock Balance",
                             Rate = rate,
+                            CostPrice = null,
                             QtyIn = qtyIn,
                             QtyOut = qtyOut,
                             Balance = runningBalance
@@ -145,6 +164,7 @@ namespace ERP.Reporting.Models
                             VoucherNo = vno,
                             Particular = particular,
                             Rate = rate,
+                            CostPrice = costPrice,
                             QtyIn = qtyIn,
                             QtyOut = qtyOut,
                             Balance = runningBalance
@@ -168,6 +188,7 @@ namespace ERP.Reporting.Models
                 TotalIn = totalIn,
                 TotalOut = totalOut,
                 ClosingBalance = runningBalance,
+                ShowCostPrice = showCostPrice,
                 GeneratedAt = DateTime.Now
             };
 
