@@ -68,6 +68,8 @@ namespace ERP.Reporting
         private Label lblBulkDates;
         private DateTimePicker dtpBulkFromDate;
         private DateTimePicker dtpBulkToDate;
+        private Label lblBulkDateBasis;
+        private ComboBox cmbBulkDateBasis;
         private Label lblBulkFormat;
         private ComboBox cmbBulkFormat;
         private Button btnBulkPrintDirect;
@@ -246,18 +248,18 @@ namespace ERP.Reporting
             {
                 Text = "DATE BASIS",
                 AutoSize = true,
-                Location = new Point(501, 10),
+                Location = new Point(490, 10),
                 Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(100, 116, 139)
             };
             cmbDateBasis = new ComboBox
             {
-                Location = new Point(501, 28),
-                Width = 100,
+                Location = new Point(490, 28),
+                Width = 115,
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9F)
             };
-            cmbDateBasis.Items.AddRange(new object[] { "VoucherDate", "EntryDate" });
+            cmbDateBasis.Items.AddRange(new object[] { "Clearing Date", "Voucher Date" });
             cmbDateBasis.SelectedIndex = 0;
 
             lblLayout = new Label
@@ -552,6 +554,30 @@ namespace ERP.Reporting
             pnlBulkSidebar.Controls.Add(dtpBulkToDate);
             curY += 36;
 
+            // Bulk Date Basis
+            lblBulkDateBasis = new Label
+            {
+                Text = "DATE BASIS:",
+                Location = new Point(12, curY),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139)
+            };
+            pnlBulkSidebar.Controls.Add(lblBulkDateBasis);
+            curY += 18;
+
+            cmbBulkDateBasis = new ComboBox
+            {
+                Location = new Point(12, curY),
+                Width = 370,
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Font = new Font("Segoe UI", 9F)
+            };
+            cmbBulkDateBasis.Items.AddRange(new object[] { "Clearing Date (Recommended)", "Voucher Date" });
+            cmbBulkDateBasis.SelectedIndex = 0;
+            pnlBulkSidebar.Controls.Add(cmbBulkDateBasis);
+            curY += 34;
+
             lblBulkFormat = new Label
             {
                 Text = "PRINT FORMAT:",
@@ -729,6 +755,16 @@ namespace ERP.Reporting
 
                 // Populate Supply Orders
                 var supplyOrders = await _supplyOrderApiService.GetAsync();
+                if (supplyOrders != null && supplyOrders.Count > 0 && !supplyOrders.Any(o => o.Details != null && o.Details.Count > 0))
+                {
+                    var detailedOrders = await Task.WhenAll(supplyOrders.Select(async so =>
+                    {
+                        try { return await _supplyOrderApiService.GetByIdAsync(so.Id) ?? so; }
+                        catch { return so; }
+                    }));
+                    supplyOrders = detailedOrders.ToList();
+                }
+
                 var dtOrders = new DataTable();
                 dtOrders.Columns.Add("Id", typeof(string));
                 dtOrders.Columns.Add("Title", typeof(string));
@@ -737,7 +773,12 @@ namespace ERP.Reporting
                 if (supplyOrders != null)
                 {
                     foreach (var so in supplyOrders)
-                        dtOrders.Rows.Add(so.Id.ToString(), so.Title);
+                    {
+                        string displayTitle = so.Details != null && so.Details.Count > 0
+                            ? $"{so.Title} ({so.Details.Count} cust)"
+                            : so.Title;
+                        dtOrders.Rows.Add(so.Id.ToString(), displayTitle);
+                    }
                 }
                 cmbSupplyOrder.DataSource = dtOrders;
                 cmbSupplyOrder.DisplayMember = "Title";
@@ -838,11 +879,14 @@ namespace ERP.Reporting
                 var order = await _supplyOrderApiService.GetByIdAsync(id);
                 if (order != null && order.Details != null)
                 {
-                    var customerIds = order.Details.Select(d => d.CustomerId).ToList();
+                    var customerIds = new HashSet<string>(
+                        order.Details.Where(d => !string.IsNullOrEmpty(d.CustomerId)).Select(d => d.CustomerId.Trim()),
+                        StringComparer.OrdinalIgnoreCase
+                    );
                     for (int i = 0; i < chklstCustomers.Items.Count; i++)
                     {
                         var cust = chklstCustomers.Items[i] as ChartOfAccountHeadDto;
-                        if (cust != null && customerIds.Contains(cust.Account))
+                        if (cust != null && !string.IsNullOrEmpty(cust.Account) && customerIds.Contains(cust.Account.Trim()))
                         {
                             chklstCustomers.SetItemChecked(i, true);
                         }
@@ -884,7 +928,9 @@ namespace ERP.Reporting
             string customerTitle = cmbCustomer.Text;
             DateTime fromDate = dtpFromDate.Value.Date;
             DateTime toDate = dtpToDate.Value.Date;
-            string dateBasis = cmbDateBasis.SelectedItem != null ? cmbDateBasis.SelectedItem.ToString() : "VoucherDate";
+            string dateBasis = (cmbDateBasis.SelectedItem != null && cmbDateBasis.SelectedItem.ToString().StartsWith("Clearing", StringComparison.OrdinalIgnoreCase))
+                ? "ClearingDate"
+                : "VoucherDate";
 
             SetLoading(true, string.Format("Generating bill for {0}...", customerTitle));
 
@@ -1019,7 +1065,9 @@ namespace ERP.Reporting
 
             DateTime fromDate = dtpBulkFromDate.Value.Date;
             DateTime toDate = dtpBulkToDate.Value.Date;
-            string dateBasis = "VoucherDate";
+            string dateBasis = (cmbBulkDateBasis != null && cmbBulkDateBasis.SelectedItem != null && cmbBulkDateBasis.SelectedItem.ToString().StartsWith("Clearing", StringComparison.OrdinalIgnoreCase))
+                ? "ClearingDate"
+                : "VoucherDate";
             var layout = (cmbBulkFormat != null && cmbBulkFormat.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
             string formatName = layout == CustomerBillPrintLayout.Thermal80mm ? "80mm Thermal Receipt" : "A4 Commercial Invoice";
 
@@ -1111,7 +1159,9 @@ namespace ERP.Reporting
 
             DateTime fromDate = dtpBulkFromDate.Value.Date;
             DateTime toDate = dtpBulkToDate.Value.Date;
-            string dateBasis = "VoucherDate";
+            string dateBasis = (cmbBulkDateBasis != null && cmbBulkDateBasis.SelectedItem != null && cmbBulkDateBasis.SelectedItem.ToString().StartsWith("Clearing", StringComparison.OrdinalIgnoreCase))
+                ? "ClearingDate"
+                : "VoucherDate";
             var layout = (cmbBulkFormat != null && cmbBulkFormat.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
 
             SetLoading(true, string.Format("Compiling batch preview for {0} customers...", checkedItems.Count));

@@ -231,7 +231,7 @@ namespace ERP.Reporting.Documents
                         ? ConfigInfo.ThankyouLine
                         : "Thank you for your valued business!";
 
-                    col.Item().AlignCenter().PaddingTop(2).Text(thankLine).Italic().FontSize(8f);
+                    col.Item().AlignCenter().PaddingTop(2).Text(thankLine).FontSize(8.5f).SemiBold();
                     col.Item().AlignCenter().PaddingTop(1).Text("Software powered by Bizgrip Solutions (Contact: 03228258734)").FontSize(5.8f).SemiBold().FontColor(QuestPDF.Helpers.Colors.Black);
                 });
             });
@@ -414,7 +414,7 @@ namespace ERP.Reporting.Documents
                             notesCol.Item().PaddingTop(4).Border(1f).BorderColor(QuestPDF.Helpers.Colors.Blue.Lighten4)
                                 .Background(QuestPDF.Helpers.Colors.Blue.Lighten5).Padding(8).Column(msgCol =>
                                 {
-                                    msgCol.Item().Text(_summary.ThankyouLine).FontSize(8.5f).Italic().FontColor(QuestPDF.Helpers.Colors.Blue.Darken3);
+                                    msgCol.Item().Text(_summary.ThankyouLine).FontSize(8.5f).FontColor(QuestPDF.Helpers.Colors.Blue.Darken3);
                                     msgCol.Item().PaddingTop(2).Text("Please clear outstanding balances within the agreed credit terms.").FontSize(7.5f).FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
                                 });
                         }

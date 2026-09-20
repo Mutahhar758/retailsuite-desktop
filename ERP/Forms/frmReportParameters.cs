@@ -8,6 +8,7 @@ using System.Text;
 using System.Windows.Forms;
 using ERP.Classes;
 using System.IO;
+using System.Threading.Tasks;
 using ERP.Services.Legacy;
 
 namespace ERP
@@ -184,6 +185,16 @@ namespace ERP
         private async System.Threading.Tasks.Task FillSupplyOrdersAsync()
         {
             var supplyOrders = await _supplyOrderApiService.GetAsync();
+            if (supplyOrders != null && supplyOrders.Count > 0 && !supplyOrders.Any(o => o.Details != null && o.Details.Count > 0))
+            {
+                var detailedOrders = await Task.WhenAll(supplyOrders.Select(async so =>
+                {
+                    try { return await _supplyOrderApiService.GetByIdAsync(so.Id) ?? so; }
+                    catch { return so; }
+                }));
+                supplyOrders = detailedOrders.ToList();
+            }
+
             var dt = new DataTable();
             dt.Columns.Add("Id", typeof(string));
             dt.Columns.Add("Title", typeof(string));
@@ -191,8 +202,16 @@ namespace ERP
             // Add an empty row for default
             dt.Rows.Add("", "--- Select Profile ---");
 
-            foreach (var item in supplyOrders)
-                dt.Rows.Add(item.Id.ToString(), item.Title);
+            if (supplyOrders != null)
+            {
+                foreach (var item in supplyOrders)
+                {
+                    string displayTitle = item.Details != null && item.Details.Count > 0
+                        ? $"{item.Title} ({item.Details.Count} cust)"
+                        : item.Title;
+                    dt.Rows.Add(item.Id.ToString(), displayTitle);
+                }
+            }
 
             cmbSupplyOrder.DataSource = dt;
             cmbSupplyOrder.DisplayMember = "Title";
@@ -714,30 +733,43 @@ namespace ERP
             int id = 0;
             if (!int.TryParse(idStr, out id)) return;
 
-            // Uncheck all first
-            for (int i = 0; i < chklstAccounts.Items.Count; i++)
+            try
             {
-                chklstAccounts.SetItemChecked(i, false);
-            }
-            chkSelectAll.Checked = false;
-
-            var order = await _supplyOrderApiService.GetByIdAsync(id);
-            if (order != null && order.Details != null)
-            {
-                var customerIds = order.Details.Select(d => d.CustomerId).ToList();
-
+                // Uncheck all first
                 for (int i = 0; i < chklstAccounts.Items.Count; i++)
                 {
-                    var rowView = chklstAccounts.Items[i] as DataRowView;
-                    if (rowView != null)
+                    chklstAccounts.SetItemChecked(i, false);
+                }
+                chkSelectAll.Checked = false;
+
+                var order = await _supplyOrderApiService.GetByIdAsync(id);
+                if (order != null && order.Details != null)
+                {
+                    var customerIds = new HashSet<string>(
+                        order.Details.Where(d => !string.IsNullOrEmpty(d.CustomerId)).Select(d => d.CustomerId.Trim()),
+                        StringComparer.OrdinalIgnoreCase
+                    );
+
+                    for (int i = 0; i < chklstAccounts.Items.Count; i++)
                     {
-                        string accountCode = rowView["Code"].ToString();
-                        if (customerIds.Contains(accountCode))
+                        var rowView = chklstAccounts.Items[i] as DataRowView;
+                        if (rowView != null)
                         {
-                            chklstAccounts.SetItemChecked(i, true);
+                            string accountCode = rowView.Row.Table.Columns.Contains("Code")
+                                ? rowView["Code"]?.ToString()?.Trim()
+                                : (rowView.Row.Table.Columns.Contains("Account") ? rowView["Account"]?.ToString()?.Trim() : null);
+
+                            if (!string.IsNullOrEmpty(accountCode) && customerIds.Contains(accountCode))
+                            {
+                                chklstAccounts.SetItemChecked(i, true);
+                            }
                         }
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading supply order profile: " + ex.Message, "Supply Order", MessageBoxButtons.OK, MessageBoxIcon.Warning);
             }
         }
 
