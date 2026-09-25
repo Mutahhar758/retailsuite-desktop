@@ -47,6 +47,7 @@ namespace ERP.Reporting
         private string _currentPdfPath;
         private bool _isWebViewReady = false;
         private readonly ItemCategoryApiService _categoryService;
+        private CheckBox chkShowStockValue;
 
         public StockBalanceViewer()
         {
@@ -248,6 +249,18 @@ namespace ERP.Reporting
                 Visible = false
             };
 
+            // Show Stock Value Checkbox
+            chkShowStockValue = new CheckBox
+            {
+                Text = "Show Stock Value",
+                Location = new Point(925, 35),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 8.5F),
+                ForeColor = Color.FromArgb(30, 41, 59),
+                Cursor = Cursors.Hand,
+                Checked = true
+            };
+
             // Add controls to top bar
             pnlTopBar.Controls.Add(lblCategory);
             pnlTopBar.Controls.Add(cmbCategory);
@@ -261,6 +274,7 @@ namespace ERP.Reporting
             pnlTopBar.Controls.Add(btnExportExcel);
             pnlTopBar.Controls.Add(btnExportCsv);
             pnlTopBar.Controls.Add(btnPrint);
+            pnlTopBar.Controls.Add(chkShowStockValue);
             pnlTopBar.Controls.Add(lblStatus);
             pnlTopBar.Controls.Add(prgLoading);
 
@@ -398,7 +412,7 @@ namespace ERP.Reporting
                 _currentHeader = reportData.Header;
                 _currentItems = reportData.Items;
 
-                _currentPdfPath = await StockBalanceDocument.GeneratePdfToTempFileAsync(_currentHeader, _currentItems);
+                _currentPdfPath = await StockBalanceDocument.GeneratePdfToTempFileAsync(_currentHeader, _currentItems, chkShowStockValue.Checked);
 
                 if (File.Exists(_currentPdfPath) && webView.CoreWebView2 != null)
                 {

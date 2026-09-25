@@ -18,11 +18,13 @@ namespace ERP.Reporting.Documents
     {
         private readonly StockBalanceHeader _header;
         private readonly List<StockBalanceReportItem> _items;
+        private readonly bool _showStockValue;
 
-        public StockBalanceDocument(StockBalanceHeader header, List<StockBalanceReportItem> items)
+        public StockBalanceDocument(StockBalanceHeader header, List<StockBalanceReportItem> items, bool showStockValue = false)
         {
             _header = header ?? new StockBalanceHeader();
             _items = items ?? new List<StockBalanceReportItem>();
+            _showStockValue = showStockValue;
         }
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
@@ -114,11 +116,14 @@ namespace ERP.Reporting.Documents
                         x.Span(totalQty.ToString("#,##0")).FontSize(9.5f).Bold().FontColor(Colors.Grey.Darken4);
                     });
 
-                    kpiRow.RelativeItem().AlignRight().Text(x =>
+                    if (_showStockValue)
                     {
-                        x.Span("Inventory Valuation: ").FontSize(8.5f).Bold().FontColor(Colors.Grey.Darken2);
-                        x.Span(totalVal.ToString("#,##0.00")).FontSize(10.5f).Bold().FontColor(Colors.Green.Darken3);
-                    });
+                        kpiRow.RelativeItem().AlignRight().Text(x =>
+                        {
+                            x.Span("Inventory Valuation: ").FontSize(8.5f).Bold().FontColor(Colors.Grey.Darken2);
+                            x.Span(totalVal.ToString("#,##0.00")).FontSize(10.5f).Bold().FontColor(Colors.Green.Darken3);
+                        });
+                    }
                 });
             });
         }
@@ -135,9 +140,16 @@ namespace ERP.Reporting.Documents
                     columns.ConstantColumn(64);  // Opening Qty
                     columns.ConstantColumn(64);  // Qty In
                     columns.ConstantColumn(64);  // Qty Out
-                    columns.ConstantColumn(70);  // Balance Qty
-                    columns.ConstantColumn(64);  // Rate
-                    columns.ConstantColumn(80);  // Stock Value
+                    if (_showStockValue)
+                    {
+                        columns.ConstantColumn(70);  // Balance Qty
+                        columns.ConstantColumn(64);  // Rate
+                        columns.ConstantColumn(80);  // Stock Value
+                    }
+                    else
+                    {
+                        columns.ConstantColumn(90);  // Balance Qty (wider)
+                    }
                 });
 
                 table.Header(header =>
@@ -149,8 +161,11 @@ namespace ERP.Reporting.Documents
                     header.Cell().Element(HeaderCell).AlignRight().Text("Inward (+)");
                     header.Cell().Element(HeaderCell).AlignRight().Text("Outward (-)");
                     header.Cell().Element(HeaderCell).AlignRight().Text("Closing Qty");
-                    header.Cell().Element(HeaderCell).AlignRight().Text("Rate");
-                    header.Cell().Element(HeaderCell).AlignRight().Text("Total Value");
+                    if (_showStockValue)
+                    {
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Rate");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Total Value");
+                    }
                 });
 
                 for (int i = 0; i < _items.Count; i++)
@@ -181,11 +196,13 @@ namespace ERP.Reporting.Documents
                     // Closing Qty
                     table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.ClosingQty.ToString("#,##0.##")).SemiBold();
 
-                    // Rate
-                    table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.Rate.ToString("#,##0.00"));
-
-                    // Total Value
-                    table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.TotalValue.ToString("#,##0.00")).SemiBold();
+                    if (_showStockValue)
+                    {
+                        // Rate
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.Rate.ToString("#,##0.00"));
+                        // Total Value
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.TotalValue.ToString("#,##0.00")).SemiBold();
+                    }
                 }
 
                 // Table Summary Totals Row (Accounting Standard)
@@ -200,8 +217,11 @@ namespace ERP.Reporting.Documents
                 table.Cell().Element(TotalCell).AlignRight().Text(sumIn.ToString("#,##0.##")).Bold();
                 table.Cell().Element(TotalCell).AlignRight().Text(sumOut.ToString("#,##0.##")).Bold();
                 table.Cell().Element(TotalCell).AlignRight().Text(sumBal.ToString("#,##0.##")).Bold();
-                table.Cell().Element(TotalCell).AlignRight().Text("-").FontColor(Colors.Grey.Darken1);
-                table.Cell().Element(TotalCell).AlignRight().Text(sumVal.ToString("#,##0.00")).Bold();
+                if (_showStockValue)
+                {
+                    table.Cell().Element(TotalCell).AlignRight().Text("-").FontColor(Colors.Grey.Darken1);
+                    table.Cell().Element(TotalCell).AlignRight().Text(sumVal.ToString("#,##0.00")).Bold();
+                }
             });
         }
 
@@ -264,7 +284,7 @@ namespace ERP.Reporting.Documents
         /// <summary>
         /// Asynchronously renders the QuestPDF document to a temporary file on disk.
         /// </summary>
-        public static async Task<string> GeneratePdfToTempFileAsync(StockBalanceHeader header, List<StockBalanceReportItem> items)
+        public static async Task<string> GeneratePdfToTempFileAsync(StockBalanceHeader header, List<StockBalanceReportItem> items, bool showStockValue = false)
         {
             return await Task.Run(() =>
             {
@@ -273,7 +293,7 @@ namespace ERP.Reporting.Documents
                     Directory.CreateDirectory(tempDir);
 
                 string tempPath = Path.Combine(tempDir, string.Format("StockBalance_{0:yyyyMMdd_HHmmss}_{1}.pdf", DateTime.Now, Guid.NewGuid().ToString("N").Substring(0, 6)));
-                var document = new StockBalanceDocument(header, items);
+                var document = new StockBalanceDocument(header, items, showStockValue);
                 document.GeneratePdf(tempPath);
                 return tempPath;
             });

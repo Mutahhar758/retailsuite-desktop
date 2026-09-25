@@ -9,7 +9,7 @@ on:
   workflow_dispatch:
     inputs:
       targetRevision:
-        description: 'Override Application Revision number (leave blank to auto-increment)'
+        description: 'Override Application Revision number (leave blank to auto-increment from server)'
         required: false
         default: ''
 
@@ -23,8 +23,6 @@ jobs:
     steps:
     - name: Checkout Code
       uses: actions/checkout@v4
-      with:
-        fetch-depth: 0
 
     - name: Setup NuGet
       uses: nuget/setup-nuget@v2
@@ -73,33 +71,48 @@ jobs:
         Write-Host "Found MSBuild at: $msbuild"
         echo "MSBUILD_PATH=$msbuild" >> $env:GITHUB_ENV
 
-    - name: Calculate and Increment Version
+    - name: Determine Auto-Incremented Version
       id: versioning
       shell: powershell
       run: |
-        [xml]$proj = Get-Content ERP/ERP.csproj
-        $currentRev = [int]($proj.Project.PropertyGroup | Where-Object { $_.ApplicationRevision -ne $null } | Select-Object -First 1).ApplicationRevision
-        
         $inputRev = "${{ github.event.inputs.targetRevision }}"
+        
         if ($inputRev -ne "") {
-            $newRev = [int]$inputRev
+            $appRevision = [int]$inputRev
+            Write-Host "Using manually specified revision: $appRevision"
         } else {
-            $newRev = $currentRev + 1
+            # Inspect existing versions deployed in IIS directory on this server
+            $highestRev = 0
+            $appFilesPath = Join-Path $env:DEPLOY_DIR "Application Files"
+            
+            if (Test-Path $appFilesPath) {
+                $existing = Get-ChildItem -Path $appFilesPath -Directory | 
+                    Where-Object { $_.Name -match '^ERP_1_0_0_(\d+)$' } | 
+                    ForEach-Object { [int]$Matches[1] }
+                
+                if ($existing) {
+                    $highestRev = ($existing | Measure-Object -Maximum).Maximum
+                    Write-Host "Found highest deployed version on server: 1.0.0.$highestRev"
+                }
+            }
+            
+            # If server directory is empty/new, read base from ERP.csproj
+            if ($highestRev -le 0) {
+                [xml]$proj = Get-Content ERP/ERP.csproj
+                $highestRev = [int]($proj.Project.PropertyGroup | Where-Object { $_.ApplicationRevision -ne $null } | Select-Object -First 1).ApplicationRevision
+                Write-Host "Falling back to ERP.csproj revision: $highestRev"
+            }
+            
+            $appRevision = $highestRev + 1
         }
 
-        $fullVersion = "1.0.0.$newRev"
-        Write-Host "Previous Revision: $currentRev"
-        Write-Host "New Revision: $newRev"
-        Write-Host "Publishing Version: $fullVersion"
+        $fullVersion = "1.0.0.$appRevision"
+        Write-Host "========================================="
+        Write-Host " Next Auto-Incremented Version: $fullVersion"
+        Write-Host " Application Revision: $appRevision"
+        Write-Host "========================================="
 
-        # 1. Update ERP.csproj with new revision
-        $content = Get-Content ERP/ERP.csproj -Raw
-        $content = $content -replace "<ApplicationRevision>\d+</ApplicationRevision>", "<ApplicationRevision>$newRev</ApplicationRevision>"
-        Set-Content -Path ERP/ERP.csproj -Value $content -Encoding UTF8
-
-        # 2. Update Properties/AssemblyInfo.cs:
-        # NOTE: AssemblyVersion must stay 1.0.0.0 to prevent breaking the ClickOnce deployment subscription identity.
-        # AssemblyFileVersion and AssemblyInformationalVersion are updated so Application.ProductVersion shows the true version.
+        # Update AssemblyFileVersion and InformationalVersion in-memory for this build
         $assemblyInfoPath = "ERP/Properties/AssemblyInfo.cs"
         if (Test-Path $assemblyInfoPath) {
             $infoContent = Get-Content $assemblyInfoPath -Raw
@@ -110,10 +123,9 @@ jobs:
                 $infoContent += "`r`n[assembly: System.Reflection.AssemblyInformationalVersion(`"$fullVersion`")]`r`n"
             }
             Set-Content -Path $assemblyInfoPath -Value $infoContent -Encoding UTF8
-            Write-Host "Updated AssemblyFileVersion to $fullVersion (AssemblyVersion left at 1.0.0.0 to protect subscription)"
         }
 
-        echo "APP_REVISION=$newRev" >> $env:GITHUB_ENV
+        echo "APP_REVISION=$appRevision" >> $env:GITHUB_ENV
         echo "APP_VERSION=$fullVersion" >> $env:GITHUB_ENV
 
     - name: Publish ClickOnce Application
@@ -139,7 +151,7 @@ jobs:
       shell: powershell
       run: |
         $destination = $env:DEPLOY_DIR
-        Write-Host "Deploying ClickOnce to destination: $destination"
+        Write-Host "Deploying ClickOnce files to IIS directory: $destination"
         
         if (-not (Test-Path $destination)) {
             New-Item -ItemType Directory -Force -Path $destination | Out-Null
@@ -149,21 +161,3 @@ jobs:
         Copy-Item -Path "./ERP/publish/*" -Destination $destination -Recurse -Force
         
         Write-Host "Deployment completed successfully to $destination for version $env:APP_VERSION"
-
-    - name: Commit and Push Version Bump to Git
-      shell: powershell
-      continue-on-error: true
-      run: |
-        git config user.name "github-actions[bot]"
-        git config user.email "github-actions[bot]@users.noreply.github.com"
-        
-        $status = git status --porcelain ERP/ERP.csproj ERP/Properties/AssemblyInfo.cs
-        if ($status) {
-            Write-Host "Committing updated ERP.csproj and AssemblyInfo.cs..."
-            git add ERP/ERP.csproj ERP/Properties/AssemblyInfo.cs
-            git commit -m "chore(release): bump desktop version to $env:APP_VERSION [skip ci]"
-            git push origin master
-            Write-Host "Version bump ($env:APP_VERSION) pushed to GitHub master."
-        } else {
-            Write-Host "No changes in version files to commit."
-        }
