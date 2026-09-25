@@ -4,8 +4,8 @@
 
 .DESCRIPTION
     1. Increments <ApplicationRevision> in ERP/ERP.csproj (or uses provided -Revision).
-    2. Updates AssemblyVersion and AssemblyFileVersion in ERP/Properties/AssemblyInfo.cs.
-    3. Builds and publishes the ClickOnce app into ERP/publish.
+    2. Updates AssemblyFileVersion & AssemblyInformationalVersion in ERP/Properties/AssemblyInfo.cs (preserves AssemblyVersion to avoid breaking ClickOnce subscriptions).
+    3. Builds and publishes the ClickOnce app (AnyCPU / msil) into ERP/publish.
     4. Commits both version files and pushes to GitHub origin master.
     5. Optionally copies publish output to a server directory (e.g. \\server\share or D:\...).
 
@@ -86,18 +86,24 @@ $content = Get-Content $csprojPath -Raw
 $content = $content -replace "<ApplicationRevision>\d+</ApplicationRevision>", "<ApplicationRevision>$newRev</ApplicationRevision>"
 Set-Content -Path $csprojPath -Value $content -Encoding UTF8
 
-# 2b. Update AssemblyInfo.cs (AssemblyVersion and AssemblyFileVersion)
+# 2b. Update AssemblyInfo.cs:
+# AssemblyVersion stays 1.0.0.0 so ClickOnce subscription identity never changes.
+# AssemblyFileVersion and AssemblyInformationalVersion update so Application.ProductVersion displays the true version.
 if (Test-Path $assemblyInfoPath) {
     $infoContent = Get-Content $assemblyInfoPath -Raw
-    $infoContent = $infoContent -replace '(?m)^\[assembly:\s*AssemblyVersion\("[^"]+"\)', "[assembly: AssemblyVersion(`"$version`")"
     $infoContent = $infoContent -replace '(?m)^\[assembly:\s*AssemblyFileVersion\("[^"]+"\)', "[assembly: AssemblyFileVersion(`"$version`")"
+    if ($infoContent -match 'AssemblyInformationalVersion') {
+        $infoContent = $infoContent -replace '(?m)^\[assembly:\s*AssemblyInformationalVersion\("[^"]+"\)', "[assembly: AssemblyInformationalVersion(`"$version`")"
+    } else {
+        $infoContent += "`r`n[assembly: System.Reflection.AssemblyInformationalVersion(`"$version`")]`r`n"
+    }
     Set-Content -Path $assemblyInfoPath -Value $infoContent -Encoding UTF8
-    Write-Host "Updated AssemblyInfo.cs to $version" -ForegroundColor Green
+    Write-Host "Updated AssemblyFileVersion and InformationalVersion to $version" -ForegroundColor Green
 }
 
-# 3. Publish via MSBuild
-Write-Host "`nPublishing ClickOnce application..." -ForegroundColor Cyan
-& $msbuild $csprojPath /target:Publish /p:Configuration=Release /p:Platform=x86 /p:PublishDir="publish\" /p:ApplicationRevision=$newRev /p:ApplicationVersion=$version /v:m
+# 3. Publish via MSBuild (Targeting AnyCPU / msil to match ClickOnce subscription)
+Write-Host "`nPublishing ClickOnce application (AnyCPU / msil)..." -ForegroundColor Cyan
+& $msbuild $csprojPath /target:Publish /p:Configuration=Release /p:PlatformTarget=AnyCPU /p:PublishDir="publish\" /p:ApplicationRevision=$newRev /p:ApplicationVersion=$version /v:m
 
 if ($LASTEXITCODE -ne 0) {
     throw "MSBuild publish failed with exit code $LASTEXITCODE"

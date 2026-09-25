@@ -97,14 +97,20 @@ jobs:
         $content = $content -replace "<ApplicationRevision>\d+</ApplicationRevision>", "<ApplicationRevision>$newRev</ApplicationRevision>"
         Set-Content -Path ERP/ERP.csproj -Value $content -Encoding UTF8
 
-        # 2. Update Properties/AssemblyInfo.cs (AssemblyVersion and AssemblyFileVersion)
+        # 2. Update Properties/AssemblyInfo.cs:
+        # NOTE: AssemblyVersion must stay 1.0.0.0 to prevent breaking the ClickOnce deployment subscription identity.
+        # AssemblyFileVersion and AssemblyInformationalVersion are updated so Application.ProductVersion shows the true version.
         $assemblyInfoPath = "ERP/Properties/AssemblyInfo.cs"
         if (Test-Path $assemblyInfoPath) {
             $infoContent = Get-Content $assemblyInfoPath -Raw
-            $infoContent = $infoContent -replace '(?m)^\[assembly:\s*AssemblyVersion\("[^"]+"\)', "[assembly: AssemblyVersion(`"$fullVersion`")"
             $infoContent = $infoContent -replace '(?m)^\[assembly:\s*AssemblyFileVersion\("[^"]+"\)', "[assembly: AssemblyFileVersion(`"$fullVersion`")"
+            if ($infoContent -match 'AssemblyInformationalVersion') {
+                $infoContent = $infoContent -replace '(?m)^\[assembly:\s*AssemblyInformationalVersion\("[^"]+"\)', "[assembly: AssemblyInformationalVersion(`"$fullVersion`")"
+            } else {
+                $infoContent += "`r`n[assembly: System.Reflection.AssemblyInformationalVersion(`"$fullVersion`")]`r`n"
+            }
             Set-Content -Path $assemblyInfoPath -Value $infoContent -Encoding UTF8
-            Write-Host "Updated AssemblyInfo.cs to $fullVersion"
+            Write-Host "Updated AssemblyFileVersion to $fullVersion (AssemblyVersion left at 1.0.0.0 to protect subscription)"
         }
 
         echo "APP_REVISION=$newRev" >> $env:GITHUB_ENV
@@ -117,8 +123,8 @@ jobs:
         $rev = $env:APP_REVISION
         $ver = $env:APP_VERSION
         
-        Write-Host "Building and Publishing ClickOnce with Version $ver..."
-        & $msbuild ERP/ERP.csproj /target:Publish /p:Configuration=Release /p:Platform=x86 /p:PublishDir="publish/" /p:ApplicationRevision=$rev /p:ApplicationVersion=$ver /v:m
+        Write-Host "Building and Publishing ClickOnce (AnyCPU / msil) with Version $ver..."
+        & $msbuild ERP/ERP.csproj /target:Publish /p:Configuration=Release /p:PlatformTarget=AnyCPU /p:PublishDir="publish/" /p:ApplicationRevision=$rev /p:ApplicationVersion=$ver /v:m
         
         if ($LASTEXITCODE -ne 0) {
             throw "MSBuild publish failed with exit code $LASTEXITCODE"
