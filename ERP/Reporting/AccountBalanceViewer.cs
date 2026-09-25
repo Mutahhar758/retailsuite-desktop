@@ -99,7 +99,9 @@ namespace ERP.Reporting
             {
                 Location = new Point(16, 32),
                 Width = 220,
-                DropDownStyle = ComboBoxStyle.DropDownList,
+                DropDownStyle = ComboBoxStyle.DropDown,
+                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+                AutoCompleteSource = AutoCompleteSource.ListItems,
                 Font = new Font("Segoe UI", 9F)
             };
             cmbAccountHead.SelectedIndexChanged += (s, e) =>

@@ -246,10 +246,11 @@ namespace ERP
             this.lblCustomer.TabIndex = 0;
             this.lblCustomer.Text = "CUSTOMER ACCOUNT *";
 
-            // 
             // cmbCustomer
             // 
-            this.cmbCustomer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbCustomer.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cmbCustomer.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbCustomer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbCustomer.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.cmbCustomer.FormattingEnabled = true;
             this.cmbCustomer.Location = new System.Drawing.Point(16, 28);
@@ -395,10 +396,11 @@ namespace ERP
             this.lblItem.TabIndex = 11;
             this.lblItem.Text = "PRODUCT FILTER";
 
-            // 
             // cmbItem
             // 
-            this.cmbItem.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbItem.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cmbItem.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbItem.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbItem.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.cmbItem.FormattingEnabled = true;
             this.cmbItem.Location = new System.Drawing.Point(746, 28);

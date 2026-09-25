@@ -613,8 +613,9 @@ namespace ERP
             // 
             // cmbNarration
             // 
-            this.cmbNarration.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
+            this.cmbNarration.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.cmbNarration.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbNarration.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbNarration.FormattingEnabled = true;
             this.cmbNarration.Location = new System.Drawing.Point(92, 94);
             this.cmbNarration.Name = "cmbNarration";
@@ -633,8 +634,9 @@ namespace ERP
             // 
             // cmbSupplyOrder
             // 
-            this.cmbSupplyOrder.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
+            this.cmbSupplyOrder.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.cmbSupplyOrder.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbSupplyOrder.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbSupplyOrder.FormattingEnabled = true;
             this.cmbSupplyOrder.Location = new System.Drawing.Point(92, 124);
             this.cmbSupplyOrder.Name = "cmbSupplyOrder";
@@ -672,8 +674,9 @@ namespace ERP
             // 
             // cmbItem
             // 
-            this.cmbItem.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
+            this.cmbItem.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.cmbItem.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbItem.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbItem.FormattingEnabled = true;
             this.cmbItem.Location = new System.Drawing.Point(504, 18);
             this.cmbItem.Name = "cmbItem";
@@ -813,8 +816,9 @@ namespace ERP
             // 
             // cmbFilterAccounts
             // 
-            this.cmbFilterAccounts.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
+            this.cmbFilterAccounts.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.cmbFilterAccounts.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbFilterAccounts.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbFilterAccounts.FormattingEnabled = true;
             this.cmbFilterAccounts.Location = new System.Drawing.Point(537, 21);
             this.cmbFilterAccounts.Name = "cmbFilterAccounts";

@@ -184,6 +184,7 @@ namespace ERP
             // 
             this.cmbAccount.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.cmbAccount.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbAccount.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbAccount.FormattingEnabled = true;
             this.cmbAccount.Location = new System.Drawing.Point(79, 21);
             this.cmbAccount.Name = "cmbAccount";
@@ -229,6 +230,7 @@ namespace ERP
             // 
             this.cmbItem.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.cmbItem.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbItem.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbItem.FormattingEnabled = true;
             this.cmbItem.Location = new System.Drawing.Point(79, 21);
             this.cmbItem.Name = "cmbItem";
@@ -346,6 +348,7 @@ namespace ERP
             // 
             this.cmbItemCatagory.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.cmbItemCatagory.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbItemCatagory.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbItemCatagory.FormattingEnabled = true;
             this.cmbItemCatagory.Location = new System.Drawing.Point(87, 21);
             this.cmbItemCatagory.Name = "cmbItemCatagory";
@@ -380,6 +383,7 @@ namespace ERP
             // 
             this.cmbType.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
             this.cmbType.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbType.FormattingEnabled = true;
             this.cmbType.Location = new System.Drawing.Point(87, 21);
             this.cmbType.Name = "cmbType";
@@ -413,7 +417,9 @@ namespace ERP
             // 
             // cmbSupplyOrder
             // 
-            this.cmbSupplyOrder.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbSupplyOrder.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cmbSupplyOrder.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbSupplyOrder.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbSupplyOrder.FormattingEnabled = true;
             this.cmbSupplyOrder.Location = new System.Drawing.Point(5, 20);
             this.cmbSupplyOrder.Name = "cmbSupplyOrder";

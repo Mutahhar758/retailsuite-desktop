@@ -106,7 +106,9 @@ namespace ERP.Reporting
             {
                 Location = new Point(12, 30),
                 Width = 210,
-                DropDownStyle = ComboBoxStyle.DropDownList,
+                DropDownStyle = ComboBoxStyle.DropDown,
+                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+                AutoCompleteSource = AutoCompleteSource.ListItems,
                 Font = new Font("Segoe UI", 9F)
             };
 

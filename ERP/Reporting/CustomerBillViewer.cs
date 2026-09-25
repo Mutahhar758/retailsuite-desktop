@@ -204,7 +204,9 @@ namespace ERP.Reporting
             {
                 Location = new Point(16, 28),
                 Width = 230,
-                DropDownStyle = ComboBoxStyle.DropDownList,
+                DropDownStyle = ComboBoxStyle.DropDown,
+                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+                AutoCompleteSource = AutoCompleteSource.ListItems,
                 Font = new Font("Segoe UI", 9F)
             };
 
@@ -444,7 +446,9 @@ namespace ERP.Reporting
             {
                 Location = new Point(12, curY),
                 Width = 370,
-                DropDownStyle = ComboBoxStyle.DropDownList,
+                DropDownStyle = ComboBoxStyle.DropDown,
+                AutoCompleteMode = AutoCompleteMode.SuggestAppend,
+                AutoCompleteSource = AutoCompleteSource.ListItems,
                 Font = new Font("Segoe UI", 9F)
             };
             cmbSupplyOrder.SelectedIndexChanged += async (s, e) => await OnSupplyOrderChangedAsync();
