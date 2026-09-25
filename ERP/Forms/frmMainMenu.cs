@@ -90,7 +90,7 @@ namespace ERP
             bankReconcilationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BankReconciliations);
             payrollToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Payrolls);
             
-            // Reports (Urdu / Classic)
+            // Legacy Reports (Urdu / Classic)
             accountStatementToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatement);
             accountStatementWithDueToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatementWithDue);
             accountBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountBalance);
@@ -111,7 +111,7 @@ namespace ERP
                 customerBillToolStripMenuItem.Visible || enToolStripMenuItem.Visible ||
                 barcodeToolStripMenuItem.Visible || shipmentLabelTagToolStripMenuItem.Visible;
 
-            // Reports 2 (English / Modern)
+            // Reports (English / Modern)
             accountStatement2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatement);
             accountStatementWithDue2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatementWithDue);
             stockBalance2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockBalance);

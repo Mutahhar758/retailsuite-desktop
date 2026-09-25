@@ -117,8 +117,8 @@ namespace ERP
             this.setupToolStripMenuItem,
             this.dailyEntryToolStripMenuItem,
             this.statisticsToolStripMenuItem,
-            this.reportsToolStripMenuItem,
             this.reports2ToolStripMenuItem,
+            this.reportsToolStripMenuItem,
             this.settingToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -379,8 +379,8 @@ namespace ERP
             this.shipmentLabelTagToolStripMenuItem,
             this.customerBillToolStripMenuItem});
             this.reportsToolStripMenuItem.Name = "reportsToolStripMenuItem";
-            this.reportsToolStripMenuItem.Size = new System.Drawing.Size(59, 20);
-            this.reportsToolStripMenuItem.Text = "Reports";
+            this.reportsToolStripMenuItem.Size = new System.Drawing.Size(99, 20);
+            this.reportsToolStripMenuItem.Text = "Legacy Reports";
             // 
             // accountStatementToolStripMenuItem
             // 
@@ -483,8 +483,8 @@ namespace ERP
             this.toolStripSeparatorReports2,
             this.miscReports2ToolStripMenuItem});
             this.reports2ToolStripMenuItem.Name = "reports2ToolStripMenuItem";
-            this.reports2ToolStripMenuItem.Size = new System.Drawing.Size(68, 20);
-            this.reports2ToolStripMenuItem.Text = "Reports 2";
+            this.reports2ToolStripMenuItem.Size = new System.Drawing.Size(59, 20);
+            this.reports2ToolStripMenuItem.Text = "Reports";
             // 
             // accountStatement2ToolStripMenuItem
             // 
