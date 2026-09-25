@@ -59,7 +59,21 @@ namespace ERP
             if (frmLogin != null)
                 frmLogin.Hide();
 
-            StConStatus.Text = Application.ProductVersion;
+            try
+            {
+                if (System.Deployment.Application.ApplicationDeployment.IsNetworkDeployed)
+                {
+                    StConStatus.Text = System.Deployment.Application.ApplicationDeployment.CurrentDeployment.CurrentVersion.ToString();
+                }
+                else
+                {
+                    StConStatus.Text = Application.ProductVersion;
+                }
+            }
+            catch
+            {
+                StConStatus.Text = Application.ProductVersion;
+            }
 
             ApplyPermissions();
         }
