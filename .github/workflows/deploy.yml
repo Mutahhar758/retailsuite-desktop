@@ -1,50 +1,163 @@
-# name: Deploy Desktop App (ClickOnce) to IIS
+name: Deploy Desktop App (ClickOnce) to IIS
 
-# on:
-#   push:
-#     branches: [ "master" ]
+on:
+  push:
+    branches: [ "master" ]
+    paths-ignore:
+      - '**.md'
+      - '.gitignore'
+  workflow_dispatch:
+    inputs:
+      targetRevision:
+        description: 'Override Application Revision number (leave blank to auto-increment)'
+        required: false
+        default: ''
 
-# jobs:
-#   build-and-deploy:
-#     runs-on: self-hosted
+env:
+  DEPLOY_DIR: 'D:\Websites\RetailSuite_Desktop'
 
-#     steps:
-#     - name: Checkout Code
-#       uses: actions/checkout@v4
+jobs:
+  build-and-deploy:
+    runs-on: self-hosted
 
-#     - name: Setup NuGet
-#       uses: nuget/setup-nuget@v2
+    steps:
+    - name: Checkout Code
+      uses: actions/checkout@v4
+      with:
+        fetch-depth: 0
 
-#     - name: Restore NuGet Packages
-#       run: nuget restore RetailSuite.Desktop.sln
-#       working-directory: ./
+    - name: Setup NuGet
+      uses: nuget/setup-nuget@v2
 
-#     - name: Publish ClickOnce Application
-#       shell: powershell
-#       run: |
-#         $msbuild = Get-ChildItem "C:\Program Files\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-#         if (-not $msbuild) {
-#             $msbuild = Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
-#         }
-#         if (-not $msbuild) {
-#             throw "MSBuild.exe not found under C:\Program Files\Microsoft Visual Studio."
-#         }
-#         Write-Output "Found MSBuild at: $msbuild"
+    - name: Restore NuGet Packages
+      shell: powershell
+      run: |
+        Write-Host "Restoring NuGet packages..."
+        nuget restore RetailSuite.Desktop.sln
+
+    - name: Locate MSBuild
+      id: find-msbuild
+      shell: powershell
+      run: |
+        $msbuild = $null
+        $vswhere = "${env:ProgramFiles(x86)}\Microsoft Visual Studio\Installer\vswhere.exe"
+        if (Test-Path $vswhere) {
+            $msbuild = & $vswhere -latest -requires Microsoft.Component.MSBuild -find MSBuild\**\Bin\MSBuild.exe | Select-Object -First 1
+        }
+        if (-not $msbuild) {
+            $candidates = @(
+                "C:\Program Files\Microsoft Visual Studio\18\Community\MSBuild\Current\Bin\MSBuild.exe",
+                "C:\Program Files\Microsoft Visual Studio\2022\Community\MSBuild\Current\Bin\MSBuild.exe",
+                "C:\Program Files\Microsoft Visual Studio\2022\Professional\MSBuild\Current\Bin\MSBuild.exe",
+                "C:\Program Files\Microsoft Visual Studio\2022\Enterprise\MSBuild\Current\Bin\MSBuild.exe",
+                "C:\Program Files (x86)\Microsoft Visual Studio\2022\BuildTools\MSBuild\Current\Bin\MSBuild.exe",
+                "C:\Program Files (x86)\Microsoft Visual Studio\2019\Community\MSBuild\Current\Bin\MSBuild.exe",
+                "C:\Program Files (x86)\Microsoft Visual Studio\2019\BuildTools\MSBuild\Current\Bin\MSBuild.exe"
+            )
+            foreach ($c in $candidates) {
+                if (Test-Path $c) {
+                    $msbuild = $c
+                    break
+                }
+            }
+        }
+        if (-not $msbuild) {
+            $msbuild = Get-ChildItem "C:\Program Files\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+        }
+        if (-not $msbuild) {
+            $msbuild = Get-ChildItem "C:\Program Files (x86)\Microsoft Visual Studio" -Recurse -Filter "MSBuild.exe" -ErrorAction SilentlyContinue | Select-Object -First 1 -ExpandProperty FullName
+        }
+        if (-not $msbuild) {
+            throw "MSBuild.exe not found on runner machine. Please install Visual Studio or VS Build Tools with .NET desktop build tools."
+        }
+        Write-Host "Found MSBuild at: $msbuild"
+        echo "MSBUILD_PATH=$msbuild" >> $env:GITHUB_ENV
+
+    - name: Calculate and Increment Version
+      id: versioning
+      shell: powershell
+      run: |
+        [xml]$proj = Get-Content ERP/ERP.csproj
+        $currentRev = [int]($proj.Project.PropertyGroup | Where-Object { $_.ApplicationRevision -ne $null } | Select-Object -First 1).ApplicationRevision
         
-#         # Calculate the ClickOnce version starting from revision 39 (since production is at 38)
-#         $runNumber = [int]${{ github.run_number }}
-#         $appRevision = 38 + $runNumber
-#         Write-Output "Publishing with version: 1.0.0.$appRevision"
-        
-#         & $msbuild ERP/ERP.csproj /target:publish /p:Configuration=Release /p:Platform="x86" /p:PublishDir="publish/" /p:ApplicationVersion="1.0.0.$appRevision"
-#       working-directory: ./
+        $inputRev = "${{ github.event.inputs.targetRevision }}"
+        if ($inputRev -ne "") {
+            $newRev = [int]$inputRev
+        } else {
+            $newRev = $currentRev + 1
+        }
 
-#     - name: Deploy ClickOnce Files to IIS
-#       shell: powershell
-#       run: |
-#         # Ensure destination folder exists
-#         New-Item -ItemType Directory -Force -Path "D:\Websites\RetailSuite_Desktop"
+        $fullVersion = "1.0.0.$newRev"
+        Write-Host "Previous Revision: $currentRev"
+        Write-Host "New Revision: $newRev"
+        Write-Host "Publishing Version: $fullVersion"
+
+        # 1. Update ERP.csproj with new revision
+        $content = Get-Content ERP/ERP.csproj -Raw
+        $content = $content -replace "<ApplicationRevision>\d+</ApplicationRevision>", "<ApplicationRevision>$newRev</ApplicationRevision>"
+        Set-Content -Path ERP/ERP.csproj -Value $content -Encoding UTF8
+
+        # 2. Update Properties/AssemblyInfo.cs (AssemblyVersion and AssemblyFileVersion)
+        $assemblyInfoPath = "ERP/Properties/AssemblyInfo.cs"
+        if (Test-Path $assemblyInfoPath) {
+            $infoContent = Get-Content $assemblyInfoPath -Raw
+            $infoContent = $infoContent -replace '(?m)^\[assembly:\s*AssemblyVersion\("[^"]+"\)', "[assembly: AssemblyVersion(`"$fullVersion`")"
+            $infoContent = $infoContent -replace '(?m)^\[assembly:\s*AssemblyFileVersion\("[^"]+"\)', "[assembly: AssemblyFileVersion(`"$fullVersion`")"
+            Set-Content -Path $assemblyInfoPath -Value $infoContent -Encoding UTF8
+            Write-Host "Updated AssemblyInfo.cs to $fullVersion"
+        }
+
+        echo "APP_REVISION=$newRev" >> $env:GITHUB_ENV
+        echo "APP_VERSION=$fullVersion" >> $env:GITHUB_ENV
+
+    - name: Publish ClickOnce Application
+      shell: powershell
+      run: |
+        $msbuild = $env:MSBUILD_PATH
+        $rev = $env:APP_REVISION
+        $ver = $env:APP_VERSION
         
-#         # Copy the ClickOnce publish files to the deployment folder
-#         Copy-Item -Path "./ERP/publish/*" -Destination "D:\Websites\RetailSuite_Desktop" -Recurse -Force
-#       working-directory: ./
+        Write-Host "Building and Publishing ClickOnce with Version $ver..."
+        & $msbuild ERP/ERP.csproj /target:Publish /p:Configuration=Release /p:Platform=x86 /p:PublishDir="publish/" /p:ApplicationRevision=$rev /p:ApplicationVersion=$ver /v:m
+        
+        if ($LASTEXITCODE -ne 0) {
+            throw "MSBuild publish failed with exit code $LASTEXITCODE"
+        }
+        
+        if (-not (Test-Path "./ERP/publish/setup.exe")) {
+            throw "Publish output './ERP/publish/setup.exe' was not generated!"
+        }
+        Write-Host "ClickOnce files generated successfully in ./ERP/publish/"
+
+    - name: Deploy ClickOnce Files to IIS Directory
+      shell: powershell
+      run: |
+        $destination = $env:DEPLOY_DIR
+        Write-Host "Deploying ClickOnce to destination: $destination"
+        
+        if (-not (Test-Path $destination)) {
+            New-Item -ItemType Directory -Force -Path $destination | Out-Null
+        }
+        
+        # Copy the ClickOnce publish files to the deployment folder
+        Copy-Item -Path "./ERP/publish/*" -Destination $destination -Recurse -Force
+        
+        Write-Host "Deployment completed successfully to $destination for version $env:APP_VERSION"
+
+    - name: Commit and Push Version Bump to Git
+      shell: powershell
+      continue-on-error: true
+      run: |
+        git config user.name "github-actions[bot]"
+        git config user.email "github-actions[bot]@users.noreply.github.com"
+        
+        $status = git status --porcelain ERP/ERP.csproj ERP/Properties/AssemblyInfo.cs
+        if ($status) {
+            Write-Host "Committing updated ERP.csproj and AssemblyInfo.cs..."
+            git add ERP/ERP.csproj ERP/Properties/AssemblyInfo.cs
+            git commit -m "chore(release): bump desktop version to $env:APP_VERSION [skip ci]"
+            git push origin master
+            Write-Host "Version bump ($env:APP_VERSION) pushed to GitHub master."
+        } else {
+            Write-Host "No changes in version files to commit."
+        }
