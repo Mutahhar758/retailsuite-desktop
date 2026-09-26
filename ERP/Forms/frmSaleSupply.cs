@@ -676,7 +676,10 @@ namespace ERP
             }
 
             decimal netRate = Rate - Discount;
-            row.Cells[clnAmount.Index].Value = decimal.Round((Qty * netRate) + AddLess + (secQty * secRate), 2).ToString();
+            decimal lineAmount = ApiSession.HasVariablePackFeature
+                ? (Qty * netRate) + AddLess
+                : (Qty * netRate) + AddLess + (secQty * secRate);
+            row.Cells[clnAmount.Index].Value = decimal.Round(lineAmount, 2).ToString();
         }
 
 
