@@ -20,11 +20,21 @@ namespace ERP.Reporting.Models
         public decimal AddLess { get; set; }
         public decimal Amount { get; set; }
 
+        public decimal? SecQty { get; set; }
+        public decimal? SecRate { get; set; }
+        public decimal? QtyInPack { get; set; }
+        public DateTime? ReceiptDate { get; set; }
+        public decimal? ReceiptAmount { get; set; }
+
         public string FormattedDate => Date != DateTime.MinValue ? Date.ToString("dd-MMM-yyyy") : string.Empty;
         public string FormattedQty => Qty.ToString("#,##0.##");
         public string FormattedRate => Rate.ToString("#,##0");
         public string FormattedAddLess => AddLess != 0 ? AddLess.ToString("#,##0") : "-";
         public string FormattedAmount => Amount.ToString("#,##0");
+        public string FormattedSecQty => SecQty.HasValue ? SecQty.Value.ToString("#,##0.##") : "-";
+        public string FormattedSecRate => SecRate.HasValue ? SecRate.Value.ToString("#,##0") : "-";
+        public string FormattedReceiptDate => ReceiptDate.HasValue && ReceiptDate.Value != DateTime.MinValue ? ReceiptDate.Value.ToString("dd-MMM-yyyy") : "-";
+        public string FormattedReceiptAmount => ReceiptAmount.HasValue && ReceiptAmount.Value != 0 ? ReceiptAmount.Value.ToString("#,##0") : "-";
     }
 
     /// <summary>
@@ -64,6 +74,7 @@ namespace ERP.Reporting.Models
 
         public QrPaymentInfo QrPayment { get; set; }
         public bool ShowQrPayment => QrPayment != null && QrPayment.IsEnabled && NetBalance > 0;
+        public bool IsWandaLayout { get; set; }
     }
 
     /// <summary>
@@ -134,6 +145,56 @@ namespace ERP.Reporting.Models
                         if (row.Table.Columns.Contains("amount") && row["amount"] != DBNull.Value)
                             decimal.TryParse(row["amount"].ToString(), out amount);
 
+                        decimal? secQty = null;
+                        if (row.Table.Columns.Contains("secqty") && row["secqty"] != DBNull.Value)
+                        {
+                            if (decimal.TryParse(row["secqty"].ToString(), out var sq)) secQty = sq;
+                        }
+                        else if (row.Table.Columns.Contains("SecQty") && row["SecQty"] != DBNull.Value)
+                        {
+                            if (decimal.TryParse(row["SecQty"].ToString(), out var sq)) secQty = sq;
+                        }
+
+                        decimal? secRate = null;
+                        if (row.Table.Columns.Contains("secrate") && row["secrate"] != DBNull.Value)
+                        {
+                            if (decimal.TryParse(row["secrate"].ToString(), out var sr)) secRate = sr;
+                        }
+                        else if (row.Table.Columns.Contains("SecRate") && row["SecRate"] != DBNull.Value)
+                        {
+                            if (decimal.TryParse(row["SecRate"].ToString(), out var sr)) secRate = sr;
+                        }
+
+                        decimal? qtyInPack = null;
+                        if (row.Table.Columns.Contains("qtyinpack") && row["qtyinpack"] != DBNull.Value)
+                        {
+                            if (decimal.TryParse(row["qtyinpack"].ToString(), out var qip)) qtyInPack = qip;
+                        }
+                        else if (row.Table.Columns.Contains("QtyInPack") && row["QtyInPack"] != DBNull.Value)
+                        {
+                            if (decimal.TryParse(row["QtyInPack"].ToString(), out var qip)) qtyInPack = qip;
+                        }
+
+                        DateTime? receiptDate = null;
+                        if (row.Table.Columns.Contains("receiptdate") && row["receiptdate"] != DBNull.Value)
+                        {
+                            if (DateTime.TryParse(row["receiptdate"].ToString(), out var rd)) receiptDate = rd;
+                        }
+                        else if (row.Table.Columns.Contains("ReceiptDate") && row["ReceiptDate"] != DBNull.Value)
+                        {
+                            if (DateTime.TryParse(row["ReceiptDate"].ToString(), out var rd)) receiptDate = rd;
+                        }
+
+                        decimal? receiptAmount = null;
+                        if (row.Table.Columns.Contains("receiptamount") && row["receiptamount"] != DBNull.Value)
+                        {
+                            if (decimal.TryParse(row["receiptamount"].ToString(), out var ra)) receiptAmount = ra;
+                        }
+                        else if (row.Table.Columns.Contains("ReceiptAmount") && row["ReceiptAmount"] != DBNull.Value)
+                        {
+                            if (decimal.TryParse(row["ReceiptAmount"].ToString(), out var ra)) receiptAmount = ra;
+                        }
+
                         lines.Add(new CustomerBillLineItem
                         {
                             Date = date,
@@ -143,7 +204,12 @@ namespace ERP.Reporting.Models
                             Qty = qty,
                             Rate = rate,
                             AddLess = addless,
-                            Amount = amount
+                            Amount = amount,
+                            SecQty = secQty,
+                            SecRate = secRate,
+                            QtyInPack = qtyInPack,
+                            ReceiptDate = receiptDate,
+                            ReceiptAmount = receiptAmount
                         });
                     }
                 }
@@ -187,7 +253,8 @@ namespace ERP.Reporting.Models
                 ThankyouLine = !string.IsNullOrWhiteSpace(ConfigInfo.ThankyouLine) ? ConfigInfo.ThankyouLine : "Thank you for your business!",
                 GeneratedBy = !string.IsNullOrWhiteSpace(UserInfo.UserName) ? UserInfo.UserName : "System Operator",
                 GeneratedAt = DateTime.Now,
-                QrPayment = QrPaymentInfo.GetCached()
+                QrPayment = QrPaymentInfo.GetCached(),
+                IsWandaLayout = ApiSession.HasVariablePackFeature
             };
 
             return new CustomerBillDataResult(summary, lines);

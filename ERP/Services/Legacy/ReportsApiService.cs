@@ -352,11 +352,29 @@ namespace ERP.Services.Legacy
                 lines.Columns.Add("rate", typeof(decimal));
                 lines.Columns.Add("addless", typeof(decimal));
                 lines.Columns.Add("amount", typeof(decimal));
+                lines.Columns.Add("secqty", typeof(decimal));
+                lines.Columns.Add("secrate", typeof(decimal));
+                lines.Columns.Add("qtyinpack", typeof(decimal));
+                lines.Columns.Add("receiptdate", typeof(DateTime));
+                lines.Columns.Add("receiptamount", typeof(decimal));
 
                 for (int i = 0; i < body.Lines.Count; i++)
                 {
                     var row = body.Lines[i];
-                    lines.Rows.Add(row.Date, row.VNo ?? string.Empty, row.Item ?? string.Empty, row.Unit ?? string.Empty, row.Qty, row.Rate, row.AddLess, row.Amount);
+                    lines.Rows.Add(
+                        row.Date,
+                        row.VNo ?? string.Empty,
+                        row.Item ?? string.Empty,
+                        row.Unit ?? string.Empty,
+                        row.Qty,
+                        row.Rate,
+                        row.AddLess,
+                        row.Amount,
+                        (object)row.SecQty ?? DBNull.Value,
+                        (object)row.SecRate ?? DBNull.Value,
+                        (object)row.QtyInPack ?? DBNull.Value,
+                        (object)row.ReceiptDate ?? DBNull.Value,
+                        (object)row.ReceiptAmount ?? DBNull.Value);
                 }
 
                 var summary = new DataTable();
@@ -983,6 +1001,21 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("amount")]
         public decimal Amount { get; set; }
+
+        [JsonProperty("secQty")]
+        public decimal? SecQty { get; set; }
+
+        [JsonProperty("secRate")]
+        public decimal? SecRate { get; set; }
+
+        [JsonProperty("qtyInPack")]
+        public decimal? QtyInPack { get; set; }
+
+        [JsonProperty("receiptDate")]
+        public DateTime? ReceiptDate { get; set; }
+
+        [JsonProperty("receiptAmount")]
+        public decimal? ReceiptAmount { get; set; }
     }
 
     internal class CustomerBillSummaryDto

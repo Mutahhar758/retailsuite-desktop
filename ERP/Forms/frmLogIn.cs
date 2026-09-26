@@ -102,7 +102,8 @@ namespace ERP
                     var features = await _licenseService.GetFeaturesAsync();
                     ApiSession.HasSupplyFeature = features.HasSupplyFeature;
                     ApiSession.HasSecondaryQty = features.HasSecondaryQty;
-                    _licenseService.UpdateFeaturesInStore(ApiSession.TenantIdentifier, features.HasSupplyFeature, features.HasSecondaryQty);
+                    ApiSession.HasVariablePackFeature = features.HasVariablePackFeature;
+                    _licenseService.UpdateFeaturesInStore(ApiSession.TenantIdentifier, features.HasSupplyFeature, features.HasSecondaryQty, features.HasVariablePackFeature);
                 }
                 catch { }
 
@@ -238,6 +239,7 @@ namespace ERP
             ApiSession.TenantIdentifier = license.TenantIdentifier;
             ApiSession.HasSupplyFeature = license.HasSupplyFeature;
             ApiSession.HasSecondaryQty = license.HasSecondaryQty;
+            ApiSession.HasVariablePackFeature = license.HasVariablePackFeature;
             _loginService = new LoginService();
             _companyApiService = new CompanyApiService();
             _personalApiService = new PersonalApiService();
