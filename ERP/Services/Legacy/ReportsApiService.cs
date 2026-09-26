@@ -782,7 +782,95 @@ namespace ERP.Services.Legacy
                 return dt;
             }
         }
+        public async Task<ProfitByCustomerDto> GetProfitByCustomerAsync(DateTime fromDate, DateTime toDate, string customerAccount = null)
+        {
+            var url = Endpoint + "/profit-by-customer?fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"));
+
+            if (!string.IsNullOrWhiteSpace(customerAccount))
+            {
+                url += "&customerAccount=" + Uri.EscapeDataString(customerAccount);
+            }
+
+            using (var client = CreateClient(includeTenantId: true))
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<ProfitByCustomerDto>>(json);
+                return payload != null && payload.Body != null ? payload.Body : new ProfitByCustomerDto();
+            }
+        }
+
+        public async Task<byte[]> GetProfitByCustomerPdfAsync(DateTime fromDate, DateTime toDate, string customerAccount = null)
+        {
+            var url = Endpoint + "/profit-by-customer/pdf?fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"));
+
+            if (!string.IsNullOrWhiteSpace(customerAccount))
+            {
+                url += "&customerAccount=" + Uri.EscapeDataString(customerAccount);
+            }
+
+            using (var client = CreateClient(includeTenantId: true))
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+        }
+
+        public async Task<ProfitByItemDto> GetProfitByItemAsync(DateTime fromDate, DateTime toDate, string itemId = null, string categoryId = null)
+        {
+            var url = Endpoint + "/profit-by-item?fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"));
+
+            if (!string.IsNullOrWhiteSpace(itemId))
+            {
+                url += "&itemId=" + Uri.EscapeDataString(itemId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(categoryId))
+            {
+                url += "&categoryId=" + Uri.EscapeDataString(categoryId);
+            }
+
+            using (var client = CreateClient(includeTenantId: true))
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<ProfitByItemDto>>(json);
+                return payload != null && payload.Body != null ? payload.Body : new ProfitByItemDto();
+            }
+        }
+
+        public async Task<byte[]> GetProfitByItemPdfAsync(DateTime fromDate, DateTime toDate, string itemId = null, string categoryId = null)
+        {
+            var url = Endpoint + "/profit-by-item/pdf?fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"));
+
+            if (!string.IsNullOrWhiteSpace(itemId))
+            {
+                url += "&itemId=" + Uri.EscapeDataString(itemId);
+            }
+
+            if (!string.IsNullOrWhiteSpace(categoryId))
+            {
+                url += "&categoryId=" + Uri.EscapeDataString(categoryId);
+            }
+
+            using (var client = CreateClient(includeTenantId: true))
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+                return await response.Content.ReadAsByteArrayAsync();
+            }
+        }
     }
+
 
     internal class AccountStatementLineDto
     {
@@ -1316,5 +1404,178 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("status")]
         public string Status { get; set; }
+    }
+    public class ProfitByCustomerDto
+    {
+        [JsonProperty("fromDate")]
+        public DateTime FromDate { get; set; }
+
+        [JsonProperty("toDate")]
+        public DateTime ToDate { get; set; }
+
+        [JsonProperty("totalSales")]
+        public decimal TotalSales { get; set; }
+
+        [JsonProperty("totalCost")]
+        public decimal TotalCost { get; set; }
+
+        [JsonProperty("grossProfit")]
+        public decimal GrossProfit { get; set; }
+
+        [JsonProperty("grossMarginPct")]
+        public decimal GrossMarginPct { get; set; }
+
+        [JsonProperty("totalQtySold")]
+        public decimal TotalQtySold { get; set; }
+
+        [JsonProperty("customerCount")]
+        public int CustomerCount { get; set; }
+
+        [JsonProperty("lines")]
+        public List<ProfitByCustomerLineDto> Lines { get; set; } = new List<ProfitByCustomerLineDto>();
+    }
+
+    public class ProfitByCustomerLineDto
+    {
+        [JsonProperty("accountId")]
+        public string AccountId { get; set; }
+
+        [JsonProperty("accountTitle")]
+        public string AccountTitle { get; set; }
+
+        [JsonProperty("city")]
+        public string City { get; set; }
+
+        [JsonProperty("phone")]
+        public string Phone { get; set; }
+
+        [JsonProperty("invoiceCount")]
+        public int InvoiceCount { get; set; }
+
+        [JsonProperty("totalQty")]
+        public decimal TotalQty { get; set; }
+
+        [JsonProperty("totalSales")]
+        public decimal TotalSales { get; set; }
+
+        [JsonProperty("totalCost")]
+        public decimal TotalCost { get; set; }
+
+        [JsonProperty("grossProfit")]
+        public decimal GrossProfit { get; set; }
+
+        [JsonProperty("grossMarginPct")]
+        public decimal GrossMarginPct { get; set; }
+
+        [JsonProperty("details")]
+        public List<ProfitByCustomerDetailLineDto> Details { get; set; }
+    }
+
+    public class ProfitByCustomerDetailLineDto
+    {
+        [JsonProperty("vDate")]
+        public DateTime VDate { get; set; }
+
+        [JsonProperty("vNo")]
+        public string VNo { get; set; }
+
+        [JsonProperty("vType")]
+        public string VType { get; set; }
+
+        [JsonProperty("itemId")]
+        public string ItemId { get; set; }
+
+        [JsonProperty("itemTitle")]
+        public string ItemTitle { get; set; }
+
+        [JsonProperty("unit")]
+        public string Unit { get; set; }
+
+        [JsonProperty("qty")]
+        public decimal Qty { get; set; }
+
+        [JsonProperty("saleRate")]
+        public decimal SaleRate { get; set; }
+
+        [JsonProperty("saleAmount")]
+        public decimal SaleAmount { get; set; }
+
+        [JsonProperty("costPrice")]
+        public decimal CostPrice { get; set; }
+
+        [JsonProperty("costAmount")]
+        public decimal CostAmount { get; set; }
+
+        [JsonProperty("profit")]
+        public decimal Profit { get; set; }
+
+        [JsonProperty("marginPct")]
+        public decimal MarginPct { get; set; }
+    }
+
+    public class ProfitByItemDto
+    {
+        [JsonProperty("fromDate")]
+        public DateTime FromDate { get; set; }
+
+        [JsonProperty("toDate")]
+        public DateTime ToDate { get; set; }
+
+        [JsonProperty("totalSales")]
+        public decimal TotalSales { get; set; }
+
+        [JsonProperty("totalCost")]
+        public decimal TotalCost { get; set; }
+
+        [JsonProperty("grossProfit")]
+        public decimal GrossProfit { get; set; }
+
+        [JsonProperty("grossMarginPct")]
+        public decimal GrossMarginPct { get; set; }
+
+        [JsonProperty("totalQtySold")]
+        public decimal TotalQtySold { get; set; }
+
+        [JsonProperty("itemCount")]
+        public int ItemCount { get; set; }
+
+        [JsonProperty("lines")]
+        public List<ProfitByItemLineDto> Lines { get; set; } = new List<ProfitByItemLineDto>();
+    }
+
+    public class ProfitByItemLineDto
+    {
+        [JsonProperty("itemId")]
+        public string ItemId { get; set; }
+
+        [JsonProperty("itemTitle")]
+        public string ItemTitle { get; set; }
+
+        [JsonProperty("category")]
+        public string Category { get; set; }
+
+        [JsonProperty("unit")]
+        public string Unit { get; set; }
+
+        [JsonProperty("totalQty")]
+        public decimal TotalQty { get; set; }
+
+        [JsonProperty("avgSaleRate")]
+        public decimal AvgSaleRate { get; set; }
+
+        [JsonProperty("totalSales")]
+        public decimal TotalSales { get; set; }
+
+        [JsonProperty("avgCostRate")]
+        public decimal AvgCostRate { get; set; }
+
+        [JsonProperty("totalCost")]
+        public decimal TotalCost { get; set; }
+
+        [JsonProperty("grossProfit")]
+        public decimal GrossProfit { get; set; }
+
+        [JsonProperty("grossMarginPct")]
+        public decimal GrossMarginPct { get; set; }
     }
 }

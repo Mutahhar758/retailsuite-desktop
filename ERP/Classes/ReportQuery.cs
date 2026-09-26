@@ -86,7 +86,13 @@ namespace ERP
 
             return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetEnvelopeAsync(account)).GetAwaiter().GetResult();
         }
-
-
+        internal static ERP.Services.Legacy.ProfitByCustomerDto ProfitByCustomer(DateTime fDate, DateTime tDate, string customerAccount = null)
+        {
+            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetProfitByCustomerAsync(fDate, tDate, customerAccount)).GetAwaiter().GetResult();
+        }
+        internal static ERP.Services.Legacy.ProfitByItemDto ProfitByItem(DateTime fDate, DateTime tDate, string itemId = null, string categoryId = null)
+        {
+            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetProfitByItemAsync(fDate, tDate, itemId, categoryId)).GetAwaiter().GetResult();
+        }
     }
 }

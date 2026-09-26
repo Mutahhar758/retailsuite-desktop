@@ -74,6 +74,8 @@ namespace ERP
             this.customerBill2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.milkComparison2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.customerBalanceRecovery2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.profitByCustomer2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.profitByItem2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparatorReports2 = new System.Windows.Forms.ToolStripSeparator();
             this.miscReports2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.envelope2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -480,6 +482,8 @@ namespace ERP
             this.customerBill2ToolStripMenuItem,
             this.milkComparison2ToolStripMenuItem,
             this.customerBalanceRecovery2ToolStripMenuItem,
+            this.profitByCustomer2ToolStripMenuItem,
+            this.profitByItem2ToolStripMenuItem,
             this.toolStripSeparatorReports2,
             this.miscReports2ToolStripMenuItem});
             this.reports2ToolStripMenuItem.Name = "reports2ToolStripMenuItem";
@@ -562,6 +566,20 @@ namespace ERP
             this.customerBalanceRecovery2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
             this.customerBalanceRecovery2ToolStripMenuItem.Text = "Customer Balance & Recovery";
             this.customerBalanceRecovery2ToolStripMenuItem.Click += new System.EventHandler(this.customerBalanceRecovery2ToolStripMenuItem_Click);
+            // 
+            // profitByCustomer2ToolStripMenuItem
+            // 
+            this.profitByCustomer2ToolStripMenuItem.Name = "profitByCustomer2ToolStripMenuItem";
+            this.profitByCustomer2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.profitByCustomer2ToolStripMenuItem.Text = "Profit by Customer";
+            this.profitByCustomer2ToolStripMenuItem.Click += new System.EventHandler(this.profitByCustomer2ToolStripMenuItem_Click);
+            // 
+            // profitByItem2ToolStripMenuItem
+            // 
+            this.profitByItem2ToolStripMenuItem.Name = "profitByItem2ToolStripMenuItem";
+            this.profitByItem2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.profitByItem2ToolStripMenuItem.Text = "Profit by Item";
+            this.profitByItem2ToolStripMenuItem.Click += new System.EventHandler(this.profitByItem2ToolStripMenuItem_Click);
             // 
             // toolStripSeparatorReports2
             // 
@@ -854,6 +872,8 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem customerBill2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem milkComparison2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerBalanceRecovery2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem profitByCustomer2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem profitByItem2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparatorReports2;
         private System.Windows.Forms.ToolStripMenuItem miscReports2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem envelope2ToolStripMenuItem;

@@ -137,6 +137,8 @@ namespace ERP
             customerBill2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBill);
             milkComparison2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.MilkComparison);
             customerBalanceRecovery2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBalanceRecovery);
+            profitByCustomer2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ProfitByCustomer);
+            profitByItem2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ProfitByItem);
             envelope2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.EnvelopeReport);
             barcode2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BarcodeReport);
             shipmentLabelTag2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ShipmentLabelReport);
@@ -147,7 +149,9 @@ namespace ERP
                 accountBalance2ToolStripMenuItem.Visible || itemLedger2ToolStripMenuItem.Visible ||
                 incomeSummary2ToolStripMenuItem.Visible || balanceSheet2ToolStripMenuItem.Visible ||
                 customerBill2ToolStripMenuItem.Visible || milkComparison2ToolStripMenuItem.Visible ||
-                customerBalanceRecovery2ToolStripMenuItem.Visible || miscReports2ToolStripMenuItem.Visible;
+                customerBalanceRecovery2ToolStripMenuItem.Visible ||
+                profitByCustomer2ToolStripMenuItem.Visible || profitByItem2ToolStripMenuItem.Visible ||
+                miscReports2ToolStripMenuItem.Visible;
             
             configurationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PrinterSettings);
         }
@@ -303,6 +307,20 @@ namespace ERP
         private void customerBalanceRecovery2ToolStripMenuItem_Click(object sender, EventArgs e)
         {
             ERP.Reporting.CustomerBalanceRecoveryViewer viewer = new ERP.Reporting.CustomerBalanceRecoveryViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void profitByCustomer2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.ProfitByCustomerViewer viewer = new ERP.Reporting.ProfitByCustomerViewer();
+            viewer.MdiParent = this;
+            viewer.Show();
+        }
+
+        private void profitByItem2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            ERP.Reporting.ProfitByItemViewer viewer = new ERP.Reporting.ProfitByItemViewer();
             viewer.MdiParent = this;
             viewer.Show();
         }

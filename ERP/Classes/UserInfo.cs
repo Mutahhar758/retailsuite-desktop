@@ -153,6 +153,8 @@ namespace ERP
         public const string StockBalance = "StockBalance";
         public const string StockLedger = "StockLedger";
         public const string IncomeSummary = "IncomeSummary";
+        public const string ProfitByCustomer = "ProfitByCustomer";
+        public const string ProfitByItem = "ProfitByItem";
         public const string BalanceSheet = "BalanceSheet";
         public const string CustomerBill = "CustomerBill";
         public const string MilkComparison = "MilkComparison";
