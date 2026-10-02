@@ -398,7 +398,13 @@ namespace ERP
             else if (Reportname == "Customer Bill (Urdu)")
             {
                 UrduReports.CrUrSaleBill rpt = new UrduReports.CrUrSaleBill();
-                DataTable dt = ReportQuery.CustomerBill((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value, dateBasis).Tables[0];
+                DataTable dt = ReportQuery.CustomerBill((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value, dateBasis, isWandaLayout: false).Tables[0];
+                for (int i = dt.Rows.Count - 1; i >= 0; i--)
+                {
+                    decimal qty = dt.Columns.Contains("qty") && dt.Rows[i]["qty"] != DBNull.Value ? Convert.ToDecimal(dt.Rows[i]["qty"]) : 0m;
+                    decimal amt = dt.Columns.Contains("amount") && dt.Rows[i]["amount"] != DBNull.Value ? Convert.ToDecimal(dt.Rows[i]["amount"]) : 0m;
+                    if (qty == 0m && amt == 0m) dt.Rows.RemoveAt(i);
+                }
                 rpt.SetDataSource(dt);
                 rpt.SetParameterValue("@companyname", CompanyInfo.UrCompanyName);
                 rpt.SetParameterValue("@Account", cmbAccount.Text);
@@ -418,8 +424,14 @@ namespace ERP
                         MessageBox.Show("Please select account..");
                         return;
                     }
-                    DataSet ds = ReportQuery.CustomerBill((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value, dateBasis);
+                    DataSet ds = ReportQuery.CustomerBill((string)cmbAccount.SelectedValue, dtpFDate.Value, dtpTDate.Value, dateBasis, isWandaLayout: false);
                     DataTable dt = ds.Tables[0];
+                    for (int i = dt.Rows.Count - 1; i >= 0; i--)
+                    {
+                        decimal qty = dt.Columns.Contains("qty") && dt.Rows[i]["qty"] != DBNull.Value ? Convert.ToDecimal(dt.Rows[i]["qty"]) : 0m;
+                        decimal amt = dt.Columns.Contains("amount") && dt.Rows[i]["amount"] != DBNull.Value ? Convert.ToDecimal(dt.Rows[i]["amount"]) : 0m;
+                        if (qty == 0m && amt == 0m) dt.Rows.RemoveAt(i);
+                    }
                     Reports.SaleReceiptBill rpt = new Reports.SaleReceiptBill();
                     rpt.SetDataSource(dt);
                     rpt.SetParameterValue("@CompanyName", CompanyInfo.CompanyName);
@@ -449,8 +461,14 @@ namespace ERP
                     
                     foreach (DataRowView item in chklstAccounts.CheckedItems)
                     {
-                        DataSet ds = ReportQuery.CustomerBill(item["Code"].ToString(), dtpFDate.Value, dtpTDate.Value, dateBasis);
+                        DataSet ds = ReportQuery.CustomerBill(item["Code"].ToString(), dtpFDate.Value, dtpTDate.Value, dateBasis, isWandaLayout: false);
                         DataTable dt = ds.Tables[0];
+                        for (int i = dt.Rows.Count - 1; i >= 0; i--)
+                        {
+                            decimal qty = dt.Columns.Contains("qty") && dt.Rows[i]["qty"] != DBNull.Value ? Convert.ToDecimal(dt.Rows[i]["qty"]) : 0m;
+                            decimal amt = dt.Columns.Contains("amount") && dt.Rows[i]["amount"] != DBNull.Value ? Convert.ToDecimal(dt.Rows[i]["amount"]) : 0m;
+                            if (qty == 0m && amt == 0m) dt.Rows.RemoveAt(i);
+                        }
                         if (dt.Rows.Count > 0)
                         {
                             Reports.SaleReceiptBill rpt = new Reports.SaleReceiptBill();

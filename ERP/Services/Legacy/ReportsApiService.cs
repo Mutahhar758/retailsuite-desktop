@@ -324,13 +324,18 @@ namespace ERP.Services.Legacy
             }
         }
 
-        public async Task<DataSet> GetCustomerBillAsync(string account, DateTime fromDate, DateTime toDate, string dateBasis = "VoucherDate")
+        public async Task<DataSet> GetCustomerBillAsync(string account, DateTime fromDate, DateTime toDate, string dateBasis = "VoucherDate", bool? isWandaLayout = null)
         {
             var url = Endpoint
                 + "/customer-bill?account=" + Uri.EscapeDataString(account ?? string.Empty)
                 + "&fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
                 + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"))
                 + "&dateBasis=" + Uri.EscapeDataString(dateBasis ?? "VoucherDate");
+
+            if (isWandaLayout.HasValue)
+            {
+                url += "&isWandaLayout=" + (isWandaLayout.Value ? "true" : "false");
+            }
 
             using (var client = CreateClient(includeTenantId: true))
             {

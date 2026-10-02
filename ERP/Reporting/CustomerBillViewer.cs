@@ -942,7 +942,7 @@ namespace ERP.Reporting
             {
                 await EnsureWebViewInitializedAsync();
 
-                DataSet ds = await Task.Run(() => ReportQuery.CustomerBill(customerCode, fromDate, toDate, dateBasis));
+                DataSet ds = await Task.Run(() => ReportQuery.CustomerBill(customerCode, fromDate, toDate, dateBasis, ApiSession.HasVariablePackFeature));
                 CustomerBillDataResult result = CustomerBillDataService.ConvertDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis);
 
                 _currentResult = result;
@@ -1109,7 +1109,7 @@ namespace ERP.Reporting
                     {
                         try
                         {
-                            DataSet ds = ReportQuery.CustomerBill(customer.Account, fromDate, toDate, dateBasis);
+                            DataSet ds = ReportQuery.CustomerBill(customer.Account, fromDate, toDate, dateBasis, ApiSession.HasVariablePackFeature);
                             var result = CustomerBillDataService.ConvertDataSet(ds, customer.Account, customer.Title, fromDate, toDate, dateBasis);
 
                             // Only print if there are line items or a non-zero balance

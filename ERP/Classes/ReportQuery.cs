@@ -76,10 +76,10 @@ namespace ERP
 
             return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetSaleRetBillAsync(Vno)).GetAwaiter().GetResult();
         }
-        internal static DataSet CustomerBill(string account, DateTime Fdate, DateTime Tdate, string dateBasis = "VoucherDate")
+        internal static DataSet CustomerBill(string account, DateTime Fdate, DateTime Tdate, string dateBasis = "VoucherDate", bool? isWandaLayout = null)
         {
 
-            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetCustomerBillAsync(account, Fdate, Tdate, dateBasis)).GetAwaiter().GetResult();
+            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetCustomerBillAsync(account, Fdate, Tdate, dateBasis, isWandaLayout)).GetAwaiter().GetResult();
         }
         internal static DataTable EnvelopeDetail(string[] account)
         {
