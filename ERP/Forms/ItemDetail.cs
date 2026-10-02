@@ -19,6 +19,7 @@ namespace ERP
         private readonly InventoryApiService _inventoryApiService;
         private readonly ItemCategoryApiService _itemCategoryApiService;
         private readonly UnitApiService _unitApiService;
+        private readonly BrandApiService _brandApiService;
         bool FLogin = true;
 
         public frmItemDetail()
@@ -27,6 +28,7 @@ namespace ERP
             _inventoryApiService = new InventoryApiService();
             _itemCategoryApiService = new ItemCategoryApiService();
             _unitApiService = new UnitApiService();
+            _brandApiService = new BrandApiService();
             UserInfo.ApplyFormPermissions(this, AppResource.InventoryItems);
         }
         void AllowNewRow()
@@ -106,6 +108,12 @@ namespace ERP
             dtItemDetail.Columns.Add("MediaId", typeof(string));
             dtItemDetail.Columns.Add("MediaUrl", typeof(string));
             dtItemDetail.Columns.Add("ItemType", typeof(int));
+            dtItemDetail.Columns.Add("RequireImei", typeof(bool));
+            dtItemDetail.Columns.Add("BrandId", typeof(string));
+            dtItemDetail.Columns.Add("ModelName", typeof(string));
+            dtItemDetail.Columns.Add("Storage", typeof(string));
+            dtItemDetail.Columns.Add("Ram", typeof(string));
+            dtItemDetail.Columns.Add("Color", typeof(string));
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -128,7 +136,13 @@ namespace ERP
                     "0",
                     items[i].MediaId,
                     items[i].MediaUrl,
-                    items[i].ItemType == "Service" ? 1 : 0);
+                    items[i].ItemType == "Service" ? 1 : 0,
+                    items[i].RequireImei == true,
+                    items[i].BrandId,
+                    items[i].ModelName,
+                    items[i].Storage,
+                    items[i].Ram,
+                    items[i].Color);
             }
         }
         async System.Threading.Tasks.Task FillformAsync(string catagory)
@@ -159,6 +173,16 @@ namespace ERP
                     "0");
                 dgvItemDetail.Rows[rIdx].Cells["clnMediaId"].Value = dtfilter.Rows[i]["MediaId"]?.ToString() ?? string.Empty;
                 dgvItemDetail.Rows[rIdx].Cells["clnMediaUrl"].Value = dtfilter.Rows[i]["MediaUrl"]?.ToString() ?? string.Empty;
+
+                if (ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnRequireImei"))
+                {
+                    dgvItemDetail.Rows[rIdx].Cells["clnRequireImei"].Value = dtfilter.Rows[i]["RequireImei"] != DBNull.Value && Convert.ToBoolean(dtfilter.Rows[i]["RequireImei"]);
+                    dgvItemDetail.Rows[rIdx].Cells["clnBrand"].Value = dtfilter.Rows[i]["BrandId"]?.ToString();
+                    dgvItemDetail.Rows[rIdx].Cells["clnModel"].Value = dtfilter.Rows[i]["ModelName"]?.ToString();
+                    dgvItemDetail.Rows[rIdx].Cells["clnStorage"].Value = dtfilter.Rows[i]["Storage"]?.ToString();
+                    dgvItemDetail.Rows[rIdx].Cells["clnRam"].Value = dtfilter.Rows[i]["Ram"]?.ToString();
+                    dgvItemDetail.Rows[rIdx].Cells["clnColor"].Value = dtfilter.Rows[i]["Color"]?.ToString();
+                }
             }
             dgvItemDetail.Rows.Add();
             CalcTotals();
@@ -188,6 +212,64 @@ namespace ERP
             clnItemType.DataSource = dtItemTypes;
             clnItemType.DisplayMember = "Name";
             clnItemType.ValueMember = "Value";
+
+            if (ApiSession.HasMobileShopFeature)
+            {
+                var brands = await _brandApiService.GetLookupAsync();
+                var dtBrand = new DataTable();
+                dtBrand.Columns.Add("Id", typeof(string));
+                dtBrand.Columns.Add("Title", typeof(string));
+                foreach (var b in brands)
+                    dtBrand.Rows.Add(b.Id, b.Title);
+
+                var clnRequireImei = new DataGridViewCheckBoxColumn
+                {
+                    Name = "clnRequireImei",
+                    HeaderText = "Req IMEI",
+                    Width = 65
+                };
+                var clnBrand = new DataGridViewComboBoxColumn
+                {
+                    Name = "clnBrand",
+                    HeaderText = "Brand",
+                    Width = 100,
+                    DataSource = dtBrand,
+                    DisplayMember = "Title",
+                    ValueMember = "Id",
+                    DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox
+                };
+                var clnModel = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnModel",
+                    HeaderText = "Model",
+                    Width = 110
+                };
+                var clnStorage = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnStorage",
+                    HeaderText = "Storage",
+                    Width = 75
+                };
+                var clnRam = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnRam",
+                    HeaderText = "RAM",
+                    Width = 65
+                };
+                var clnColor = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnColor",
+                    HeaderText = "Color",
+                    Width = 85
+                };
+
+                dgvItemDetail.Columns.Add(clnRequireImei);
+                dgvItemDetail.Columns.Add(clnBrand);
+                dgvItemDetail.Columns.Add(clnModel);
+                dgvItemDetail.Columns.Add(clnStorage);
+                dgvItemDetail.Columns.Add(clnRam);
+                dgvItemDetail.Columns.Add(clnColor);
+            }
 
             dgvItemDetail.Rows.Add();
             await FillformAsync((string)cmbItemCatagory.SelectedValue);
@@ -330,7 +412,13 @@ namespace ERP
                                 OpnStock = isService ? 0 : ParseNullableDecimal(row.Cells[clnOpnStock.Index].Value),
                                 OpnRate = isService ? 0 : ParseNullableDecimal(row.Cells[clnOpnRate.Index].Value),
                                 ItemType = isService ? "Service" : "Product",
-                                MediaId = row.Cells["clnMediaId"] != null ? Convert.ToString(row.Cells["clnMediaId"].Value) : string.Empty
+                                MediaId = row.Cells["clnMediaId"] != null ? Convert.ToString(row.Cells["clnMediaId"].Value) : string.Empty,
+                                RequireImei = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnRequireImei") && row.Cells["clnRequireImei"].Value != null ? Convert.ToBoolean(row.Cells["clnRequireImei"].Value) : (bool?)null,
+                                BrandId = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnBrand") ? Convert.ToString(row.Cells["clnBrand"].Value) : null,
+                                ModelName = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnModel") ? Convert.ToString(row.Cells["clnModel"].Value) : null,
+                                Storage = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnStorage") ? Convert.ToString(row.Cells["clnStorage"].Value) : null,
+                                Ram = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnRam") ? Convert.ToString(row.Cells["clnRam"].Value) : null,
+                                Color = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnColor") ? Convert.ToString(row.Cells["clnColor"].Value) : null
                             };
 
                             var id = request.Id ?? string.Empty;

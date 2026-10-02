@@ -76,6 +76,11 @@ namespace ERP
             }
 
             ApplyPermissions();
+
+            if (ApiSession.HasMobileShopFeature)
+            {
+                SetupMobileShopMenu();
+            }
         }
 
         private void ApplyPermissions()
@@ -764,6 +769,71 @@ namespace ERP
             frmSupplyOrder frm = new frmSupplyOrder();
             frm.MdiParent = this;
             frm.Show();
+        }
+
+        private void SetupMobileShopMenu()
+        {
+            try
+            {
+                var mobileMenu = new ToolStripMenuItem("Mobile Shop");
+
+                var repairJobItem = new ToolStripMenuItem("Repair Job Card");
+                repairJobItem.Click += (s, e) =>
+                {
+                    var frm = new ERP.Forms.frmRepairJob();
+                    frm.MdiParent = this;
+                    frm.Show();
+                };
+
+                var imeiStockItem = new ToolStripMenuItem("IMEI Stock Ledger");
+                imeiStockItem.Click += (s, e) =>
+                {
+                    var frm = new ERP.Forms.frmImeiStock();
+                    frm.MdiParent = this;
+                    frm.Show();
+                };
+
+                var imeiHistoryItem = new ToolStripMenuItem("IMEI Search & Timeline");
+                imeiHistoryItem.Click += (s, e) =>
+                {
+                    var frm = new ERP.Forms.frmImeiHistory();
+                    frm.MdiParent = this;
+                    frm.Show();
+                };
+
+                var brandItem = new ToolStripMenuItem("Brand Management");
+                brandItem.Click += (s, e) =>
+                {
+                    var frm = new ERP.Forms.frmBrand();
+                    frm.MdiParent = this;
+                    frm.Show();
+                };
+
+                repairJobItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.RepairJobs);
+                imeiStockItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ImeiStock);
+                imeiHistoryItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ImeiStock);
+                brandItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Brands);
+
+                mobileMenu.DropDownItems.Add(repairJobItem);
+                mobileMenu.DropDownItems.Add(new ToolStripSeparator());
+                mobileMenu.DropDownItems.Add(imeiStockItem);
+                mobileMenu.DropDownItems.Add(imeiHistoryItem);
+                mobileMenu.DropDownItems.Add(new ToolStripSeparator());
+                mobileMenu.DropDownItems.Add(brandItem);
+
+                mobileMenu.Visible = UserInfo.IsOwner ||
+                    repairJobItem.Visible || imeiStockItem.Visible || imeiHistoryItem.Visible || brandItem.Visible;
+
+                int index = menuStrip1.Items.IndexOf(dailyEntryToolStripMenuItem);
+                if (index >= 0)
+                    menuStrip1.Items.Insert(index + 1, mobileMenu);
+                else
+                    menuStrip1.Items.Add(mobileMenu);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error setting up Mobile Shop menu: " + ex.Message);
+            }
         }
     }
 

@@ -165,6 +165,27 @@ namespace ERP.Services.Legacy
         [JsonProperty("secUnit")]
         public string SecUnit { get; set; }
 
+        [JsonProperty("imei")]
+        public string Imei { get; set; }
+
+        [JsonProperty("imei2")]
+        public string Imei2 { get; set; }
+
+        [JsonProperty("ptaStatus")]
+        public string PtaStatus { get; set; }
+
+        [JsonProperty("conditionNote")]
+        public string ConditionNote { get; set; }
+
+        [JsonProperty("batteryHealth")]
+        public int? BatteryHealth { get; set; }
+
+        [JsonProperty("warrantyMonths")]
+        public int? WarrantyMonths { get; set; }
+
+        [JsonProperty("warrantyExpiryDate")]
+        public string WarrantyExpiryDate { get; set; }
+
         [JsonProperty("cashReceipt")]
         public decimal CashReceipt { get; set; }
 
@@ -257,5 +278,26 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("secUnit")]
         public string SecUnit { get; set; }
+
+        [JsonProperty("imei")]
+        public string Imei { get; set; }
+
+        [JsonProperty("imei2")]
+        public string Imei2 { get; set; }
+
+        [JsonProperty("ptaStatus")]
+        public string PtaStatus { get; set; }
+
+        [JsonProperty("conditionNote")]
+        public string ConditionNote { get; set; }
+
+        [JsonProperty("batteryHealth")]
+        public int? BatteryHealth { get; set; }
+
+        [JsonProperty("warrantyMonths")]
+        public int? WarrantyMonths { get; set; }
+
+        [JsonProperty("warrantyExpiryDate")]
+        public string WarrantyExpiryDate { get; set; }
     }
 }

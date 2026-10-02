@@ -18,6 +18,7 @@ namespace ERP
         private readonly ItemCategoryApiService _itemCategoryApiService;
         private readonly UnitApiService _unitApiService;
         private readonly InventoryApiService _inventoryApiService;
+        private readonly MobileShopApiService _mobileShopApiService;
         private List<SaleDto> _queryList = new List<SaleDto>();
 
         private DataTable dtItems = new DataTable();
@@ -44,6 +45,7 @@ namespace ERP
             _itemCategoryApiService = new ItemCategoryApiService();
             _unitApiService = new UnitApiService();
             _inventoryApiService = new InventoryApiService();
+            _mobileShopApiService = new MobileShopApiService();
             InitializeLookupTables();
             dgvSale.Rows.Add();
             UserInfo.ApplyFormPermissions(this, AppResource.Sales);
@@ -227,6 +229,16 @@ namespace ERP
                         dgvSale["clnSecQty", ind].Value = (line.SecQty ?? 0).ToString("0.##");
                         dgvSale["clnSecRate", ind].Value = (line.SecRate ?? 0).ToString("0.##");
                     }
+
+                    if (ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei"))
+                    {
+                        dgvSale["clnImei", ind].Value = line.Imei;
+                        dgvSale["clnImei2", ind].Value = line.Imei2;
+                        dgvSale["clnPtaStatus", ind].Value = line.PtaStatus;
+                        dgvSale["clnWarrantyMonths", ind].Value = line.WarrantyMonths?.ToString();
+                        dgvSale["clnBatteryHealth", ind].Value = line.BatteryHealth?.ToString();
+                        dgvSale["clnConditionNote", ind].Value = line.ConditionNote;
+                    }
                 }
             }
 
@@ -298,7 +310,13 @@ namespace ERP
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
                     SecQty = secQty,
                     SecRate = secRate,
-                    SecUnit = secUnit
+                    SecUnit = secUnit,
+                    Imei = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei") ? Convert.ToString(row.Cells["clnImei"].Value) : null,
+                    Imei2 = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei2") ? Convert.ToString(row.Cells["clnImei2"].Value) : null,
+                    PtaStatus = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnPtaStatus") ? Convert.ToString(row.Cells["clnPtaStatus"].Value) : null,
+                    WarrantyMonths = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnWarrantyMonths") && int.TryParse(Convert.ToString(row.Cells["clnWarrantyMonths"].Value), out int wm) ? (int?)wm : null,
+                    BatteryHealth = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnBatteryHealth") && int.TryParse(Convert.ToString(row.Cells["clnBatteryHealth"].Value), out int bh) ? (int?)bh : null,
+                    ConditionNote = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnConditionNote") ? Convert.ToString(row.Cells["clnConditionNote"].Value) : null
                 });
             }
 
@@ -411,11 +429,87 @@ namespace ERP
             }
         }
 
+        private void SetupMobileShopColumns()
+        {
+            if (ApiSession.HasMobileShopFeature)
+            {
+                if (!dgvSale.Columns.Contains("clnImei"))
+                {
+                    var colImei = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnImei",
+                        HeaderText = "IMEI / Serial",
+                        Width = 140
+                    };
+                    var colImei2 = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnImei2",
+                        HeaderText = "IMEI 2",
+                        Width = 140
+                    };
+                    var colPta = new DataGridViewComboBoxColumn
+                    {
+                        Name = "clnPtaStatus",
+                        HeaderText = "PTA Status",
+                        Width = 110,
+                        DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox
+                    };
+                    colPta.Items.AddRange("Official PTA", "Non-PTA", "CPID", "Patched", "JV");
+
+                    var colWarranty = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnWarrantyMonths",
+                        HeaderText = "Warranty (Mo)",
+                        Width = 90
+                    };
+                    var colBattery = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnBatteryHealth",
+                        HeaderText = "Battery %",
+                        Width = 70
+                    };
+                    var colCondition = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnConditionNote",
+                        HeaderText = "Condition / Note",
+                        Width = 120
+                    };
+
+                    int insertIndex = clnItemNo.Index + 1;
+                    dgvSale.Columns.Insert(insertIndex, colImei);
+                    dgvSale.Columns.Insert(insertIndex + 1, colImei2);
+                    dgvSale.Columns.Insert(insertIndex + 2, colPta);
+                    dgvSale.Columns.Insert(insertIndex + 3, colWarranty);
+                    dgvSale.Columns.Insert(insertIndex + 4, colBattery);
+                    dgvSale.Columns.Insert(insertIndex + 5, colCondition);
+                }
+                else
+                {
+                    dgvSale.Columns["clnImei"].Visible = true;
+                    dgvSale.Columns["clnImei2"].Visible = true;
+                    dgvSale.Columns["clnPtaStatus"].Visible = true;
+                    dgvSale.Columns["clnWarrantyMonths"].Visible = true;
+                    dgvSale.Columns["clnBatteryHealth"].Visible = true;
+                    dgvSale.Columns["clnConditionNote"].Visible = true;
+                }
+            }
+            else
+            {
+                if (dgvSale.Columns.Contains("clnImei")) dgvSale.Columns["clnImei"].Visible = false;
+                if (dgvSale.Columns.Contains("clnImei2")) dgvSale.Columns["clnImei2"].Visible = false;
+                if (dgvSale.Columns.Contains("clnPtaStatus")) dgvSale.Columns["clnPtaStatus"].Visible = false;
+                if (dgvSale.Columns.Contains("clnWarrantyMonths")) dgvSale.Columns["clnWarrantyMonths"].Visible = false;
+                if (dgvSale.Columns.Contains("clnBatteryHealth")) dgvSale.Columns["clnBatteryHealth"].Visible = false;
+                if (dgvSale.Columns.Contains("clnConditionNote")) dgvSale.Columns["clnConditionNote"].Visible = false;
+            }
+        }
+
         private async void frmPurchase_Load(object sender, EventArgs e)
         {
             try
             {
                 SetupSecondaryQtyColumns();
+                SetupMobileShopColumns();
                 await LoadLookupsAsync();
                 await FillQueryAsync();
                 if (_queryList.Count > 0 && txtVoucherNo.Text == "")
