@@ -13,34 +13,27 @@ using ERP.Services.Legacy;
 namespace ERP
 {
     /// <summary>
-    /// Code-behind for Customer Supply & Bill Register Form.
-    /// Provides full parity with retailsuite-web-retail CustomerSupplyRegister.tsx:
-    /// - Filter by customer, date range (with quick presets), and product
-    /// - KPI metrics (Total records, Total Qty, Total Amount, Pending modifications)
-    /// - Inline editing of Qty, SecQty, Rate, SecRate, Discount, Add/Less with live formula recalculation
-    /// - Dirty tracking with amber row highlight
-    /// - Single row save & batch save all modified lines
-    /// - New supply entry modal dialog
-    /// - Deletion of lines with confirmation
-    /// - Direct link to Customer Bill Viewer with customer and date range pre-loaded
+    /// Dedicated Customer Supply Register for Wanda (Feed & Commodity) Tenants.
+    /// Pure dual-unit logic:
+    /// - Qty is Weight (Kg), SecQty is Bags, Rate is per Kg, SecRate is Bag Rate
+    /// - Formula: (Qty * (Rate - Discount)) + AddLess
+    /// - High performance, zero conditional overhead
     /// </summary>
-    public partial class frmCustomerSupplyRegister : Form
+    public partial class frmWandaCustomerSupplyRegister : Form
     {
-        // API Services
         private readonly SaleSupplyApiService _apiService;
         private readonly ChartOfAccountApiService _chartOfAccountApiService;
         private readonly InventoryApiService _inventoryApiService;
         private readonly UnitApiService _unitApiService;
 
-        // State Data
         private List<ChartOfAccountHeadDto> _customers = new List<ChartOfAccountHeadDto>();
         private List<InventoryItemDto> _items = new List<InventoryItemDto>();
         private List<UnitLookupDto> _units = new List<UnitLookupDto>();
-        private List<RegisterRowModel> _rowModels = new List<RegisterRowModel>();
+        private List<WandaRegisterRowModel> _rowModels = new List<WandaRegisterRowModel>();
         private bool _isLoading = false;
         private bool _isPopulatingGrid = false;
 
-        public frmCustomerSupplyRegister()
+        public frmWandaCustomerSupplyRegister()
         {
             _apiService = new SaleSupplyApiService();
             _chartOfAccountApiService = new ChartOfAccountApiService();
@@ -53,7 +46,7 @@ namespace ERP
             this.Load += async (s, e) => await InitializeFormAsync();
         }
 
-        public frmCustomerSupplyRegister(string customerId, DateTime fromDate, DateTime toDate)
+        public frmWandaCustomerSupplyRegister(string customerId, DateTime fromDate, DateTime toDate)
             : this()
         {
             dtpFromDate.Value = fromDate;
@@ -63,7 +56,6 @@ namespace ERP
 
         private void WireEvents()
         {
-            // Enable double buffering on DataGridView via reflection to avoid flicker
             try
             {
                 typeof(DataGridView).InvokeMember(
@@ -73,43 +65,33 @@ namespace ERP
             }
             catch { }
 
-            // Header Buttons
             btnReload.Click += async (s, e) => await FetchRecordsAsync();
             btnSaveAll.Click += async (s, e) => await SaveAllModifiedRowsAsync();
             btnAddSupplyEntry.Click += (s, e) => OpenAddSupplyEntryDialog();
             btnPrintCustomerBill.Click += (s, e) => OpenCustomerBillViewer();
 
-            // Filter Controls
             cmbCustomer.SelectedIndexChanged += async (s, e) =>
             {
                 if (!_isLoading) await FetchRecordsAsync();
             };
             btnSearch.Click += async (s, e) => await FetchRecordsAsync();
 
-            // Date Presets
             btnPreset1to10.Click += async (s, e) => await ApplyPresetAsync(1, 10);
             btnPreset1to15.Click += async (s, e) => await ApplyPresetAsync(1, 15);
             btnPreset1to20.Click += async (s, e) => await ApplyPresetAsync(1, 20);
             btnPresetMonth.Click += async (s, e) => await ApplyPresetMonthAsync(false);
             btnPresetLastMonth.Click += async (s, e) => await ApplyPresetMonthAsync(true);
 
-            // Filter bottom border
             pnlFilters.Paint += (s, pe) =>
             {
                 pe.Graphics.DrawLine(new Pen(Color.FromArgb(226, 232, 240), 1), 0, pnlFilters.Height - 1, pnlFilters.Width, pnlFilters.Height - 1);
             };
 
-            // Grid Events
             dgvRecords.CellValueChanged += OnGridCellValueChanged;
             dgvRecords.CellContentClick += OnGridCellContentClick;
 
-            // Header Button Layout on Form Resize
             this.Resize += (s, e) => LayoutHeaderButtons();
             LayoutHeaderButtons();
-
-            // Conditional Columns
-            colSecQty.Visible = ApiSession.HasSecondaryQty;
-            colSecRate.Visible = ApiSession.HasSecondaryQty;
         }
 
         private void LayoutHeaderButtons()
@@ -119,25 +101,13 @@ namespace ERP
             int spacing = 8;
             int curX = pnlHeader.ClientSize.Width - rightMargin;
 
-            if (btnPrintCustomerBill != null)
+            Button[] rightToLeft = { btnPrintCustomerBill, btnAddSupplyEntry, btnSaveAll, btnReload };
+            foreach (var btn in rightToLeft)
             {
-                curX -= btnPrintCustomerBill.Width;
-                btnPrintCustomerBill.Location = new Point(curX, 16);
-            }
-            if (btnAddSupplyEntry != null)
-            {
-                curX -= (btnAddSupplyEntry.Width + spacing);
-                btnAddSupplyEntry.Location = new Point(curX, 16);
-            }
-            if (btnSaveAll != null)
-            {
-                curX -= (btnSaveAll.Width + spacing);
-                btnSaveAll.Location = new Point(curX, 16);
-            }
-            if (btnReload != null)
-            {
-                curX -= (btnReload.Width + spacing);
-                btnReload.Location = new Point(curX, 16);
+                if (btn == null) continue;
+                curX -= btn.Width;
+                btn.Location = new Point(curX, (pnlHeader.Height - btn.Height) / 2);
+                curX -= spacing;
             }
         }
 
@@ -146,28 +116,33 @@ namespace ERP
             try
             {
                 _isLoading = true;
-                lblStatus.Text = "Loading lookups and customers...";
+                lblStatus.Text = "Loading Wanda customers, items and defaults...";
                 prgProgress.Visible = true;
 
-                var customersTask = _chartOfAccountApiService.GetCustomerAccountsAsync();
-                var itemsTask = _inventoryApiService.GetLookupAsync(null);
-                var unitsTask = _unitApiService.GetLookupAsync();
+                var now = DateTime.Today;
+                if (this.Tag == null)
+                {
+                    dtpFromDate.Value = new DateTime(now.Year, now.Month, 1);
+                    dtpToDate.Value = new DateTime(now.Year, now.Month, DateTime.DaysInMonth(now.Year, now.Month));
+                }
 
-                await Task.WhenAll(customersTask, itemsTask, unitsTask);
+                var customerTask = _chartOfAccountApiService.GetCustomerAccountsAsync();
+                var itemTask = _inventoryApiService.GetLookupAsync(null);
+                var unitTask = _unitApiService.GetLookupAsync();
 
-                _customers = customersTask.Result ?? new List<ChartOfAccountHeadDto>();
-                _items = itemsTask.Result ?? new List<InventoryItemDto>();
-                _units = unitsTask.Result ?? new List<UnitLookupDto>();
+                await Task.WhenAll(customerTask, itemTask, unitTask);
 
-                // Bind Customers
+                _customers = await customerTask;
+                _items = await itemTask;
+                _units = await unitTask;
+
                 cmbCustomer.DisplayMember = "Title";
                 cmbCustomer.ValueMember = "Account";
-                cmbCustomer.DataSource = _customers;
+                cmbCustomer.DataSource = new List<ChartOfAccountHeadDto>(_customers);
 
-                // Bind Items Filter
                 var filterItems = new List<InventoryItemDto>
                 {
-                    new InventoryItemDto { Id = "", Title = "--- All Products ---" }
+                    new InventoryItemDto { Id = "", Title = "-- All Products --" }
                 };
                 filterItems.AddRange(_items);
                 cmbItem.DisplayMember = "Title";
@@ -175,8 +150,8 @@ namespace ERP
                 cmbItem.DataSource = filterItems;
                 cmbItem.SelectedIndex = 0;
 
-                // Select Customer if passed in constructor/Tag
-                if (this.Tag != null && this.Tag is string passedCus && !string.IsNullOrWhiteSpace(passedCus))
+                string passedCus = this.Tag as string;
+                if (!string.IsNullOrEmpty(passedCus))
                 {
                     cmbCustomer.SelectedValue = passedCus;
                 }
@@ -184,10 +159,6 @@ namespace ERP
                 {
                     cmbCustomer.SelectedIndex = 0;
                 }
-
-                colUnit.Visible = false;
-                colSecQty.Visible = ApiSession.HasSecondaryQty;
-                colSecRate.Visible = ApiSession.HasSecondaryQty;
 
                 _isLoading = false;
                 prgProgress.Visible = false;
@@ -198,7 +169,7 @@ namespace ERP
                 }
                 else
                 {
-                    lblStatus.Text = "Ready. Select a customer to begin.";
+                    lblStatus.Text = "Ready. Select a Wanda customer to begin.";
                 }
             }
             catch (Exception ex)
@@ -245,20 +216,17 @@ namespace ERP
                 string itemId = cmbItem.SelectedValue != null ? cmbItem.SelectedValue.ToString() : "";
 
                 var lines = await _apiService.GetCustomerLinesAsync(customerId, fromDate, toDate, itemId);
-
-                // Sort by Date ascending
                 lines.Sort((a, b) => a.Date.CompareTo(b.Date));
 
-                _rowModels = lines.Select(l => new RegisterRowModel(l)).ToList();
+                _rowModels = lines.Select(l => new WandaRegisterRowModel(l)).ToList();
 
                 PopulateGridFromModels();
-
                 lblStatus.Text = $"Loaded {_rowModels.Count} supply records for {cmbCustomer.Text}.";
             }
             catch (Exception ex)
             {
                 lblStatus.Text = "Error fetching records: " + ex.Message;
-                MessageBox.Show("Failed to load customer supply records: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Failed to load supply records: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -274,86 +242,47 @@ namespace ERP
             _isPopulatingGrid = true;
             dgvRecords.Rows.Clear();
 
-            foreach (var model in _rowModels)
+            foreach (var m in _rowModels)
             {
                 int rowIndex = dgvRecords.Rows.Add();
                 var row = dgvRecords.Rows[rowIndex];
-                row.Tag = model;
 
-                row.Cells["colDate"].Value = model.Date.ToString("dd-MMM-yyyy");
-                row.Cells["colVoucher"].Value = "SP-" + model.VoucherNo;
-                row.Cells["colItem"].Value = !string.IsNullOrWhiteSpace(model.ItemTitle) ? $"{model.ItemTitle} ({model.ItemId})" : model.ItemId;
-                row.Cells["colUnit"].Value = GetUnitTitle(model.Unit);
-                row.Cells["colQty"].Value = model.Qty.ToString("N2");
-                if (ApiSession.HasSecondaryQty)
-                {
-                    row.Cells["colSecQty"].Value = (model.SecQty ?? 0).ToString("N2");
-                    row.Cells["colSecRate"].Value = (model.SecRate ?? 0).ToString("N2");
-                }
-                row.Cells["colRate"].Value = model.Rate.ToString("N2");
-                row.Cells["colDiscount"].Value = model.Discount.ToString("N2");
-                row.Cells["colAddLess"].Value = model.AddLess.ToString("N2");
-                row.Cells["colAmount"].Value = model.Amount.ToString("N2");
+                row.Cells["colDate"].Value = m.Date.ToString("dd-MMM-yyyy");
+                row.Cells["colVoucher"].Value = "SP-" + m.VoucherNo;
+                row.Cells["colItem"].Value = !string.IsNullOrWhiteSpace(m.ItemTitle) ? m.ItemTitle : m.ItemId;
+                row.Cells["colQty"].Value = m.Qty.ToString("N2");
+                row.Cells["colSecQty"].Value = m.SecQty.ToString("N2");
+                row.Cells["colRate"].Value = m.Rate.ToString("N2");
+                row.Cells["colSecRate"].Value = m.SecRate.ToString("N2");
+                row.Cells["colDiscount"].Value = m.Discount.ToString("N2");
+                row.Cells["colAddLess"].Value = m.AddLess.ToString("N2");
+                row.Cells["colAmount"].Value = m.Amount.ToString("N2");
 
-                ApplyRowDirtyStyle(row, model.IsDirty);
+                row.Tag = m;
+                ApplyRowDirtyStyle(row, m.IsDirty);
             }
 
             _isPopulatingGrid = false;
             RecalculateKpis();
         }
 
-        private string GetUnitTitle(string unitCode)
-        {
-            if (string.IsNullOrWhiteSpace(unitCode)) return "";
-            string trimmed = unitCode.Trim();
-
-            // 1. Direct match by Code
-            var match = _units.FirstOrDefault(u =>
-                string.Equals(u.Code?.Trim(), trimmed, StringComparison.OrdinalIgnoreCase));
-            if (match != null && !string.IsNullOrWhiteSpace(match.Title))
-                return match.Title;
-
-            // 2. Numeric match (handles "1" vs "01")
-            if (int.TryParse(trimmed, out int numVal))
-            {
-                match = _units.FirstOrDefault(u =>
-                    int.TryParse(u.Code?.Trim(), out int uNum) && uNum == numVal);
-                if (match != null && !string.IsNullOrWhiteSpace(match.Title))
-                    return match.Title;
-            }
-
-            // 3. Fallback if unitCode is already the Title
-            match = _units.FirstOrDefault(u =>
-                string.Equals(u.Title?.Trim(), trimmed, StringComparison.OrdinalIgnoreCase));
-            if (match != null && !string.IsNullOrWhiteSpace(match.Title))
-                return match.Title;
-
-            return unitCode;
-        }
-
         private void OnGridCellValueChanged(object sender, DataGridViewCellEventArgs e)
         {
-            if (_isPopulatingGrid || e.RowIndex < 0 || e.RowIndex >= dgvRecords.Rows.Count) return;
+            if (_isPopulatingGrid || _isLoading) return;
+            if (e.RowIndex < 0 || e.RowIndex >= dgvRecords.Rows.Count) return;
 
             var row = dgvRecords.Rows[e.RowIndex];
-            var model = row.Tag as RegisterRowModel;
+            var model = row.Tag as WandaRegisterRowModel;
             if (model == null) return;
 
             string colName = dgvRecords.Columns[e.ColumnIndex].Name;
-
-            decimal ParseDecimal(object val)
-            {
-                if (val == null) return 0;
-                string s = val.ToString().Replace(",", "").Trim();
-                return decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal res) ? res : 0;
-            }
 
             if (colName == "colQty")
             {
                 model.Qty = ParseDecimal(row.Cells["colQty"].Value);
                 model.IsDirty = true;
             }
-            else if (colName == "colSecQty" && ApiSession.HasSecondaryQty)
+            else if (colName == "colSecQty")
             {
                 model.SecQty = ParseDecimal(row.Cells["colSecQty"].Value);
                 model.IsDirty = true;
@@ -363,7 +292,7 @@ namespace ERP
                 model.Rate = ParseDecimal(row.Cells["colRate"].Value);
                 model.IsDirty = true;
             }
-            else if (colName == "colSecRate" && ApiSession.HasSecondaryQty)
+            else if (colName == "colSecRate")
             {
                 model.SecRate = ParseDecimal(row.Cells["colSecRate"].Value);
                 model.IsDirty = true;
@@ -379,10 +308,8 @@ namespace ERP
                 model.IsDirty = true;
             }
 
-            // Recalculate Amount: (Qty * (Rate - Disc)) + AddLess + (SecQty * SecRate)
-            decimal baseAmt = model.Qty * (model.Rate - model.Discount);
-            decimal secAmt = (model.SecQty ?? 0) * (model.SecRate ?? 0);
-            model.Amount = Math.Round(baseAmt + model.AddLess + secAmt, 2);
+            // Wanda formula: (Qty * (Rate - Discount)) + AddLess
+            model.Amount = Math.Round((model.Qty * (model.Rate - model.Discount)) + model.AddLess, 2);
 
             _isPopulatingGrid = true;
             row.Cells["colAmount"].Value = model.Amount.ToString("N2");
@@ -414,11 +341,13 @@ namespace ERP
         {
             int totalRecords = _rowModels.Count;
             decimal totalQty = _rowModels.Sum(m => m.Qty);
+            decimal totalBags = _rowModels.Sum(m => m.SecQty);
             decimal totalAmount = _rowModels.Sum(m => m.Amount);
             int dirtyCount = _rowModels.Count(m => m.IsDirty);
 
             lblKpiRecordsVal.Text = $"{totalRecords} Records";
             lblKpiQtyVal.Text = totalQty.ToString("N2");
+            lblKpiBagsVal.Text = totalBags.ToString("N2");
             lblKpiAmountVal.Text = $"Rs. {totalAmount:N2}";
 
             if (dirtyCount > 0)
@@ -442,45 +371,43 @@ namespace ERP
             if (e.RowIndex < 0 || e.RowIndex >= dgvRecords.Rows.Count) return;
 
             var row = dgvRecords.Rows[e.RowIndex];
-            var model = row.Tag as RegisterRowModel;
+            var model = row.Tag as WandaRegisterRowModel;
             if (model == null) return;
 
             string colName = dgvRecords.Columns[e.ColumnIndex].Name;
 
-            // Click SAVE button
             if (colName == "colSave")
             {
                 if (!model.IsDirty)
                 {
-                    MessageBox.Show("No changes made to this row.", "Information", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    MessageBox.Show("No changes to save for this row.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     return;
                 }
                 await SaveSingleRowAsync(row, model);
             }
-            // Click DELETE button
             else if (colName == "colDelete")
             {
-                var confirm = MessageBox.Show(
-                    $"Are you sure you want to delete this supply record from voucher SP-{model.VoucherNo}?\n\nDate: {model.Date:dd-MMM-yyyy}\nItem: {model.ItemTitle}\nQty: {model.Qty}\nAmount: Rs. {model.Amount:N2}",
+                var dr = MessageBox.Show(
+                    $"Are you sure you want to delete this line from SP-{model.VoucherNo}?",
                     "Confirm Deletion",
                     MessageBoxButtons.YesNo,
                     MessageBoxIcon.Warning);
 
-                if (confirm == DialogResult.Yes)
+                if (dr == DialogResult.Yes)
                 {
                     await DeleteRowAsync(row, model);
                 }
             }
         }
 
-        private async Task SaveSingleRowAsync(DataGridViewRow row, RegisterRowModel model)
+        private async Task SaveSingleRowAsync(DataGridViewRow row, WandaRegisterRowModel model)
         {
             try
             {
-                lblStatus.Text = $"Saving record for voucher SP-{model.VoucherNo}...";
+                lblStatus.Text = $"Saving record for SP-{model.VoucherNo}...";
                 prgProgress.Visible = true;
 
-                var req = new SaleSupplyLineApiRequest
+                await _apiService.UpdateLineAsync(model.VoucherNo, model.Seq, new SaleSupplyLineApiRequest
                 {
                     Seq = model.Seq,
                     CustomerId = model.CustomerId,
@@ -490,10 +417,8 @@ namespace ERP
                     AddLess = model.AddLess,
                     SecQty = model.SecQty,
                     SecRate = model.SecRate,
-                    SecUnit = model.SecUnit
-                };
-
-                await _apiService.UpdateLineAsync(model.VoucherNo, model.Seq, req);
+                    SecUnit = "Bags"
+                });
 
                 model.IsDirty = false;
                 ApplyRowDirtyStyle(row, false);
@@ -541,31 +466,30 @@ namespace ERP
                         AddLess = m.AddLess,
                         SecQty = m.SecQty,
                         SecRate = m.SecRate,
-                        SecUnit = m.SecUnit
+                        SecUnit = "Bags"
                     }
                 }).ToList();
 
                 await _apiService.UpdateCustomerLinesAsync(requests);
 
                 foreach (var m in dirtyModels)
+                {
                     m.IsDirty = false;
+                }
 
                 foreach (DataGridViewRow row in dgvRecords.Rows)
                 {
-                    if (row.Tag is RegisterRowModel rm && !rm.IsDirty)
-                    {
-                        ApplyRowDirtyStyle(row, false);
-                    }
+                    ApplyRowDirtyStyle(row, false);
                 }
 
                 RecalculateKpis();
-                lblStatus.Text = $"Successfully saved {dirtyModels.Count} supply records.";
-                MessageBox.Show($"Successfully saved {dirtyModels.Count} supply records.", "Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                lblStatus.Text = $"Successfully updated {dirtyModels.Count} Wanda supply records.";
+                MessageBox.Show($"Successfully saved {dirtyModels.Count} supply record updates.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
-                lblStatus.Text = "Error batch saving: " + ex.Message;
-                MessageBox.Show("Failed to batch save supply records: " + ex.Message, "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                lblStatus.Text = "Error batch saving records: " + ex.Message;
+                MessageBox.Show("Failed to batch save supply records: " + ex.Message, "Batch Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -574,7 +498,7 @@ namespace ERP
             }
         }
 
-        private async Task DeleteRowAsync(DataGridViewRow row, RegisterRowModel model)
+        private async Task DeleteRowAsync(DataGridViewRow row, WandaRegisterRowModel model)
         {
             try
             {
@@ -611,7 +535,7 @@ namespace ERP
             string customerId = cmbCustomer.SelectedValue.ToString();
             string customerTitle = cmbCustomer.Text;
 
-            using (var dlg = new frmAddSupplyEntryDialog(customerId, customerTitle, _items, _units, dtpFromDate.Value))
+            using (var dlg = new frmAddWandaSupplyEntryDialog(customerId, customerTitle, _items, _units, dtpFromDate.Value))
             {
                 if (dlg.ShowDialog(this) == DialogResult.OK)
                 {
@@ -634,7 +558,7 @@ namespace ERP
 
             try
             {
-                var viewer = new CustomerBillViewer(customerId, fromD, toD);
+                var viewer = new WandaCustomerBillViewer(customerId, fromD, toD);
                 if (this.MdiParent != null)
                 {
                     viewer.MdiParent = this.MdiParent;
@@ -647,103 +571,84 @@ namespace ERP
             }
         }
 
-        // Row model for tracking dirty states
-        private class RegisterRowModel
+        private decimal ParseDecimal(object val)
         {
+            if (val == null) return 0;
+            string s = val.ToString().Replace(",", "").Trim();
+            return decimal.TryParse(s, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal r) ? r : 0;
+        }
+
+        private class WandaRegisterRowModel
+        {
+            public string VoucherNo { get; set; }
             public int Seq { get; set; }
             public DateTime Date { get; set; }
-            public string VoucherNo { get; set; }
+            public string CustomerId { get; set; }
             public string ItemId { get; set; }
             public string ItemTitle { get; set; }
-            public string CustomerId { get; set; }
-            public string CustomerTitle { get; set; }
-            public string Unit { get; set; }
             public decimal Qty { get; set; }
+            public decimal SecQty { get; set; }
             public decimal Rate { get; set; }
+            public decimal SecRate { get; set; }
             public decimal Discount { get; set; }
             public decimal AddLess { get; set; }
             public decimal Amount { get; set; }
-            public decimal? SecQty { get; set; }
-            public decimal? SecRate { get; set; }
-            public string SecUnit { get; set; }
             public bool IsDirty { get; set; }
 
-            public RegisterRowModel(SaleSupplyLineDto dto)
+            public WandaRegisterRowModel(SaleSupplyLineDto dto)
             {
+                VoucherNo = dto.VoucherNo;
                 Seq = dto.Seq;
                 Date = dto.Date;
-                VoucherNo = dto.VoucherNo;
+                CustomerId = dto.CustomerId;
                 ItemId = dto.ItemId;
                 ItemTitle = dto.ItemTitle ?? dto.ItemId;
-                CustomerId = dto.CustomerId;
-                CustomerTitle = dto.CustomerTitle ?? dto.CustomerId;
-                Unit = dto.Unit;
                 Qty = dto.Qty;
+                SecQty = dto.SecQty ?? 0;
                 Rate = dto.Rate;
+                SecRate = dto.SecRate ?? 0;
                 Discount = dto.Discount;
                 AddLess = dto.AddLess;
                 Amount = dto.Amount;
-                SecQty = dto.SecQty;
-                SecRate = dto.SecRate;
-                SecUnit = dto.SecUnit;
                 IsDirty = false;
             }
         }
 
-        // Modal Dialog to Add Supply Line
-        private class frmAddSupplyEntryDialog : Form
+        private class frmAddWandaSupplyEntryDialog : Form
         {
+            private readonly SaleSupplyApiService _apiService = new SaleSupplyApiService();
             private readonly string _customerId;
-            private readonly SaleSupplyApiService _apiService;
             private DateTimePicker dtpDate;
             private ComboBox cmbItem;
             private TextBox txtQty;
+            private TextBox txtSecQty;
             private TextBox txtRate;
+            private TextBox txtSecRate;
             private TextBox txtDiscount;
             private TextBox txtAddLess;
-            private TextBox txtSecQty;
-            private TextBox txtSecRate;
             private Label lblAmountPreview;
             private Button btnSave;
             private Button btnCancel;
 
-            public frmAddSupplyEntryDialog(
-                string customerId, string customerTitle,
-                List<InventoryItemDto> items, List<UnitLookupDto> units, DateTime defaultDate)
+            public frmAddWandaSupplyEntryDialog(string customerId, string customerTitle, List<InventoryItemDto> items, List<UnitLookupDto> units, DateTime defaultDate)
             {
                 _customerId = customerId;
-                _apiService = new SaleSupplyApiService();
-
-                this.Text = "Add Daily Supply Entry - " + customerTitle;
-                this.Size = new Size(460, 480);
+                this.Text = "Add Wanda Supply Entry (Feed/Commodity) - " + customerTitle;
+                this.Size = new Size(450, 400);
                 this.FormBorderStyle = FormBorderStyle.FixedDialog;
                 this.StartPosition = FormStartPosition.CenterParent;
                 this.MaximizeBox = false;
                 this.MinimizeBox = false;
-                this.Font = new Font("Segoe UI", 9F);
                 this.BackColor = Color.White;
 
-                int y = 16;
-                // Header
-                var lblHeader = new Label
-                {
-                    Text = "Add Supply Record for " + customerTitle,
-                    Location = new Point(16, y),
-                    AutoSize = true,
-                    Font = new Font("Segoe UI", 10F, FontStyle.Bold),
-                    ForeColor = Color.FromArgb(15, 23, 42)
-                };
-                this.Controls.Add(lblHeader);
-                y += 36;
+                int y = 20;
 
-                // Date
                 AddLabel("Date:", 16, y);
                 dtpDate = new DateTimePicker { Location = new Point(130, y), Width = 280, Format = DateTimePickerFormat.Custom, CustomFormat = "dd-MMM-yyyy", Value = defaultDate };
                 this.Controls.Add(dtpDate);
                 y += 34;
 
-                // Item
-                AddLabel("Item / Product:", 16, y);
+                AddLabel("Wanda Product:", 16, y);
                 cmbItem = new ComboBox { Location = new Point(130, y), Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
                 cmbItem.DisplayMember = "Title";
                 cmbItem.ValueMember = "Id";
@@ -758,54 +663,45 @@ namespace ERP
                 this.Controls.Add(cmbItem);
                 y += 34;
 
-                // Qty
-                AddLabel("Quantity:", 16, y);
+                AddLabel("Weight (Kg):", 16, y);
                 txtQty = new TextBox { Location = new Point(130, y), Width = 120, Text = "1.00" };
                 txtQty.TextChanged += (s, e) => UpdateAmt();
                 this.Controls.Add(txtQty);
 
-                // Rate
-                AddLabel("Rate:", 260, y);
-                txtRate = new TextBox { Location = new Point(300, y), Width = 110, Text = "0.00" };
-                txtRate.TextChanged += (s, e) => UpdateAmt();
-                this.Controls.Add(txtRate);
+                AddLabel("Bags (Qty):", 260, y);
+                txtSecQty = new TextBox { Location = new Point(330, y), Width = 80, Text = "0.00" };
+                txtSecQty.TextChanged += (s, e) => UpdateAmt();
+                this.Controls.Add(txtSecQty);
                 y += 34;
 
-                // Sec Qty & Sec Rate if enabled
-                if (ApiSession.HasSecondaryQty)
-                {
-                    AddLabel("Sec Qty (Bags):", 16, y);
-                    txtSecQty = new TextBox { Location = new Point(130, y), Width = 120, Text = "0.00" };
-                    txtSecQty.TextChanged += (s, e) => UpdateAmt();
-                    this.Controls.Add(txtSecQty);
+                AddLabel("Rate (/Kg):", 16, y);
+                txtRate = new TextBox { Location = new Point(130, y), Width = 120, Text = "0.00" };
+                txtRate.TextChanged += (s, e) => UpdateAmt();
+                this.Controls.Add(txtRate);
 
-                    AddLabel("Sec Rate:", 260, y);
-                    txtSecRate = new TextBox { Location = new Point(300, y), Width = 110, Text = "0.00" };
-                    txtSecRate.TextChanged += (s, e) => UpdateAmt();
-                    this.Controls.Add(txtSecRate);
-                    y += 34;
-                }
+                AddLabel("Bag Rate:", 260, y);
+                txtSecRate = new TextBox { Location = new Point(330, y), Width = 80, Text = "0.00" };
+                txtSecRate.TextChanged += (s, e) => UpdateAmt();
+                this.Controls.Add(txtSecRate);
+                y += 34;
 
-                // Discount & Add/Less
                 AddLabel("Discount:", 16, y);
                 txtDiscount = new TextBox { Location = new Point(130, y), Width = 120, Text = "0.00" };
                 txtDiscount.TextChanged += (s, e) => UpdateAmt();
                 this.Controls.Add(txtDiscount);
 
                 AddLabel("Add/Less:", 260, y);
-                txtAddLess = new TextBox { Location = new Point(320, y), Width = 90, Text = "0.00" };
+                txtAddLess = new TextBox { Location = new Point(330, y), Width = 80, Text = "0.00" };
                 txtAddLess.TextChanged += (s, e) => UpdateAmt();
                 this.Controls.Add(txtAddLess);
                 y += 38;
 
-                // Amount Preview
                 var lblAmtTitle = new Label { Text = "Calculated Amount:", Location = new Point(16, y), AutoSize = true, Font = new Font("Segoe UI", 9F, FontStyle.Bold) };
                 this.Controls.Add(lblAmtTitle);
-                lblAmountPreview = new Label { Text = "Rs. 0.00", Location = new Point(130, y), AutoSize = true, Font = new Font("Segoe UI", 11F, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129) };
+                lblAmountPreview = new Label { Text = "Rs. 0.00", Location = new Point(140, y), AutoSize = true, Font = new Font("Segoe UI", 11F, FontStyle.Bold), ForeColor = Color.FromArgb(16, 185, 129) };
                 this.Controls.Add(lblAmountPreview);
                 y += 44;
 
-                // Buttons
                 btnSave = new Button
                 {
                     Text = "Save Entry",
@@ -867,10 +763,9 @@ namespace ERP
                 decimal rate = Parse(txtRate);
                 decimal disc = Parse(txtDiscount);
                 decimal addLess = Parse(txtAddLess);
-                decimal secQty = txtSecQty != null ? Parse(txtSecQty) : 0;
-                decimal secRate = txtSecRate != null ? Parse(txtSecRate) : 0;
+                // Wanda formula: (Weight * (Rate - Discount)) + AddLess
+                decimal amt = Math.Round((qty * (rate - disc)) + addLess, 2);
 
-                decimal amt = Math.Round((qty * (rate - disc)) + addLess + (secQty * secRate), 2);
                 if (lblAmountPreview != null)
                 {
                     lblAmountPreview.Text = $"Rs. {amt:N2}";
@@ -881,14 +776,14 @@ namespace ERP
             {
                 if (cmbItem.SelectedValue == null)
                 {
-                    MessageBox.Show("Please select an item.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Please select a Wanda item.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
                 decimal qty = Parse(txtQty);
                 if (qty <= 0)
                 {
-                    MessageBox.Show("Quantity must be greater than 0.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Weight (Kg) must be greater than 0.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -902,8 +797,8 @@ namespace ERP
                     decimal rate = Parse(txtRate);
                     decimal disc = Parse(txtDiscount);
                     decimal addLess = Parse(txtAddLess);
-                    decimal? secQty = txtSecQty != null ? (decimal?)Parse(txtSecQty) : null;
-                    decimal? secRate = txtSecRate != null ? (decimal?)Parse(txtSecRate) : null;
+                    decimal secQty = Parse(txtSecQty);
+                    decimal secRate = Parse(txtSecRate);
 
                     var existingVouchers = await _apiService.GetListAsync(dateStr, dateStr, itemId);
 
@@ -923,7 +818,7 @@ namespace ERP
                             AddLess = d.AddLess,
                             SecQty = d.SecQty,
                             SecRate = d.SecRate,
-                            SecUnit = d.SecUnit
+                            SecUnit = "Bags"
                         }).ToList();
 
                         updatedLines.Add(new SaleSupplyLineApiRequest
@@ -936,7 +831,7 @@ namespace ERP
                             AddLess = addLess,
                             SecQty = secQty,
                             SecRate = secRate,
-                            SecUnit = null
+                            SecUnit = "Bags"
                         });
 
                         await _apiService.UpdateAsync(targetVoucher.VoucherNo, new SaleSupplyUpdateApiRequest
@@ -946,7 +841,7 @@ namespace ERP
                             Lines = updatedLines
                         });
 
-                        MessageBox.Show($"Added supply line to existing voucher SP-{targetVoucher.VoucherNo}.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show($"Added Wanda supply line to existing voucher SP-{targetVoucher.VoucherNo}.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
                     else
                     {
@@ -966,12 +861,12 @@ namespace ERP
                                     AddLess = addLess,
                                     SecQty = secQty,
                                     SecRate = secRate,
-                                    SecUnit = null
+                                    SecUnit = "Bags"
                                 }
                             }
                         });
 
-                        MessageBox.Show($"Created new Sale Supply voucher SP-{newVoucherNo}.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        MessageBox.Show($"Created new Wanda supply voucher SP-{newVoucherNo}.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }
 
                     this.DialogResult = DialogResult.OK;
@@ -979,7 +874,7 @@ namespace ERP
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Failed to add supply entry: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Failed to add Wanda supply entry: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
                 finally
                 {

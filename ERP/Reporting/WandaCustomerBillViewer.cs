@@ -20,10 +20,10 @@ using Microsoft.Web.WebView2.WinForms;
 namespace ERP.Reporting
 {
     /// <summary>
-    /// Modern, code-first WinForms Customer Bill / Statement Viewer hosting WebView2
-    /// with QuestPDF rendering, ClosedXML / CsvHelper exports, and direct silent bulk printing.
+    /// Dedicated Customer Bill / Statement Viewer for Wanda Feed & Commodities businesses.
+    /// Full dual-unit support (Bags, Weight, Bag Rate, Carriage, Receipts) and Supply Order profile filtering.
     /// </summary>
-    public class CustomerBillViewer : Form
+    public class WandaCustomerBillViewer : Form
     {
         // Services
         private readonly ChartOfAccountApiService _chartOfAccountApiService;
@@ -94,7 +94,7 @@ namespace ERP.Reporting
         private CancellationTokenSource _bulkCts;
         private string _initialCustomerCode;
 
-        public CustomerBillViewer()
+        public WandaCustomerBillViewer()
         {
             _chartOfAccountApiService = new ChartOfAccountApiService();
             _supplyOrderApiService = new SupplyOrderApiService();
@@ -103,7 +103,7 @@ namespace ERP.Reporting
             this.Load += async (s, e) => await InitializeDataAsync();
         }
 
-        public CustomerBillViewer(string initialCustomerCode, DateTime fromDate, DateTime toDate)
+        public WandaCustomerBillViewer(string initialCustomerCode, DateTime fromDate, DateTime toDate)
             : this()
         {
             _initialCustomerCode = initialCustomerCode;
@@ -115,7 +115,7 @@ namespace ERP.Reporting
 
         private void InitializeComponentCodeFirst()
         {
-            this.Text = "Customer Bill";
+            this.Text = "Customer Bill & Statement";
             this.Size = new Size(1220, 850);
             this.MinimumSize = new Size(1020, 680);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -601,7 +601,7 @@ namespace ERP.Reporting
                 Font = new Font("Segoe UI", 9F)
             };
             cmbBulkFormat.Items.AddRange(new object[] { "A4 Commercial Invoice (Full Page)", "80mm Thermal Receipt (POS Roll)" });
-            cmbBulkFormat.SelectedIndex = 1; // Default to 80mm thermal receipt for bulk printing
+            cmbBulkFormat.SelectedIndex = 1;
             pnlBulkSidebar.Controls.Add(cmbBulkFormat);
             curY += 34;
 
@@ -792,8 +792,7 @@ namespace ERP.Reporting
                 // Initialize WebView2
                 await EnsureWebViewInitializedAsync();
 
-                // Ready state: Do not auto-generate bill on form load; wait for user to click Generate Bill
-                lblStatus.Text = "Ready. Select customer & date range, then click 'Generate Bill'.";
+                lblStatus.Text = "Ready. Select customer & date range, then click 'Preview'.";
                 lblStatus.ForeColor = Color.FromArgb(71, 85, 105);
 
                 if (!string.IsNullOrWhiteSpace(_initialCustomerCode))
@@ -918,7 +917,7 @@ namespace ERP.Reporting
         }
 
         // ==========================================
-        // SINGLE BILL LOGIC
+        // SINGLE BILL LOGIC (WANDA DUAL-UNIT)
         // ==========================================
         private async Task LoadAndRenderSingleBillAsync()
         {
@@ -942,8 +941,9 @@ namespace ERP.Reporting
             {
                 await EnsureWebViewInitializedAsync();
 
-                DataSet ds = await Task.Run(() => ReportQuery.CustomerBill(customerCode, fromDate, toDate, dateBasis, ApiSession.HasVariablePackFeature));
-                CustomerBillDataResult result = CustomerBillDataService.ConvertDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis);
+                // Explicitly pass isWandaLayout: true
+                DataSet ds = await Task.Run(() => ReportQuery.CustomerBill(customerCode, fromDate, toDate, dateBasis, isWandaLayout: true));
+                CustomerBillDataResult result = CustomerBillDataService.ConvertDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis, isWandaLayout: true);
 
                 _currentResult = result;
                 var layout = (cmbLayout != null && cmbLayout.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
@@ -1109,10 +1109,9 @@ namespace ERP.Reporting
                     {
                         try
                         {
-                            DataSet ds = ReportQuery.CustomerBill(customer.Account, fromDate, toDate, dateBasis, ApiSession.HasVariablePackFeature);
-                            var result = CustomerBillDataService.ConvertDataSet(ds, customer.Account, customer.Title, fromDate, toDate, dateBasis);
+                            DataSet ds = ReportQuery.CustomerBill(customer.Account, fromDate, toDate, dateBasis, isWandaLayout: true);
+                            var result = CustomerBillDataService.ConvertDataSet(ds, customer.Account, customer.Title, fromDate, toDate, dateBasis, isWandaLayout: true);
 
-                            // Only print if there are line items or a non-zero balance
                             if (result.Lines.Count > 0 || Math.Abs(result.Summary.NetBalance) > 0.01m)
                             {
                                 var doc = new CustomerBillDocument(result.Summary, result.Lines, layout);
@@ -1126,7 +1125,6 @@ namespace ERP.Reporting
                         }
                     });
 
-                    // Allow thermal printer buffer and auto-cutter to cycle cleanly between jobs
                     await Task.Delay(350);
                 }
 
@@ -1182,8 +1180,8 @@ namespace ERP.Reporting
                     {
                         try
                         {
-                            DataSet ds = ReportQuery.CustomerBill(cust.Account, fromDate, toDate, dateBasis);
-                            var res = CustomerBillDataService.ConvertDataSet(ds, cust.Account, cust.Title, fromDate, toDate, dateBasis);
+                            DataSet ds = ReportQuery.CustomerBill(cust.Account, fromDate, toDate, dateBasis, isWandaLayout: true);
+                            var res = CustomerBillDataService.ConvertDataSet(ds, cust.Account, cust.Title, fromDate, toDate, dateBasis, isWandaLayout: true);
                             batch.Add(res);
                         }
                         catch
@@ -1213,7 +1211,7 @@ namespace ERP.Reporting
         }
 
         // ==========================================
-        // EXPORT LOGIC
+        // EXPORT LOGIC (WANDA 11 COLUMNS)
         // ==========================================
         private void ExportSingleToExcel()
         {
@@ -1248,8 +1246,8 @@ namespace ERP.Reporting
                             ws.Cell("A4").Value = string.Format("Customer: {0}", _currentResult.Summary.CustomerName);
 
                             int row = 6;
-                            // Table Headers
-                            string[] headers = { "#", "Date", "Voucher #", "Item Description", "Unit", "Qty", "Rate", "Add / Less", "Amount" };
+                            // Table Headers (Wanda 11 columns)
+                            string[] headers = { "#", "Date", "Voucher #", "Item Description", "Unit", "Weight (Qty)", "Bags", "Bag Rate", "Carriage (Add/Less)", "Amount", "Receipt Date", "Receipt Amount" };
                             for (int c = 0; c < headers.Length; c++)
                             {
                                 ws.Cell(row, c + 1).Value = headers[c];
@@ -1268,54 +1266,66 @@ namespace ERP.Reporting
                                 ws.Cell(row, 4).Value = l.Item;
                                 ws.Cell(row, 5).Value = l.Unit;
                                 ws.Cell(row, 6).Value = l.Qty;
-                                ws.Cell(row, 7).Value = l.Rate;
-                                ws.Cell(row, 8).Value = l.AddLess;
-                                ws.Cell(row, 9).Value = l.Amount;
+                                if (l.SecQty.HasValue) ws.Cell(row, 7).Value = l.SecQty.Value;
+                                else ws.Cell(row, 7).Value = "";
+
+                                if (l.SecRate.HasValue) ws.Cell(row, 8).Value = l.SecRate.Value;
+                                else if (l.Rate > 0) ws.Cell(row, 8).Value = l.Rate;
+                                else ws.Cell(row, 8).Value = "";
+
+                                ws.Cell(row, 9).Value = l.AddLess;
+                                ws.Cell(row, 10).Value = l.Amount;
+                                ws.Cell(row, 11).Value = l.FormattedReceiptDate;
+
+                                if (l.ReceiptAmount.HasValue) ws.Cell(row, 12).Value = l.ReceiptAmount.Value;
+                                else ws.Cell(row, 12).Value = "";
 
                                 ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.##";
-                                ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00";
-                                ws.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00";
+                                if (l.SecQty.HasValue) ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.##";
+                                if (l.SecRate.HasValue || l.Rate > 0) ws.Cell(row, 8).Style.NumberFormat.Format = "#,##0.00";
                                 ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
+                                ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
+                                if (l.ReceiptAmount.HasValue) ws.Cell(row, 12).Style.NumberFormat.Format = "#,##0.00";
                                 row++;
                             }
 
                             // Subtotal
                             ws.Cell(row, 4).Value = "Current Bill Total:";
                             ws.Cell(row, 4).Style.Font.Bold = true;
-                            ws.Cell(row, 9).Value = _currentResult.Summary.CurrentBillTotal;
-                            ws.Cell(row, 9).Style.Font.Bold = true;
-                            ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
+                            ws.Cell(row, 10).Value = _currentResult.Summary.CurrentBillTotal;
+                            ws.Cell(row, 10).Style.Font.Bold = true;
+                            ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
                             row += 2;
 
                             // Summary Reconciliation
                             ws.Cell(row, 4).Value = "Previous Balance (B/F):";
-                            ws.Cell(row, 9).Value = _currentResult.Summary.PreviousBalance;
-                            ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
+                            ws.Cell(row, 10).Value = _currentResult.Summary.PreviousBalance;
+                            ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
                             row++;
 
                             ws.Cell(row, 4).Value = "Current Period Bill:";
-                            ws.Cell(row, 9).Value = _currentResult.Summary.CurrentBillTotal;
-                            ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
+                            ws.Cell(row, 10).Value = _currentResult.Summary.CurrentBillTotal;
+                            ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
                             row++;
 
                             ws.Cell(row, 4).Value = "Gross Total Payable:";
                             ws.Cell(row, 4).Style.Font.Bold = true;
-                            ws.Cell(row, 9).Value = _currentResult.Summary.GrossTotal;
-                            ws.Cell(row, 9).Style.Font.Bold = true;
-                            ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
+                            ws.Cell(row, 10).Value = _currentResult.Summary.GrossTotal;
+                            ws.Cell(row, 10).Style.Font.Bold = true;
+                            ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
                             row++;
 
                             ws.Cell(row, 4).Value = "Less Payments Received:";
-                            ws.Cell(row, 9).Value = -_currentResult.Summary.PaymentsReceived;
-                            ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
+                            ws.Cell(row, 10).Value = -_currentResult.Summary.PaymentsReceived;
+                            ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
                             row++;
 
                             ws.Cell(row, 4).Value = "NET BALANCE DUE:";
                             ws.Cell(row, 4).Style.Font.Bold = true;
-                            ws.Cell(row, 9).Value = _currentResult.Summary.NetBalance;
-                            ws.Cell(row, 9).Style.Font.Bold = true;
-                            ws.Cell(row, 9).Style.NumberFormat.Format = "#,##0.00";
-                            ws.Cell(row, 9).Style.Border.BottomBorder = XLBorderStyleValues.Double;
+                            ws.Cell(row, 10).Value = _currentResult.Summary.NetBalance;
+                            ws.Cell(row, 10).Style.Font.Bold = true;
+                            ws.Cell(row, 10).Style.NumberFormat.Format = "#,##0.00";
+                            ws.Cell(row, 10).Style.Border.BottomBorder = XLBorderStyleValues.Double;
 
                             ws.Columns().AdjustToContents();
                             wb.SaveAs(sfd.FileName);
@@ -1350,7 +1360,22 @@ namespace ERP.Reporting
                         using (var writer = new StreamWriter(sfd.FileName))
                         using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                         {
-                            csv.WriteRecords(_currentResult.Lines);
+                            var exportRows = _currentResult.Lines.Select((l, i) => new
+                            {
+                                SerialNo = i + 1,
+                                Date = l.FormattedDate,
+                                VoucherNo = l.VNo,
+                                Item = l.Item,
+                                Unit = l.Unit,
+                                WeightQty = l.Qty,
+                                Bags = l.SecQty,
+                                BagRate = l.SecRate,
+                                CarriageAddLess = l.AddLess,
+                                Amount = l.Amount,
+                                ReceiptDate = l.FormattedReceiptDate,
+                                ReceiptAmount = l.ReceiptAmount
+                            });
+                            csv.WriteRecords(exportRows);
                         }
                         MessageBox.Show("CSV bill exported successfully!", "Export Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
                     }

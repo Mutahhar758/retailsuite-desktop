@@ -105,7 +105,8 @@ namespace ERP.Reporting.Models
             DateTime toDate,
             string dateBasis = "VoucherDate",
             string customerAddress = "",
-            string customerPhone = "")
+            string customerPhone = "",
+            bool? isWandaLayout = null)
         {
             var lines = new List<CustomerBillLineItem>();
             decimal prevBalance = 0m;
@@ -254,7 +255,7 @@ namespace ERP.Reporting.Models
                 GeneratedBy = !string.IsNullOrWhiteSpace(UserInfo.UserName) ? UserInfo.UserName : "System Operator",
                 GeneratedAt = DateTime.Now,
                 QrPayment = QrPaymentInfo.GetCached(),
-                IsWandaLayout = ApiSession.HasVariablePackFeature
+                IsWandaLayout = isWandaLayout ?? ApiSession.HasVariablePackFeature
             };
 
             return new CustomerBillDataResult(summary, lines);

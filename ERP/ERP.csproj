@@ -303,11 +303,17 @@
     <Compile Include="Forms\frmSaleSupply.designer.cs">
       <DependentUpon>frmSaleSupply.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\frmCustomerSupplyRegister.cs">
+    <Compile Include="Forms\frmNormalCustomerSupplyRegister.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\frmCustomerSupplyRegister.Designer.cs">
-      <DependentUpon>frmCustomerSupplyRegister.cs</DependentUpon>
+    <Compile Include="Forms\frmNormalCustomerSupplyRegister.Designer.cs">
+      <DependentUpon>frmNormalCustomerSupplyRegister.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmWandaCustomerSupplyRegister.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmWandaCustomerSupplyRegister.Designer.cs">
+      <DependentUpon>frmWandaCustomerSupplyRegister.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\frmSupplyOrder.cs">
       <SubType>Form</SubType>
@@ -675,7 +681,10 @@
     </Compile>
     <Compile Include="Reporting\Models\CustomerBillReportItem.cs" />
     <Compile Include="Reporting\Documents\CustomerBillDocument.cs" />
-    <Compile Include="Reporting\CustomerBillViewer.cs">
+    <Compile Include="Reporting\NormalCustomerBillViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\WandaCustomerBillViewer.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Reporting\Models\EnvelopeReportItem.cs" />

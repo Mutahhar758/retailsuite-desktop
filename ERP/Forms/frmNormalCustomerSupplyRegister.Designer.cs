@@ -1,6 +1,6 @@
 namespace ERP
 {
-    partial class frmCustomerSupplyRegister
+    partial class frmNormalCustomerSupplyRegister
     {
         private System.ComponentModel.IContainer components = null;
 
@@ -20,11 +20,8 @@ namespace ERP
             System.Windows.Forms.DataGridViewCellStyle dgvDefaultStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colDateStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colVoucherStyle = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle colUnitStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colQtyStyle = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle colSecQtyStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colRateStyle = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle colSecRateStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colDiscountStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colAddLessStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colAmountStyle = new System.Windows.Forms.DataGridViewCellStyle();
@@ -74,11 +71,8 @@ namespace ERP
             this.colDate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colVoucher = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colItem = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colUnit = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colSecQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.colSecRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colDiscount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colAddLess = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -115,7 +109,7 @@ namespace ERP
             this.pnlHeader.Height = 64;
             this.pnlHeader.Location = new System.Drawing.Point(0, 0);
             this.pnlHeader.Name = "pnlHeader";
-            this.pnlHeader.Padding = new System.Windows.Forms.Padding(16, 8, 16, 8);
+            this.pnlHeader.Padding = new System.Windows.Forms.Padding(16, 0, 16, 0);
             this.pnlHeader.Size = new System.Drawing.Size(1264, 64);
             this.pnlHeader.TabIndex = 0;
 
@@ -123,25 +117,25 @@ namespace ERP
             // lblTitle
             // 
             this.lblTitle.AutoSize = true;
-            this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 12F, System.Drawing.FontStyle.Bold);
+            this.lblTitle.Font = new System.Drawing.Font("Segoe UI", 13F, System.Drawing.FontStyle.Bold);
             this.lblTitle.ForeColor = System.Drawing.Color.White;
-            this.lblTitle.Location = new System.Drawing.Point(16, 10);
+            this.lblTitle.Location = new System.Drawing.Point(16, 12);
             this.lblTitle.Name = "lblTitle";
-            this.lblTitle.Size = new System.Drawing.Size(326, 21);
+            this.lblTitle.Size = new System.Drawing.Size(325, 25);
             this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "CUSTOMER SUPPLY & BILL REGISTER";
+            this.lblTitle.Text = "Customer Supply Register (Milk/Retail)";
 
             // 
             // lblSubtitle
             // 
             this.lblSubtitle.AutoSize = true;
-            this.lblSubtitle.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.lblSubtitle.Font = new System.Drawing.Font("Segoe UI", 8F);
             this.lblSubtitle.ForeColor = System.Drawing.Color.FromArgb(148, 163, 184);
-            this.lblSubtitle.Location = new System.Drawing.Point(17, 34);
+            this.lblSubtitle.Location = new System.Drawing.Point(18, 38);
             this.lblSubtitle.Name = "lblSubtitle";
-            this.lblSubtitle.Size = new System.Drawing.Size(460, 15);
+            this.lblSubtitle.Size = new System.Drawing.Size(262, 13);
             this.lblSubtitle.TabIndex = 1;
-            this.lblSubtitle.Text = "Audit, update, and manage daily customer supply deliveries and print customer bills";
+            this.lblSubtitle.Text = "Daily Customer Supply Register • Single-Unit Mode";
 
             // 
             // btnReload
@@ -246,6 +240,7 @@ namespace ERP
             this.lblCustomer.TabIndex = 0;
             this.lblCustomer.Text = "CUSTOMER ACCOUNT *";
 
+            // 
             // cmbCustomer
             // 
             this.cmbCustomer.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
@@ -313,9 +308,9 @@ namespace ERP
             this.btnPreset1to10.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPreset1to10.Font = new System.Drawing.Font("Segoe UI", 7.5F, System.Drawing.FontStyle.Bold);
             this.btnPreset1to10.ForeColor = System.Drawing.Color.FromArgb(51, 65, 85);
-            this.btnPreset1to10.Location = new System.Drawing.Point(506, 28);
+            this.btnPreset1to10.Location = new System.Drawing.Point(504, 28);
             this.btnPreset1to10.Name = "btnPreset1to10";
-            this.btnPreset1to10.Size = new System.Drawing.Size(38, 24);
+            this.btnPreset1to10.Size = new System.Drawing.Size(42, 24);
             this.btnPreset1to10.TabIndex = 6;
             this.btnPreset1to10.Text = "1-10";
             this.btnPreset1to10.UseVisualStyleBackColor = false;
@@ -329,9 +324,9 @@ namespace ERP
             this.btnPreset1to15.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPreset1to15.Font = new System.Drawing.Font("Segoe UI", 7.5F, System.Drawing.FontStyle.Bold);
             this.btnPreset1to15.ForeColor = System.Drawing.Color.FromArgb(51, 65, 85);
-            this.btnPreset1to15.Location = new System.Drawing.Point(548, 28);
+            this.btnPreset1to15.Location = new System.Drawing.Point(550, 28);
             this.btnPreset1to15.Name = "btnPreset1to15";
-            this.btnPreset1to15.Size = new System.Drawing.Size(38, 24);
+            this.btnPreset1to15.Size = new System.Drawing.Size(42, 24);
             this.btnPreset1to15.TabIndex = 7;
             this.btnPreset1to15.Text = "1-15";
             this.btnPreset1to15.UseVisualStyleBackColor = false;
@@ -345,9 +340,9 @@ namespace ERP
             this.btnPreset1to20.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPreset1to20.Font = new System.Drawing.Font("Segoe UI", 7.5F, System.Drawing.FontStyle.Bold);
             this.btnPreset1to20.ForeColor = System.Drawing.Color.FromArgb(51, 65, 85);
-            this.btnPreset1to20.Location = new System.Drawing.Point(590, 28);
+            this.btnPreset1to20.Location = new System.Drawing.Point(596, 28);
             this.btnPreset1to20.Name = "btnPreset1to20";
-            this.btnPreset1to20.Size = new System.Drawing.Size(38, 24);
+            this.btnPreset1to20.Size = new System.Drawing.Size(42, 24);
             this.btnPreset1to20.TabIndex = 8;
             this.btnPreset1to20.Text = "1-20";
             this.btnPreset1to20.UseVisualStyleBackColor = false;
@@ -361,11 +356,11 @@ namespace ERP
             this.btnPresetMonth.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPresetMonth.Font = new System.Drawing.Font("Segoe UI", 7.5F, System.Drawing.FontStyle.Bold);
             this.btnPresetMonth.ForeColor = System.Drawing.Color.FromArgb(51, 65, 85);
-            this.btnPresetMonth.Location = new System.Drawing.Point(632, 28);
+            this.btnPresetMonth.Location = new System.Drawing.Point(642, 28);
             this.btnPresetMonth.Name = "btnPresetMonth";
-            this.btnPresetMonth.Size = new System.Drawing.Size(52, 24);
+            this.btnPresetMonth.Size = new System.Drawing.Size(42, 24);
             this.btnPresetMonth.TabIndex = 9;
-            this.btnPresetMonth.Text = "Month";
+            this.btnPresetMonth.Text = "This";
             this.btnPresetMonth.UseVisualStyleBackColor = false;
 
             // 
@@ -396,6 +391,7 @@ namespace ERP
             this.lblItem.TabIndex = 11;
             this.lblItem.Text = "PRODUCT FILTER";
 
+            // 
             // cmbItem
             // 
             this.cmbItem.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
@@ -469,7 +465,7 @@ namespace ERP
             // 
             this.lblKpiRecordsVal.AutoSize = true;
             this.lblKpiRecordsVal.Font = new System.Drawing.Font("Segoe UI", 11F, System.Drawing.FontStyle.Bold);
-            this.lblKpiRecordsVal.ForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+            this.lblKpiRecordsVal.ForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
             this.lblKpiRecordsVal.Location = new System.Drawing.Point(8, 20);
             this.lblKpiRecordsVal.Name = "lblKpiRecordsVal";
             this.lblKpiRecordsVal.Size = new System.Drawing.Size(77, 20);
@@ -496,7 +492,7 @@ namespace ERP
             this.lblKpiQtyTitle.ForeColor = System.Drawing.Color.FromArgb(148, 163, 184);
             this.lblKpiQtyTitle.Location = new System.Drawing.Point(8, 5);
             this.lblKpiQtyTitle.Name = "lblKpiQtyTitle";
-            this.lblKpiQtyTitle.Size = new System.Drawing.Size(89, 12);
+            this.lblKpiQtyTitle.Size = new System.Drawing.Size(95, 12);
             this.lblKpiQtyTitle.TabIndex = 0;
             this.lblKpiQtyTitle.Text = "TOTAL QUANTITY";
 
@@ -532,9 +528,9 @@ namespace ERP
             this.lblKpiAmountTitle.ForeColor = System.Drawing.Color.FromArgb(148, 163, 184);
             this.lblKpiAmountTitle.Location = new System.Drawing.Point(8, 5);
             this.lblKpiAmountTitle.Name = "lblKpiAmountTitle";
-            this.lblKpiAmountTitle.Size = new System.Drawing.Size(126, 12);
+            this.lblKpiAmountTitle.Size = new System.Drawing.Size(83, 12);
             this.lblKpiAmountTitle.TabIndex = 0;
-            this.lblKpiAmountTitle.Text = "TOTAL BILLING AMOUNT";
+            this.lblKpiAmountTitle.Text = "TOTAL AMOUNT";
 
             // 
             // lblKpiAmountVal
@@ -618,11 +614,8 @@ namespace ERP
             this.colDate,
             this.colVoucher,
             this.colItem,
-            this.colUnit,
             this.colQty,
-            this.colSecQty,
             this.colRate,
-            this.colSecRate,
             this.colDiscount,
             this.colAddLess,
             this.colAmount,
@@ -655,37 +648,28 @@ namespace ERP
             this.colDate.HeaderText = "Date";
             this.colDate.Name = "colDate";
             this.colDate.ReadOnly = true;
-            this.colDate.Width = 95;
+            this.colDate.Width = 90;
 
             // 
             // colVoucher
             // 
             colVoucherStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            colVoucherStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            colVoucherStyle.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Bold);
             colVoucherStyle.ForeColor = System.Drawing.Color.FromArgb(37, 99, 235);
             this.colVoucher.DefaultCellStyle = colVoucherStyle;
             this.colVoucher.HeaderText = "Voucher #";
             this.colVoucher.Name = "colVoucher";
             this.colVoucher.ReadOnly = true;
-            this.colVoucher.Width = 90;
+            this.colVoucher.Width = 95;
 
             // 
             // colItem
             // 
-            this.colItem.HeaderText = "Item Supplied";
+            this.colItem.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.colItem.HeaderText = "Item Description";
+            this.colItem.MinimumWidth = 140;
             this.colItem.Name = "colItem";
             this.colItem.ReadOnly = true;
-            this.colItem.Width = 210;
-
-            // 
-            // colUnit
-            // 
-            colUnitStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            this.colUnit.DefaultCellStyle = colUnitStyle;
-            this.colUnit.HeaderText = "Unit";
-            this.colUnit.Name = "colUnit";
-            this.colUnit.ReadOnly = true;
-            this.colUnit.Width = 90;
 
             // 
             // colQty
@@ -695,16 +679,7 @@ namespace ERP
             this.colQty.DefaultCellStyle = colQtyStyle;
             this.colQty.HeaderText = "Qty";
             this.colQty.Name = "colQty";
-            this.colQty.Width = 85;
-
-            // 
-            // colSecQty
-            // 
-            colSecQtyStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.colSecQty.DefaultCellStyle = colSecQtyStyle;
-            this.colSecQty.HeaderText = "Sec Qty";
-            this.colSecQty.Name = "colSecQty";
-            this.colSecQty.Width = 85;
+            this.colQty.Width = 100;
 
             // 
             // colRate
@@ -713,16 +688,7 @@ namespace ERP
             this.colRate.DefaultCellStyle = colRateStyle;
             this.colRate.HeaderText = "Rate";
             this.colRate.Name = "colRate";
-            this.colRate.Width = 85;
-
-            // 
-            // colSecRate
-            // 
-            colSecRateStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.colSecRate.DefaultCellStyle = colSecRateStyle;
-            this.colSecRate.HeaderText = "Sec Rate";
-            this.colSecRate.Name = "colSecRate";
-            this.colSecRate.Width = 85;
+            this.colRate.Width = 100;
 
             // 
             // colDiscount
@@ -731,7 +697,7 @@ namespace ERP
             this.colDiscount.DefaultCellStyle = colDiscountStyle;
             this.colDiscount.HeaderText = "Discount";
             this.colDiscount.Name = "colDiscount";
-            this.colDiscount.Width = 80;
+            this.colDiscount.Width = 90;
 
             // 
             // colAddLess
@@ -740,7 +706,7 @@ namespace ERP
             this.colAddLess.DefaultCellStyle = colAddLessStyle;
             this.colAddLess.HeaderText = "Add / Less";
             this.colAddLess.Name = "colAddLess";
-            this.colAddLess.Width = 85;
+            this.colAddLess.Width = 95;
 
             // 
             // colAmount
@@ -752,17 +718,17 @@ namespace ERP
             this.colAmount.HeaderText = "Total Amount";
             this.colAmount.Name = "colAmount";
             this.colAmount.ReadOnly = true;
-            this.colAmount.Width = 115;
+            this.colAmount.Width = 130;
 
             // 
             // colSave
             // 
             colSaveStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             colSaveStyle.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
-            colSaveStyle.ForeColor = System.Drawing.Color.FromArgb(37, 99, 235);
+            colSaveStyle.ForeColor = System.Drawing.Color.FromArgb(148, 163, 184);
             this.colSave.DefaultCellStyle = colSaveStyle;
             this.colSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.colSave.HeaderText = "Save";
+            this.colSave.HeaderText = "";
             this.colSave.Name = "colSave";
             this.colSave.Text = "Save";
             this.colSave.UseColumnTextForButtonValue = true;
@@ -773,10 +739,10 @@ namespace ERP
             // 
             colDeleteStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             colDeleteStyle.BackColor = System.Drawing.Color.FromArgb(254, 242, 242);
-            colDeleteStyle.ForeColor = System.Drawing.Color.FromArgb(220, 38, 38);
+            colDeleteStyle.ForeColor = System.Drawing.Color.FromArgb(239, 68, 68);
             this.colDelete.DefaultCellStyle = colDeleteStyle;
             this.colDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.colDelete.HeaderText = "Delete";
+            this.colDelete.HeaderText = "";
             this.colDelete.Name = "colDelete";
             this.colDelete.Text = "Delete";
             this.colDelete.UseColumnTextForButtonValue = true;
@@ -793,42 +759,43 @@ namespace ERP
             this.statusStrip.Name = "statusStrip";
             this.statusStrip.Size = new System.Drawing.Size(1264, 22);
             this.statusStrip.TabIndex = 4;
+            this.statusStrip.Text = "statusStrip";
 
             // 
             // lblStatus
             // 
+            this.lblStatus.Font = new System.Drawing.Font("Segoe UI", 8.5F);
+            this.lblStatus.ForeColor = System.Drawing.Color.FromArgb(71, 85, 105);
             this.lblStatus.Name = "lblStatus";
-            this.lblStatus.Size = new System.Drawing.Size(1249, 17);
+            this.lblStatus.Size = new System.Drawing.Size(1217, 17);
             this.lblStatus.Spring = true;
-            this.lblStatus.Text = "Ready. Select a customer to load daily supply records.";
+            this.lblStatus.Text = "Ready. Select a customer to begin.";
             this.lblStatus.TextAlign = System.Drawing.ContentAlignment.MiddleLeft;
 
             // 
             // prgProgress
             // 
             this.prgProgress.Name = "prgProgress";
-            this.prgProgress.Size = new System.Drawing.Size(150, 16);
+            this.prgProgress.Size = new System.Drawing.Size(100, 16);
             this.prgProgress.Style = System.Windows.Forms.ProgressBarStyle.Marquee;
             this.prgProgress.Visible = false;
 
             // 
-            // frmCustomerSupplyRegister
+            // frmNormalCustomerSupplyRegister
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(7F, 15F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.BackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            this.BackColor = System.Drawing.Color.White;
             this.ClientSize = new System.Drawing.Size(1264, 773);
             this.Controls.Add(this.pnlGridContainer);
             this.Controls.Add(this.pnlKpis);
             this.Controls.Add(this.pnlFilters);
             this.Controls.Add(this.pnlHeader);
             this.Controls.Add(this.statusStrip);
-            this.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular);
-            this.MinimumSize = new System.Drawing.Size(1080, 650);
-            this.Name = "frmCustomerSupplyRegister";
+            this.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.Name = "frmNormalCustomerSupplyRegister";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Customer Supply & Bill Register";
-
+            this.Text = "Customer Supply Register (Milk & Retail Daily Sales)";
             this.pnlHeader.ResumeLayout(false);
             this.pnlHeader.PerformLayout();
             this.pnlFilters.ResumeLayout(false);
@@ -893,11 +860,8 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn colDate;
         private System.Windows.Forms.DataGridViewTextBoxColumn colVoucher;
         private System.Windows.Forms.DataGridViewTextBoxColumn colItem;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colUnit;
         private System.Windows.Forms.DataGridViewTextBoxColumn colQty;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colSecQty;
         private System.Windows.Forms.DataGridViewTextBoxColumn colRate;
-        private System.Windows.Forms.DataGridViewTextBoxColumn colSecRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn colDiscount;
         private System.Windows.Forms.DataGridViewTextBoxColumn colAddLess;
         private System.Windows.Forms.DataGridViewTextBoxColumn colAmount;

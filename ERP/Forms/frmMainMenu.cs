@@ -292,9 +292,18 @@ namespace ERP
 
         private void customerBill2ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ERP.Reporting.CustomerBillViewer viewer = new ERP.Reporting.CustomerBillViewer();
-            viewer.MdiParent = this;
-            viewer.Show();
+            if (ApiSession.HasVariablePackFeature)
+            {
+                ERP.Reporting.WandaCustomerBillViewer viewer = new ERP.Reporting.WandaCustomerBillViewer();
+                viewer.MdiParent = this;
+                viewer.Show();
+            }
+            else
+            {
+                ERP.Reporting.NormalCustomerBillViewer viewer = new ERP.Reporting.NormalCustomerBillViewer();
+                viewer.MdiParent = this;
+                viewer.Show();
+            }
         }
 
         private void milkComparison2ToolStripMenuItem_Click(object sender, EventArgs e)
@@ -745,9 +754,18 @@ namespace ERP
 
         private void customerSupplyRegisterToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            frmCustomerSupplyRegister frm = new frmCustomerSupplyRegister();
-            frm.MdiParent = this;
-            frm.Show();
+            if (ApiSession.HasVariablePackFeature)
+            {
+                frmWandaCustomerSupplyRegister frm = new frmWandaCustomerSupplyRegister();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+            else
+            {
+                frmNormalCustomerSupplyRegister frm = new frmNormalCustomerSupplyRegister();
+                frm.MdiParent = this;
+                frm.Show();
+            }
         }
 
         private void customerBillToolStripMenuItem_Click_1(object sender, EventArgs e)
