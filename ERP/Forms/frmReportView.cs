@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -29,27 +29,63 @@ namespace ERP
             {
                 if (e.ObjectInfo.Text.Substring(0, 2) == "SL")
                 {
-                    frmSale frmSL = new frmSale();
-                    frmSL.FillSale(e.ObjectInfo.Text.Substring(3));
-                    frmSL.ShowDialog();
+                    if (ERP.Classes.ApiSession.HasVariablePackFeature)
+                    {
+                        frmWandaSale frmSL = new frmWandaSale();
+                        frmSL.FillSale(e.ObjectInfo.Text.Substring(3));
+                        frmSL.ShowDialog();
+                    }
+                    else
+                    {
+                        frmNormalSale frmSL = new frmNormalSale();
+                        frmSL.FillSale(e.ObjectInfo.Text.Substring(3));
+                        frmSL.ShowDialog();
+                    }
                 }
                 if (e.ObjectInfo.Text.Substring(0, 2) == "SR")
                 {
-                    frmSaleReturn frmSL = new frmSaleReturn();
-                    frmSL.FillSale(e.ObjectInfo.Text.Substring(3));
-                    frmSL.ShowDialog();
+                    if (ERP.Classes.ApiSession.HasVariablePackFeature)
+                    {
+                        frmWandaSaleReturn frmSL = new frmWandaSaleReturn();
+                        frmSL.FillSale(e.ObjectInfo.Text.Substring(3));
+                        frmSL.ShowDialog();
+                    }
+                    else
+                    {
+                        frmNormalSaleReturn frmSL = new frmNormalSaleReturn();
+                        frmSL.FillSale(e.ObjectInfo.Text.Substring(3));
+                        frmSL.ShowDialog();
+                    }
                 }
                 else if (e.ObjectInfo.Text.Substring(0, 2) == "PU")
                 {
-                    frmPurchase frmPU = new frmPurchase();
-                    frmPU.FillPurchase(e.ObjectInfo.Text.Substring(3));
-                    frmPU.ShowDialog();
+                    if (ERP.Classes.ApiSession.HasVariablePackFeature)
+                    {
+                        frmWandaPurchase frmPU = new frmWandaPurchase();
+                        frmPU.FillPurchase(e.ObjectInfo.Text.Substring(3));
+                        frmPU.ShowDialog();
+                    }
+                    else
+                    {
+                        frmNormalPurchase frmPU = new frmNormalPurchase();
+                        frmPU.FillPurchase(e.ObjectInfo.Text.Substring(3));
+                        frmPU.ShowDialog();
+                    }
                 }
                 else if (e.ObjectInfo.Text.Substring(0, 2) == "PR")
                 {
-                    frmPurchaseReturn frmPU = new frmPurchaseReturn();
-                    frmPU.FillPurchase(e.ObjectInfo.Text.Substring(3));
-                    frmPU.ShowDialog();
+                    if (ERP.Classes.ApiSession.HasVariablePackFeature)
+                    {
+                        frmWandaPurchaseReturn frmPU = new frmWandaPurchaseReturn();
+                        frmPU.FillPurchase(e.ObjectInfo.Text.Substring(3));
+                        frmPU.ShowDialog();
+                    }
+                    else
+                    {
+                        frmNormalPurchaseReturn frmPU = new frmNormalPurchaseReturn();
+                        frmPU.FillPurchase(e.ObjectInfo.Text.Substring(3));
+                        frmPU.ShowDialog();
+                    }
                 }
                 else if (e.ObjectInfo.Text.Substring(0, 2) == "PV")
                 {

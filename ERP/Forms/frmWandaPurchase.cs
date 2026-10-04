@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -10,15 +11,15 @@ using ERP.Services.Legacy;
 
 namespace ERP
 {
-    public partial class frmSaleReturn : Form
+    public partial class frmWandaPurchase : Form
     {
-        private readonly SaleReturnApiService _apiService;
+        private readonly PurchaseApiService _apiService;
         private readonly ChartOfAccountApiService _chartOfAccountApiService;
         private readonly NarrationApiService _narrationApiService;
         private readonly ItemCategoryApiService _itemCategoryApiService;
         private readonly UnitApiService _unitApiService;
         private readonly InventoryApiService _inventoryApiService;
-        private List<SaleReturnDto> _queryList = new List<SaleReturnDto>();
+        private List<PurchaseDto> _queryList = new List<PurchaseDto>();
 
         private readonly DataTable dtItems = new DataTable();
         private readonly DataTable dtUnits = new DataTable();
@@ -30,15 +31,13 @@ namespace ERP
         private bool resetRow = false;
         private bool FLogIn = true;
         private int VoucherIndex = 0;
-        private string VoucherNum = null;
-        private bool _isSaving;
 
         enum Navigators { Up, Down, Home, End }
 
-        public frmSaleReturn()
+        public frmWandaPurchase()
         {
             InitializeComponent();
-            _apiService = new SaleReturnApiService();
+            _apiService = new PurchaseApiService();
             _chartOfAccountApiService = new ChartOfAccountApiService();
             _narrationApiService = new NarrationApiService();
             _itemCategoryApiService = new ItemCategoryApiService();
@@ -46,7 +45,7 @@ namespace ERP
             _inventoryApiService = new InventoryApiService();
             InitializeLookupTables();
             dgvSale.Rows.Add();
-            UserInfo.ApplyFormPermissions(this, AppResource.SaleReturns);
+            UserInfo.ApplyFormPermissions(this, AppResource.Purchases);
         }
 
         private void InitializeLookupTables()
@@ -60,6 +59,7 @@ namespace ERP
             dtItems.Columns.Add("PrimaryUnit", typeof(string));
             dtItems.Columns.Add("SecondaryUnit", typeof(string));
             dtItems.Columns.Add("DefaultUnit", typeof(string));
+            dtItems.Columns.Add("QtyInPack", typeof(decimal));
 
             dtUnits.Columns.Add("Code", typeof(string));
             dtUnits.Columns.Add("Title", typeof(string));
@@ -76,7 +76,7 @@ namespace ERP
 
         private async System.Threading.Tasks.Task LoadLookupsAsync()
         {
-            var accountsTask = _chartOfAccountApiService.GetCustomerAccountsAsync();
+            var accountsTask = _chartOfAccountApiService.GetSupplierAccountsAsync();
             var narrationsTask = _narrationApiService.GetLookupAsync();
             var categoriesTask = _itemCategoryApiService.GetLookupAsync();
             var unitsTask = _unitApiService.GetLookupAsync();
@@ -85,7 +85,7 @@ namespace ERP
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
-                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit);
+                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.QtyInPack ?? 0);
 
             dtUnits.Rows.Clear();
             foreach (var u in unitsTask.Result)
@@ -114,7 +114,6 @@ namespace ERP
             cmbAccounts.DataSource = dtAccounts.Copy();
             cmbAccounts.DisplayMember = "Title";
             cmbAccounts.ValueMember = "Account";
-            cmbAccounts.SelectedIndex = -1;
         }
 
         private void FillFilterAccounts()
@@ -130,7 +129,6 @@ namespace ERP
             cmbNarration.DataSource = dtNarration.Copy();
             cmbNarration.DisplayMember = "Title";
             cmbNarration.ValueMember = "Code";
-            cmbNarration.SelectedIndex = -1;
         }
 
         private void FillCategories()
@@ -147,67 +145,61 @@ namespace ERP
 
             for (int i = 0; i < _queryList.Count; i++)
             {
-                var row = _queryList[i];
+                var r = _queryList[i];
                 dgvQuery.Rows.Add(
-                    row.Date.ToString("dd-MMM-yyyy"),
-                    "SR-" + row.VoucherNo,
-                    row.Account,
-                    row.CreatedBy + " | " + row.CreatedOn.ToString("dd-MMM-yyyy hh:mm:ss tt"),
-                    !string.IsNullOrWhiteSpace(row.LastModifiedBy)
-                        ? row.LastModifiedBy + " | " + row.LastModifiedOn.Value.ToString("dd-MMM-yyyy hh:mm:ss tt")
+                    r.Date.ToString("dd-MMM-yyyy"),
+                    "PU-" + r.VoucherNo,
+                    r.Account,
+                    r.CreatedBy + " | " + r.CreatedOn.ToString("dd-MMM-yyyy hh:mm:ss tt"),
+                    !string.IsNullOrWhiteSpace(r.LastModifiedBy)
+                        ? r.LastModifiedBy + " | " + r.LastModifiedOn.Value.ToString("dd-MMM-yyyy hh:mm:ss tt")
                         : null);
             }
         }
 
-        internal async System.Threading.Tasks.Task FillSaleAsync(string vno)
+        internal async System.Threading.Tasks.Task FillPurchaseAsync(string vno)
         {
             var lines = await _apiService.GetDetailAsync(vno);
-            txtVoucherNo.Text = "SR-" + vno;
-            VoucherNum = vno;
+            txtVoucherNo.Text = "PU-" + vno;
             dgvSale.Rows.Clear();
 
             if (lines.Count > 0)
             {
                 var first = lines[0];
                 dtpDate.Value = first.Date;
+                cmbAccounts.SelectedValue = first.AccountId;
                 if (string.IsNullOrWhiteSpace(first.Narration))
                     cmbNarration.SelectedIndex = -1;
                 else
                     cmbNarration.SelectedValue = first.Narration;
-                cmbAccounts.SelectedValue = first.AccountId;
                 txtDescription.Text = first.Description;
                 txtCreatedBy.Text = first.CreatedBy + " | " + first.CreatedOn.ToString("dd-MMM-yyyy hh:mm:ss tt");
                 txtEditBy.Text = !string.IsNullOrWhiteSpace(first.LastModifiedBy)
-                    ? first.LastModifiedBy + " | " + first.LastModifiedOn.Value.ToString("dd-MMM-yyyy hh:mm:ss tt")
-                    : null;
-                txtCashReceipt.Text = first.CashReceipt.ToString("N2");
-                txtCashBack.Text = first.CashBack.ToString("N2");
+                    ? first.LastModifiedBy + " | " + first.LastModifiedOn.Value.ToString("dd-MMM-yyyy hh:mm:ss tt") : null;
+                txtCashReceipt.Text = (first.CashPaid ?? 0).ToString("N2");
+                txtCashBack.Text = (first.CashBack ?? 0).ToString("N2");
 
                 for (int i = 0; i < lines.Count; i++)
                 {
-                    var line = lines[i];
-                    decimal discountPercent = line.Rate == 0 ? 0 : (line.Discount / line.Rate) * 100;
-                    
+                    var l = lines[i];
                     int ind = dgvSale.Rows.Add();
                     var row = dgvSale.Rows[ind];
-                    
-                    row.Cells[clnSeq.Index].Value = line.Seq.ToString();
-                    row.Cells[clnItemKey.Index].Value = line.ItemKey;
-                    row.Cells[clnCatagory.Index].Value = line.ItemCategoryCode;
+                    row.Cells[clnSeq.Index].Value = l.Seq.ToString();
+                    row.Cells[clnItemKey.Index].Value = l.ItemKey;
+                    row.Cells[clnCatagory.Index].Value = l.ItemCategoryCode;
                     row.Cells[clnItemNo.Index].Value = null;
                     row.Cells[clnUnit.Index].Value = null;
-                    row.Cells[clnQty.Index].Value = line.Qty.ToString("0.##");
-                    row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
-                    row.Cells[clnDiscount.Index].Value = line.Discount.ToString("0.##");
-                    row.Cells[clnDiscPercent.Index].Value = discountPercent.ToString("0.##");
-                    row.Cells[clnAmount.Index].Value = line.Amount.ToString("N2");
+                    row.Cells[clnQty.Index].Value = l.Qty.ToString("0.##");
+                    row.Cells[clnRate.Index].Value = l.Rate.ToString("0.##");
+                    row.Cells[clnAddless.Index].Value = l.AddLess.ToString("0.##");
+                    row.Cells[clnAmount.Index].Value = l.Amount.ToString("N2");
                     row.Cells[clnStatus.Index].Value = "0";
 
 
-                    SetcmbItemSource(line.ItemCategoryCode, ind);
-                    dgvSale[clnItemNo.Index, ind].Value = line.ItemId;
+                    SetcmbItemSource(l.ItemCategoryCode, ind);
+                    dgvSale[clnItemNo.Index, ind].Value = l.ItemId;
 
-                    DataRow itemRow = dtItems.Select("Id = '" + line.ItemId.Replace("'", "''") + "'").FirstOrDefault();
+                    DataRow itemRow = dtItems.Select("Id = '" + l.ItemId.Replace("'", "''") + "'").FirstOrDefault();
                     if (itemRow != null)
                     {
                         DataRowView drv = dtItems.DefaultView[dtItems.Rows.IndexOf(itemRow)];
@@ -218,13 +210,17 @@ namespace ERP
                         SetAllUnitsSource(ind);
                     }
 
-                    dgvSale[clnUnit.Index, ind].Value = line.Unit;
-                    dgvSale[clnRate.Index, ind].Value = line.Rate.ToString("0.##");
+                    dgvSale[clnUnit.Index, ind].Value = l.Unit;
+                    dgvSale[clnRate.Index, ind].Value = l.Rate.ToString("0.##");
 
-                    if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                    if (dgvSale.Columns.Contains("clnSecQty"))
                     {
-                        dgvSale["clnSecQty", ind].Value = (line.SecQty ?? 0).ToString("0.##");
-                        dgvSale["clnSecRate", ind].Value = (line.SecRate ?? 0).ToString("0.##");
+                        dgvSale["clnSecQty", ind].Value = (l.SecQty ?? 0).ToString("0.##");
+                        if (dgvSale.Columns.Contains("clnPackQty"))
+                            dgvSale["clnPackQty", ind].Value = (l.QtyInPack ?? 0).ToString("0.##");
+                        if (dgvSale.Columns.Contains("clnPacking"))
+                            dgvSale["clnPacking", ind].Value = (l.Packing ?? 0).ToString("0.##");
+                        dgvSale["clnSecRate", ind].Value = (l.SecRate ?? 0).ToString("0.##");
                     }
                 }
             }
@@ -233,15 +229,9 @@ namespace ERP
             CalcTotAmount();
         }
 
-        internal void FillSale(string vno)
+        internal void FillPurchase(string vno)
         {
-            _ = FillSaleAsync(vno);
-        }
-
-        private static decimal ParseDecimal(object value)
-        {
-            decimal parsed;
-            return decimal.TryParse(Convert.ToString(value), out parsed) ? parsed : 0;
+            _ = FillPurchaseAsync(vno);
         }
 
         private void CalcTotAmount()
@@ -255,108 +245,17 @@ namespace ERP
             }
             catch { }
 
+            lblTotAmount.Text = totAmount.ToString();
             txtTotAmount.Text = totAmount.ToString("N2");
         }
 
-        private async System.Threading.Tasks.Task SaveAsync()
+        private static decimal ParseDecimal(object value)
         {
-            if (cmbAccounts.SelectedValue == null)
-            {
-                MessageBox.Show("Please Select Account...!");
-                return;
-            }
-
-            var lines = new List<SaleReturnLineRequest>();
-            foreach (DataGridViewRow row in dgvSale.Rows)
-            {
-                if (row.Cells[clnItemNo.Index].Value == null)
-                    continue;
-
-                decimal secQty = 0;
-                decimal secRate = 0;
-                string secUnit = null;
-                if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
-                {
-                    secQty = ParseDecimal(row.Cells["clnSecQty"].Value);
-                    secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
-                    
-                    string itemId = Convert.ToString(row.Cells[clnItemNo.Index].Value);
-                    DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
-                    if (itemRow != null)
-                    {
-                        secUnit = Convert.ToString(itemRow["SecondaryUnit"]);
-                    }
-                }
-
-                lines.Add(new SaleReturnLineRequest
-                {
-                    Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
-                    ItemId = Convert.ToString(row.Cells[clnItemNo.Index].Value),
-                    Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
-                    Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
-                    Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
-                    SecQty = secQty,
-                    SecRate = secRate,
-                    SecUnit = secUnit
-                });
-            }
-
-            try
-            {
-                string voucher = txtVoucherNo.Text != "" ? txtVoucherNo.Text.Substring(3) : null;
-                bool isNew = string.IsNullOrWhiteSpace(voucher);
-
-                if (isNew)
-                {
-                    var createRequest = new SaleReturnCreateRequest
-                    {
-                        Date = dtpDate.Value.ToString("yyyy-MM-dd"),
-                        Account = cmbAccounts.SelectedValue.ToString(),
-                        Description = txtDescription.Text,
-                        Narration = cmbNarration.SelectedValue?.ToString(),
-                        CashReceipt = txtCashReceipt.Value,
-                        CashBack = txtCashBack.Value,
-                        Lines = lines
-                    };
-                    voucher = await _apiService.CreateAsync(createRequest);
-                }
-                else
-                {
-                    var updateRequest = new SaleReturnUpdateRequest
-                    {
-                        Date = dtpDate.Value.ToString("yyyy-MM-dd"),
-                        Account = cmbAccounts.SelectedValue.ToString(),
-                        Description = txtDescription.Text,
-                        Narration = cmbNarration.SelectedValue?.ToString(),
-                        CashReceipt = txtCashReceipt.Value,
-                        CashBack = txtCashBack.Value,
-                        Lines = lines
-                    };
-                    await _apiService.UpdateAsync(voucher, updateRequest);
-                }
-
-                await FillSaleAsync(voucher);
-                await FillQueryAsync();
-                VoucherIndex = _queryList.FindIndex(x => x.VoucherNo == voucher);
-                if (VoucherIndex < 0)
-                    VoucherIndex = 0;
-
-                MessageBox.Show("Record Successfully Saved...!");
-                btnNew.Focus();
-            }
-            catch (Exception ex)
-            {
-                MessageBox.Show("Error saving sale return: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
-            }
+            decimal parsed;
+            return decimal.TryParse(Convert.ToString(value), out parsed) ? parsed : 0;
         }
 
-        void rdb_CheckedChanged(object sender, EventArgs e)
-        {
-            if ((sender as RadioButton).Checked)
-                FillAccounts();
-        }
-
-        void AllowNewRow()
+        private void AllowNewRow()
         {
             if (dgvSale.CurrentRow.Index == dgvSale.Rows[dgvSale.Rows.Count - 1].Index)
             {
@@ -368,46 +267,60 @@ namespace ERP
         private void SetupSecondaryQtyColumns()
         {
             clnUnit.Visible = false;
+            clnQty.HeaderText = "Weight (Kg)";
+            clnRate.HeaderText = "Rate (/Kg)";
 
-            if (ApiSession.HasSecondaryQty)
+            if (!dgvSale.Columns.Contains("clnSecQty"))
             {
-                clnQty.HeaderText = "Single Qty";
-                clnRate.HeaderText = "Single Rate";
-
-                if (!dgvSale.Columns.Contains("clnSecQty"))
+                var colSecQty = new DataGridViewTextBoxColumn
                 {
-                    var colSecQty = new DataGridViewTextBoxColumn
-                    {
-                        Name = "clnSecQty",
-                        HeaderText = "Pack Qty",
-                        Width = 80
-                    };
-                    var colSecRate = new DataGridViewTextBoxColumn
-                    {
-                        Name = "clnSecRate",
-                        HeaderText = "Pack Rate",
-                        Width = 80
-                    };
-                    int insertIndex = clnDiscount.Index;
-                    dgvSale.Columns.Insert(insertIndex, colSecQty);
-                    dgvSale.Columns.Insert(insertIndex + 1, colSecRate);
-                }
-                else
+                    Name = "clnSecQty",
+                    HeaderText = "Bags",
+                    Width = 75,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
+                var colPackQty = new DataGridViewTextBoxColumn
                 {
-                    dgvSale.Columns["clnSecQty"].Visible = true;
-                    dgvSale.Columns["clnSecRate"].Visible = true;
-                }
-            }
-            else
-            {
-                clnQty.HeaderText = "Qty";
-                clnRate.HeaderText = "Rate";
+                    Name = "clnPackQty",
+                    HeaderText = "Pack Qty",
+                    Width = 75,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
+                var colPacking = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnPacking",
+                    HeaderText = "Packing",
+                    Width = 75,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
+                var colSecRate = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnSecRate",
+                    HeaderText = "Bag Rate",
+                    Width = 80,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
 
-                if (dgvSale.Columns.Contains("clnSecQty"))
-                    dgvSale.Columns["clnSecQty"].Visible = false;
-                if (dgvSale.Columns.Contains("clnSecRate"))
-                    dgvSale.Columns["clnSecRate"].Visible = false;
+                dgvSale.Columns.Add(colSecQty);
+                dgvSale.Columns.Add(colPackQty);
+                dgvSale.Columns.Add(colPacking);
+                dgvSale.Columns.Add(colSecRate);
             }
+
+            int dIdx = 0;
+            clnSeq.DisplayIndex = dIdx++;
+            clnItemKey.DisplayIndex = dIdx++;
+            clnCatagory.DisplayIndex = dIdx++;
+            clnItemNo.DisplayIndex = dIdx++;
+            clnQty.DisplayIndex = dIdx++;
+            if (dgvSale.Columns.Contains("clnSecQty")) dgvSale.Columns["clnSecQty"].DisplayIndex = dIdx++;
+            if (dgvSale.Columns.Contains("clnPackQty")) dgvSale.Columns["clnPackQty"].DisplayIndex = dIdx++;
+            if (dgvSale.Columns.Contains("clnPacking")) dgvSale.Columns["clnPacking"].DisplayIndex = dIdx++;
+            clnRate.DisplayIndex = dIdx++;
+            if (dgvSale.Columns.Contains("clnSecRate")) dgvSale.Columns["clnSecRate"].DisplayIndex = dIdx++;
+            clnAddless.DisplayIndex = dIdx++;
+            clnAmount.DisplayIndex = dIdx++;
+            if (clnStatus != null) clnStatus.DisplayIndex = dIdx++;
         }
 
         private async void frmPurchase_Load(object sender, EventArgs e)
@@ -418,12 +331,12 @@ namespace ERP
                 await LoadLookupsAsync();
                 await FillQueryAsync();
                 if (_queryList.Count > 0 && txtVoucherNo.Text == "")
-                    await FillSaleAsync(_queryList[VoucherIndex].VoucherNo);
+                    await FillPurchaseAsync(_queryList[VoucherIndex].VoucherNo);
                 FLogIn = false;
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading sale return data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error loading purchase data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -445,34 +358,10 @@ namespace ERP
             }
         }
 
-        private async void frmPurchase_KeyDown(object sender, KeyEventArgs e)
+        private void frmPurchase_KeyDown(object sender, KeyEventArgs e)
         {
             if (e.KeyCode == Keys.Enter && !dgvSale.Focused)
-            {
-                e.SuppressKeyPress = true;
                 SendKeys.Send("{tab}");
-            }
-            else if (e.KeyCode == Keys.F1)
-            {
-                Print(true);
-            }
-            else if (e.KeyCode == Keys.F5)
-            {
-                if (_isSaving)
-                    return;
-
-                _isSaving = true;
-                btnSave.Enabled = false;
-                try
-                {
-                    await SaveAsync();
-                }
-                finally
-                {
-                    _isSaving = false;
-                    btnSave.Enabled = true;
-                }
-            }
         }
 
         private void dgvPurchase_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
@@ -499,25 +388,54 @@ namespace ERP
                     cmbCatagory.SelectedIndexChanged += new EventHandler(cmbCatagory_SelectedIndexChanged);
                 }
             }
-            else if (dgvSale.CurrentCell.ColumnIndex == clnRate.Index ||
-                dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
-                dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
-                dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
-                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
-                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
+            else if (dgvSale.CurrentCell.ColumnIndex == clnRate.Index || dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
                 TextBox tbRate = e.Control as TextBox;
                 if (tbRate != null && e.Control.Text != null)
                     tbRate.KeyPress += new KeyPressEventHandler(tbRate_KeyPress);
             }
+            else if (dgvSale.CurrentCell.ColumnIndex == clnAddless.Index)
+            {
+                TextBox tbAddless = e.Control as TextBox;
+                if (tbAddless != null && e.Control.Text != null)
+                    tbAddless.KeyPress += new KeyPressEventHandler(tbAddless_KeyPress);
+            }
+            else if (dgvSale.CurrentCell.ColumnIndex == clnQty.Index || dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty")
+            {
+                TextBox tbQty = e.Control as TextBox;
+                if (tbQty != null && e.Control.Text != null)
+                    tbQty.KeyPress += new KeyPressEventHandler(tbQty_KeyPress);
+            }
         }
 
-        void cmbCatagory_SelectedIndexChanged(object sender, EventArgs e)
+        private void tbAddless_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (dgvSale.CurrentCell.ColumnIndex == clnAddless.Index)
+            {
+                if ((sender as TextBox).SelectedText.Length > 0)
+                {
+                    int selind = (sender as TextBox).SelectionStart;
+                    (sender as TextBox).Text = (sender as TextBox).Text.Replace((sender as TextBox).SelectedText, "");
+                    (sender as TextBox).SelectionStart = selind;
+                    (sender as TextBox).SelectionLength = 0;
+                }
+                if (!char.IsControl(e.KeyChar)
+                    && !char.IsDigit(e.KeyChar)
+                    && !((sender as TextBox).Text.Count(a => a == '.') == 0 && e.KeyChar == '.')
+                    && !(((sender as TextBox).Text.Count(a => a == '-') == 0 && e.KeyChar == '-') && (sender as TextBox).SelectionStart == 0))
+                {
+                    e.Handled = true;
+                }
+            }
+        }
+
+        private void cmbCatagory_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (dgvSale.CurrentCellAddress.X == clnCatagory.DisplayIndex && (sender as ComboBox).SelectedIndex != -1)
             {
                 DataRowView dr = (DataRowView)(sender as ComboBox).SelectedItem;
-                dgvSale[dgvSale.CurrentCellAddress.X, dgvSale.CurrentCellAddress.Y].Value = dr[0].ToString();
+                if ((sender as ComboBox).SelectedValue == null)
+                    (sender as ComboBox).SelectedValue = dr[0].ToString();
                 SetcmbItemSource(dr[0].ToString(), dgvSale.CurrentCellAddress.Y);
             }
         }
@@ -542,17 +460,32 @@ namespace ERP
         {
         }
 
-        void tbQty_KeyPress(object sender, KeyPressEventArgs e)
+        private void tbQty_KeyPress(object sender, KeyPressEventArgs e)
         {
+            if (dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
+                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
+                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnPackQty" ||
+                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnPacking")
+            {
+                if ((sender as TextBox).SelectedText.Length > 0)
+                {
+                    int selind = (sender as TextBox).SelectionStart;
+                    (sender as TextBox).Text = (sender as TextBox).Text.Replace((sender as TextBox).SelectedText, "");
+                    (sender as TextBox).SelectionStart = selind;
+                    (sender as TextBox).SelectionLength = 0;
+                }
+                if (!char.IsControl(e.KeyChar)
+                    && !char.IsDigit(e.KeyChar)
+                    && !((sender as TextBox).Text.Count(a => a == '.') == 0 && e.KeyChar == '.'))
+                {
+                    e.Handled = true;
+                }
+            }
         }
 
-        void tbRate_KeyPress(object sender, KeyPressEventArgs e)
+        private void tbRate_KeyPress(object sender, KeyPressEventArgs e)
         {
             if (dgvSale.CurrentCell.ColumnIndex == clnRate.Index ||
-                dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
-                dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
-                dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
-                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
                 if ((sender as TextBox).SelectedText.Length > 0)
@@ -571,7 +504,7 @@ namespace ERP
             }
         }
 
-        void cmbItem_SelectedIndexChanged(object sender, EventArgs e)
+        private void cmbItem_SelectedIndexChanged(object sender, EventArgs e)
         {
             if (dgvSale.CurrentCellAddress.X == clnItemNo.DisplayIndex && (sender as ComboBox).SelectedIndex != -1)
             {
@@ -579,11 +512,7 @@ namespace ERP
                 if ((sender as ComboBox).SelectedValue == null)
                     (sender as ComboBox).SelectedValue = dr[0].ToString();
                 if (dr != null)
-                {
                     SetcmbUnitSource(dr, dgvSale.CurrentCellAddress.Y);
-                    if (txtVoucherNo.Text == "")
-                        dgvSale.Rows[dgvSale.CurrentCellAddress.Y].Cells[clnDiscPercent.Index].Value = "0";
-                }
             }
         }
 
@@ -591,11 +520,24 @@ namespace ERP
         {
             dgvSale[clnRate.Index, rowInd].Value = dr["PriRate"].ToString();
 
-            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+            decimal qtyInPack = dr.Row.Table.Columns.Contains("QtyInPack") ? ParseDecimal(dr["QtyInPack"]) : 0;
+            if (dgvSale.Columns.Contains("clnPackQty"))
+                dgvSale["clnPackQty", rowInd].Value = qtyInPack > 0 ? qtyInPack.ToString("0.##") : "0";
+            if (dgvSale.Columns.Contains("clnPacking"))
+                dgvSale["clnPacking", rowInd].Value = qtyInPack > 0 ? qtyInPack.ToString("0.##") : "0";
+
+            decimal priRate = ParseDecimal(dr["PriRate"]);
+            decimal secRate = ParseDecimal(dr["SecRate"]);
+            if (secRate == 0 && qtyInPack > 0)
+                secRate = Math.Round(priRate * qtyInPack, 4);
+
+            if (dgvSale.Columns.Contains("clnSecRate"))
+                dgvSale["clnSecRate", rowInd].Value = secRate > 0 ? secRate.ToString("0.##") : "0";
+
+            if (dgvSale.Columns.Contains("clnSecQty"))
             {
                 if (dgvSale["clnSecQty", rowInd].Value == null || string.IsNullOrWhiteSpace(dgvSale["clnSecQty", rowInd].Value.ToString()))
                     dgvSale["clnSecQty", rowInd].Value = "0";
-                dgvSale["clnSecRate", rowInd].Value = dr["SecRate"].ToString();
             }
         }
 
@@ -634,42 +576,66 @@ namespace ERP
             resetRow = true;
             currentRow = e.RowIndex;
 
-            decimal qty = ParseDecimal(dgvSale[clnQty.Index, e.RowIndex].Value);
-            decimal rate = ParseDecimal(dgvSale[clnRate.Index, e.RowIndex].Value);
-            decimal discount = ParseDecimal(dgvSale[clnDiscount.Index, e.RowIndex].Value);
-            decimal discountPercent = ParseDecimal(dgvSale[clnDiscPercent.Index, e.RowIndex].Value);
+            string colName = dgvSale.Columns[e.ColumnIndex].Name;
+            decimal kgQty = ParseDecimal(dgvSale[clnQty.Index, e.RowIndex].Value);
+            decimal bagQty = dgvSale.Columns.Contains("clnSecQty") ? ParseDecimal(dgvSale["clnSecQty", e.RowIndex].Value) : 0;
+            decimal packQty = dgvSale.Columns.Contains("clnPackQty") ? ParseDecimal(dgvSale["clnPackQty", e.RowIndex].Value) : 0;
+            decimal packing = dgvSale.Columns.Contains("clnPacking") ? ParseDecimal(dgvSale["clnPacking", e.RowIndex].Value) : 0;
+            decimal kgRate = ParseDecimal(dgvSale[clnRate.Index, e.RowIndex].Value);
+            decimal bagRate = dgvSale.Columns.Contains("clnSecRate") ? ParseDecimal(dgvSale["clnSecRate", e.RowIndex].Value) : 0;
+            decimal addLess = ParseDecimal(dgvSale[clnAddless.Index, e.RowIndex].Value);
 
-            decimal secQty = 0;
-            decimal secRate = 0;
-            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+            if (e.ColumnIndex == clnQty.Index)
             {
-                secQty = ParseDecimal(dgvSale["clnSecQty", e.RowIndex].Value);
-                secRate = ParseDecimal(dgvSale["clnSecRate", e.RowIndex].Value);
+                if (bagQty > 0)
+                    packQty = Math.Round(kgQty / bagQty, 2);
+                else if (packQty > 0)
+                    bagQty = Math.Round(kgQty / packQty, 2);
+            }
+            else if (colName == "clnSecQty")
+            {
+                if (packQty > 0)
+                    kgQty = Math.Round(bagQty * packQty, 2);
+                else if (kgQty > 0)
+                    packQty = Math.Round(kgQty / bagQty, 2);
+            }
+            else if (colName == "clnPackQty")
+            {
+                if (bagQty > 0)
+                    kgQty = Math.Round(bagQty * packQty, 2);
+                else if (kgQty > 0)
+                    bagQty = Math.Round(kgQty / packQty, 2);
+            }
+            else if (colName == "clnPacking")
+            {
+                if (packing > 0)
+                {
+                    if (bagRate > 0)
+                        kgRate = Math.Round(bagRate / packing, 4);
+                    else if (kgRate > 0)
+                        bagRate = Math.Round(kgRate * packing, 4);
+                }
+            }
+            else if (e.ColumnIndex == clnRate.Index)
+            {
+                if (packing > 0)
+                    bagRate = Math.Round(kgRate * packing, 4);
+            }
+            else if (colName == "clnSecRate")
+            {
+                if (packing > 0)
+                    kgRate = Math.Round(bagRate / packing, 4);
             }
 
-            dgvSale[clnQty.Index, e.RowIndex].Value = qty.ToString();
-            dgvSale[clnRate.Index, e.RowIndex].Value = rate.ToString();
-            dgvSale[clnDiscount.Index, e.RowIndex].Value = discount.ToString();
-            dgvSale[clnDiscPercent.Index, e.RowIndex].Value = discountPercent.ToString();
-            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
-            {
-                dgvSale["clnSecQty", e.RowIndex].Value = secQty.ToString();
-                dgvSale["clnSecRate", e.RowIndex].Value = secRate.ToString();
-            }
+            dgvSale[clnQty.Index, e.RowIndex].Value = kgQty.ToString("0.##");
+            if (dgvSale.Columns.Contains("clnSecQty")) dgvSale["clnSecQty", e.RowIndex].Value = bagQty.ToString("0.##");
+            if (dgvSale.Columns.Contains("clnPackQty")) dgvSale["clnPackQty", e.RowIndex].Value = packQty.ToString("0.##");
+            if (dgvSale.Columns.Contains("clnPacking")) dgvSale["clnPacking", e.RowIndex].Value = packing.ToString("0.##");
+            dgvSale[clnRate.Index, e.RowIndex].Value = kgRate.ToString("0.####");
+            if (dgvSale.Columns.Contains("clnSecRate")) dgvSale["clnSecRate", e.RowIndex].Value = bagRate.ToString("0.####");
+            dgvSale[clnAddless.Index, e.RowIndex].Value = addLess.ToString("0.##");
 
-            if (!clnDiscount.Visible)
-            {
-                discount = rate * (discountPercent / 100);
-                dgvSale[clnDiscount.Index, e.RowIndex].Value = discount.ToString();
-            }
-            else
-            {
-                discountPercent = rate == 0 ? 0 : (discount / rate) * 100;
-                dgvSale[clnDiscPercent.Index, e.RowIndex].Value = discountPercent.ToString();
-            }
-
-            decimal netRate = rate - discount;
-            dgvSale[clnAmount.Index, e.RowIndex].Value = decimal.Round((qty * netRate) + (secQty * secRate), 2).ToString();
+            dgvSale[clnAmount.Index, e.RowIndex].Value = Math.Round((kgQty * kgRate) + addLess, 2).ToString("N2");
             CalcTotAmount();
         }
 
@@ -684,22 +650,110 @@ namespace ERP
 
         private async void btnSave_Click(object sender, EventArgs e)
         {
-            if (_isSaving)
+            if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to save this...!", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
 
-            if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to save this...!", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            if (cmbAccounts.SelectedValue == null)
             {
-                _isSaving = true;
-                btnSave.Enabled = false;
-                try
+                MessageBox.Show("Please Select Account...!");
+                return;
+            }
+
+            var lines = new List<PurchaseLineRequest>();
+            foreach (DataGridViewRow row in dgvSale.Rows)
+            {
+                if (row.Cells[clnItemNo.Index].Value == null)
+                    continue;
+
+                decimal secQty = 0;
+                decimal secRate = 0;
+                decimal? qtyInPack = null;
+                decimal? packing = null;
+                string secUnit = null;
+                if (dgvSale.Columns.Contains("clnSecQty"))
                 {
-                    await SaveAsync();
+                    secQty = ParseDecimal(row.Cells["clnSecQty"].Value);
+                    secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
+                    if (dgvSale.Columns.Contains("clnPackQty"))
+                    {
+                        decimal pQty = ParseDecimal(row.Cells["clnPackQty"].Value);
+                        if (pQty > 0) qtyInPack = pQty;
+                    }
+                    if (dgvSale.Columns.Contains("clnPacking"))
+                    {
+                        decimal pck = ParseDecimal(row.Cells["clnPacking"].Value);
+                        if (pck > 0) packing = pck;
+                    }
+                    
+                    string itemId = Convert.ToString(row.Cells[clnItemNo.Index].Value);
+                    DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
+                    if (itemRow != null)
+                    {
+                        secUnit = Convert.ToString(itemRow["SecondaryUnit"]);
+                    }
+                    if (string.IsNullOrWhiteSpace(secUnit))
+                        secUnit = "Bags";
                 }
-                finally
+
+                lines.Add(new PurchaseLineRequest
                 {
-                    _isSaving = false;
-                    btnSave.Enabled = true;
+                    Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
+                    ItemId = Convert.ToString(row.Cells[clnItemNo.Index].Value),
+                    Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
+                    Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
+                    AddLess = ParseDecimal(row.Cells[clnAddless.Index].Value),
+                    SecQty = secQty,
+                    SecRate = secRate,
+                    SecUnit = secUnit,
+                    QtyInPack = qtyInPack,
+                    Packing = packing
+                });
+            }
+
+            try
+            {
+                string voucher = txtVoucherNo.Text != "" ? txtVoucherNo.Text.Substring(3) : null;
+                bool isNew = string.IsNullOrWhiteSpace(voucher);
+
+                if (isNew)
+                {
+                    var createRequest = new PurchaseCreateRequest
+                    {
+                        Date = dtpDate.Value.ToString("yyyy-MM-dd"),
+                        Account = cmbAccounts.SelectedValue.ToString(),
+                        Description = txtDescription.Text,
+                        Narration = cmbNarration.SelectedValue?.ToString(),
+                        CashPaid = txtCashReceipt.Value,
+                        CashBack = txtCashBack.Value,
+                        Lines = lines
+                    };
+                    voucher = await _apiService.CreateAsync(createRequest);
                 }
+                else
+                {
+                    var updateRequest = new PurchaseUpdateRequest
+                    {
+                        Date = dtpDate.Value.ToString("yyyy-MM-dd"),
+                        Account = cmbAccounts.SelectedValue.ToString(),
+                        Description = txtDescription.Text,
+                        Narration = cmbNarration.SelectedValue?.ToString(),
+                        CashPaid = txtCashReceipt.Value,
+                        CashBack = txtCashBack.Value,
+                        Lines = lines
+                    };
+                    await _apiService.UpdateAsync(voucher, updateRequest);
+                }
+
+                await FillPurchaseAsync(voucher);
+                await FillQueryAsync();
+                VoucherIndex = _queryList.FindIndex(x => x.VoucherNo == voucher);
+                if (VoucherIndex < 0) VoucherIndex = 0;
+
+                MessageBox.Show("Record Successfully Saved...!");
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error saving purchase: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -708,7 +762,7 @@ namespace ERP
             try
             {
                 string voucher = txtFilterVoucher.Text;
-                if (!string.IsNullOrWhiteSpace(voucher) && voucher.StartsWith("SR-", StringComparison.OrdinalIgnoreCase))
+                if (!string.IsNullOrWhiteSpace(voucher) && voucher.StartsWith("PU-", StringComparison.OrdinalIgnoreCase))
                     voucher = voucher.Substring(3);
 
                 await FillQueryAsync(
@@ -719,7 +773,7 @@ namespace ERP
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Error loading sale return data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error loading purchase data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
@@ -740,18 +794,18 @@ namespace ERP
         private void txtFilterVoucher_Validated(object sender, EventArgs e)
         {
             txtFilterVoucher.Text = txtFilterVoucher.Text.ToUpper();
-            if (!Regex.IsMatch(txtFilterVoucher.Text, @"SR-\d{5}"))
+            if (!Regex.IsMatch(txtFilterVoucher.Text, @"PU-\d{5}"))
                 txtFilterVoucher.Text = "";
         }
 
         private async void dgvQuery_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (!FLogIn && e.RowIndex > -1)
+            if (!FLogIn && e.RowIndex != -1)
             {
                 VoucherIndex = e.RowIndex;
                 string voucherNo = dgvQuery.Rows[e.RowIndex].Cells[clnVoucherNum.Index].Value.ToString();
                 tbSaleQuery.SelectedTab = tbDetail;
-                await FillSaleAsync(voucherNo.Substring(3));
+                await FillPurchaseAsync(voucherNo.Substring(3));
             }
         }
 
@@ -762,69 +816,93 @@ namespace ERP
             txtDescription.Text = "";
             txtCreatedBy.Text = "";
             txtEditBy.Text = "";
-            txtVoucherNo.Text = "";
-            VoucherNum = null;
+            txtBarcode.Text = "";
+            lblTotAmount.Text = "0";
             txtTotAmount.Text = "0";
             txtCashReceipt.Text = "0";
             txtCashBack.Text = "0";
             txtBalance.Text = "0";
             dgvSale.Rows.Add();
-            cmbAccounts.SelectedIndex = -1;
-            cmbNarration.SelectedIndex = -1;
             dtpDate.Focus();
+        }
+
+        private void txtCashReceipt_TextChanged(object sender, EventArgs e)
+        {
+            txtCashBack.Text = (txtCashReceipt.Value - txtTotAmount.Value <= 0 ? 0 : txtCashReceipt.Value - txtTotAmount.Value).ToString("N2");
+            txtBalance.Text = (txtTotAmount.Value - (txtCashReceipt.Value - txtCashBack.Value)).ToString("N2");
+        }
+
+        private void txtTotAmount_TextChanged(object sender, EventArgs e)
+        {
+            txtCashBack.Text = (txtCashReceipt.Value - txtTotAmount.Value <= 0 ? 0 : txtCashReceipt.Value - txtTotAmount.Value).ToString("N2");
+            txtBalance.Text = (txtTotAmount.Value - (txtCashReceipt.Value - txtCashBack.Value)).ToString("N2");
+        }
+
+        private void txtCashBack_TextChanged(object sender, EventArgs e)
+        {
+            txtBalance.Text = (txtTotAmount.Value - (txtCashReceipt.Value - txtCashBack.Value)).ToString("N2");
+        }
+
+        void CopyAsNew()
+        {
+            if (txtVoucherNo.Text != "")
+            {
+                txtVoucherNo.Text = "";
+                txtCreatedBy.Text = "";
+                txtEditBy.Text = "";
+                dtpDate.Value = DateTime.Now;
+                MessageBox.Show("Record copied for new entry. Click Save to create a new record.", "Copy as New", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                dtpDate.Focus();
+            }
+            else
+            {
+                MessageBox.Show("No record to copy. Please load a record first.", "Copy as New", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+        }
+
+        private void btnNewCopy_Click(object sender, EventArgs e)
+        {
+            if (MessageBox.Show("This will copy the current record as a new entry." + Environment.NewLine + "Do you want to continue?", "Copy as New", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                CopyAsNew();
+            }
         }
 
         private void btnPrint_Click(object sender, EventArgs e)
         {
-            Print(true);
         }
 
-        void Navigate(Navigators nav)
+        private void Navigate(Navigators nav)
         {
             if (dgvQuery.CurrentRow != null && tbSaleQuery.SelectedTab == tbDetail)
             {
                 if (nav == Navigators.Up && VoucherIndex > 0)
                 {
                     VoucherIndex--;
-                    _ = FillSaleAsync(_queryList[VoucherIndex].VoucherNo);
+                    _ = FillPurchaseAsync(_queryList[VoucherIndex].VoucherNo);
                 }
                 else if (nav == Navigators.Down && _queryList.Count - 1 > VoucherIndex)
                 {
                     VoucherIndex++;
-                    _ = FillSaleAsync(_queryList[VoucherIndex].VoucherNo);
+                    _ = FillPurchaseAsync(_queryList[VoucherIndex].VoucherNo);
                 }
                 else if (nav == Navigators.Home && _queryList.Count > 0)
                 {
-                    VoucherIndex = 0;
-                    _ = FillSaleAsync(_queryList[VoucherIndex].VoucherNo);
+                    VoucherIndex = _queryList.Count - 1;
+                    _ = FillPurchaseAsync(_queryList[VoucherIndex].VoucherNo);
                 }
                 else if (nav == Navigators.End && _queryList.Count > 0)
                 {
-                    VoucherIndex = _queryList.Count - 1;
-                    _ = FillSaleAsync(_queryList[VoucherIndex].VoucherNo);
+                    VoucherIndex = 0;
+                    _ = FillPurchaseAsync(_queryList[VoucherIndex].VoucherNo);
                 }
             }
         }
 
-        private void btnHome_Click(object sender, EventArgs e)
-        {
-            Navigate(Navigators.Home);
-        }
-
-        private void btnPri_Click(object sender, EventArgs e)
-        {
-            Navigate(Navigators.Up);
-        }
-
-        private void btnNext_Click(object sender, EventArgs e)
-        {
-            Navigate(Navigators.Down);
-        }
-
-        private void btnEnd_Click(object sender, EventArgs e)
-        {
-            Navigate(Navigators.End);
-        }
+        private void btnHome_Click(object sender, EventArgs e) => Navigate(Navigators.Home);
+        private void btnPri_Click(object sender, EventArgs e) => Navigate(Navigators.Up);
+        private void btnNext_Click(object sender, EventArgs e) => Navigate(Navigators.Down);
+        private void btnEnd_Click(object sender, EventArgs e) => Navigate(Navigators.End);
 
         private void tbSaleQuery_KeyDown(object sender, KeyEventArgs e)
         {
@@ -863,7 +941,7 @@ namespace ERP
                 }
                 catch (Exception ex)
                 {
-                    MessageBox.Show("Error deleting sale return: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Error deleting purchase: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             }
         }
@@ -906,7 +984,7 @@ namespace ERP
 
         private void btnClose_Click(object sender, EventArgs e)
         {
-            this.Close();
+            Close();
         }
 
         private void tbDetail_Click(object sender, EventArgs e)
@@ -917,58 +995,34 @@ namespace ERP
         {
         }
 
-        private void btnPreview_Click(object sender, EventArgs e)
+        private void txtBarcode_TextChanged(object sender, EventArgs e)
         {
-            Print(false);
         }
 
-        private void Print(bool IsDirect)
+        private void btnPreview_Click(object sender, EventArgs e)
         {
             Cursor.Current = Cursors.WaitCursor;
             if (txtVoucherNo.Text != "")
             {
-                DataSet ds = ReportQuery.SaleRetBill(txtVoucherNo.Text.Substring(3));
+                DataSet ds = ReportQuery.PurchaseBill(txtVoucherNo.Text.Substring(3));
                 if (ds.Tables[1].Rows.Count > 0)
                 {
-                    Reports.rpt_SaleInvoice rpt = new Reports.rpt_SaleInvoice();
+                    frmReportView frm = new frmReportView();
+                    Reports.rpt_PurchaseBill rpt = new Reports.rpt_PurchaseBill();
 
                     rpt.SetDataSource(ds.Tables[0]);
-                    rpt.SetParameterValue("@CompanyName", CompanyInfo.CompanyName);
-                    rpt.SetParameterValue("@Address", CompanyInfo.Address);
-                    rpt.SetParameterValue("@ContactHeader", CompanyInfo.ContactHead);
+                    rpt.SetParameterValue("@HeaderLocation", Application.StartupPath + "\\rptHeader.jpg");
                     rpt.SetParameterValue("@Account", (string)ds.Tables[1].Rows[0]["Title"]);
                     rpt.SetParameterValue("@VoucherNo", txtVoucherNo.Text);
                     rpt.SetParameterValue("@VDate", (DateTime)ds.Tables[1].Rows[0]["vdate"]);
                     rpt.SetParameterValue("@Amount", ds.Tables[1].Rows[0]["Amount"]);
                     rpt.SetParameterValue("@Discount", ds.Tables[1].Rows[0]["Discount"]);
                     rpt.SetParameterValue("@NetAmount", ds.Tables[1].Rows[0]["NetAmount"]);
-                    rpt.SetParameterValue("@Remarks", (string)ds.Tables[1].Rows[0]["descr"]);
-                    rpt.SetParameterValue("@Balance", (decimal)ds.Tables[1].Rows[0]["Balance"]);
                     Cursor.Current = Cursors.Default;
-                    if (IsDirect)
-                    {
-                        rpt.PrintOptions.PrinterName = ConfigInfo.ThermalPrinterName;
-                        rpt.PrintToPrinter(1, true, 0, 0);
-                    }
-                    else
-                    {
-                        frmReportView frm = new frmReportView();
-                        frm.rptViewer.ReportSource = rpt;
-                        frm.ShowDialog();
-                    }
+                    frm.rptViewer.ReportSource = rpt;
+                    frm.ShowDialog();
                 }
             }
-        }
-
-        private void txtCashReceipt_TextChanged(object sender, EventArgs e)
-        {
-            txtBalance.Text = (txtTotAmount.Value - (txtCashReceipt.Value - txtCashBack.Value)).ToString("N2");
-        }
-
-        private void txtTotAmount_TextChanged(object sender, EventArgs e)
-        {
-            txtCashBack.Text = (txtCashReceipt.Value - txtTotAmount.Value <= 0 ? 0 : txtCashReceipt.Value - txtTotAmount.Value).ToString("N2");
-            txtBalance.Text = (txtTotAmount.Value - (txtCashReceipt.Value - txtCashBack.Value)).ToString("N2");
         }
     }
 }

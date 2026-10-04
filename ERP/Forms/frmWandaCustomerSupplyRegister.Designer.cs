@@ -22,6 +22,7 @@ namespace ERP
             System.Windows.Forms.DataGridViewCellStyle colVoucherStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colQtyStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colSecQtyStyle = new System.Windows.Forms.DataGridViewCellStyle();
+            System.Windows.Forms.DataGridViewCellStyle colPackQtyStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colRateStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colSecRateStyle = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle colDiscountStyle = new System.Windows.Forms.DataGridViewCellStyle();
@@ -78,6 +79,7 @@ namespace ERP
             this.colItem = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colSecQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colPackQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colSecRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colDiscount = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -131,7 +133,7 @@ namespace ERP
             this.lblTitle.Name = "lblTitle";
             this.lblTitle.Size = new System.Drawing.Size(355, 25);
             this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "Wanda Supply Register (Weight & Bags)";
+            this.lblTitle.Text = "Customer Supply Register";
 
             // 
             // lblSubtitle
@@ -661,6 +663,7 @@ namespace ERP
             this.colItem,
             this.colQty,
             this.colSecQty,
+            this.colPackQty,
             this.colRate,
             this.colSecRate,
             this.colDiscount,
@@ -713,7 +716,7 @@ namespace ERP
             // colItem
             // 
             this.colItem.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.colItem.HeaderText = "Wanda Product Description";
+            this.colItem.HeaderText = "Product Description";
             this.colItem.MinimumWidth = 140;
             this.colItem.Name = "colItem";
             this.colItem.ReadOnly = true;
@@ -738,6 +741,16 @@ namespace ERP
             this.colSecQty.HeaderText = "Bags";
             this.colSecQty.Name = "colSecQty";
             this.colSecQty.Width = 75;
+
+            // 
+            // colPackQty
+            // 
+            colPackQtyStyle.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            colPackQtyStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
+            this.colPackQty.DefaultCellStyle = colPackQtyStyle;
+            this.colPackQty.HeaderText = "Pack (Kg/b)";
+            this.colPackQty.Name = "colPackQty";
+            this.colPackQty.Width = 80;
 
             // 
             // colRate
@@ -862,7 +875,7 @@ namespace ERP
             this.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.Name = "frmWandaCustomerSupplyRegister";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Wanda Supply Register (Feed & Dual-Unit Sales)";
+            this.Text = "Customer Supply Register";
             this.pnlHeader.ResumeLayout(false);
             this.pnlHeader.PerformLayout();
             this.pnlFilters.ResumeLayout(false);
@@ -934,6 +947,7 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn colItem;
         private System.Windows.Forms.DataGridViewTextBoxColumn colQty;
         private System.Windows.Forms.DataGridViewTextBoxColumn colSecQty;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colPackQty;
         private System.Windows.Forms.DataGridViewTextBoxColumn colRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn colSecRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn colDiscount;

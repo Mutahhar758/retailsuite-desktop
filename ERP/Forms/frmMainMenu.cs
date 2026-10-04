@@ -208,11 +208,25 @@ namespace ERP
 
 
 
+        private void OpenSaleForm()
+        {
+            if (ApiSession.HasVariablePackFeature)
+            {
+                frmWandaSale frm = new frmWandaSale();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+            else
+            {
+                frmNormalSale frm = new frmNormalSale();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+        }
+
         private void saleOrderToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            frmSale frm = new frmSale();
-            frm.MdiParent = this;
-            frm.Show();
+            OpenSaleForm();
         }
 
 
@@ -355,11 +369,25 @@ namespace ERP
             viewer.Show();
         }
 
+        private void OpenPurchaseForm()
+        {
+            if (ApiSession.HasVariablePackFeature)
+            {
+                frmWandaPurchase frm = new frmWandaPurchase();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+            else
+            {
+                frmNormalPurchase frm = new frmNormalPurchase();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+        }
+
         private void purchaseToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            frmPurchase frm = new frmPurchase();
-            frm.MdiParent = this;
-            frm.Show();
+            OpenPurchaseForm();
         }
 
         private void stockBalanceToolStripMenuItem_Click(object sender, EventArgs e)
@@ -397,25 +425,11 @@ namespace ERP
             }
             else if (e.KeyCode == Keys.F12)
             {
-                if ((Application.OpenForms["frmSale"]) != null)
-                    Application.OpenForms["frmSale"].Focus();
-                else
-                {
-                    frmSale frm = new frmSale();
-                    frm.MdiParent = this;
-                    frm.Show();
-                }
+                OpenSaleForm();
             }
             else if (e.KeyCode == Keys.F11)
             {
-                if ((Application.OpenForms["frmPurchase"]) != null)
-                    Application.OpenForms["frmPurchase"].Focus();
-                else
-                {
-                    frmPurchase frm = new frmPurchase();
-                    frm.MdiParent = this;
-                    frm.Show();
-                }
+                OpenPurchaseForm();
             }
             else if (e.KeyCode == Keys.F8)
             {
@@ -558,16 +572,12 @@ namespace ERP
 
         private void pictureBox1_Click(object sender, EventArgs e)
         {
-            frmSale frm = new frmSale();
-            frm.MdiParent = this;
-            frm.Show();
+            OpenSaleForm();
         }
 
         private void pictureBox3_Click(object sender, EventArgs e)
         {
-            frmPurchase frm = new frmPurchase();
-            frm.MdiParent = this;
-            frm.Show();
+            OpenPurchaseForm();
         }
 
         private void pictureBox2_Click(object sender, EventArgs e)
@@ -612,9 +622,18 @@ namespace ERP
 
         private void stockAdjustmentToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            frmStockAdjustment frm = new frmStockAdjustment();
-            frm.MdiParent = this;
-            frm.Show();
+            if (ApiSession.HasVariablePackFeature)
+            {
+                frmWandaStockAdjustment frm = new frmWandaStockAdjustment();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+            else
+            {
+                frmNormalStockAdjustment frm = new frmNormalStockAdjustment();
+                frm.MdiParent = this;
+                frm.Show();
+            }
         }
 
 
@@ -645,16 +664,34 @@ namespace ERP
 
         private void saleReturnToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            frmSaleReturn frm = new frmSaleReturn();
-            frm.MdiParent = this;
-            frm.Show();
+            if (ApiSession.HasVariablePackFeature)
+            {
+                frmWandaSaleReturn frm = new frmWandaSaleReturn();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+            else
+            {
+                frmNormalSaleReturn frm = new frmNormalSaleReturn();
+                frm.MdiParent = this;
+                frm.Show();
+            }
         }
 
         private void purchaseReturnToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            frmPurchaseReturn frm = new frmPurchaseReturn();
-            frm.MdiParent = this;
-            frm.Show();
+            if (ApiSession.HasVariablePackFeature)
+            {
+                frmWandaPurchaseReturn frm = new frmWandaPurchaseReturn();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+            else
+            {
+                frmNormalPurchaseReturn frm = new frmNormalPurchaseReturn();
+                frm.MdiParent = this;
+                frm.Show();
+            }
         }
 
         private void incomeSummaryToolStripMenuItem_Click(object sender, EventArgs e)
@@ -747,9 +784,18 @@ namespace ERP
 
         private void toolStripMenuItem1_Click(object sender, EventArgs e)
         {
-            frmSaleSupply frm = new frmSaleSupply();
-            frm.MdiParent = this;
-            frm.Show();
+            if (ApiSession.HasVariablePackFeature)
+            {
+                frmWandaSaleSupply frm = new frmWandaSaleSupply();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+            else
+            {
+                frmNormalSaleSupply frm = new frmNormalSaleSupply();
+                frm.MdiParent = this;
+                frm.Show();
+            }
         }
 
         private void customerSupplyRegisterToolStripMenuItem_Click(object sender, EventArgs e)

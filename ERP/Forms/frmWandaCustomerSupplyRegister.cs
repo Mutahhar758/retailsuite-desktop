@@ -252,6 +252,7 @@ namespace ERP
                 row.Cells["colItem"].Value = !string.IsNullOrWhiteSpace(m.ItemTitle) ? m.ItemTitle : m.ItemId;
                 row.Cells["colQty"].Value = m.Qty.ToString("N2");
                 row.Cells["colSecQty"].Value = m.SecQty.ToString("N2");
+                row.Cells["colPackQty"].Value = m.PackQty.ToString("N2");
                 row.Cells["colRate"].Value = m.Rate.ToString("N2");
                 row.Cells["colSecRate"].Value = m.SecRate.ToString("N2");
                 row.Cells["colDiscount"].Value = m.Discount.ToString("N2");
@@ -280,21 +281,51 @@ namespace ERP
             if (colName == "colQty")
             {
                 model.Qty = ParseDecimal(row.Cells["colQty"].Value);
+                if (model.SecQty > 0)
+                    model.PackQty = Math.Round(model.Qty / model.SecQty, 2);
+                else if (model.PackQty > 0)
+                    model.SecQty = Math.Round(model.Qty / model.PackQty, 2);
                 model.IsDirty = true;
             }
             else if (colName == "colSecQty")
             {
                 model.SecQty = ParseDecimal(row.Cells["colSecQty"].Value);
+                if (model.PackQty > 0)
+                    model.Qty = Math.Round(model.SecQty * model.PackQty, 2);
+                else if (model.Qty > 0)
+                    model.PackQty = Math.Round(model.Qty / model.SecQty, 2);
+                model.IsDirty = true;
+            }
+            else if (colName == "colPackQty")
+            {
+                model.PackQty = ParseDecimal(row.Cells["colPackQty"].Value);
+                model.Packing = model.PackQty;
+                if (model.SecQty > 0)
+                    model.Qty = Math.Round(model.SecQty * model.PackQty, 2);
+                else if (model.Qty > 0)
+                    model.SecQty = Math.Round(model.Qty / model.PackQty, 2);
+
+                if (model.Packing > 0)
+                {
+                    if (model.SecRate > 0)
+                        model.Rate = Math.Round(model.SecRate / model.Packing, 4);
+                    else if (model.Rate > 0)
+                        model.SecRate = Math.Round(model.Rate * model.Packing, 4);
+                }
                 model.IsDirty = true;
             }
             else if (colName == "colRate")
             {
                 model.Rate = ParseDecimal(row.Cells["colRate"].Value);
+                if (model.Packing > 0)
+                    model.SecRate = Math.Round(model.Rate * model.Packing, 4);
                 model.IsDirty = true;
             }
             else if (colName == "colSecRate")
             {
                 model.SecRate = ParseDecimal(row.Cells["colSecRate"].Value);
+                if (model.Packing > 0)
+                    model.Rate = Math.Round(model.SecRate / model.Packing, 4);
                 model.IsDirty = true;
             }
             else if (colName == "colDiscount")
@@ -312,6 +343,13 @@ namespace ERP
             model.Amount = Math.Round((model.Qty * (model.Rate - model.Discount)) + model.AddLess, 2);
 
             _isPopulatingGrid = true;
+            row.Cells["colQty"].Value = model.Qty.ToString("N2");
+            row.Cells["colSecQty"].Value = model.SecQty.ToString("N2");
+            row.Cells["colPackQty"].Value = model.PackQty.ToString("N2");
+            row.Cells["colRate"].Value = model.Rate.ToString("N2");
+            row.Cells["colSecRate"].Value = model.SecRate.ToString("N2");
+            row.Cells["colDiscount"].Value = model.Discount.ToString("N2");
+            row.Cells["colAddLess"].Value = model.AddLess.ToString("N2");
             row.Cells["colAmount"].Value = model.Amount.ToString("N2");
             _isPopulatingGrid = false;
 
@@ -417,7 +455,9 @@ namespace ERP
                     AddLess = model.AddLess,
                     SecQty = model.SecQty,
                     SecRate = model.SecRate,
-                    SecUnit = "Bags"
+                    SecUnit = "Bags",
+                    QtyInPack = model.PackQty,
+                    Packing = model.Packing
                 });
 
                 model.IsDirty = false;
@@ -466,7 +506,9 @@ namespace ERP
                         AddLess = m.AddLess,
                         SecQty = m.SecQty,
                         SecRate = m.SecRate,
-                        SecUnit = "Bags"
+                        SecUnit = "Bags",
+                        QtyInPack = m.PackQty,
+                        Packing = m.Packing
                     }
                 }).ToList();
 
@@ -590,6 +632,8 @@ namespace ERP
             public decimal SecQty { get; set; }
             public decimal Rate { get; set; }
             public decimal SecRate { get; set; }
+            public decimal PackQty { get; set; }
+            public decimal Packing { get; set; }
             public decimal Discount { get; set; }
             public decimal AddLess { get; set; }
             public decimal Amount { get; set; }
@@ -607,6 +651,8 @@ namespace ERP
                 SecQty = dto.SecQty ?? 0;
                 Rate = dto.Rate;
                 SecRate = dto.SecRate ?? 0;
+                PackQty = dto.QtyInPack ?? (dto.SecQty.HasValue && dto.SecQty.Value > 0 ? Math.Round(dto.Qty / dto.SecQty.Value, 2) : 50);
+                Packing = dto.Packing ?? PackQty;
                 Discount = dto.Discount;
                 AddLess = dto.AddLess;
                 Amount = dto.Amount;
@@ -648,7 +694,7 @@ namespace ERP
                 this.Controls.Add(dtpDate);
                 y += 34;
 
-                AddLabel("Wanda Product:", 16, y);
+                AddLabel("Product:", 16, y);
                 cmbItem = new ComboBox { Location = new Point(130, y), Width = 280, DropDownStyle = ComboBoxStyle.DropDownList };
                 cmbItem.DisplayMember = "Title";
                 cmbItem.ValueMember = "Id";
@@ -800,6 +846,12 @@ namespace ERP
                     decimal secQty = Parse(txtSecQty);
                     decimal secRate = Parse(txtSecRate);
 
+                    decimal defaultPack = 50;
+                    if (cmbItem.SelectedItem is InventoryItemDto itemObj && itemObj.QtyInPack.HasValue && itemObj.QtyInPack.Value > 0)
+                        defaultPack = itemObj.QtyInPack.Value;
+                    else if (secQty > 0)
+                        defaultPack = Math.Round(qty / secQty, 2);
+
                     var existingVouchers = await _apiService.GetListAsync(dateStr, dateStr, itemId);
 
                     if (existingVouchers != null && existingVouchers.Count > 0)
@@ -818,7 +870,9 @@ namespace ERP
                             AddLess = d.AddLess,
                             SecQty = d.SecQty,
                             SecRate = d.SecRate,
-                            SecUnit = "Bags"
+                            SecUnit = "Bags",
+                            QtyInPack = d.QtyInPack,
+                            Packing = d.Packing
                         }).ToList();
 
                         updatedLines.Add(new SaleSupplyLineApiRequest
@@ -831,7 +885,9 @@ namespace ERP
                             AddLess = addLess,
                             SecQty = secQty,
                             SecRate = secRate,
-                            SecUnit = "Bags"
+                            SecUnit = "Bags",
+                            QtyInPack = defaultPack,
+                            Packing = defaultPack
                         });
 
                         await _apiService.UpdateAsync(targetVoucher.VoucherNo, new SaleSupplyUpdateApiRequest
@@ -861,7 +917,9 @@ namespace ERP
                                     AddLess = addLess,
                                     SecQty = secQty,
                                     SecRate = secRate,
-                                    SecUnit = "Bags"
+                                    SecUnit = "Bags",
+                                    QtyInPack = defaultPack,
+                                    Packing = defaultPack
                                 }
                             }
                         });

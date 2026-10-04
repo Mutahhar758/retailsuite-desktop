@@ -291,17 +291,17 @@
     <Compile Include="Forms\frmHRInfo.Designer.cs">
       <DependentUpon>frmHRInfo.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\frmPurchaseReturn.cs">
+    <Compile Include="Forms\frmNormalSaleSupply.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\frmPurchaseReturn.designer.cs">
-      <DependentUpon>frmPurchaseReturn.cs</DependentUpon>
+    <Compile Include="Forms\frmNormalSaleSupply.designer.cs">
+      <DependentUpon>frmNormalSaleSupply.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\frmSaleSupply.cs">
+    <Compile Include="Forms\frmWandaSaleSupply.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Forms\frmSaleSupply.designer.cs">
-      <DependentUpon>frmSaleSupply.cs</DependentUpon>
+    <Compile Include="Forms\frmWandaSaleSupply.designer.cs">
+      <DependentUpon>frmWandaSaleSupply.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\frmNormalCustomerSupplyRegister.cs">
       <SubType>Form</SubType>
@@ -315,29 +315,77 @@
     <Compile Include="Forms\frmWandaCustomerSupplyRegister.Designer.cs">
       <DependentUpon>frmWandaCustomerSupplyRegister.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\frmNormalSale.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmNormalSale.designer.cs">
+      <DependentUpon>frmNormalSale.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmWandaSale.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmWandaSale.designer.cs">
+      <DependentUpon>frmWandaSale.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmNormalPurchase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmNormalPurchase.designer.cs">
+      <DependentUpon>frmNormalPurchase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmWandaPurchase.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmWandaPurchase.designer.cs">
+      <DependentUpon>frmWandaPurchase.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmNormalSaleReturn.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmNormalSaleReturn.designer.cs">
+      <DependentUpon>frmNormalSaleReturn.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmWandaSaleReturn.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmWandaSaleReturn.designer.cs">
+      <DependentUpon>frmWandaSaleReturn.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmNormalPurchaseReturn.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmNormalPurchaseReturn.designer.cs">
+      <DependentUpon>frmNormalPurchaseReturn.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmWandaPurchaseReturn.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmWandaPurchaseReturn.designer.cs">
+      <DependentUpon>frmWandaPurchaseReturn.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmNormalStockAdjustment.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmNormalStockAdjustment.designer.cs">
+      <DependentUpon>frmNormalStockAdjustment.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmWandaStockAdjustment.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmWandaStockAdjustment.designer.cs">
+      <DependentUpon>frmWandaStockAdjustment.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\frmSupplyOrder.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\frmSupplyOrder.Designer.cs">
       <DependentUpon>frmSupplyOrder.cs</DependentUpon>
     </Compile>
-    <Compile Include="Forms\frmSaleReturn.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\frmSaleReturn.designer.cs">
-      <DependentUpon>frmSaleReturn.cs</DependentUpon>
-    </Compile>
     <Compile Include="Forms\frmChangepassword.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\frmChangepassword.Designer.cs">
       <DependentUpon>frmChangepassword.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Forms\frmStockAdjustment.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\frmStockAdjustment.designer.cs">
-      <DependentUpon>frmStockAdjustment.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\frmAuthentication.cs">
       <SubType>Form</SubType>
@@ -356,12 +404,6 @@
     </Compile>
     <Compile Include="Forms\frmConfiguration.Designer.cs">
       <DependentUpon>frmConfiguration.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Forms\frmPurchase.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\frmPurchase.designer.cs">
-      <DependentUpon>frmPurchase.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\frmBankReconcilation.cs">
       <SubType>Form</SubType>
@@ -422,12 +464,6 @@
     </Compile>
     <Compile Include="Forms\frmReportView.Designer.cs">
       <DependentUpon>frmReportView.cs</DependentUpon>
-    </Compile>
-    <Compile Include="Forms\frmSale.cs">
-      <SubType>Form</SubType>
-    </Compile>
-    <Compile Include="Forms\frmSale.designer.cs">
-      <DependentUpon>frmSale.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\frmAccountAddEdit.cs">
       <SubType>Form</SubType>
@@ -741,20 +777,44 @@
     <EmbeddedResource Include="Forms\frmHRInfo.resx">
       <DependentUpon>frmHRInfo.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\frmPurchaseReturn.resx">
-      <DependentUpon>frmPurchaseReturn.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\frmNormalSaleSupply.resx">
+      <DependentUpon>frmNormalSaleSupply.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\frmSaleSupply.resx">
-      <DependentUpon>frmSaleSupply.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\frmWandaSaleSupply.resx">
+      <DependentUpon>frmWandaSaleSupply.cs</DependentUpon>
     </EmbeddedResource>
-    <EmbeddedResource Include="Forms\frmSaleReturn.resx">
-      <DependentUpon>frmSaleReturn.cs</DependentUpon>
+    <EmbeddedResource Include="Forms\frmNormalSale.resx">
+      <DependentUpon>frmNormalSale.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmWandaSale.resx">
+      <DependentUpon>frmWandaSale.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmNormalPurchase.resx">
+      <DependentUpon>frmNormalPurchase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmWandaPurchase.resx">
+      <DependentUpon>frmWandaPurchase.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmNormalSaleReturn.resx">
+      <DependentUpon>frmNormalSaleReturn.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmWandaSaleReturn.resx">
+      <DependentUpon>frmWandaSaleReturn.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmNormalPurchaseReturn.resx">
+      <DependentUpon>frmNormalPurchaseReturn.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmWandaPurchaseReturn.resx">
+      <DependentUpon>frmWandaPurchaseReturn.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmNormalStockAdjustment.resx">
+      <DependentUpon>frmNormalStockAdjustment.cs</DependentUpon>
+    </EmbeddedResource>
+    <EmbeddedResource Include="Forms\frmWandaStockAdjustment.resx">
+      <DependentUpon>frmWandaStockAdjustment.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmChangepassword.resx">
       <DependentUpon>frmChangepassword.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\frmStockAdjustment.resx">
-      <DependentUpon>frmStockAdjustment.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmAuthentication.resx">
       <DependentUpon>frmAuthentication.cs</DependentUpon>
@@ -764,9 +824,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmConfiguration.resx">
       <DependentUpon>frmConfiguration.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\frmPurchase.resx">
-      <DependentUpon>frmPurchase.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmBankReconcilation.resx">
       <DependentUpon>frmBankReconcilation.cs</DependentUpon>
@@ -797,9 +854,6 @@
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmReportView.resx">
       <DependentUpon>frmReportView.cs</DependentUpon>
-    </EmbeddedResource>
-    <EmbeddedResource Include="Forms\frmSale.resx">
-      <DependentUpon>frmSale.cs</DependentUpon>
     </EmbeddedResource>
     <EmbeddedResource Include="Forms\frmAccountAddEdit.resx">
       <DependentUpon>frmAccountAddEdit.cs</DependentUpon>

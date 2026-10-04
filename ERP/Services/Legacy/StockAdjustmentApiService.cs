@@ -165,6 +165,12 @@ namespace ERP.Services.Legacy
         [JsonProperty("secUnit")]
         public string SecUnit { get; set; }
 
+        [JsonProperty("qtyInPack")]
+        public decimal? QtyInPack { get; set; }
+
+        [JsonProperty("packing")]
+        public decimal? Packing { get; set; }
+
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
 
@@ -239,5 +245,11 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("secUnit")]
         public string SecUnit { get; set; }
+
+        [JsonProperty("qtyInPack")]
+        public decimal? QtyInPack { get; set; }
+
+        [JsonProperty("packing")]
+        public decimal? Packing { get; set; }
     }
 }

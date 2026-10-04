@@ -1,6 +1,6 @@
-namespace ERP
+﻿namespace ERP
 {
-    partial class frmStockAdjustment
+    partial class frmNormalStockAdjustment
     {
         /// <summary>
         /// Required designer variable.
@@ -1051,7 +1051,7 @@ namespace ERP
             this.dataGridViewTextBoxColumn12.Name = "dataGridViewTextBoxColumn12";
             this.dataGridViewTextBoxColumn12.ReadOnly = true;
             // 
-            // frmStockAdjustment
+            // frmNormalStockAdjustment
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
@@ -1059,7 +1059,7 @@ namespace ERP
             this.Controls.Add(this.label17);
             this.Controls.Add(this.tbSaleQuery);
             this.KeyPreview = true;
-            this.Name = "frmStockAdjustment";
+            this.Name = "frmNormalStockAdjustment";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
             this.Text = "Sale";
             this.Load += new System.EventHandler(this.frmPurchase_Load);
@@ -1165,3 +1165,4 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn clnStatus;
     }
 }
+

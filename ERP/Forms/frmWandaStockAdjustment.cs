@@ -10,7 +10,7 @@ using ERP.Services.Legacy;
 
 namespace ERP
 {
-    public partial class frmStockAdjustment : Form
+    public partial class frmWandaStockAdjustment : Form
     {
         private readonly StockAdjustmentApiService _apiService;
         private readonly NarrationApiService _narrationApiService;
@@ -32,7 +32,7 @@ namespace ERP
 
         enum Navigators { Up, Down, Home, End }
 
-        public frmStockAdjustment()
+        public frmWandaStockAdjustment()
         {
             InitializeComponent();
             _apiService = new StockAdjustmentApiService();
@@ -57,6 +57,7 @@ namespace ERP
             dtItems.Columns.Add("PrimaryUnit", typeof(string));
             dtItems.Columns.Add("SecondaryUnit", typeof(string));
             dtItems.Columns.Add("DefaultUnit", typeof(string));
+            dtItems.Columns.Add("QtyInPack", typeof(decimal));
 
             dtUnits.Columns.Add("Code", typeof(string));
             dtUnits.Columns.Add("Title", typeof(string));
@@ -78,7 +79,7 @@ namespace ERP
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
-                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit);
+                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.QtyInPack);
 
             dtUnits.Rows.Clear();
             foreach (var u in unitsTask.Result)
@@ -156,11 +157,17 @@ namespace ERP
                 decimal secQtyOut = 0;
                 decimal secRate = 0;
                 string secUnit = null;
+                decimal? qtyInPack = null;
+                decimal? packing = null;
                 if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQtyIn"))
                 {
                     secQtyIn = ParseDecimal(row.Cells["clnSecQtyIn"].Value);
                     secQtyOut = ParseDecimal(row.Cells["clnSecQtyOut"].Value);
                     secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
+                    if (dgvSale.Columns.Contains("clnPackQty"))
+                        qtyInPack = ParseDecimal(row.Cells["clnPackQty"].Value);
+                    if (dgvSale.Columns.Contains("clnPacking"))
+                        packing = ParseDecimal(row.Cells["clnPacking"].Value);
                     
                     string itemId = Convert.ToString(row.Cells[clnItemNo.Index].Value);
                     DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
@@ -181,7 +188,9 @@ namespace ERP
                     SecQtyIn = secQtyIn,
                     SecQtyOut = secQtyOut,
                     SecRate = secRate,
-                    SecUnit = secUnit
+                    SecUnit = secUnit,
+                    QtyInPack = qtyInPack,
+                    Packing = packing
                 });
             }
 
@@ -317,6 +326,18 @@ namespace ERP
                         dgvSale["clnSecQtyIn", ind].Value = (line.SecQtyIn ?? 0).ToString("0.##");
                         dgvSale["clnSecQtyOut", ind].Value = (line.SecQtyOut ?? 0).ToString("0.##");
                         dgvSale["clnSecRate", ind].Value = (line.SecRate ?? 0).ToString("0.##");
+                        if (dgvSale.Columns.Contains("clnPackQty"))
+                        {
+                            decimal netKg = line.QtyIn - line.QtyOut;
+                            decimal netBag = (line.SecQtyIn ?? 0) - (line.SecQtyOut ?? 0);
+                            decimal packVal = line.QtyInPack ?? (netKg > 0 && netBag > 0 ? Math.Round(netKg / netBag, 2) : 50);
+                            dgvSale["clnPackQty", ind].Value = packVal.ToString("0.##");
+                        }
+                        if (dgvSale.Columns.Contains("clnPacking"))
+                        {
+                            decimal packingVal = line.Packing ?? line.QtyInPack ?? 50;
+                            dgvSale["clnPacking", ind].Value = packingVal.ToString("0.##");
+                        }
                     }
                 }
             }
@@ -344,52 +365,71 @@ namespace ERP
         private void SetupSecondaryQtyColumns()
         {
             clnUnit.Visible = false;
+            clnQtyIn.HeaderText = "Weight In (Kg)";
+            clnQtyOut.HeaderText = "Weight Out (Kg)";
+            clnRate.HeaderText = "Rate (Rs/Kg)";
 
-            if (ApiSession.HasSecondaryQty)
+            if (!dgvSale.Columns.Contains("clnSecQtyIn"))
             {
-                clnQtyIn.HeaderText = "Single Qty In";
-                clnQtyOut.HeaderText = "Single Qty Out";
-                clnRate.HeaderText = "Single Rate";
-
-                if (!dgvSale.Columns.Contains("clnSecQtyIn"))
+                var colSecQtyIn = new DataGridViewTextBoxColumn
                 {
-                    var colSecQtyIn = new DataGridViewTextBoxColumn
-                    {
-                        Name = "clnSecQtyIn",
-                        HeaderText = "Pack Qty In",
-                        Width = 80
-                    };
-                    var colSecQtyOut = new DataGridViewTextBoxColumn
-                    {
-                        Name = "clnSecQtyOut",
-                        HeaderText = "Pack Qty Out",
-                        Width = 80
-                    };
-                    var colSecRate = new DataGridViewTextBoxColumn
-                    {
-                        Name = "clnSecRate",
-                        HeaderText = "Pack Rate",
-                        Width = 80
-                    };
-                    int insertIndex = clnRate.Index;
-                    dgvSale.Columns.Insert(insertIndex, colSecQtyIn);
-                    dgvSale.Columns.Insert(insertIndex + 1, colSecQtyOut);
-                    dgvSale.Columns.Insert(insertIndex + 2, colSecRate);
-                }
-            }
-            else
-            {
-                clnQtyIn.HeaderText = "Qty In";
-                clnQtyOut.HeaderText = "Qty Out";
-                clnRate.HeaderText = "Rate";
+                    Name = "clnSecQtyIn",
+                    HeaderText = "Bags In",
+                    Width = 75,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
+                var colSecQtyOut = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnSecQtyOut",
+                    HeaderText = "Bags Out",
+                    Width = 75,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
+                var colPackQty = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnPackQty",
+                    HeaderText = "Pack Qty",
+                    Width = 75,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
+                var colPacking = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnPacking",
+                    HeaderText = "Packing",
+                    Width = 75,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
+                var colSecRate = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnSecRate",
+                    HeaderText = "Bag Rate",
+                    Width = 80,
+                    DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
 
-                if (dgvSale.Columns.Contains("clnSecQtyIn"))
-                    dgvSale.Columns.Remove("clnSecQtyIn");
-                if (dgvSale.Columns.Contains("clnSecQtyOut"))
-                    dgvSale.Columns.Remove("clnSecQtyOut");
-                if (dgvSale.Columns.Contains("clnSecRate"))
-                    dgvSale.Columns.Remove("clnSecRate");
+                dgvSale.Columns.Add(colSecQtyIn);
+                dgvSale.Columns.Add(colSecQtyOut);
+                dgvSale.Columns.Add(colPackQty);
+                dgvSale.Columns.Add(colPacking);
+                dgvSale.Columns.Add(colSecRate);
             }
+
+            int dIdx = 0;
+            clnSeq.DisplayIndex = dIdx++;
+            clnItemKey.DisplayIndex = dIdx++;
+            clnCatagory.DisplayIndex = dIdx++;
+            clnItemNo.DisplayIndex = dIdx++;
+            clnUnit.DisplayIndex = dIdx++;
+            clnQtyIn.DisplayIndex = dIdx++;
+            clnQtyOut.DisplayIndex = dIdx++;
+            if (dgvSale.Columns.Contains("clnSecQtyIn")) dgvSale.Columns["clnSecQtyIn"].DisplayIndex = dIdx++;
+            if (dgvSale.Columns.Contains("clnSecQtyOut")) dgvSale.Columns["clnSecQtyOut"].DisplayIndex = dIdx++;
+            if (dgvSale.Columns.Contains("clnPackQty")) dgvSale.Columns["clnPackQty"].DisplayIndex = dIdx++;
+            if (dgvSale.Columns.Contains("clnPacking")) dgvSale.Columns["clnPacking"].DisplayIndex = dIdx++;
+            clnRate.DisplayIndex = dIdx++;
+            if (dgvSale.Columns.Contains("clnSecRate")) dgvSale.Columns["clnSecRate"].DisplayIndex = dIdx++;
+            clnAmount.DisplayIndex = dIdx++;
+            if (clnStatus != null) clnStatus.DisplayIndex = dIdx++;
         }
 
         private async void frmPurchase_Load(object sender, EventArgs e)
@@ -469,6 +509,8 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQtyOut.Index ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQtyIn" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQtyOut" ||
+                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnPackQty" ||
+                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnPacking" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
                 TextBox tbRate = e.Control as TextBox;
@@ -526,6 +568,8 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQtyOut.Index ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQtyIn" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQtyOut" ||
+                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnPackQty" ||
+                dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnPacking" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
                 if ((sender as TextBox).SelectedText.Length > 0)
@@ -564,13 +608,31 @@ namespace ERP
         private void SetcmbUnitSource(DataRowView dr, int rowInd)
         {
             if (dr == null) return;
-            dgvSale[clnRate.Index, rowInd].Value = dr["PriRate"]?.ToString() ?? "0";
+            decimal priRate = dr["PriRate"] != DBNull.Value ? Convert.ToDecimal(dr["PriRate"]) : 0;
+            decimal secRate = dr["SecRate"] != DBNull.Value ? Convert.ToDecimal(dr["SecRate"]) : 0;
+            decimal defaultPacking = 0;
+            if (dr.Row.Table.Columns.Contains("QtyInPack") && dr["QtyInPack"] != DBNull.Value)
+                defaultPacking = Convert.ToDecimal(dr["QtyInPack"]);
+            if (defaultPacking == 0) defaultPacking = 50;
+
+            if (secRate == 0 && defaultPacking > 0)
+                secRate = priRate * defaultPacking;
+
+            dgvSale[clnRate.Index, rowInd].Value = priRate.ToString("0.####");
 
             if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQtyIn"))
             {
                 dgvSale["clnSecQtyIn", rowInd].Value = "0";
                 dgvSale["clnSecQtyOut", rowInd].Value = "0";
-                dgvSale["clnSecRate", rowInd].Value = dr["SecRate"]?.ToString() ?? "0";
+                dgvSale["clnSecRate", rowInd].Value = secRate.ToString("0.####");
+                if (dgvSale.Columns.Contains("clnPacking"))
+                {
+                    dgvSale["clnPacking", rowInd].Value = defaultPacking.ToString("0.##");
+                }
+                if (dgvSale.Columns.Contains("clnPackQty"))
+                {
+                    dgvSale["clnPackQty", rowInd].Value = defaultPacking.ToString("0.##");
+                }
             }
         }
 
@@ -609,31 +671,90 @@ namespace ERP
             resetRow = true;
             currentRow = e.RowIndex;
 
+            string colName = e.ColumnIndex >= 0 && e.ColumnIndex < dgvSale.Columns.Count 
+                ? dgvSale.Columns[e.ColumnIndex].Name 
+                : string.Empty;
+
             decimal qtyIn = ParseDecimal(dgvSale[clnQtyIn.Index, e.RowIndex].Value);
             decimal qtyOut = ParseDecimal(dgvSale[clnQtyOut.Index, e.RowIndex].Value);
+            decimal secQtyIn = dgvSale.Columns.Contains("clnSecQtyIn") ? ParseDecimal(dgvSale["clnSecQtyIn", e.RowIndex].Value) : 0;
+            decimal secQtyOut = dgvSale.Columns.Contains("clnSecQtyOut") ? ParseDecimal(dgvSale["clnSecQtyOut", e.RowIndex].Value) : 0;
+            decimal packQty = dgvSale.Columns.Contains("clnPackQty") ? ParseDecimal(dgvSale["clnPackQty", e.RowIndex].Value) : 0;
+            decimal packing = dgvSale.Columns.Contains("clnPacking") ? ParseDecimal(dgvSale["clnPacking", e.RowIndex].Value) : 0;
             decimal rate = ParseDecimal(dgvSale[clnRate.Index, e.RowIndex].Value);
+            decimal secRate = dgvSale.Columns.Contains("clnSecRate") ? ParseDecimal(dgvSale["clnSecRate", e.RowIndex].Value) : 0;
 
-            decimal secQtyIn = 0;
-            decimal secQtyOut = 0;
-            decimal secRate = 0;
-            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQtyIn"))
+            if (e.ColumnIndex == clnQtyIn.Index)
             {
-                secQtyIn = ParseDecimal(dgvSale["clnSecQtyIn", e.RowIndex].Value);
-                secQtyOut = ParseDecimal(dgvSale["clnSecQtyOut", e.RowIndex].Value);
-                secRate = ParseDecimal(dgvSale["clnSecRate", e.RowIndex].Value);
+                if (secQtyIn > 0)
+                    packQty = Math.Round(qtyIn / secQtyIn, 2);
+                else if (packQty > 0)
+                    secQtyIn = Math.Round(qtyIn / packQty, 2);
+            }
+            else if (e.ColumnIndex == clnQtyOut.Index)
+            {
+                if (secQtyOut > 0)
+                    packQty = Math.Round(qtyOut / secQtyOut, 2);
+                else if (packQty > 0)
+                    secQtyOut = Math.Round(qtyOut / packQty, 2);
+            }
+            else if (colName == "clnSecQtyIn")
+            {
+                if (packQty > 0)
+                    qtyIn = Math.Round(secQtyIn * packQty, 2);
+                else if (qtyIn > 0)
+                    packQty = Math.Round(qtyIn / secQtyIn, 2);
+            }
+            else if (colName == "clnSecQtyOut")
+            {
+                if (packQty > 0)
+                    qtyOut = Math.Round(secQtyOut * packQty, 2);
+                else if (qtyOut > 0)
+                    packQty = Math.Round(qtyOut / secQtyOut, 2);
+            }
+            else if (colName == "clnPackQty")
+            {
+                if (secQtyIn > 0)
+                    qtyIn = Math.Round(secQtyIn * packQty, 2);
+                else if (qtyIn > 0)
+                    secQtyIn = Math.Round(qtyIn / packQty, 2);
+
+                if (secQtyOut > 0)
+                    qtyOut = Math.Round(secQtyOut * packQty, 2);
+                else if (qtyOut > 0)
+                    secQtyOut = Math.Round(qtyOut / packQty, 2);
+            }
+            else if (colName == "clnPacking")
+            {
+                if (packing > 0)
+                {
+                    if (secRate > 0)
+                        rate = Math.Round(secRate / packing, 4);
+                    else if (rate > 0)
+                        secRate = Math.Round(rate * packing, 4);
+                }
+            }
+            else if (e.ColumnIndex == clnRate.Index)
+            {
+                if (packing > 0)
+                    secRate = Math.Round(rate * packing, 4);
+            }
+            else if (colName == "clnSecRate")
+            {
+                if (packing > 0)
+                    rate = Math.Round(secRate / packing, 4);
             }
 
-            dgvSale[clnQtyIn.Index, e.RowIndex].Value = qtyIn.ToString();
-            dgvSale[clnQtyOut.Index, e.RowIndex].Value = qtyOut.ToString();
-            dgvSale[clnRate.Index, e.RowIndex].Value = rate.ToString();
-            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQtyIn"))
-            {
-                dgvSale["clnSecQtyIn", e.RowIndex].Value = secQtyIn.ToString();
-                dgvSale["clnSecQtyOut", e.RowIndex].Value = secQtyOut.ToString();
-                dgvSale["clnSecRate", e.RowIndex].Value = secRate.ToString();
-            }
+            dgvSale[clnQtyIn.Index, e.RowIndex].Value = qtyIn.ToString("0.##");
+            dgvSale[clnQtyOut.Index, e.RowIndex].Value = qtyOut.ToString("0.##");
+            if (dgvSale.Columns.Contains("clnSecQtyIn")) dgvSale["clnSecQtyIn", e.RowIndex].Value = secQtyIn.ToString("0.##");
+            if (dgvSale.Columns.Contains("clnSecQtyOut")) dgvSale["clnSecQtyOut", e.RowIndex].Value = secQtyOut.ToString("0.##");
+            if (dgvSale.Columns.Contains("clnPackQty")) dgvSale["clnPackQty", e.RowIndex].Value = packQty.ToString("0.##");
+            if (dgvSale.Columns.Contains("clnPacking")) dgvSale["clnPacking", e.RowIndex].Value = packing.ToString("0.##");
+            dgvSale[clnRate.Index, e.RowIndex].Value = rate.ToString("0.####");
+            if (dgvSale.Columns.Contains("clnSecRate")) dgvSale["clnSecRate", e.RowIndex].Value = secRate.ToString("0.####");
 
-            dgvSale[clnAmount.Index, e.RowIndex].Value = decimal.Round(((qtyIn - qtyOut) * rate) + ((secQtyIn - secQtyOut) * secRate), 2).ToString();
+            dgvSale[clnAmount.Index, e.RowIndex].Value = decimal.Round((qtyIn - qtyOut) * rate, 2).ToString("N2");
             CalcTotAmount();
         }
 
@@ -952,3 +1073,4 @@ namespace ERP
         }
     }
 }
+

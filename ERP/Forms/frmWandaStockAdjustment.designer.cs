@@ -1,6 +1,6 @@
-namespace ERP
+﻿namespace ERP
 {
-    partial class frmSaleReturn
+    partial class frmWandaStockAdjustment
     {
         /// <summary>
         /// Required designer variable.
@@ -35,7 +35,6 @@ namespace ERP
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmSaleReturn));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
@@ -71,10 +70,9 @@ namespace ERP
             this.clnCatagory = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnItemNo = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnUnit = new System.Windows.Forms.DataGridViewComboBoxColumn();
-            this.clnQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnQtyIn = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnQtyOut = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clnDiscount = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clnDiscPercent = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnStatus = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.grpInvoiceDetail = new System.Windows.Forms.GroupBox();
@@ -86,8 +84,6 @@ namespace ERP
             this.lblNarration = new System.Windows.Forms.Label();
             this.label2 = new System.Windows.Forms.Label();
             this.txtDescription = new System.Windows.Forms.TextBox();
-            this.cmbAccounts = new System.Windows.Forms.ComboBox();
-            this.label10 = new System.Windows.Forms.Label();
             this.label1 = new System.Windows.Forms.Label();
             this.dtpDate = new System.Windows.Forms.DateTimePicker();
             this.txtVoucherNo = new System.Windows.Forms.TextBox();
@@ -113,7 +109,6 @@ namespace ERP
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.deleteRecordToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.label17 = new System.Windows.Forms.Label();
-            this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -136,7 +131,6 @@ namespace ERP
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvQuery)).BeginInit();
             this.contextMenuStrip1.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).BeginInit();
             this.SuspendLayout();
             // 
             // tbSaleQuery
@@ -150,7 +144,7 @@ namespace ERP
             this.tbSaleQuery.Location = new System.Drawing.Point(0, 54);
             this.tbSaleQuery.Name = "tbSaleQuery";
             this.tbSaleQuery.SelectedIndex = 0;
-            this.tbSaleQuery.Size = new System.Drawing.Size(938, 574);
+            this.tbSaleQuery.Size = new System.Drawing.Size(1091, 690);
             this.tbSaleQuery.TabIndex = 0;
             this.tbSaleQuery.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tbSaleQuery_KeyDown);
             // 
@@ -163,7 +157,7 @@ namespace ERP
             this.tbDetail.Location = new System.Drawing.Point(4, 25);
             this.tbDetail.Name = "tbDetail";
             this.tbDetail.Padding = new System.Windows.Forms.Padding(3);
-            this.tbDetail.Size = new System.Drawing.Size(930, 545);
+            this.tbDetail.Size = new System.Drawing.Size(1083, 661);
             this.tbDetail.TabIndex = 0;
             this.tbDetail.Text = "Detail";
             this.tbDetail.UseVisualStyleBackColor = true;
@@ -171,7 +165,7 @@ namespace ERP
             // 
             // groupBox3
             // 
-            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox3.Controls.Add(this.txtCashBack);
             this.groupBox3.Controls.Add(this.label16);
             this.groupBox3.Controls.Add(this.txtBalance);
@@ -181,18 +175,20 @@ namespace ERP
             this.groupBox3.Controls.Add(this.label13);
             this.groupBox3.Controls.Add(this.label14);
             this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.groupBox3.Location = new System.Drawing.Point(697, 349);
+            this.groupBox3.Location = new System.Drawing.Point(715, 502);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(216, 138);
+            this.groupBox3.Size = new System.Drawing.Size(213, 138);
             this.groupBox3.TabIndex = 211;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = "Receipt Detail ";
+            this.groupBox3.Visible = false;
             // 
             // txtCashBack
             // 
             this.txtCashBack.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCashBack.Location = new System.Drawing.Point(86, 76);
             this.txtCashBack.Name = "txtCashBack";
+            this.txtCashBack.ReadOnly = true;
             this.txtCashBack.Size = new System.Drawing.Size(121, 24);
             this.txtCashBack.TabIndex = 220;
             this.txtCashBack.TabStop = false;
@@ -277,7 +273,7 @@ namespace ERP
             // 
             // panel1
             // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.panel1.Anchor = System.Windows.Forms.AnchorStyles.Bottom;
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Controls.Add(this.btnPreview);
             this.panel1.Controls.Add(this.btnDelete);
@@ -289,10 +285,10 @@ namespace ERP
             this.panel1.Controls.Add(this.btnSave);
             this.panel1.Controls.Add(this.btnHome);
             this.panel1.Controls.Add(this.btnNew);
-            this.panel1.Location = new System.Drawing.Point(8, 350);
+            this.panel1.Location = new System.Drawing.Point(99, 610);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(485, 38);
-            this.panel1.TabIndex = 3;
+            this.panel1.TabIndex = 2;
             // 
             // btnPreview
             // 
@@ -447,20 +443,19 @@ namespace ERP
             this.clnCatagory,
             this.clnItemNo,
             this.clnUnit,
-            this.clnQty,
+            this.clnQtyIn,
+            this.clnQtyOut,
             this.clnRate,
-            this.clnDiscount,
-            this.clnDiscPercent,
             this.clnAmount,
             this.clnStatus});
-            this.dgvSale.Location = new System.Drawing.Point(8, 137);
+            this.dgvSale.Location = new System.Drawing.Point(7, 187);
             this.dgvSale.MultiSelect = false;
             this.dgvSale.Name = "dgvSale";
             this.dgvSale.RowHeadersWidth = 15;
             this.dgvSale.RowTemplate.Height = 25;
             this.dgvSale.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvSale.Size = new System.Drawing.Size(914, 206);
-            this.dgvSale.TabIndex = 1;
+            this.dgvSale.Size = new System.Drawing.Size(1068, 309);
+            this.dgvSale.TabIndex = 2;
             this.dgvSale.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSale_CellContentClick);
             this.dgvSale.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPurchase_CellEndEdit);
             this.dgvSale.CellMouseUp += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvSale_CellMouseUp);
@@ -510,39 +505,31 @@ namespace ERP
             this.clnUnit.Name = "clnUnit";
             this.clnUnit.Width = 70;
             // 
-            // clnQty
+            // clnQtyIn
             // 
             dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.clnQty.DefaultCellStyle = dataGridViewCellStyle2;
-            this.clnQty.HeaderText = "Qty";
-            this.clnQty.MinimumWidth = 80;
-            this.clnQty.Name = "clnQty";
-            this.clnQty.Width = 80;
+            this.clnQtyIn.DefaultCellStyle = dataGridViewCellStyle2;
+            this.clnQtyIn.HeaderText = "Qty In";
+            this.clnQtyIn.MinimumWidth = 80;
+            this.clnQtyIn.Name = "clnQtyIn";
+            this.clnQtyIn.Width = 80;
+            // 
+            // clnQtyOut
+            // 
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.clnQtyOut.DefaultCellStyle = dataGridViewCellStyle3;
+            this.clnQtyOut.HeaderText = "Qty Out";
+            this.clnQtyOut.MinimumWidth = 80;
+            this.clnQtyOut.Name = "clnQtyOut";
+            this.clnQtyOut.Width = 80;
             // 
             // clnRate
             // 
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.clnRate.DefaultCellStyle = dataGridViewCellStyle3;
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.clnRate.DefaultCellStyle = dataGridViewCellStyle4;
             this.clnRate.HeaderText = "Rate";
             this.clnRate.MinimumWidth = 100;
             this.clnRate.Name = "clnRate";
-            // 
-            // clnDiscount
-            // 
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.clnDiscount.DefaultCellStyle = dataGridViewCellStyle4;
-            this.clnDiscount.HeaderText = "Discount (Rs)";
-            this.clnDiscount.MinimumWidth = 70;
-            this.clnDiscount.Name = "clnDiscount";
-            this.clnDiscount.Visible = false;
-            this.clnDiscount.Width = 70;
-            // 
-            // clnDiscPercent
-            // 
-            this.clnDiscPercent.HeaderText = "Discount (%)";
-            this.clnDiscPercent.MinimumWidth = 70;
-            this.clnDiscPercent.Name = "clnDiscPercent";
-            this.clnDiscPercent.Width = 70;
             // 
             // clnAmount
             // 
@@ -570,8 +557,6 @@ namespace ERP
             this.grpInvoiceDetail.Controls.Add(this.lblNarration);
             this.grpInvoiceDetail.Controls.Add(this.label2);
             this.grpInvoiceDetail.Controls.Add(this.txtDescription);
-            this.grpInvoiceDetail.Controls.Add(this.cmbAccounts);
-            this.grpInvoiceDetail.Controls.Add(this.label10);
             this.grpInvoiceDetail.Controls.Add(this.label1);
             this.grpInvoiceDetail.Controls.Add(this.dtpDate);
             this.grpInvoiceDetail.Controls.Add(this.txtVoucherNo);
@@ -579,7 +564,7 @@ namespace ERP
             this.grpInvoiceDetail.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grpInvoiceDetail.Location = new System.Drawing.Point(7, 8);
             this.grpInvoiceDetail.Name = "grpInvoiceDetail";
-            this.grpInvoiceDetail.Size = new System.Drawing.Size(851, 126);
+            this.grpInvoiceDetail.Size = new System.Drawing.Size(888, 126);
             this.grpInvoiceDetail.TabIndex = 0;
             this.grpInvoiceDetail.TabStop = false;
             this.grpInvoiceDetail.Text = "Invoice Detail ";
@@ -630,7 +615,8 @@ namespace ERP
             this.cmbNarration.Location = new System.Drawing.Point(92, 94);
             this.cmbNarration.Name = "cmbNarration";
             this.cmbNarration.Size = new System.Drawing.Size(320, 24);
-            this.cmbNarration.TabIndex = 3;
+            this.cmbNarration.TabIndex = 2;
+            this.cmbNarration.TabStop = false;
             // 
             // lblNarration
             // 
@@ -646,7 +632,7 @@ namespace ERP
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(424, 47);
+            this.label2.Location = new System.Drawing.Point(422, 23);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(82, 16);
             this.label2.TabIndex = 215;
@@ -654,31 +640,11 @@ namespace ERP
             // 
             // txtDescription
             // 
-            this.txtDescription.Location = new System.Drawing.Point(509, 45);
+            this.txtDescription.Location = new System.Drawing.Point(507, 21);
             this.txtDescription.Multiline = true;
             this.txtDescription.Name = "txtDescription";
             this.txtDescription.Size = new System.Drawing.Size(335, 73);
-            this.txtDescription.TabIndex = 2;
-            // 
-            // cmbAccounts
-            // 
-            this.cmbAccounts.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
-            this.cmbAccounts.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.cmbAccounts.FormattingEnabled = true;
-            this.cmbAccounts.Location = new System.Drawing.Point(509, 19);
-            this.cmbAccounts.Name = "cmbAccounts";
-            this.cmbAccounts.Size = new System.Drawing.Size(335, 24);
-            this.cmbAccounts.TabIndex = 1;
-            // 
-            // label10
-            // 
-            this.label10.AutoSize = true;
-            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label10.Location = new System.Drawing.Point(427, 22);
-            this.label10.Name = "label10";
-            this.label10.Size = new System.Drawing.Size(71, 16);
-            this.label10.TabIndex = 213;
-            this.label10.Text = "Customer :";
+            this.txtDescription.TabIndex = 3;
             // 
             // label1
             // 
@@ -726,7 +692,7 @@ namespace ERP
             this.tbQuery.Location = new System.Drawing.Point(4, 25);
             this.tbQuery.Name = "tbQuery";
             this.tbQuery.Padding = new System.Windows.Forms.Padding(3);
-            this.tbQuery.Size = new System.Drawing.Size(930, 545);
+            this.tbQuery.Size = new System.Drawing.Size(1083, 661);
             this.tbQuery.TabIndex = 1;
             this.tbQuery.Tag = "Lock";
             this.tbQuery.Text = "Query";
@@ -877,7 +843,7 @@ namespace ERP
             this.dgvQuery.ReadOnly = true;
             this.dgvQuery.RowHeadersWidth = 30;
             this.dgvQuery.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvQuery.Size = new System.Drawing.Size(924, 323);
+            this.dgvQuery.Size = new System.Drawing.Size(1077, 323);
             this.dgvQuery.TabIndex = 190;
             this.dgvQuery.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvQuery_CellDoubleClick);
             // 
@@ -942,22 +908,12 @@ namespace ERP
             this.label17.AutoSize = true;
             this.label17.Font = new System.Drawing.Font("Calibri", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label17.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.label17.Location = new System.Drawing.Point(364, 9);
+            this.label17.Location = new System.Drawing.Point(356, 9);
             this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(294, 59);
+            this.label17.Size = new System.Drawing.Size(379, 59);
             this.label17.TabIndex = 216;
-            this.label17.Text = "SALE RETURN";
+            this.label17.Text = "Stock Adjustment";
             this.label17.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
-            // 
-            // pictureBox1
-            // 
-            this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(290, 9);
-            this.pictureBox1.Name = "pictureBox1";
-            this.pictureBox1.Size = new System.Drawing.Size(84, 59);
-            this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
-            this.pictureBox1.TabIndex = 217;
-            this.pictureBox1.TabStop = false;
             // 
             // dataGridViewTextBoxColumn1
             // 
@@ -1095,18 +1051,17 @@ namespace ERP
             this.dataGridViewTextBoxColumn12.Name = "dataGridViewTextBoxColumn12";
             this.dataGridViewTextBoxColumn12.ReadOnly = true;
             // 
-            // frmSaleReturn
+            // frmWandaStockAdjustment
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(938, 628);
+            this.ClientSize = new System.Drawing.Size(1091, 744);
             this.Controls.Add(this.label17);
-            this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.tbSaleQuery);
             this.KeyPreview = true;
-            this.Name = "frmSaleReturn";
+            this.Name = "frmWandaStockAdjustment";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Sale Return";
+            this.Text = "Sale";
             this.Load += new System.EventHandler(this.frmPurchase_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmPurchase_KeyDown);
             this.tbSaleQuery.ResumeLayout(false);
@@ -1122,7 +1077,6 @@ namespace ERP
             this.groupBox1.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvQuery)).EndInit();
             this.contextMenuStrip1.ResumeLayout(false);
-            ((System.ComponentModel.ISupportInitialize)(this.pictureBox1)).EndInit();
             this.ResumeLayout(false);
             this.PerformLayout();
 
@@ -1159,8 +1113,6 @@ namespace ERP
         private System.Windows.Forms.Label lblNarration;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtDescription;
-        private System.Windows.Forms.ComboBox cmbAccounts;
-        private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.DateTimePicker dtpDate;
         private System.Windows.Forms.TextBox txtVoucherNo;
@@ -1189,7 +1141,6 @@ namespace ERP
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem deleteRecordToolStripMenuItem;
         private System.Windows.Forms.Label label17;
-        private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn11;
         private System.Windows.Forms.Button btnPreview;
         private ERP.DecimalTextbox txtCashReceipt;
@@ -1207,11 +1158,11 @@ namespace ERP
         private System.Windows.Forms.DataGridViewComboBoxColumn clnCatagory;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnItemNo;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnUnit;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnQty;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnQtyIn;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnQtyOut;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnRate;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnDiscount;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnDiscPercent;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnAmount;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnStatus;
     }
 }
+

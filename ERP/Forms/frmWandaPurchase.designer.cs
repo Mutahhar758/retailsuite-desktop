@@ -1,6 +1,6 @@
 namespace ERP
 {
-    partial class frmSaleSupply
+    partial class frmWandaPurchase
     {
         /// <summary>
         /// Required designer variable.
@@ -34,21 +34,49 @@ namespace ERP
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle3 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle4 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle5 = new System.Windows.Forms.DataGridViewCellStyle();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmWandaPurchase));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle6 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmSaleSupply));
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle7 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle8 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle9 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle10 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle11 = new System.Windows.Forms.DataGridViewCellStyle();
             System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle12 = new System.Windows.Forms.DataGridViewCellStyle();
-            System.Windows.Forms.DataGridViewCellStyle dataGridViewCellStyle13 = new System.Windows.Forms.DataGridViewCellStyle();
             this.tbSaleQuery = new System.Windows.Forms.TabControl();
             this.tbDetail = new System.Windows.Forms.TabPage();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.txtBarcode = new System.Windows.Forms.TextBox();
+            this.label13 = new System.Windows.Forms.Label();
+            this.grpInvoiceDetail = new System.Windows.Forms.GroupBox();
+            this.txtEditBy = new System.Windows.Forms.TextBox();
+            this.txtCreatedBy = new System.Windows.Forms.TextBox();
+            this.label9 = new System.Windows.Forms.Label();
+            this.label8 = new System.Windows.Forms.Label();
+            this.cmbNarration = new System.Windows.Forms.ComboBox();
+            this.lblNarration = new System.Windows.Forms.Label();
+            this.label2 = new System.Windows.Forms.Label();
+            this.txtDescription = new System.Windows.Forms.TextBox();
+            this.cmbAccounts = new System.Windows.Forms.ComboBox();
+            this.label10 = new System.Windows.Forms.Label();
+            this.label1 = new System.Windows.Forms.Label();
+            this.dtpDate = new System.Windows.Forms.DateTimePicker();
+            this.txtVoucherNo = new System.Windows.Forms.TextBox();
+            this.label7 = new System.Windows.Forms.Label();
+            this.lblTotAmount = new System.Windows.Forms.Label();
+            this.groupBox3 = new System.Windows.Forms.GroupBox();
+            this.txtCashBack = new ERP.DecimalTextbox(this.components);
+            this.label16 = new System.Windows.Forms.Label();
+            this.txtBalance = new ERP.DecimalTextbox(this.components);
             this.label15 = new System.Windows.Forms.Label();
+            this.txtCashReceipt = new ERP.DecimalTextbox(this.components);
+            this.txtTotAmount = new ERP.DecimalTextbox(this.components);
+            this.label17 = new System.Windows.Forms.Label();
+            this.label14 = new System.Windows.Forms.Label();
             this.panel1 = new System.Windows.Forms.Panel();
             this.btnCopyAsNew = new System.Windows.Forms.Button();
+            this.btnPreview = new System.Windows.Forms.Button();
             this.btnDelete = new System.Windows.Forms.Button();
+            this.btnPrint = new System.Windows.Forms.Button();
             this.btnNext = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
             this.btnEnd = new System.Windows.Forms.Button();
@@ -58,43 +86,15 @@ namespace ERP
             this.btnNew = new System.Windows.Forms.Button();
             this.dgvSale = new System.Windows.Forms.DataGridView();
             this.clnSeq = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clnCustomer = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.clnItemKey = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnCatagory = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.clnItemNo = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnUnit = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clnDiscount = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clnDiscPercent = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clnAddLess = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnAddless = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnStatus = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.pnlTotals = new System.Windows.Forms.Panel();
-            this.lblTotCount = new System.Windows.Forms.Label();
-            this.txtTotCount = new System.Windows.Forms.TextBox();
-            this.lblTotQty = new System.Windows.Forms.Label();
-            this.txtTotQty = new System.Windows.Forms.TextBox();
-            this.lblTotAddLess = new System.Windows.Forms.Label();
-            this.txtTotAddLess = new System.Windows.Forms.TextBox();
-            this.label15 = new System.Windows.Forms.Label();
-            this.txtTotAmount = new ERP.DecimalTextbox(this.components);
-            this.grpInvoiceDetail = new System.Windows.Forms.GroupBox();
-            this.txtEditBy = new System.Windows.Forms.TextBox();
-            this.txtCreatedBy = new System.Windows.Forms.TextBox();
-            this.label9 = new System.Windows.Forms.Label();
-            this.label8 = new System.Windows.Forms.Label();
-            this.cmbNarration = new System.Windows.Forms.ComboBox();
-            this.lblNarration = new System.Windows.Forms.Label();
-            this.cmbSupplyOrder = new System.Windows.Forms.ComboBox();
-            this.lblSupplyOrder = new System.Windows.Forms.Label();
-            this.label2 = new System.Windows.Forms.Label();
-            this.txtDescription = new System.Windows.Forms.TextBox();
-            this.cmbItem = new System.Windows.Forms.ComboBox();
-            this.lblItem = new System.Windows.Forms.Label();
-            this.label1 = new System.Windows.Forms.Label();
-            this.dtpDate = new System.Windows.Forms.DateTimePicker();
-            this.txtVoucherNo = new System.Windows.Forms.TextBox();
-            this.label7 = new System.Windows.Forms.Label();
-            this.lblSearchCustomer = new System.Windows.Forms.Label();
-            this.txtSearchCustomer = new System.Windows.Forms.TextBox();
             this.tbQuery = new System.Windows.Forms.TabPage();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.txtFilterVoucher = new System.Windows.Forms.TextBox();
@@ -115,7 +115,7 @@ namespace ERP
             this.clnEditby = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.deleteRecordToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.label17 = new System.Windows.Forms.Label();
+            this.label12 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -129,15 +129,13 @@ namespace ERP
             this.dataGridViewTextBoxColumn10 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn11 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn12 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn13 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn14 = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.dataGridViewTextBoxColumn15 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.tbSaleQuery.SuspendLayout();
             this.tbDetail.SuspendLayout();
-            this.panel1.SuspendLayout();
-            this.pnlTotals.SuspendLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvSale)).BeginInit();
+            this.groupBox2.SuspendLayout();
             this.grpInvoiceDetail.SuspendLayout();
+            this.groupBox3.SuspendLayout();
+            this.panel1.SuspendLayout();
+            ((System.ComponentModel.ISupportInitialize)(this.dgvSale)).BeginInit();
             this.tbQuery.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvQuery)).BeginInit();
@@ -156,396 +154,57 @@ namespace ERP
             this.tbSaleQuery.Location = new System.Drawing.Point(0, 54);
             this.tbSaleQuery.Name = "tbSaleQuery";
             this.tbSaleQuery.SelectedIndex = 0;
-            this.tbSaleQuery.Size = new System.Drawing.Size(1091, 531);
+            this.tbSaleQuery.Size = new System.Drawing.Size(925, 572);
             this.tbSaleQuery.TabIndex = 0;
             this.tbSaleQuery.KeyDown += new System.Windows.Forms.KeyEventHandler(this.tbSaleQuery_KeyDown);
             // 
             // tbDetail
             // 
-            this.tbDetail.Controls.Add(this.pnlTotals);
+            this.tbDetail.Controls.Add(this.groupBox2);
+            this.tbDetail.Controls.Add(this.grpInvoiceDetail);
+            this.tbDetail.Controls.Add(this.lblTotAmount);
+            this.tbDetail.Controls.Add(this.groupBox3);
             this.tbDetail.Controls.Add(this.panel1);
             this.tbDetail.Controls.Add(this.dgvSale);
-            this.tbDetail.Controls.Add(this.grpInvoiceDetail);
-            this.tbDetail.Controls.Add(this.lblSearchCustomer);
-            this.tbDetail.Controls.Add(this.txtSearchCustomer);
             this.tbDetail.Location = new System.Drawing.Point(4, 25);
             this.tbDetail.Name = "tbDetail";
             this.tbDetail.Padding = new System.Windows.Forms.Padding(3);
-            this.tbDetail.Size = new System.Drawing.Size(1083, 502);
+            this.tbDetail.Size = new System.Drawing.Size(917, 543);
             this.tbDetail.TabIndex = 0;
             this.tbDetail.Text = "Detail";
             this.tbDetail.UseVisualStyleBackColor = true;
             this.tbDetail.Click += new System.EventHandler(this.tbDetail_Click);
             // 
-            // panel1
+            // groupBox2
             // 
-            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
-            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.panel1.Controls.Add(this.btnCopyAsNew);
-            this.panel1.Controls.Add(this.btnDelete);
-            this.panel1.Controls.Add(this.btnNext);
-            this.panel1.Controls.Add(this.btnClose);
-            this.panel1.Controls.Add(this.btnEnd);
-            this.panel1.Controls.Add(this.btnPri);
-            this.panel1.Controls.Add(this.btnSave);
-            this.panel1.Controls.Add(this.btnHome);
-            this.panel1.Controls.Add(this.btnNew);
-            this.panel1.Location = new System.Drawing.Point(7, 363);
-            this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(446, 38);
-            this.panel1.TabIndex = 3;
+            this.groupBox2.Controls.Add(this.txtBarcode);
+            this.groupBox2.Controls.Add(this.label13);
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox2.Location = new System.Drawing.Point(16, 135);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(290, 49);
+            this.groupBox2.TabIndex = 214;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Product Detail ";
             // 
-            // btnCopyAsNew
+            // txtBarcode
             // 
-            this.btnCopyAsNew.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.btnCopyAsNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCopyAsNew.Location = new System.Drawing.Point(166, 3);
-            this.btnCopyAsNew.Name = "btnCopyAsNew";
-            this.btnCopyAsNew.Size = new System.Drawing.Size(114, 29);
-            this.btnCopyAsNew.TabIndex = 169;
-            this.btnCopyAsNew.Text = "Copy as &New";
-            this.btnCopyAsNew.UseVisualStyleBackColor = false;
-            this.btnCopyAsNew.Click += new System.EventHandler(this.btnNewCopy_Click);
+            this.txtBarcode.Location = new System.Drawing.Point(82, 20);
+            this.txtBarcode.Multiline = true;
+            this.txtBarcode.Name = "txtBarcode";
+            this.txtBarcode.Size = new System.Drawing.Size(191, 22);
+            this.txtBarcode.TabIndex = 0;
+            this.txtBarcode.TextChanged += new System.EventHandler(this.txtBarcode_TextChanged);
             // 
-            // btnDelete
+            // label13
             // 
-            this.btnDelete.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.btnDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDelete.Location = new System.Drawing.Point(286, 3);
-            this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(73, 29);
-            this.btnDelete.TabIndex = 168;
-            this.btnDelete.Text = "&Delete";
-            this.btnDelete.UseVisualStyleBackColor = false;
-            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
-            // 
-            // btnNext
-            // 
-            this.btnNext.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.btnNext.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnNext.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnNext.Location = new System.Drawing.Point(244, 35);
-            this.btnNext.Name = "btnNext";
-            this.btnNext.Size = new System.Drawing.Size(36, 29);
-            this.btnNext.TabIndex = 164;
-            this.btnNext.Text = ">";
-            this.btnNext.UseVisualStyleBackColor = false;
-            this.btnNext.Visible = false;
-            this.btnNext.Click += new System.EventHandler(this.btnNext_Click);
-            // 
-            // btnClose
-            // 
-            this.btnClose.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClose.Location = new System.Drawing.Point(365, 3);
-            this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(73, 29);
-            this.btnClose.TabIndex = 163;
-            this.btnClose.Text = "Close";
-            this.btnClose.UseVisualStyleBackColor = false;
-            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
-            // 
-            // btnEnd
-            // 
-            this.btnEnd.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.btnEnd.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnEnd.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnEnd.Location = new System.Drawing.Point(286, 35);
-            this.btnEnd.Name = "btnEnd";
-            this.btnEnd.Size = new System.Drawing.Size(36, 29);
-            this.btnEnd.TabIndex = 163;
-            this.btnEnd.Text = ">>";
-            this.btnEnd.UseVisualStyleBackColor = false;
-            this.btnEnd.Visible = false;
-            this.btnEnd.Click += new System.EventHandler(this.btnEnd_Click);
-            // 
-            // btnPri
-            // 
-            this.btnPri.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.btnPri.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnPri.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnPri.Location = new System.Drawing.Point(202, 35);
-            this.btnPri.Name = "btnPri";
-            this.btnPri.Size = new System.Drawing.Size(36, 29);
-            this.btnPri.TabIndex = 162;
-            this.btnPri.Text = "<";
-            this.btnPri.UseVisualStyleBackColor = false;
-            this.btnPri.Visible = false;
-            this.btnPri.Click += new System.EventHandler(this.btnPri_Click);
-            // 
-            // btnSave
-            // 
-            this.btnSave.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnSave.Location = new System.Drawing.Point(88, 3);
-            this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(73, 29);
-            this.btnSave.TabIndex = 0;
-            this.btnSave.Text = "&Save";
-            this.btnSave.UseVisualStyleBackColor = false;
-            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
-            // 
-            // btnHome
-            // 
-            this.btnHome.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.btnHome.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnHome.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.btnHome.Location = new System.Drawing.Point(160, 35);
-            this.btnHome.Name = "btnHome";
-            this.btnHome.Size = new System.Drawing.Size(36, 29);
-            this.btnHome.TabIndex = 161;
-            this.btnHome.Text = "<<";
-            this.btnHome.UseVisualStyleBackColor = false;
-            this.btnHome.Visible = false;
-            this.btnHome.Click += new System.EventHandler(this.btnHome_Click);
-            // 
-            // btnNew
-            // 
-            this.btnNew.BackColor = System.Drawing.SystemColors.ControlLight;
-            this.btnNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnNew.Location = new System.Drawing.Point(10, 3);
-            this.btnNew.Name = "btnNew";
-            this.btnNew.Size = new System.Drawing.Size(73, 29);
-            this.btnNew.TabIndex = 1;
-            this.btnNew.Text = "&New";
-            this.btnNew.UseVisualStyleBackColor = false;
-            this.btnNew.Click += new System.EventHandler(this.btnNew_Click);
-            // 
-            // dgvSale
-            // 
-            this.dgvSale.AllowUserToAddRows = false;
-            this.dgvSale.AllowUserToDeleteRows = false;
-            this.dgvSale.AllowUserToOrderColumns = true;
-            this.dgvSale.AllowUserToResizeColumns = false;
-            this.dgvSale.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
-            | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
-            this.dgvSale.BackgroundColor = System.Drawing.SystemColors.ControlLightLight;
-            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvSale.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
-            this.dgvSale.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
-            this.dgvSale.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
-            this.clnSeq,
-            this.clnCustomer,
-            this.clnUnit,
-            this.clnQty,
-            this.clnRate,
-            this.clnDiscount,
-            this.clnDiscPercent,
-            this.clnAddLess,
-            this.clnAmount,
-            this.clnStatus});
-            this.dgvSale.Location = new System.Drawing.Point(7, 203);
-            this.dgvSale.MultiSelect = false;
-            this.dgvSale.Name = "dgvSale";
-            this.dgvSale.RowHeadersWidth = 15;
-            this.dgvSale.RowTemplate.Height = 25;
-            this.dgvSale.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvSale.Size = new System.Drawing.Size(1068, 154);
-            this.dgvSale.TabIndex = 1;
-            this.dgvSale.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSale_CellContentClick);
-            this.dgvSale.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPurchase_CellEndEdit);
-            this.dgvSale.CellMouseUp += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvSale_CellMouseUp);
-            this.dgvSale.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvPurchase_DataError);
-            this.dgvSale.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.dgvPurchase_EditingControlShowing);
-            this.dgvSale.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.dgvPurchase_RowsAdded);
-            this.dgvSale.SelectionChanged += new System.EventHandler(this.dgvPurchase_SelectionChanged);
-            this.dgvSale.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvPurchase_KeyDown);
-            // 
-            // clnSeq
-            // 
-            this.clnSeq.HeaderText = "Seq";
-            this.clnSeq.Name = "clnSeq";
-            this.clnSeq.ReadOnly = true;
-            this.clnSeq.Visible = false;
-            // 
-            // clnCustomer
-            // 
-            this.clnCustomer.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.clnCustomer.HeaderText = "Customer";
-            this.clnCustomer.MinimumWidth = 120;
-            this.clnCustomer.Name = "clnCustomer";
-            this.clnCustomer.Resizable = System.Windows.Forms.DataGridViewTriState.True;
-            this.clnCustomer.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
-            // 
-            // clnUnit
-            // 
-            this.clnUnit.HeaderText = "Unit";
-            this.clnUnit.MinimumWidth = 70;
-            this.clnUnit.Name = "clnUnit";
-            this.clnUnit.Width = 70;
-            // 
-            // clnQty
-            // 
-            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.clnQty.DefaultCellStyle = dataGridViewCellStyle2;
-            this.clnQty.HeaderText = "Qty";
-            this.clnQty.MinimumWidth = 80;
-            this.clnQty.Name = "clnQty";
-            this.clnQty.Width = 80;
-            // 
-            // clnRate
-            // 
-            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.clnRate.DefaultCellStyle = dataGridViewCellStyle3;
-            this.clnRate.HeaderText = "Rate";
-            this.clnRate.MinimumWidth = 100;
-            this.clnRate.Name = "clnRate";
-            // 
-            // clnDiscount
-            // 
-            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.clnDiscount.DefaultCellStyle = dataGridViewCellStyle4;
-            this.clnDiscount.HeaderText = "Discount (Rs)";
-            this.clnDiscount.MinimumWidth = 70;
-            this.clnDiscount.Name = "clnDiscount";
-            this.clnDiscount.Visible = false;
-            this.clnDiscount.Width = 70;
-            // 
-            // clnDiscPercent
-            // 
-            this.clnDiscPercent.HeaderText = "Discount (%)";
-            this.clnDiscPercent.MinimumWidth = 70;
-            this.clnDiscPercent.Name = "clnDiscPercent";
-            this.clnDiscPercent.Width = 70;
-            // 
-            // clnAddLess
-            // 
-            this.clnAddLess.HeaderText = "Add/Less (Rs)";
-            this.clnAddLess.MinimumWidth = 80;
-            this.clnAddLess.Name = "clnAddLess";
-            this.clnAddLess.Width = 80;
-            // 
-            // clnAmount
-            // 
-            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.clnAmount.DefaultCellStyle = dataGridViewCellStyle5;
-            this.clnAmount.HeaderText = "Amount";
-            this.clnAmount.MinimumWidth = 100;
-            this.clnAmount.Name = "clnAmount";
-            this.clnAmount.ReadOnly = true;
-            // 
-            // clnStatus
-            // 
-            this.clnStatus.HeaderText = "Status";
-            this.clnStatus.Name = "clnStatus";
-            this.clnStatus.ReadOnly = true;
-            this.clnStatus.Visible = false;
-            // 
-            // pnlTotals
-            // 
-            this.pnlTotals.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
-            this.pnlTotals.Controls.Add(this.lblTotCount);
-            this.pnlTotals.Controls.Add(this.txtTotCount);
-            this.pnlTotals.Controls.Add(this.lblTotQty);
-            this.pnlTotals.Controls.Add(this.txtTotQty);
-            this.pnlTotals.Controls.Add(this.lblTotAddLess);
-            this.pnlTotals.Controls.Add(this.txtTotAddLess);
-            this.pnlTotals.Controls.Add(this.label15);
-            this.pnlTotals.Controls.Add(this.txtTotAmount);
-            this.pnlTotals.Location = new System.Drawing.Point(458, 363);
-            this.pnlTotals.Name = "pnlTotals";
-            this.pnlTotals.Size = new System.Drawing.Size(617, 38);
-            this.pnlTotals.TabIndex = 219;
-            // 
-            // lblTotCount
-            // 
-            this.lblTotCount.AutoSize = true;
-            this.lblTotCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTotCount.Location = new System.Drawing.Point(3, 10);
-            this.lblTotCount.Name = "lblTotCount";
-            this.lblTotCount.Size = new System.Drawing.Size(51, 16);
-            this.lblTotCount.TabIndex = 0;
-            this.lblTotCount.Text = "Count : ";
-            // 
-            // txtTotCount
-            // 
-            this.txtTotCount.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotCount.Location = new System.Drawing.Point(58, 6);
-            this.txtTotCount.Name = "txtTotCount";
-            this.txtTotCount.ReadOnly = true;
-            this.txtTotCount.Size = new System.Drawing.Size(50, 24);
-            this.txtTotCount.TabIndex = 1;
-            this.txtTotCount.TabStop = false;
-            this.txtTotCount.Text = "0";
-            this.txtTotCount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // lblTotQty
-            // 
-            this.lblTotQty.AutoSize = true;
-            this.lblTotQty.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTotQty.Location = new System.Drawing.Point(114, 10);
-            this.lblTotQty.Name = "lblTotQty";
-            this.lblTotQty.Size = new System.Drawing.Size(37, 16);
-            this.lblTotQty.TabIndex = 2;
-            this.lblTotQty.Text = "Qty : ";
-            // 
-            // txtTotQty
-            // 
-            this.txtTotQty.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotQty.Location = new System.Drawing.Point(155, 6);
-            this.txtTotQty.Name = "txtTotQty";
-            this.txtTotQty.ReadOnly = true;
-            this.txtTotQty.Size = new System.Drawing.Size(85, 24);
-            this.txtTotQty.TabIndex = 3;
-            this.txtTotQty.TabStop = false;
-            this.txtTotQty.Text = "0.00";
-            this.txtTotQty.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // lblTotAddLess
-            // 
-            this.lblTotAddLess.AutoSize = true;
-            this.lblTotAddLess.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblTotAddLess.Location = new System.Drawing.Point(245, 10);
-            this.lblTotAddLess.Name = "lblTotAddLess";
-            this.lblTotAddLess.Size = new System.Drawing.Size(71, 16);
-            this.lblTotAddLess.TabIndex = 4;
-            this.lblTotAddLess.Text = "Add/Less : ";
-            // 
-            // txtTotAddLess
-            // 
-            this.txtTotAddLess.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotAddLess.Location = new System.Drawing.Point(320, 6);
-            this.txtTotAddLess.Name = "txtTotAddLess";
-            this.txtTotAddLess.ReadOnly = true;
-            this.txtTotAddLess.Size = new System.Drawing.Size(85, 24);
-            this.txtTotAddLess.TabIndex = 5;
-            this.txtTotAddLess.TabStop = false;
-            this.txtTotAddLess.Text = "0.00";
-            this.txtTotAddLess.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            // 
-            // label15
-            // 
-            this.label15.AutoSize = true;
-            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label15.Location = new System.Drawing.Point(410, 10);
-            this.label15.Name = "label15";
-            this.label15.Size = new System.Drawing.Size(61, 16);
-            this.label15.TabIndex = 6;
-            this.label15.Text = "Amount : ";
-            // 
-            // txtTotAmount
-            // 
-            this.txtTotAmount.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtTotAmount.Location = new System.Drawing.Point(475, 6);
-            this.txtTotAmount.Name = "txtTotAmount";
-            this.txtTotAmount.ReadOnly = true;
-            this.txtTotAmount.Size = new System.Drawing.Size(138, 24);
-            this.txtTotAmount.TabIndex = 7;
-            this.txtTotAmount.TabStop = false;
-            this.txtTotAmount.Text = "0";
-            this.txtTotAmount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtTotAmount.Value = new decimal(new int[] {
-            0,
-            0,
-            0,
-            0});
+            this.label13.AutoSize = true;
+            this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label13.Location = new System.Drawing.Point(8, 23);
+            this.label13.Name = "label13";
+            this.label13.Size = new System.Drawing.Size(68, 16);
+            this.label13.TabIndex = 210;
+            this.label13.Text = "Barcode : ";
             // 
             // grpInvoiceDetail
             // 
@@ -555,20 +214,18 @@ namespace ERP
             this.grpInvoiceDetail.Controls.Add(this.label8);
             this.grpInvoiceDetail.Controls.Add(this.cmbNarration);
             this.grpInvoiceDetail.Controls.Add(this.lblNarration);
-            this.grpInvoiceDetail.Controls.Add(this.cmbSupplyOrder);
-            this.grpInvoiceDetail.Controls.Add(this.lblSupplyOrder);
             this.grpInvoiceDetail.Controls.Add(this.label2);
             this.grpInvoiceDetail.Controls.Add(this.txtDescription);
-            this.grpInvoiceDetail.Controls.Add(this.cmbItem);
-            this.grpInvoiceDetail.Controls.Add(this.lblItem);
+            this.grpInvoiceDetail.Controls.Add(this.cmbAccounts);
+            this.grpInvoiceDetail.Controls.Add(this.label10);
             this.grpInvoiceDetail.Controls.Add(this.label1);
             this.grpInvoiceDetail.Controls.Add(this.dtpDate);
             this.grpInvoiceDetail.Controls.Add(this.txtVoucherNo);
             this.grpInvoiceDetail.Controls.Add(this.label7);
             this.grpInvoiceDetail.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.grpInvoiceDetail.Location = new System.Drawing.Point(7, 8);
+            this.grpInvoiceDetail.Location = new System.Drawing.Point(16, 8);
             this.grpInvoiceDetail.Name = "grpInvoiceDetail";
-            this.grpInvoiceDetail.Size = new System.Drawing.Size(873, 160);
+            this.grpInvoiceDetail.Size = new System.Drawing.Size(880, 126);
             this.grpInvoiceDetail.TabIndex = 0;
             this.grpInvoiceDetail.TabStop = false;
             this.grpInvoiceDetail.Text = "Invoice Detail ";
@@ -613,14 +270,13 @@ namespace ERP
             // 
             // cmbNarration
             // 
-            this.cmbNarration.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cmbNarration.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
             this.cmbNarration.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.cmbNarration.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbNarration.FormattingEnabled = true;
             this.cmbNarration.Location = new System.Drawing.Point(92, 94);
             this.cmbNarration.Name = "cmbNarration";
             this.cmbNarration.Size = new System.Drawing.Size(320, 24);
-            this.cmbNarration.TabIndex = 3;
+            this.cmbNarration.TabIndex = 4;
             // 
             // lblNarration
             // 
@@ -632,33 +288,11 @@ namespace ERP
             this.lblNarration.TabIndex = 217;
             this.lblNarration.Text = "Narration :";
             // 
-            // cmbSupplyOrder
-            // 
-            this.cmbSupplyOrder.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.cmbSupplyOrder.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.cmbSupplyOrder.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
-            this.cmbSupplyOrder.FormattingEnabled = true;
-            this.cmbSupplyOrder.Location = new System.Drawing.Point(92, 124);
-            this.cmbSupplyOrder.Name = "cmbSupplyOrder";
-            this.cmbSupplyOrder.Size = new System.Drawing.Size(320, 24);
-            this.cmbSupplyOrder.TabIndex = 4;
-            this.cmbSupplyOrder.Leave += new System.EventHandler(this.cmbSupplyOrder_Leave);
-            // 
-            // lblSupplyOrder
-            // 
-            this.lblSupplyOrder.AutoSize = true;
-            this.lblSupplyOrder.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSupplyOrder.Location = new System.Drawing.Point(10, 127);
-            this.lblSupplyOrder.Name = "lblSupplyOrder";
-            this.lblSupplyOrder.Size = new System.Drawing.Size(92, 16);
-            this.lblSupplyOrder.TabIndex = 222;
-            this.lblSupplyOrder.Text = "Supply Order :";
-            // 
             // label2
             // 
             this.label2.AutoSize = true;
             this.label2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label2.Location = new System.Drawing.Point(418, 49);
+            this.label2.Location = new System.Drawing.Point(444, 47);
             this.label2.Name = "label2";
             this.label2.Size = new System.Drawing.Size(81, 16);
             this.label2.TabIndex = 215;
@@ -666,33 +300,31 @@ namespace ERP
             // 
             // txtDescription
             // 
-            this.txtDescription.Location = new System.Drawing.Point(504, 46);
+            this.txtDescription.Location = new System.Drawing.Point(529, 45);
             this.txtDescription.Multiline = true;
             this.txtDescription.Name = "txtDescription";
-            this.txtDescription.Size = new System.Drawing.Size(363, 45);
-            this.txtDescription.TabIndex = 2;
+            this.txtDescription.Size = new System.Drawing.Size(335, 73);
+            this.txtDescription.TabIndex = 5;
             // 
-            // cmbItem
+            // cmbAccounts
             // 
-            this.cmbItem.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.cmbItem.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.cmbItem.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
-            this.cmbItem.FormattingEnabled = true;
-            this.cmbItem.Location = new System.Drawing.Point(504, 18);
-            this.cmbItem.Name = "cmbItem";
-            this.cmbItem.Size = new System.Drawing.Size(363, 24);
-            this.cmbItem.TabIndex = 1;
-            this.cmbItem.SelectedIndexChanged += new System.EventHandler(this.cmbItem_SelectedIndexChanged);
+            this.cmbAccounts.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
+            this.cmbAccounts.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbAccounts.FormattingEnabled = true;
+            this.cmbAccounts.Location = new System.Drawing.Point(529, 19);
+            this.cmbAccounts.Name = "cmbAccounts";
+            this.cmbAccounts.Size = new System.Drawing.Size(335, 24);
+            this.cmbAccounts.TabIndex = 3;
             // 
-            // lblItem
+            // label10
             // 
-            this.lblItem.AutoSize = true;
-            this.lblItem.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblItem.Location = new System.Drawing.Point(418, 21);
-            this.lblItem.Name = "lblItem";
-            this.lblItem.Size = new System.Drawing.Size(38, 16);
-            this.lblItem.TabIndex = 213;
-            this.lblItem.Text = "Item :";
+            this.label10.AutoSize = true;
+            this.label10.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label10.Location = new System.Drawing.Point(447, 22);
+            this.label10.Name = "label10";
+            this.label10.Size = new System.Drawing.Size(61, 16);
+            this.label10.TabIndex = 213;
+            this.label10.Text = "Account :";
             // 
             // label1
             // 
@@ -711,8 +343,7 @@ namespace ERP
             this.dtpDate.Location = new System.Drawing.Point(281, 19);
             this.dtpDate.Name = "dtpDate";
             this.dtpDate.Size = new System.Drawing.Size(131, 22);
-            this.dtpDate.TabIndex = 0;
-            this.dtpDate.TabStop = false;
+            this.dtpDate.TabIndex = 2;
             // 
             // txtVoucherNo
             // 
@@ -733,25 +364,428 @@ namespace ERP
             this.label7.TabIndex = 208;
             this.label7.Text = "Voucher # :";
             // 
-            // lblSearchCustomer
+            // lblTotAmount
             // 
-            this.lblSearchCustomer.AutoSize = true;
-            this.lblSearchCustomer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblSearchCustomer.Location = new System.Drawing.Point(7, 178);
-            this.lblSearchCustomer.Name = "lblSearchCustomer";
-            this.lblSearchCustomer.Size = new System.Drawing.Size(113, 16);
-            this.lblSearchCustomer.TabIndex = 220;
-            this.lblSearchCustomer.Text = "Search Customer:";
-            this.lblSearchCustomer.Click += new System.EventHandler(this.lblSearchCustomer_Click);
+            this.lblTotAmount.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.lblTotAmount.AutoSize = true;
+            this.lblTotAmount.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTotAmount.Location = new System.Drawing.Point(583, 395);
+            this.lblTotAmount.Name = "lblTotAmount";
+            this.lblTotAmount.Size = new System.Drawing.Size(14, 16);
+            this.lblTotAmount.TabIndex = 213;
+            this.lblTotAmount.Text = "0";
+            this.lblTotAmount.Visible = false;
             // 
-            // txtSearchCustomer
+            // groupBox3
             // 
-            this.txtSearchCustomer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtSearchCustomer.Location = new System.Drawing.Point(126, 175);
-            this.txtSearchCustomer.Name = "txtSearchCustomer";
-            this.txtSearchCustomer.Size = new System.Drawing.Size(260, 22);
-            this.txtSearchCustomer.TabIndex = 221;
-            this.txtSearchCustomer.TextChanged += new System.EventHandler(this.txtSearchCustomer_TextChanged);
+            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
+            this.groupBox3.Controls.Add(this.txtCashBack);
+            this.groupBox3.Controls.Add(this.label16);
+            this.groupBox3.Controls.Add(this.txtBalance);
+            this.groupBox3.Controls.Add(this.label15);
+            this.groupBox3.Controls.Add(this.txtCashReceipt);
+            this.groupBox3.Controls.Add(this.txtTotAmount);
+            this.groupBox3.Controls.Add(this.label17);
+            this.groupBox3.Controls.Add(this.label14);
+            this.groupBox3.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox3.Location = new System.Drawing.Point(688, 395);
+            this.groupBox3.Name = "groupBox3";
+            this.groupBox3.Size = new System.Drawing.Size(213, 138);
+            this.groupBox3.TabIndex = 2;
+            this.groupBox3.TabStop = false;
+            this.groupBox3.Text = "Payment Detail ";
+            // 
+            // txtCashBack
+            // 
+            this.txtCashBack.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCashBack.Location = new System.Drawing.Point(86, 76);
+            this.txtCashBack.Name = "txtCashBack";
+            this.txtCashBack.Size = new System.Drawing.Size(121, 24);
+            this.txtCashBack.TabIndex = 220;
+            this.txtCashBack.Text = "0";
+            this.txtCashBack.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtCashBack.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.txtCashBack.TextChanged += new System.EventHandler(this.txtCashBack_TextChanged);
+            // 
+            // label16
+            // 
+            this.label16.AutoSize = true;
+            this.label16.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label16.Location = new System.Drawing.Point(5, 81);
+            this.label16.Name = "label16";
+            this.label16.Size = new System.Drawing.Size(81, 16);
+            this.label16.TabIndex = 219;
+            this.label16.Text = "Cash Back : ";
+            // 
+            // txtBalance
+            // 
+            this.txtBalance.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtBalance.Location = new System.Drawing.Point(86, 104);
+            this.txtBalance.Name = "txtBalance";
+            this.txtBalance.ReadOnly = true;
+            this.txtBalance.Size = new System.Drawing.Size(121, 24);
+            this.txtBalance.TabIndex = 216;
+            this.txtBalance.TabStop = false;
+            this.txtBalance.Text = "0";
+            this.txtBalance.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtBalance.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            // 
+            // label15
+            // 
+            this.label15.AutoSize = true;
+            this.label15.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label15.Location = new System.Drawing.Point(5, 25);
+            this.label15.Name = "label15";
+            this.label15.Size = new System.Drawing.Size(61, 16);
+            this.label15.TabIndex = 218;
+            this.label15.Text = "Amount : ";
+            // 
+            // txtCashReceipt
+            // 
+            this.txtCashReceipt.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtCashReceipt.Location = new System.Drawing.Point(86, 48);
+            this.txtCashReceipt.Name = "txtCashReceipt";
+            this.txtCashReceipt.Size = new System.Drawing.Size(121, 24);
+            this.txtCashReceipt.TabIndex = 0;
+            this.txtCashReceipt.Text = "0";
+            this.txtCashReceipt.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtCashReceipt.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.txtCashReceipt.TextChanged += new System.EventHandler(this.txtCashReceipt_TextChanged);
+            // 
+            // txtTotAmount
+            // 
+            this.txtTotAmount.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtTotAmount.Location = new System.Drawing.Point(86, 20);
+            this.txtTotAmount.Name = "txtTotAmount";
+            this.txtTotAmount.ReadOnly = true;
+            this.txtTotAmount.Size = new System.Drawing.Size(121, 24);
+            this.txtTotAmount.TabIndex = 217;
+            this.txtTotAmount.TabStop = false;
+            this.txtTotAmount.Text = "0";
+            this.txtTotAmount.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.txtTotAmount.Value = new decimal(new int[] {
+            0,
+            0,
+            0,
+            0});
+            this.txtTotAmount.TextChanged += new System.EventHandler(this.txtTotAmount_TextChanged);
+            // 
+            // label17
+            // 
+            this.label17.AutoSize = true;
+            this.label17.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label17.Location = new System.Drawing.Point(5, 53);
+            this.label17.Name = "label17";
+            this.label17.Size = new System.Drawing.Size(78, 16);
+            this.label17.TabIndex = 211;
+            this.label17.Text = "Cash Paid : ";
+            // 
+            // label14
+            // 
+            this.label14.AutoSize = true;
+            this.label14.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label14.Location = new System.Drawing.Point(5, 109);
+            this.label14.Name = "label14";
+            this.label14.Size = new System.Drawing.Size(66, 16);
+            this.label14.TabIndex = 215;
+            this.label14.Text = "Balance : ";
+            // 
+            // panel1
+            // 
+            this.panel1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left)));
+            this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.panel1.Controls.Add(this.btnCopyAsNew);
+            this.panel1.Controls.Add(this.btnPreview);
+            this.panel1.Controls.Add(this.btnDelete);
+            this.panel1.Controls.Add(this.btnPrint);
+            this.panel1.Controls.Add(this.btnNext);
+            this.panel1.Controls.Add(this.btnClose);
+            this.panel1.Controls.Add(this.btnEnd);
+            this.panel1.Controls.Add(this.btnPri);
+            this.panel1.Controls.Add(this.btnSave);
+            this.panel1.Controls.Add(this.btnHome);
+            this.panel1.Controls.Add(this.btnNew);
+            this.panel1.Location = new System.Drawing.Point(16, 459);
+            this.panel1.Name = "panel1";
+            this.panel1.Size = new System.Drawing.Size(602, 68);
+            this.panel1.TabIndex = 2;
+            // 
+            // btnCopyAsNew
+            // 
+            this.btnCopyAsNew.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnCopyAsNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnCopyAsNew.Location = new System.Drawing.Point(166, 3);
+            this.btnCopyAsNew.Name = "btnCopyAsNew";
+            this.btnCopyAsNew.Size = new System.Drawing.Size(114, 29);
+            this.btnCopyAsNew.TabIndex = 170;
+            this.btnCopyAsNew.Text = "Copy as &New";
+            this.btnCopyAsNew.UseVisualStyleBackColor = false;
+            this.btnCopyAsNew.Click += new System.EventHandler(this.btnNewCopy_Click);
+            // 
+            // btnPreview
+            // 
+            this.btnPreview.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnPreview.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPreview.Location = new System.Drawing.Point(363, 3);
+            this.btnPreview.Name = "btnPreview";
+            this.btnPreview.Size = new System.Drawing.Size(73, 29);
+            this.btnPreview.TabIndex = 169;
+            this.btnPreview.Text = "Pre&view";
+            this.btnPreview.UseVisualStyleBackColor = false;
+            this.btnPreview.Click += new System.EventHandler(this.btnPreview_Click);
+            // 
+            // btnDelete
+            // 
+            this.btnDelete.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnDelete.Location = new System.Drawing.Point(441, 3);
+            this.btnDelete.Name = "btnDelete";
+            this.btnDelete.Size = new System.Drawing.Size(73, 29);
+            this.btnDelete.TabIndex = 168;
+            this.btnDelete.Text = "&Delete";
+            this.btnDelete.UseVisualStyleBackColor = false;
+            this.btnDelete.Click += new System.EventHandler(this.btnDelete_Click);
+            // 
+            // btnPrint
+            // 
+            this.btnPrint.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnPrint.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPrint.Location = new System.Drawing.Point(285, 3);
+            this.btnPrint.Name = "btnPrint";
+            this.btnPrint.Size = new System.Drawing.Size(73, 29);
+            this.btnPrint.TabIndex = 165;
+            this.btnPrint.Text = "&Print";
+            this.btnPrint.UseVisualStyleBackColor = false;
+            this.btnPrint.Click += new System.EventHandler(this.btnPrint_Click);
+            // 
+            // btnNext
+            // 
+            this.btnNext.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnNext.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnNext.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnNext.Location = new System.Drawing.Point(244, 35);
+            this.btnNext.Name = "btnNext";
+            this.btnNext.Size = new System.Drawing.Size(36, 29);
+            this.btnNext.TabIndex = 164;
+            this.btnNext.Text = ">";
+            this.btnNext.UseVisualStyleBackColor = false;
+            this.btnNext.Click += new System.EventHandler(this.btnNext_Click);
+            // 
+            // btnClose
+            // 
+            this.btnClose.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnClose.Location = new System.Drawing.Point(519, 3);
+            this.btnClose.Name = "btnClose";
+            this.btnClose.Size = new System.Drawing.Size(73, 29);
+            this.btnClose.TabIndex = 163;
+            this.btnClose.Text = "Close";
+            this.btnClose.UseVisualStyleBackColor = false;
+            this.btnClose.Click += new System.EventHandler(this.btnClose_Click);
+            // 
+            // btnEnd
+            // 
+            this.btnEnd.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnEnd.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnEnd.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnEnd.Location = new System.Drawing.Point(286, 35);
+            this.btnEnd.Name = "btnEnd";
+            this.btnEnd.Size = new System.Drawing.Size(36, 29);
+            this.btnEnd.TabIndex = 163;
+            this.btnEnd.Text = ">>";
+            this.btnEnd.UseVisualStyleBackColor = false;
+            this.btnEnd.Click += new System.EventHandler(this.btnEnd_Click);
+            // 
+            // btnPri
+            // 
+            this.btnPri.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnPri.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnPri.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnPri.Location = new System.Drawing.Point(202, 35);
+            this.btnPri.Name = "btnPri";
+            this.btnPri.Size = new System.Drawing.Size(36, 29);
+            this.btnPri.TabIndex = 162;
+            this.btnPri.Text = "<";
+            this.btnPri.UseVisualStyleBackColor = false;
+            this.btnPri.Click += new System.EventHandler(this.btnPri_Click);
+            // 
+            // btnSave
+            // 
+            this.btnSave.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnSave.Location = new System.Drawing.Point(88, 3);
+            this.btnSave.Name = "btnSave";
+            this.btnSave.Size = new System.Drawing.Size(73, 29);
+            this.btnSave.TabIndex = 0;
+            this.btnSave.Text = "&Save";
+            this.btnSave.UseVisualStyleBackColor = false;
+            this.btnSave.Click += new System.EventHandler(this.btnSave_Click);
+            // 
+            // btnHome
+            // 
+            this.btnHome.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnHome.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnHome.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnHome.Location = new System.Drawing.Point(160, 35);
+            this.btnHome.Name = "btnHome";
+            this.btnHome.Size = new System.Drawing.Size(36, 29);
+            this.btnHome.TabIndex = 161;
+            this.btnHome.Text = "<<";
+            this.btnHome.UseVisualStyleBackColor = false;
+            this.btnHome.Click += new System.EventHandler(this.btnHome_Click);
+            // 
+            // btnNew
+            // 
+            this.btnNew.BackColor = System.Drawing.SystemColors.ControlLight;
+            this.btnNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnNew.Location = new System.Drawing.Point(10, 3);
+            this.btnNew.Name = "btnNew";
+            this.btnNew.Size = new System.Drawing.Size(73, 29);
+            this.btnNew.TabIndex = 161;
+            this.btnNew.Text = "&New";
+            this.btnNew.UseVisualStyleBackColor = false;
+            this.btnNew.Click += new System.EventHandler(this.btnNew_Click);
+            // 
+            // dgvSale
+            // 
+            this.dgvSale.AllowUserToAddRows = false;
+            this.dgvSale.AllowUserToDeleteRows = false;
+            this.dgvSale.AllowUserToOrderColumns = true;
+            this.dgvSale.AllowUserToResizeColumns = false;
+            this.dgvSale.Anchor = ((System.Windows.Forms.AnchorStyles)((((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Bottom) 
+            | System.Windows.Forms.AnchorStyles.Left) 
+            | System.Windows.Forms.AnchorStyles.Right)));
+            this.dgvSale.BackgroundColor = System.Drawing.SystemColors.ControlLightLight;
+            dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle1.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle1.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle1.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle1.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle1.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgvSale.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle1;
+            this.dgvSale.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvSale.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.clnSeq,
+            this.clnItemKey,
+            this.clnCatagory,
+            this.clnItemNo,
+            this.clnUnit,
+            this.clnQty,
+            this.clnRate,
+            this.clnAddless,
+            this.clnAmount,
+            this.clnStatus});
+            this.dgvSale.Location = new System.Drawing.Point(16, 187);
+            this.dgvSale.MultiSelect = false;
+            this.dgvSale.Name = "dgvSale";
+            this.dgvSale.RowHeadersWidth = 15;
+            this.dgvSale.RowTemplate.Height = 25;
+            this.dgvSale.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            this.dgvSale.Size = new System.Drawing.Size(893, 202);
+            this.dgvSale.TabIndex = 1;
+            this.dgvSale.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSale_CellContentClick);
+            this.dgvSale.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPurchase_CellEndEdit);
+            this.dgvSale.CellMouseUp += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvSale_CellMouseUp);
+            this.dgvSale.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvPurchase_DataError);
+            this.dgvSale.EditingControlShowing += new System.Windows.Forms.DataGridViewEditingControlShowingEventHandler(this.dgvPurchase_EditingControlShowing);
+            this.dgvSale.RowsAdded += new System.Windows.Forms.DataGridViewRowsAddedEventHandler(this.dgvPurchase_RowsAdded);
+            this.dgvSale.SelectionChanged += new System.EventHandler(this.dgvPurchase_SelectionChanged);
+            this.dgvSale.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvPurchase_KeyDown);
+            // 
+            // clnSeq
+            // 
+            this.clnSeq.HeaderText = "Seq";
+            this.clnSeq.Name = "clnSeq";
+            this.clnSeq.ReadOnly = true;
+            this.clnSeq.Visible = false;
+            // 
+            // clnItemKey
+            // 
+            this.clnItemKey.HeaderText = "Item Key";
+            this.clnItemKey.MinimumWidth = 70;
+            this.clnItemKey.Name = "clnItemKey";
+            this.clnItemKey.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.clnItemKey.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
+            this.clnItemKey.Width = 70;
+            // 
+            // clnCatagory
+            // 
+            this.clnCatagory.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.clnCatagory.FillWeight = 50F;
+            this.clnCatagory.HeaderText = "Item Catagory";
+            this.clnCatagory.MinimumWidth = 140;
+            this.clnCatagory.Name = "clnCatagory";
+            // 
+            // clnItemNo
+            // 
+            this.clnItemNo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
+            this.clnItemNo.FillWeight = 50F;
+            this.clnItemNo.HeaderText = "ItemNo";
+            this.clnItemNo.MinimumWidth = 120;
+            this.clnItemNo.Name = "clnItemNo";
+            this.clnItemNo.Resizable = System.Windows.Forms.DataGridViewTriState.True;
+            this.clnItemNo.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.Automatic;
+            // 
+            // clnUnit
+            // 
+            this.clnUnit.HeaderText = "Unit";
+            this.clnUnit.MinimumWidth = 70;
+            this.clnUnit.Name = "clnUnit";
+            this.clnUnit.Width = 70;
+            // 
+            // clnQty
+            // 
+            dataGridViewCellStyle2.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.clnQty.DefaultCellStyle = dataGridViewCellStyle2;
+            this.clnQty.HeaderText = "Qty";
+            this.clnQty.MinimumWidth = 100;
+            this.clnQty.Name = "clnQty";
+            // 
+            // clnRate
+            // 
+            dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.clnRate.DefaultCellStyle = dataGridViewCellStyle3;
+            this.clnRate.HeaderText = "Rate";
+            this.clnRate.MinimumWidth = 120;
+            this.clnRate.Name = "clnRate";
+            this.clnRate.Width = 120;
+            // 
+            // clnAddless
+            // 
+            this.clnAddless.HeaderText = "Add / Less";
+            this.clnAddless.MinimumWidth = 90;
+            this.clnAddless.Name = "clnAddless";
+            this.clnAddless.Width = 90;
+            // 
+            // clnAmount
+            // 
+            dataGridViewCellStyle4.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.clnAmount.DefaultCellStyle = dataGridViewCellStyle4;
+            this.clnAmount.HeaderText = "Amount";
+            this.clnAmount.MinimumWidth = 120;
+            this.clnAmount.Name = "clnAmount";
+            this.clnAmount.ReadOnly = true;
+            this.clnAmount.Width = 120;
+            // 
+            // clnStatus
+            // 
+            this.clnStatus.HeaderText = "Status";
+            this.clnStatus.Name = "clnStatus";
+            this.clnStatus.ReadOnly = true;
+            this.clnStatus.Visible = false;
             // 
             // tbQuery
             // 
@@ -760,7 +794,7 @@ namespace ERP
             this.tbQuery.Location = new System.Drawing.Point(4, 25);
             this.tbQuery.Name = "tbQuery";
             this.tbQuery.Padding = new System.Windows.Forms.Padding(3);
-            this.tbQuery.Size = new System.Drawing.Size(1083, 502);
+            this.tbQuery.Size = new System.Drawing.Size(917, 543);
             this.tbQuery.TabIndex = 1;
             this.tbQuery.Tag = "Lock";
             this.tbQuery.Text = "Query";
@@ -816,9 +850,8 @@ namespace ERP
             // 
             // cmbFilterAccounts
             // 
-            this.cmbFilterAccounts.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.cmbFilterAccounts.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
             this.cmbFilterAccounts.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
-            this.cmbFilterAccounts.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDown;
             this.cmbFilterAccounts.FormattingEnabled = true;
             this.cmbFilterAccounts.Location = new System.Drawing.Point(537, 21);
             this.cmbFilterAccounts.Name = "cmbFilterAccounts";
@@ -890,14 +923,14 @@ namespace ERP
             this.dgvQuery.AllowUserToOrderColumns = true;
             this.dgvQuery.AllowUserToResizeColumns = false;
             this.dgvQuery.BackgroundColor = System.Drawing.SystemColors.ControlLightLight;
-            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
-            dataGridViewCellStyle6.BackColor = System.Drawing.SystemColors.Control;
-            dataGridViewCellStyle6.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            dataGridViewCellStyle6.ForeColor = System.Drawing.SystemColors.WindowText;
-            dataGridViewCellStyle6.SelectionBackColor = System.Drawing.SystemColors.Highlight;
-            dataGridViewCellStyle6.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
-            dataGridViewCellStyle6.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
-            this.dgvQuery.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle6;
+            dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
+            dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Control;
+            dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            dataGridViewCellStyle5.ForeColor = System.Drawing.SystemColors.WindowText;
+            dataGridViewCellStyle5.SelectionBackColor = System.Drawing.SystemColors.Highlight;
+            dataGridViewCellStyle5.SelectionForeColor = System.Drawing.SystemColors.HighlightText;
+            dataGridViewCellStyle5.WrapMode = System.Windows.Forms.DataGridViewTriState.True;
+            this.dgvQuery.ColumnHeadersDefaultCellStyle = dataGridViewCellStyle5;
             this.dgvQuery.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
             this.dgvQuery.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.clnDate,
@@ -909,9 +942,10 @@ namespace ERP
             this.dgvQuery.Location = new System.Drawing.Point(3, 3);
             this.dgvQuery.MultiSelect = false;
             this.dgvQuery.Name = "dgvQuery";
+            this.dgvQuery.ReadOnly = true;
             this.dgvQuery.RowHeadersWidth = 30;
             this.dgvQuery.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.FullRowSelect;
-            this.dgvQuery.Size = new System.Drawing.Size(1077, 323);
+            this.dgvQuery.Size = new System.Drawing.Size(911, 323);
             this.dgvQuery.TabIndex = 190;
             this.dgvQuery.CellDoubleClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvQuery_CellDoubleClick);
             // 
@@ -971,22 +1005,22 @@ namespace ERP
             this.deleteRecordToolStripMenuItem.Text = "Delete Record";
             this.deleteRecordToolStripMenuItem.Click += new System.EventHandler(this.deleteRecordToolStripMenuItem_Click);
             // 
-            // label17
+            // label12
             // 
-            this.label17.AutoSize = true;
-            this.label17.Font = new System.Drawing.Font("Calibri", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label17.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
-            this.label17.Location = new System.Drawing.Point(439, 9);
-            this.label17.Name = "label17";
-            this.label17.Size = new System.Drawing.Size(277, 59);
-            this.label17.TabIndex = 216;
-            this.label17.Text = "SALE SUPPLY";
-            this.label17.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("Calibri", 36F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.ForeColor = System.Drawing.SystemColors.ActiveCaptionText;
+            this.label12.Location = new System.Drawing.Point(395, 4);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(206, 59);
+            this.label12.TabIndex = 216;
+            this.label12.Text = "Purchase";
+            this.label12.TextAlign = System.Drawing.ContentAlignment.MiddleCenter;
             // 
             // pictureBox1
             // 
             this.pictureBox1.Image = ((System.Drawing.Image)(resources.GetObject("pictureBox1.Image")));
-            this.pictureBox1.Location = new System.Drawing.Point(365, 9);
+            this.pictureBox1.Location = new System.Drawing.Point(323, 4);
             this.pictureBox1.Name = "pictureBox1";
             this.pictureBox1.Size = new System.Drawing.Size(84, 59);
             this.pictureBox1.SizeMode = System.Windows.Forms.PictureBoxSizeMode.Zoom;
@@ -1003,8 +1037,8 @@ namespace ERP
             // dataGridViewTextBoxColumn2
             // 
             this.dataGridViewTextBoxColumn2.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.dataGridViewTextBoxColumn2.DefaultCellStyle = dataGridViewCellStyle7;
+            dataGridViewCellStyle6.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.dataGridViewTextBoxColumn2.DefaultCellStyle = dataGridViewCellStyle6;
             this.dataGridViewTextBoxColumn2.FillWeight = 50F;
             this.dataGridViewTextBoxColumn2.HeaderText = "Catagory";
             this.dataGridViewTextBoxColumn2.MinimumWidth = 120;
@@ -1017,8 +1051,8 @@ namespace ERP
             // dataGridViewTextBoxColumn3
             // 
             this.dataGridViewTextBoxColumn3.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle8;
+            dataGridViewCellStyle7.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.dataGridViewTextBoxColumn3.DefaultCellStyle = dataGridViewCellStyle7;
             this.dataGridViewTextBoxColumn3.FillWeight = 50F;
             this.dataGridViewTextBoxColumn3.HeaderText = "ItemNo";
             this.dataGridViewTextBoxColumn3.MinimumWidth = 120;
@@ -1030,8 +1064,8 @@ namespace ERP
             // dataGridViewTextBoxColumn4
             // 
             this.dataGridViewTextBoxColumn4.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.dataGridViewTextBoxColumn4.DefaultCellStyle = dataGridViewCellStyle9;
+            dataGridViewCellStyle8.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.dataGridViewTextBoxColumn4.DefaultCellStyle = dataGridViewCellStyle8;
             this.dataGridViewTextBoxColumn4.FillWeight = 50F;
             this.dataGridViewTextBoxColumn4.HeaderText = "Flovours";
             this.dataGridViewTextBoxColumn4.MinimumWidth = 120;
@@ -1043,8 +1077,8 @@ namespace ERP
             // dataGridViewTextBoxColumn5
             // 
             this.dataGridViewTextBoxColumn5.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.dataGridViewTextBoxColumn5.DefaultCellStyle = dataGridViewCellStyle10;
+            dataGridViewCellStyle9.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.dataGridViewTextBoxColumn5.DefaultCellStyle = dataGridViewCellStyle9;
             this.dataGridViewTextBoxColumn5.FillWeight = 50F;
             this.dataGridViewTextBoxColumn5.HeaderText = "Item";
             this.dataGridViewTextBoxColumn5.MinimumWidth = 120;
@@ -1055,8 +1089,8 @@ namespace ERP
             // 
             // dataGridViewTextBoxColumn6
             // 
-            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.dataGridViewTextBoxColumn6.DefaultCellStyle = dataGridViewCellStyle11;
+            dataGridViewCellStyle10.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.dataGridViewTextBoxColumn6.DefaultCellStyle = dataGridViewCellStyle10;
             this.dataGridViewTextBoxColumn6.FillWeight = 50F;
             this.dataGridViewTextBoxColumn6.Frozen = true;
             this.dataGridViewTextBoxColumn6.HeaderText = "Qty";
@@ -1069,8 +1103,8 @@ namespace ERP
             // 
             // dataGridViewTextBoxColumn7
             // 
-            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.dataGridViewTextBoxColumn7.DefaultCellStyle = dataGridViewCellStyle12;
+            dataGridViewCellStyle11.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.dataGridViewTextBoxColumn7.DefaultCellStyle = dataGridViewCellStyle11;
             this.dataGridViewTextBoxColumn7.FillWeight = 50F;
             this.dataGridViewTextBoxColumn7.Frozen = true;
             this.dataGridViewTextBoxColumn7.HeaderText = "Rate";
@@ -1083,8 +1117,8 @@ namespace ERP
             // 
             // dataGridViewTextBoxColumn8
             // 
-            dataGridViewCellStyle13.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
-            this.dataGridViewTextBoxColumn8.DefaultCellStyle = dataGridViewCellStyle13;
+            dataGridViewCellStyle12.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
+            this.dataGridViewTextBoxColumn8.DefaultCellStyle = dataGridViewCellStyle12;
             this.dataGridViewTextBoxColumn8.FillWeight = 50F;
             this.dataGridViewTextBoxColumn8.Frozen = true;
             this.dataGridViewTextBoxColumn8.HeaderText = "Amount";
@@ -1098,19 +1132,16 @@ namespace ERP
             // dataGridViewTextBoxColumn9
             // 
             this.dataGridViewTextBoxColumn9.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.dataGridViewTextBoxColumn9.FillWeight = 50F;
             this.dataGridViewTextBoxColumn9.Frozen = true;
             this.dataGridViewTextBoxColumn9.HeaderText = "Status";
             this.dataGridViewTextBoxColumn9.MinimumWidth = 180;
             this.dataGridViewTextBoxColumn9.Name = "dataGridViewTextBoxColumn9";
             this.dataGridViewTextBoxColumn9.ReadOnly = true;
-            this.dataGridViewTextBoxColumn9.Resizable = System.Windows.Forms.DataGridViewTriState.True;
             this.dataGridViewTextBoxColumn9.Visible = false;
             // 
             // dataGridViewTextBoxColumn10
             // 
             this.dataGridViewTextBoxColumn10.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.dataGridViewTextBoxColumn10.Frozen = true;
             this.dataGridViewTextBoxColumn10.HeaderText = "Edit By";
             this.dataGridViewTextBoxColumn10.MinimumWidth = 180;
             this.dataGridViewTextBoxColumn10.Name = "dataGridViewTextBoxColumn10";
@@ -1130,55 +1161,32 @@ namespace ERP
             this.dataGridViewTextBoxColumn12.HeaderText = "Edit By";
             this.dataGridViewTextBoxColumn12.MinimumWidth = 180;
             this.dataGridViewTextBoxColumn12.Name = "dataGridViewTextBoxColumn12";
-            this.dataGridViewTextBoxColumn12.ReadOnly = true;
             // 
-            // dataGridViewTextBoxColumn13
-            // 
-            this.dataGridViewTextBoxColumn13.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.dataGridViewTextBoxColumn13.HeaderText = "Edit By";
-            this.dataGridViewTextBoxColumn13.MinimumWidth = 180;
-            this.dataGridViewTextBoxColumn13.Name = "dataGridViewTextBoxColumn13";
-            this.dataGridViewTextBoxColumn13.ReadOnly = true;
-            // 
-            // dataGridViewTextBoxColumn14
-            // 
-            this.dataGridViewTextBoxColumn14.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.dataGridViewTextBoxColumn14.HeaderText = "Edit By";
-            this.dataGridViewTextBoxColumn14.MinimumWidth = 180;
-            this.dataGridViewTextBoxColumn14.Name = "dataGridViewTextBoxColumn14";
-            this.dataGridViewTextBoxColumn14.ReadOnly = true;
-            // 
-            // dataGridViewTextBoxColumn15
-            // 
-            this.dataGridViewTextBoxColumn15.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.dataGridViewTextBoxColumn15.HeaderText = "Edit By";
-            this.dataGridViewTextBoxColumn15.MinimumWidth = 180;
-            this.dataGridViewTextBoxColumn15.Name = "dataGridViewTextBoxColumn15";
-            this.dataGridViewTextBoxColumn15.ReadOnly = true;
-            // 
-            // frmSaleSupply
+            // frmWandaPurchase
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(1091, 585);
-            this.Controls.Add(this.label17);
+            this.ClientSize = new System.Drawing.Size(925, 626);
+            this.Controls.Add(this.label12);
             this.Controls.Add(this.pictureBox1);
             this.Controls.Add(this.tbSaleQuery);
             this.KeyPreview = true;
-            this.Name = "frmSaleSupply";
+            this.Name = "frmWandaPurchase";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Sale";
+            this.Text = "Purchase Voucher";
             this.Load += new System.EventHandler(this.frmPurchase_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmPurchase_KeyDown);
             this.tbSaleQuery.ResumeLayout(false);
             this.tbDetail.ResumeLayout(false);
             this.tbDetail.PerformLayout();
-            this.panel1.ResumeLayout(false);
-            this.pnlTotals.ResumeLayout(false);
-            this.pnlTotals.PerformLayout();
-            ((System.ComponentModel.ISupportInitialize)(this.dgvSale)).EndInit();
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             this.grpInvoiceDetail.ResumeLayout(false);
             this.grpInvoiceDetail.PerformLayout();
+            this.groupBox3.ResumeLayout(false);
+            this.groupBox3.PerformLayout();
+            this.panel1.ResumeLayout(false);
+            ((System.ComponentModel.ISupportInitialize)(this.dgvSale)).EndInit();
             this.tbQuery.ResumeLayout(false);
             this.groupBox1.ResumeLayout(false);
             this.groupBox1.PerformLayout();
@@ -1212,6 +1220,7 @@ namespace ERP
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnHome;
         private System.Windows.Forms.Button btnNew;
+        private System.Windows.Forms.Button btnCopyAsNew;
         private System.Windows.Forms.GroupBox grpInvoiceDetail;
         private System.Windows.Forms.TextBox txtEditBy;
         private System.Windows.Forms.TextBox txtCreatedBy;
@@ -1219,18 +1228,22 @@ namespace ERP
         private System.Windows.Forms.Label label8;
         private System.Windows.Forms.ComboBox cmbNarration;
         private System.Windows.Forms.Label lblNarration;
-        private System.Windows.Forms.ComboBox cmbSupplyOrder;
-        private System.Windows.Forms.Label lblSupplyOrder;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtDescription;
-        private System.Windows.Forms.ComboBox cmbItem;
-        private System.Windows.Forms.Label lblItem;
+        private System.Windows.Forms.ComboBox cmbAccounts;
+        private System.Windows.Forms.Label label10;
         private System.Windows.Forms.Label label1;
         private System.Windows.Forms.DateTimePicker dtpDate;
         private System.Windows.Forms.TextBox txtVoucherNo;
         private System.Windows.Forms.Label label7;
         private System.Windows.Forms.DataGridView dgvSale;
+        private System.Windows.Forms.Label lblTotAmount;
         private System.Windows.Forms.DataGridView dgvQuery;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnDate;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnVoucherNum;
+        private System.Windows.Forms.DataGridViewTextBoxColumn Account;
+        private System.Windows.Forms.DataGridViewTextBoxColumn ClnCreatedby;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnEditby;
         private System.Windows.Forms.GroupBox groupBox1;
         private System.Windows.Forms.TextBox txtFilterVoucher;
         private System.Windows.Forms.Label label11;
@@ -1243,42 +1256,36 @@ namespace ERP
         private System.Windows.Forms.Label label6;
         private System.Windows.Forms.Button btnFind;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn10;
-        private System.Windows.Forms.Button btnCopyAsNew;
+        private System.Windows.Forms.Button btnPrint;
         private System.Windows.Forms.Button btnDelete;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem deleteRecordToolStripMenuItem;
-        private System.Windows.Forms.Label label17;
-        private System.Windows.Forms.PictureBox pictureBox1;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn11;
-        private System.Windows.Forms.Panel pnlTotals;
-        private System.Windows.Forms.Label lblTotCount;
-        private System.Windows.Forms.TextBox txtTotCount;
-        private System.Windows.Forms.Label lblTotQty;
-        private System.Windows.Forms.TextBox txtTotQty;
-        private System.Windows.Forms.Label lblTotAddLess;
-        private System.Windows.Forms.TextBox txtTotAddLess;
-        private System.Windows.Forms.Label label15;
-        private ERP.DecimalTextbox txtTotAmount;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn12;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn13;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn14;
-        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn15;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnDate;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnVoucherNum;
-        private System.Windows.Forms.DataGridViewTextBoxColumn Account;
-        private System.Windows.Forms.DataGridViewTextBoxColumn ClnCreatedby;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnEditby;
+        private System.Windows.Forms.Button btnPreview;
+        private System.Windows.Forms.Label label12;
+        private System.Windows.Forms.PictureBox pictureBox1;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.TextBox txtBarcode;
+        private System.Windows.Forms.Label label13;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSeq;
-        private System.Windows.Forms.DataGridViewComboBoxColumn clnCustomer;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnItemKey;
+        private System.Windows.Forms.DataGridViewComboBoxColumn clnCatagory;
+        private System.Windows.Forms.DataGridViewComboBoxColumn clnItemNo;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnUnit;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnQty;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnRate;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnDiscount;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnDiscPercent;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnAddLess;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnAddless;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnAmount;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnStatus;
-        private System.Windows.Forms.Label lblSearchCustomer;
-        private System.Windows.Forms.TextBox txtSearchCustomer;
+        private System.Windows.Forms.GroupBox groupBox3;
+        private ERP.DecimalTextbox txtCashBack;
+        private System.Windows.Forms.Label label16;
+        private ERP.DecimalTextbox txtBalance;
+        private System.Windows.Forms.Label label15;
+        private ERP.DecimalTextbox txtCashReceipt;
+        private ERP.DecimalTextbox txtTotAmount;
+        private System.Windows.Forms.Label label17;
+        private System.Windows.Forms.Label label14;
+        private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn12;
     }
 }
