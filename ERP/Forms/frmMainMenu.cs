@@ -104,27 +104,6 @@ namespace ERP
             bankReconcilationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BankReconciliations);
             payrollToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Payrolls);
             
-            // Legacy Reports (Urdu / Classic)
-            accountStatementToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatement);
-            accountStatementWithDueToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatementWithDue);
-            accountBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountBalance);
-            trialBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.TrialBalance);
-            stockBalanceToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockBalance);
-            itemLedgerToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockLedger);
-            incomeSummaryToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.IncomeSummary);
-            balanceSheetToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BalanceSheet);
-            customerBillToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBill);
-            enToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.EnvelopeReport);
-            barcodeToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BarcodeReport);
-            shipmentLabelTagToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ShipmentLabelReport);
-            reportsToolStripMenuItem.Visible = UserInfo.IsOwner ||
-                accountStatementToolStripMenuItem.Visible || accountStatementWithDueToolStripMenuItem.Visible ||
-                accountBalanceToolStripMenuItem.Visible || trialBalanceToolStripMenuItem.Visible ||
-                stockBalanceToolStripMenuItem.Visible || itemLedgerToolStripMenuItem.Visible ||
-                incomeSummaryToolStripMenuItem.Visible || balanceSheetToolStripMenuItem.Visible ||
-                customerBillToolStripMenuItem.Visible || enToolStripMenuItem.Visible ||
-                barcodeToolStripMenuItem.Visible || shipmentLabelTagToolStripMenuItem.Visible;
-
             // Reports (English / Modern)
             accountStatement2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatement);
             accountStatementWithDue2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.AccountStatementWithDue);
@@ -237,15 +216,6 @@ namespace ERP
             frmUnits frm = new frmUnits();
             frm.MdiParent = this;
             frm.Show();
-        }
-
-        private void accountStatementToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Account Statement";
-            frm.MdiParent = this;
-            frm.Show();
-
         }
 
         private void accountStatement2ToolStripMenuItem_Click(object sender, EventArgs e)
@@ -390,14 +360,6 @@ namespace ERP
             OpenPurchaseForm();
         }
 
-        private void stockBalanceToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Stock Balance";
-            frm.MdiParent = this;
-            frm.Show();
-        }
-
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
             if (th != null && th.IsAlive)
@@ -463,14 +425,6 @@ namespace ERP
         {
             frmReportParameters frm = new frmReportParameters();
             frm.Reportname = "Income Summery";
-            frm.MdiParent = this;
-            frm.Show();
-        }
-
-        private void trialBalanceToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Trial Balance";
             frm.MdiParent = this;
             frm.Show();
         }
@@ -644,24 +598,6 @@ namespace ERP
             frm.Show();
         }
 
-        private void accountBalanceToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Balance Detail";
-            frm.Paramname = "Balance Detail";
-            frm.MdiParent = this;
-            frm.Show();
-        }
-
-        private void itemLedgerToolStripMenuItem_Click_1(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Stock Ledger";
-            frm.Paramname = "Stock Ledger";
-            frm.MdiParent = this;
-            frm.Show();
-        }
-
         private void saleReturnToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (ApiSession.HasVariablePackFeature)
@@ -694,26 +630,6 @@ namespace ERP
             }
         }
 
-        private void incomeSummaryToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Income Summery";
-            frm.Paramname = "Income Summery";
-            frm.MdiParent = this;
-            frm.Show();
-
-        }
-
-        private void balanceSheetToolStripMenuItem_Click_1(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Balance Sheet";
-            frm.Paramname = "Balance Sheet";
-            frm.MdiParent = this;
-            frm.Show();
-
-        }
-
         private void hRInfoToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Forms.frmHRInfo frm = new Forms.frmHRInfo();
@@ -727,17 +643,6 @@ namespace ERP
             frm.MdiParent = this;
             frm.Show();
         }
-
-
-        private void enToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Envelope";
-            frm.Paramname = "Envelope";
-            frm.MdiParent = this;
-            frm.Show();
-        }
-
 
         private void frmMainMenu_Shown(object sender, EventArgs e)
         {
@@ -754,31 +659,6 @@ namespace ERP
             panel1.DrawToBitmap(Mainbmp, new Rectangle(Point.Empty, Mainbmp.Size));
             this.Controls.Remove(panel1);
             this.BackgroundImage = Mainbmp;
-
-        }
-        private void accountStatementWithDueToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Account Statement With Due Days";
-            frm.MdiParent = this;
-            frm.Show();
-        }
-
-        private void barcodeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Barcode";
-            frm.MdiParent = this;
-            frm.Show();
-
-        }
-
-        private void shipmentLabelTagToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Shipment Label Tag";
-            frm.MdiParent = this;
-            frm.Show();
 
         }
 
@@ -812,15 +692,6 @@ namespace ERP
                 frm.MdiParent = this;
                 frm.Show();
             }
-        }
-
-        private void customerBillToolStripMenuItem_Click_1(object sender, EventArgs e)
-        {
-            frmReportParameters frm = new frmReportParameters();
-            frm.Reportname = "Customer Bill Date Range";
-            frm.Paramname = "Customer Bill Date Range";
-            frm.MdiParent = this;
-            frm.Show();
         }
 
         private void supplyOrderToolStripMenuItem_Click_1(object sender, EventArgs e)

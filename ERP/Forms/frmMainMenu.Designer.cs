@@ -61,7 +61,6 @@ namespace ERP
             this.payrollToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statisticsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.usersStatsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.reportsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.reports2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.accountStatement2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.accountStatementWithDue2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -81,18 +80,6 @@ namespace ERP
             this.envelope2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.barcode2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.shipmentLabelTag2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.accountStatementToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.accountStatementWithDueToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.accountBalanceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.trialBalanceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.stockBalanceToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.itemLedgerToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.incomeSummaryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.balanceSheetToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.enToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.barcodeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.shipmentLabelTagToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.customerBillToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.settingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.configurationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
@@ -120,7 +107,6 @@ namespace ERP
             this.dailyEntryToolStripMenuItem,
             this.statisticsToolStripMenuItem,
             this.reports2ToolStripMenuItem,
-            this.reportsToolStripMenuItem,
             this.settingToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
@@ -364,109 +350,6 @@ namespace ERP
             this.usersStatsToolStripMenuItem.Name = "usersStatsToolStripMenuItem";
             this.usersStatsToolStripMenuItem.Size = new System.Drawing.Size(130, 22);
             this.usersStatsToolStripMenuItem.Text = "Users Stats";
-            // 
-            // reportsToolStripMenuItem
-            // 
-            this.reportsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.accountStatementToolStripMenuItem,
-            this.accountStatementWithDueToolStripMenuItem,
-            this.accountBalanceToolStripMenuItem,
-            this.trialBalanceToolStripMenuItem,
-            this.stockBalanceToolStripMenuItem,
-            this.itemLedgerToolStripMenuItem,
-            this.incomeSummaryToolStripMenuItem,
-            this.balanceSheetToolStripMenuItem,
-            this.enToolStripMenuItem,
-            this.barcodeToolStripMenuItem,
-            this.shipmentLabelTagToolStripMenuItem,
-            this.customerBillToolStripMenuItem});
-            this.reportsToolStripMenuItem.Name = "reportsToolStripMenuItem";
-            this.reportsToolStripMenuItem.Size = new System.Drawing.Size(99, 20);
-            this.reportsToolStripMenuItem.Text = "Legacy Reports";
-            // 
-            // accountStatementToolStripMenuItem
-            // 
-            this.accountStatementToolStripMenuItem.Name = "accountStatementToolStripMenuItem";
-            this.accountStatementToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.accountStatementToolStripMenuItem.Text = "Account Statement";
-            this.accountStatementToolStripMenuItem.Click += new System.EventHandler(this.accountStatementToolStripMenuItem_Click);
-            // 
-            // accountStatementWithDueToolStripMenuItem
-            // 
-            this.accountStatementWithDueToolStripMenuItem.Name = "accountStatementWithDueToolStripMenuItem";
-            this.accountStatementWithDueToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.accountStatementWithDueToolStripMenuItem.Text = "Account Statement With Due";
-            this.accountStatementWithDueToolStripMenuItem.Click += new System.EventHandler(this.accountStatementWithDueToolStripMenuItem_Click);
-            // 
-            // accountBalanceToolStripMenuItem
-            // 
-            this.accountBalanceToolStripMenuItem.Name = "accountBalanceToolStripMenuItem";
-            this.accountBalanceToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.accountBalanceToolStripMenuItem.Text = "Account Balance";
-            this.accountBalanceToolStripMenuItem.Click += new System.EventHandler(this.accountBalanceToolStripMenuItem_Click);
-            // 
-            // trialBalanceToolStripMenuItem
-            // 
-            this.trialBalanceToolStripMenuItem.Name = "trialBalanceToolStripMenuItem";
-            this.trialBalanceToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.trialBalanceToolStripMenuItem.Text = "Trial Balance";
-            this.trialBalanceToolStripMenuItem.Click += new System.EventHandler(this.trialBalanceToolStripMenuItem_Click);
-            // 
-            // stockBalanceToolStripMenuItem
-            // 
-            this.stockBalanceToolStripMenuItem.Name = "stockBalanceToolStripMenuItem";
-            this.stockBalanceToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.stockBalanceToolStripMenuItem.Text = "Stock Balance";
-            this.stockBalanceToolStripMenuItem.Click += new System.EventHandler(this.stockBalanceToolStripMenuItem_Click);
-            // 
-            // itemLedgerToolStripMenuItem
-            // 
-            this.itemLedgerToolStripMenuItem.Name = "itemLedgerToolStripMenuItem";
-            this.itemLedgerToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.itemLedgerToolStripMenuItem.Text = "Item Ledger";
-            this.itemLedgerToolStripMenuItem.Click += new System.EventHandler(this.itemLedgerToolStripMenuItem_Click_1);
-            // 
-            // incomeSummaryToolStripMenuItem
-            // 
-            this.incomeSummaryToolStripMenuItem.Name = "incomeSummaryToolStripMenuItem";
-            this.incomeSummaryToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.incomeSummaryToolStripMenuItem.Text = "Income Summary";
-            this.incomeSummaryToolStripMenuItem.Click += new System.EventHandler(this.incomeSummaryToolStripMenuItem_Click);
-            // 
-            // balanceSheetToolStripMenuItem
-            // 
-            this.balanceSheetToolStripMenuItem.Name = "balanceSheetToolStripMenuItem";
-            this.balanceSheetToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.balanceSheetToolStripMenuItem.Text = "Balance Sheet";
-            this.balanceSheetToolStripMenuItem.Click += new System.EventHandler(this.balanceSheetToolStripMenuItem_Click_1);
-            // 
-            // enToolStripMenuItem
-            // 
-            this.enToolStripMenuItem.Name = "enToolStripMenuItem";
-            this.enToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.enToolStripMenuItem.Text = "Envelope";
-            this.enToolStripMenuItem.Click += new System.EventHandler(this.enToolStripMenuItem_Click);
-            // 
-            // barcodeToolStripMenuItem
-            // 
-            this.barcodeToolStripMenuItem.Name = "barcodeToolStripMenuItem";
-            this.barcodeToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.barcodeToolStripMenuItem.Text = "Barcode";
-            this.barcodeToolStripMenuItem.Click += new System.EventHandler(this.barcodeToolStripMenuItem_Click);
-            // 
-            // shipmentLabelTagToolStripMenuItem
-            // 
-            this.shipmentLabelTagToolStripMenuItem.Name = "shipmentLabelTagToolStripMenuItem";
-            this.shipmentLabelTagToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.shipmentLabelTagToolStripMenuItem.Text = "Shipment Label Tag";
-            this.shipmentLabelTagToolStripMenuItem.Click += new System.EventHandler(this.shipmentLabelTagToolStripMenuItem_Click);
-            // 
-            // customerBillToolStripMenuItem
-            // 
-            this.customerBillToolStripMenuItem.Name = "customerBillToolStripMenuItem";
-            this.customerBillToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.customerBillToolStripMenuItem.Text = "Customer Bill";
-            this.customerBillToolStripMenuItem.Click += new System.EventHandler(this.customerBillToolStripMenuItem_Click_1);
             // 
             // reports2ToolStripMenuItem
             // 
@@ -810,14 +693,11 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem paymentVoucherToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem receiptVoucherToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem journalVoucherToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem reportsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem narrationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem itemDetailToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saleOrderToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unitIndexToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem accountStatementToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem purchaseToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem stockBalanceToolStripMenuItem;
         private System.Windows.Forms.StatusStrip statusStrip1;
         private System.Windows.Forms.ToolStripStatusLabel toolStripStatusLabel1;
         private System.Windows.Forms.ToolStripStatusLabel StlblUserId;
@@ -825,7 +705,6 @@ namespace ERP
         private System.Windows.Forms.ToolStripStatusLabel StConStatus;
         private System.Windows.Forms.ToolStripMenuItem statisticsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem usersStatsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem trialBalanceToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem bankReconcilationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem itemCatagoryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem settingToolStripMenuItem;
@@ -833,20 +712,14 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem detailAccountsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem stockAdjustmentToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem changePasswordToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem accountBalanceToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem itemLedgerToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saleReturnToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;
         private System.Windows.Forms.ToolStripMenuItem purchaseReturnToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator2;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator3;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator4;
-        private System.Windows.Forms.ToolStripMenuItem incomeSummaryToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem balanceSheetToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem hRInfoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem payrollToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem enToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem accountStatementWithDueToolStripMenuItem;
         private System.Windows.Forms.Panel panel1;
         private System.Windows.Forms.Label lblUrCompanyName;
         private System.Windows.Forms.Label lblCompanyName;
@@ -854,11 +727,8 @@ namespace ERP
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.Label label3;
         private System.Windows.Forms.PictureBox picLogo;
-        private System.Windows.Forms.ToolStripMenuItem barcodeToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem shipmentLabelTagToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolStripMenuItem1;
         private System.Windows.Forms.ToolStripMenuItem customerSupplyRegisterToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem customerBillToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem supplyOrderToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem reports2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem accountStatement2ToolStripMenuItem;
