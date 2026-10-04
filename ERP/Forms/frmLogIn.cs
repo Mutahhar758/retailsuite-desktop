@@ -103,7 +103,8 @@ namespace ERP
                     ApiSession.HasSupplyFeature = features.HasSupplyFeature;
                     ApiSession.HasSecondaryQty = features.HasSecondaryQty;
                     ApiSession.HasVariablePackFeature = features.HasVariablePackFeature;
-                    _licenseService.UpdateFeaturesInStore(ApiSession.TenantIdentifier, features.HasSupplyFeature, features.HasSecondaryQty, features.HasVariablePackFeature);
+                    ApiSession.HasMobileShopFeature = features.HasMobileShopFeature;
+                    _licenseService.UpdateFeaturesInStore(ApiSession.TenantIdentifier, features.HasSupplyFeature, features.HasSecondaryQty, features.HasVariablePackFeature, features.HasMobileShopFeature);
                 }
                 catch { }
 
@@ -165,6 +166,12 @@ namespace ERP
                     if (!string.IsNullOrWhiteSpace(secQtySetting))
                     {
                         ApiSession.HasSecondaryQty = string.Equals(secQtySetting, "true", StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    var supplySetting = await _settingsApiService.GetSettingValueAsync("Supply.EnableSupply");
+                    if (!string.IsNullOrWhiteSpace(supplySetting))
+                    {
+                        ApiSession.HasSupplyFeature = string.Equals(supplySetting, "true", StringComparison.OrdinalIgnoreCase);
                     }
                 }
                 catch
@@ -240,6 +247,7 @@ namespace ERP
             ApiSession.HasSupplyFeature = license.HasSupplyFeature;
             ApiSession.HasSecondaryQty = license.HasSecondaryQty;
             ApiSession.HasVariablePackFeature = license.HasVariablePackFeature;
+            ApiSession.HasMobileShopFeature = license.HasMobileShopFeature;
             _loginService = new LoginService();
             _companyApiService = new CompanyApiService();
             _personalApiService = new PersonalApiService();

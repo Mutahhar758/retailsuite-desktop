@@ -152,6 +152,27 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("itemType")]
         public string ItemType { get; set; }
+
+        [JsonProperty("requireImei")]
+        public bool? RequireImei { get; set; }
+
+        [JsonProperty("brandId")]
+        public string BrandId { get; set; }
+
+        [JsonProperty("brandTitle")]
+        public string BrandTitle { get; set; }
+
+        [JsonProperty("modelName")]
+        public string ModelName { get; set; }
+
+        [JsonProperty("storage")]
+        public string Storage { get; set; }
+
+        [JsonProperty("ram")]
+        public string Ram { get; set; }
+
+        [JsonProperty("color")]
+        public string Color { get; set; }
     }
 
     internal class InventoryItemUpsertApiRequest
@@ -206,5 +227,23 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("itemType")]
         public string ItemType { get; set; }
+
+        [JsonProperty("requireImei")]
+        public bool? RequireImei { get; set; }
+
+        [JsonProperty("brandId")]
+        public string BrandId { get; set; }
+
+        [JsonProperty("modelName")]
+        public string ModelName { get; set; }
+
+        [JsonProperty("storage")]
+        public string Storage { get; set; }
+
+        [JsonProperty("ram")]
+        public string Ram { get; set; }
+
+        [JsonProperty("color")]
+        public string Color { get; set; }
     }
 }

@@ -225,6 +225,8 @@
     <Compile Include="Dtos\Authentication\LoginResultDto.cs" />
     <Compile Include="Dtos\\Authentication\\TokenResponseDto.cs" />
     <Compile Include="Services\Legacy\ApiServiceBase.cs" />
+    <Compile Include="Services\Legacy\BrandApiService.cs" />
+    <Compile Include="Services\Legacy\MobileShopApiService.cs" />
     <Compile Include="Services\Legacy\BankReconciliationApiService.cs" />
     <Compile Include="Services\Legacy\ChartOfAccountApiService.cs" />
     <Compile Include="Services\Legacy\CompanyApiService.cs" />
@@ -278,6 +280,30 @@
     </Compile>
     <Compile Include="Forms\frmMainMenu.Designer.cs">
       <DependentUpon>frmMainMenu.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmBrand.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmBrand.designer.cs">
+      <DependentUpon>frmBrand.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmImeiStock.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmImeiStock.designer.cs">
+      <DependentUpon>frmImeiStock.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmImeiHistory.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmImeiHistory.designer.cs">
+      <DependentUpon>frmImeiHistory.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmRepairJob.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmRepairJob.designer.cs">
+      <DependentUpon>frmRepairJob.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\frmPayRoll.cs">
       <SubType>Form</SubType>

@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ERP.Classes;
 
 namespace ERP
 {
@@ -57,6 +58,15 @@ namespace ERP
 
         public static bool HasPermission(string action, string resource)
         {
+            if (!ApiSession.HasMobileShopFeature)
+            {
+                if (resource == AppResource.Brands || resource == AppResource.RepairJobs ||
+                    resource == AppResource.ImeiStock || resource == AppResource.WarrantyLookup)
+                {
+                    return false;
+                }
+            }
+
             if (IsOwner) return true;
             if (_Permissions == null) return false;
             string permissionName = $"Permissions.{resource}.{action}";
@@ -167,5 +177,11 @@ namespace ERP
         public const string BarcodeReport = "BarcodeReport";
         public const string ShipmentLabelReport = "ShipmentLabelReport";
         public const string MiscReports = "MiscReports";
+
+        // Mobile Shop module (active when HasMobileShopFeature = true)
+        public const string Brands         = "Brands";
+        public const string RepairJobs     = "RepairJobs";
+        public const string ImeiStock      = "ImeiStock";
+        public const string WarrantyLookup = "WarrantyLookup";
     }
 }

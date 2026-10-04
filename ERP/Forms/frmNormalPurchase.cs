@@ -19,6 +19,11 @@ namespace ERP
         private readonly ItemCategoryApiService _itemCategoryApiService;
         private readonly UnitApiService _unitApiService;
         private readonly InventoryApiService _inventoryApiService;
+        private readonly MobileShopApiService _mobileShopApiService;
+        private TextBox txtSellerCnic;
+        private TextBox txtSellerContact;
+        private Label lblSellerCnic;
+        private Label lblSellerContact;
         private List<PurchaseDto> _queryList = new List<PurchaseDto>();
 
         private readonly DataTable dtItems = new DataTable();
@@ -43,6 +48,7 @@ namespace ERP
             _itemCategoryApiService = new ItemCategoryApiService();
             _unitApiService = new UnitApiService();
             _inventoryApiService = new InventoryApiService();
+            _mobileShopApiService = new MobileShopApiService();
             InitializeLookupTables();
             dgvSale.Rows.Add();
             UserInfo.ApplyFormPermissions(this, AppResource.Purchases);
@@ -217,6 +223,22 @@ namespace ERP
                         dgvSale["clnSecQty", ind].Value = (l.SecQty ?? 0).ToString("0.##");
                         dgvSale["clnSecRate", ind].Value = (l.SecRate ?? 0).ToString("0.##");
                     }
+
+                    if (ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei"))
+                    {
+                        dgvSale["clnImei", ind].Value = l.Imei;
+                        dgvSale["clnImei2", ind].Value = l.Imei2;
+                        dgvSale["clnPtaStatus", ind].Value = l.PtaStatus;
+                        dgvSale["clnBatteryHealth", ind].Value = l.BatteryHealth?.ToString();
+                        dgvSale["clnConditionNote", ind].Value = l.ConditionNote;
+                    }
+                }
+
+                if (ApiSession.HasMobileShopFeature && txtSellerCnic != null)
+                {
+                    var master = _queryList.FirstOrDefault(q => q.VoucherNo == vno);
+                    txtSellerCnic.Text = master?.SellerCnic ?? "";
+                    txtSellerContact.Text = master?.SellerContact ?? "";
                 }
             }
 
@@ -329,11 +351,97 @@ namespace ERP
             }
         }
 
+        private void SetupMobileShop()
+        {
+            if (ApiSession.HasMobileShopFeature)
+            {
+                if (txtSellerCnic == null)
+                {
+                    lblSellerCnic = new Label { Text = "Seller CNIC:", AutoSize = true, Location = new Point(550, 72) };
+                    txtSellerCnic = new TextBox { Location = new Point(630, 70), Width = 130 };
+                    lblSellerContact = new Label { Text = "Seller Mobile:", AutoSize = true, Location = new Point(550, 96) };
+                    txtSellerContact = new TextBox { Location = new Point(630, 94), Width = 130 };
+                    grpInvoiceDetail.Controls.Add(lblSellerCnic);
+                    grpInvoiceDetail.Controls.Add(txtSellerCnic);
+                    grpInvoiceDetail.Controls.Add(lblSellerContact);
+                    grpInvoiceDetail.Controls.Add(txtSellerContact);
+                }
+
+                if (!dgvSale.Columns.Contains("clnImei"))
+                {
+                    var colImei = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnImei",
+                        HeaderText = "IMEI / Serial",
+                        Width = 140
+                    };
+                    var colImei2 = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnImei2",
+                        HeaderText = "IMEI 2",
+                        Width = 140
+                    };
+                    var colPta = new DataGridViewComboBoxColumn
+                    {
+                        Name = "clnPtaStatus",
+                        HeaderText = "PTA Status",
+                        Width = 110,
+                        DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox
+                    };
+                    colPta.Items.AddRange("Official PTA", "Non-PTA", "CPID", "Patched", "JV");
+
+                    var colBattery = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnBatteryHealth",
+                        HeaderText = "Battery %",
+                        Width = 70
+                    };
+                    var colCondition = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnConditionNote",
+                        HeaderText = "Condition / Note",
+                        Width = 120
+                    };
+
+                    int insertIndex = clnItemNo.Index + 1;
+                    dgvSale.Columns.Insert(insertIndex, colImei);
+                    dgvSale.Columns.Insert(insertIndex + 1, colImei2);
+                    dgvSale.Columns.Insert(insertIndex + 2, colPta);
+                    dgvSale.Columns.Insert(insertIndex + 3, colBattery);
+                    dgvSale.Columns.Insert(insertIndex + 4, colCondition);
+                }
+                else
+                {
+                    dgvSale.Columns["clnImei"].Visible = true;
+                    dgvSale.Columns["clnImei2"].Visible = true;
+                    dgvSale.Columns["clnPtaStatus"].Visible = true;
+                    dgvSale.Columns["clnBatteryHealth"].Visible = true;
+                    dgvSale.Columns["clnConditionNote"].Visible = true;
+                }
+            }
+            else
+            {
+                if (txtSellerCnic != null)
+                {
+                    lblSellerCnic.Visible = false;
+                    txtSellerCnic.Visible = false;
+                    lblSellerContact.Visible = false;
+                    txtSellerContact.Visible = false;
+                }
+                if (dgvSale.Columns.Contains("clnImei")) dgvSale.Columns["clnImei"].Visible = false;
+                if (dgvSale.Columns.Contains("clnImei2")) dgvSale.Columns["clnImei2"].Visible = false;
+                if (dgvSale.Columns.Contains("clnPtaStatus")) dgvSale.Columns["clnPtaStatus"].Visible = false;
+                if (dgvSale.Columns.Contains("clnBatteryHealth")) dgvSale.Columns["clnBatteryHealth"].Visible = false;
+                if (dgvSale.Columns.Contains("clnConditionNote")) dgvSale.Columns["clnConditionNote"].Visible = false;
+            }
+        }
+
         private async void frmPurchase_Load(object sender, EventArgs e)
         {
             try
             {
                 SetupSecondaryQtyColumns();
+                SetupMobileShop();
                 await LoadLookupsAsync();
                 await FillQueryAsync();
                 if (_queryList.Count > 0 && txtVoucherNo.Text == "")
@@ -641,7 +749,12 @@ namespace ERP
                     AddLess = ParseDecimal(row.Cells[clnAddless.Index].Value),
                     SecQty = secQty,
                     SecRate = secRate,
-                    SecUnit = secUnit
+                    SecUnit = secUnit,
+                    Imei = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei") ? Convert.ToString(row.Cells["clnImei"].Value) : null,
+                    Imei2 = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei2") ? Convert.ToString(row.Cells["clnImei2"].Value) : null,
+                    PtaStatus = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnPtaStatus") ? Convert.ToString(row.Cells["clnPtaStatus"].Value) : null,
+                    BatteryHealth = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnBatteryHealth") && int.TryParse(Convert.ToString(row.Cells["clnBatteryHealth"].Value), out int bh) ? (int?)bh : null,
+                    ConditionNote = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnConditionNote") ? Convert.ToString(row.Cells["clnConditionNote"].Value) : null
                 });
             }
 
@@ -660,6 +773,8 @@ namespace ERP
                         Narration = cmbNarration.SelectedValue?.ToString(),
                         CashPaid = txtCashReceipt.Value,
                         CashBack = txtCashBack.Value,
+                        SellerCnic = ApiSession.HasMobileShopFeature && txtSellerCnic != null ? txtSellerCnic.Text.Trim() : null,
+                        SellerContact = ApiSession.HasMobileShopFeature && txtSellerContact != null ? txtSellerContact.Text.Trim() : null,
                         Lines = lines
                     };
                     voucher = await _apiService.CreateAsync(createRequest);
@@ -674,6 +789,8 @@ namespace ERP
                         Narration = cmbNarration.SelectedValue?.ToString(),
                         CashPaid = txtCashReceipt.Value,
                         CashBack = txtCashBack.Value,
+                        SellerCnic = ApiSession.HasMobileShopFeature && txtSellerCnic != null ? txtSellerCnic.Text.Trim() : null,
+                        SellerContact = ApiSession.HasMobileShopFeature && txtSellerContact != null ? txtSellerContact.Text.Trim() : null,
                         Lines = lines
                     };
                     await _apiService.UpdateAsync(voucher, updateRequest);

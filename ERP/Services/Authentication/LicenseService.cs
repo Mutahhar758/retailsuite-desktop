@@ -19,6 +19,7 @@ namespace ERP.Services.Authentication
         public bool HasSupplyFeature { get; set; } = true;
         public bool HasSecondaryQty { get; set; } = false;
         public bool HasVariablePackFeature { get; set; } = false;
+        public bool HasMobileShopFeature { get; set; } = false;
     }
 
     public class LicenseService
@@ -67,6 +68,7 @@ namespace ERP.Services.Authentication
                         string encryptedHasSupply = INIFile.ReadValue(section, "HasSupplyFeature", "", _licensePath);
                         string encryptedHasSecondary = INIFile.ReadValue(section, "HasSecondaryQty", "", _licensePath);
                         string encryptedHasVariablePack = INIFile.ReadValue(section, "HasVariablePackFeature", "", _licensePath);
+                        string encryptedHasMobileShop = INIFile.ReadValue(section, "HasMobileShopFeature", "", _licensePath);
 
                         if (!string.IsNullOrEmpty(encryptedKey) && !string.IsNullOrEmpty(encryptedTenantIdentifier))
                         {
@@ -88,6 +90,12 @@ namespace ERP.Services.Authentication
                                 string decryptedHasVariablePack = SecurityHelper.Decrypt(encryptedHasVariablePack);
                                 bool.TryParse(decryptedHasVariablePack, out hasVariablePack);
                             }
+                            bool hasMobileShop = false;
+                            if (!string.IsNullOrEmpty(encryptedHasMobileShop))
+                            {
+                                string decryptedHasMobileShop = SecurityHelper.Decrypt(encryptedHasMobileShop);
+                                bool.TryParse(decryptedHasMobileShop, out hasMobileShop);
+                            }
 
                             licenses.Add(new OrganizationLicense
                             {
@@ -96,7 +104,8 @@ namespace ERP.Services.Authentication
                                 Name = SecurityHelper.Decrypt(encryptedName) ?? "Unknown Organization",
                                 HasSupplyFeature = hasSupply,
                                 HasSecondaryQty = hasSecondary,
-                                HasVariablePackFeature = hasVariablePack
+                                HasVariablePackFeature = hasVariablePack,
+                                HasMobileShopFeature = hasMobileShop
                             });
                         }
                     }
@@ -128,7 +137,8 @@ namespace ERP.Services.Authentication
                             Name = tenantData["name"]?.ToString(),
                             HasSupplyFeature = tenantData["hasSupplyFeature"]?.ToObject<bool>() ?? true,
                             HasSecondaryQty = tenantData["hasSecondaryQty"]?.ToObject<bool>() ?? false,
-                            HasVariablePackFeature = tenantData["hasVariablePackFeature"]?.ToObject<bool>() ?? false
+                            HasVariablePackFeature = tenantData["hasVariablePackFeature"]?.ToObject<bool>() ?? false,
+                            HasMobileShopFeature = tenantData["hasMobileShopFeature"]?.ToObject<bool>() ?? false
                         };
 
                         StoreLicense(license);
@@ -154,6 +164,7 @@ namespace ERP.Services.Authentication
             string encryptedHasSupply = SecurityHelper.Encrypt(license.HasSupplyFeature.ToString());
             string encryptedHasSecondary = SecurityHelper.Encrypt(license.HasSecondaryQty.ToString());
             string encryptedHasVariablePack = SecurityHelper.Encrypt(license.HasVariablePackFeature.ToString());
+            string encryptedHasMobileShop = SecurityHelper.Encrypt(license.HasMobileShopFeature.ToString());
 
             INIFile.WriteValue(section, "LicenseKey", encryptedKey, _licensePath);
             INIFile.WriteValue(section, "TenantIdentifier", encryptedTenantIdentifier, _licensePath);
@@ -161,6 +172,7 @@ namespace ERP.Services.Authentication
             INIFile.WriteValue(section, "HasSupplyFeature", encryptedHasSupply, _licensePath);
             INIFile.WriteValue(section, "HasSecondaryQty", encryptedHasSecondary, _licensePath);
             INIFile.WriteValue(section, "HasVariablePackFeature", encryptedHasVariablePack, _licensePath);
+            INIFile.WriteValue(section, "HasMobileShopFeature", encryptedHasMobileShop, _licensePath);
         }
 
         public bool HasAnyLicense()
@@ -175,7 +187,7 @@ namespace ERP.Services.Authentication
             return licenses.FirstOrDefault()?.TenantIdentifier;
         }
 
-        public async Task<(bool HasSupplyFeature, bool HasSecondaryQty, bool HasVariablePackFeature)> GetFeaturesAsync()
+        public async Task<(bool HasSupplyFeature, bool HasSecondaryQty, bool HasVariablePackFeature, bool HasMobileShopFeature)> GetFeaturesAsync()
         {
             try
             {
@@ -201,16 +213,17 @@ namespace ERP.Services.Authentication
                         var hasSupply = (body["hasSupplyFeature"] ?? body["HasSupplyFeature"])?.ToObject<bool>() ?? true;
                         var hasSecondary = (body["hasSecondaryQty"] ?? body["HasSecondaryQty"])?.ToObject<bool>() ?? false;
                         var hasVariablePack = (body["hasVariablePackFeature"] ?? body["HasVariablePackFeature"])?.ToObject<bool>() ?? false;
-                        return (hasSupply, hasSecondary, hasVariablePack);
+                        var hasMobileShop = (body["hasMobileShopFeature"] ?? body["HasMobileShopFeature"])?.ToObject<bool>() ?? false;
+                        return (hasSupply, hasSecondary, hasVariablePack, hasMobileShop);
                     }
                 }
             }
             catch { }
-            return (true, false, false); // Default values if request fails
+            return (true, false, false, false); // Default values if request fails
         }
 
 
-        public void UpdateFeaturesInStore(string tenantIdentifier, bool hasSupply, bool hasSecondary, bool hasVariablePack)
+        public void UpdateFeaturesInStore(string tenantIdentifier, bool hasSupply, bool hasSecondary, bool hasVariablePack, bool hasMobileShop = false)
         {
             if (!File.Exists(_licensePath)) return;
             try
@@ -231,9 +244,11 @@ namespace ERP.Services.Authentication
                                 string encryptedHasSupply = SecurityHelper.Encrypt(hasSupply.ToString());
                                 string encryptedHasSecondary = SecurityHelper.Encrypt(hasSecondary.ToString());
                                 string encryptedHasVariablePack = SecurityHelper.Encrypt(hasVariablePack.ToString());
+                                string encryptedHasMobileShop = SecurityHelper.Encrypt(hasMobileShop.ToString());
                                 INIFile.WriteValue(section, "HasSupplyFeature", encryptedHasSupply, _licensePath);
                                 INIFile.WriteValue(section, "HasSecondaryQty", encryptedHasSecondary, _licensePath);
                                 INIFile.WriteValue(section, "HasVariablePackFeature", encryptedHasVariablePack, _licensePath);
+                                INIFile.WriteValue(section, "HasMobileShopFeature", encryptedHasMobileShop, _licensePath);
                                 break;
                             }
                         }

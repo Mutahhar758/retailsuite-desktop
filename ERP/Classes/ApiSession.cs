@@ -25,5 +25,6 @@ namespace ERP.Classes
         public static bool HasSupplyFeature { get; set; } = true;
         public static bool HasSecondaryQty { get; set; } = false;
         public static bool HasVariablePackFeature { get; set; } = false;
+        public static bool HasMobileShopFeature { get; set; } = false;
     }
 }

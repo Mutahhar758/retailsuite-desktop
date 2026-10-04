@@ -40,6 +40,7 @@ namespace ERP
             this.itemDetailToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unitIndexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.itemCatagoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.brandToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.hRInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.supplyOrderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.dailyEntryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -126,6 +127,7 @@ namespace ERP
             this.itemDetailToolStripMenuItem,
             this.unitIndexToolStripMenuItem,
             this.itemCatagoryToolStripMenuItem,
+            this.brandToolStripMenuItem,
             this.hRInfoToolStripMenuItem,
             this.supplyOrderToolStripMenuItem});
             this.setupToolStripMenuItem.Name = "setupToolStripMenuItem";
@@ -195,6 +197,13 @@ namespace ERP
             this.itemCatagoryToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
             this.itemCatagoryToolStripMenuItem.Text = "Item Catagory";
             this.itemCatagoryToolStripMenuItem.Click += new System.EventHandler(this.itemCatagoryToolStripMenuItem_Click);
+            // 
+            // brandToolStripMenuItem
+            // 
+            this.brandToolStripMenuItem.Name = "brandToolStripMenuItem";
+            this.brandToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
+            this.brandToolStripMenuItem.Text = "Brand Master";
+            this.brandToolStripMenuItem.Click += new System.EventHandler(this.brandToolStripMenuItem_Click);
             // 
             // hRInfoToolStripMenuItem
             // 
@@ -707,6 +716,7 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem usersStatsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem bankReconcilationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem itemCatagoryToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem brandToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem settingToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem configurationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem detailAccountsToolStripMenuItem;
