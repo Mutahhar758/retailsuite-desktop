@@ -123,7 +123,7 @@ namespace ERP
             this.lblTitle.Name = "lblTitle";
             this.lblTitle.Size = new System.Drawing.Size(325, 25);
             this.lblTitle.TabIndex = 0;
-            this.lblTitle.Text = "Customer Supply Register (Milk/Retail)";
+            this.lblTitle.Text = "Customer Supply Register";
 
             // 
             // lblSubtitle
@@ -795,7 +795,7 @@ namespace ERP
             this.Font = new System.Drawing.Font("Segoe UI", 9F);
             this.Name = "frmNormalCustomerSupplyRegister";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Customer Supply Register (Milk & Retail Daily Sales)";
+            this.Text = "Customer Supply Register";
             this.pnlHeader.ResumeLayout(false);
             this.pnlHeader.PerformLayout();
             this.pnlFilters.ResumeLayout(false);

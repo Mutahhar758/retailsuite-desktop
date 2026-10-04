@@ -7,7 +7,7 @@ using ERP.Services.Legacy;
 
 namespace ERP.Reporting.Models
 {
-    public class MilkComparisonLineItem
+    public class PurchaseSupplyComparisonLineItem
     {
         public DateTime Date { get; set; }
         public string DayName { get; set; }
@@ -26,7 +26,7 @@ namespace ERP.Reporting.Models
         public string Status { get; set; } // "Surplus", "Shortage", "Equal"
     }
 
-    public class MilkComparisonSummary
+    public class PurchaseSupplyComparisonSummary
     {
         public decimal TotalPurchaseQty { get; set; }
         public decimal TotalPurchaseAmount { get; set; }
@@ -42,30 +42,30 @@ namespace ERP.Reporting.Models
         public decimal TotalNetDiffQty { get; set; }
     }
 
-    public class MilkComparisonHeader
+    public class PurchaseSupplyComparisonHeader
     {
         public string CompanyName { get; set; } = !string.IsNullOrWhiteSpace(ERP.CompanyInfo.CompanyName) ? ERP.CompanyInfo.CompanyName : "Retail Suite Enterprise";
-        public string ReportTitle { get; set; } = "MILK PURCHASE VS SUPPLY & SALE COMPARISON";
-        public string ItemTitle { get; set; } = "Fresh Whole Milk (Dodh)";
-        public string UnitTitle { get; set; } = "Litre";
+        public string ReportTitle { get; set; } = "PURCHASE VS SUPPLY & SALE COMPARISON";
+        public string ItemTitle { get; set; } = "Item / Product";
+        public string UnitTitle { get; set; } = "Unit";
         public DateTime FromDate { get; set; }
         public DateTime ToDate { get; set; }
         public DateTime GeneratedAt { get; set; } = DateTime.Now;
     }
 
-    public static class MilkComparisonDataService
+    public static class PurchaseSupplyComparisonDataService
     {
-        public static async Task<(MilkComparisonHeader Header, List<MilkComparisonLineItem> Lines, MilkComparisonSummary Summary)> GetComparisonDataAsync(
+        public static async Task<(PurchaseSupplyComparisonHeader Header, List<PurchaseSupplyComparisonLineItem> Lines, PurchaseSupplyComparisonSummary Summary)> GetComparisonDataAsync(
             DateTime fromDate,
             DateTime toDate,
             string itemId,
             string itemTitle = null)
         {
-            var header = new MilkComparisonHeader
+            var header = new PurchaseSupplyComparisonHeader
             {
                 CompanyName = !string.IsNullOrWhiteSpace(ERP.CompanyInfo.CompanyName) ? ERP.CompanyInfo.CompanyName : "Retail Suite Enterprise",
-                ItemTitle = !string.IsNullOrWhiteSpace(itemTitle) ? itemTitle : "Fresh Whole Milk (Dodh)",
-                UnitTitle = "Litre",
+                ItemTitle = !string.IsNullOrWhiteSpace(itemTitle) ? itemTitle : "Item / Product",
+                UnitTitle = "Unit",
                 FromDate = fromDate,
                 ToDate = toDate,
                 GeneratedAt = DateTime.Now
@@ -78,12 +78,12 @@ namespace ERP.Reporting.Models
 
                 if (dt != null && dt.Rows.Count > 0)
                 {
-                    var lines = new List<MilkComparisonLineItem>();
+                    var lines = new List<PurchaseSupplyComparisonLineItem>();
                     decimal runningNetDiff = 0m;
 
                     foreach (DataRow row in dt.Rows)
                     {
-                        var item = new MilkComparisonLineItem
+                        var item = new PurchaseSupplyComparisonLineItem
                         {
                             Date = row.Table.Columns.Contains("Date") && row["Date"] != DBNull.Value ? Convert.ToDateTime(row["Date"]) : DateTime.Today,
                             DayName = row.Table.Columns.Contains("DayName") ? Convert.ToString(row["DayName"]) : string.Empty,
@@ -127,14 +127,14 @@ namespace ERP.Reporting.Models
                 // Return empty if database query fails or returns nothing
             }
 
-            var emptyLines = new List<MilkComparisonLineItem>();
+            var emptyLines = new List<PurchaseSupplyComparisonLineItem>();
             var emptySummary = CalculateSummary(emptyLines);
             return (header, emptyLines, emptySummary);
         }
 
-        public static MilkComparisonSummary CalculateSummary(List<MilkComparisonLineItem> lines)
+        public static PurchaseSupplyComparisonSummary CalculateSummary(List<PurchaseSupplyComparisonLineItem> lines)
         {
-            var summary = new MilkComparisonSummary();
+            var summary = new PurchaseSupplyComparisonSummary();
             if (lines == null || lines.Count == 0) return summary;
 
             summary.TotalPurchaseQty = lines.Sum(x => x.PurchaseQty);

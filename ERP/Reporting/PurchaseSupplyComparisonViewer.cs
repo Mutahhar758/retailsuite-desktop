@@ -19,10 +19,10 @@ using Microsoft.Web.WebView2.WinForms;
 namespace ERP.Reporting
 {
     /// <summary>
-    /// Modern WinForms viewer for Milk Purchase vs Supply & Sales Comparison.
-    /// Provides parity with retailsuite-web-retail's MilkComparisonReport.
+    /// Modern WinForms viewer for Purchase vs Supply & Sales Comparison.
+    /// Provides parity with retailsuite-web-retail's PurchaseSupplyComparisonReport.
     /// </summary>
-    public class MilkComparisonViewer : Form
+    public class PurchaseSupplyComparisonViewer : Form
     {
         private readonly InventoryApiService _inventoryApiService;
 
@@ -53,14 +53,14 @@ namespace ERP.Reporting
 
         // State
         private List<InventoryItemDto> _allItems = new List<InventoryItemDto>();
-        private MilkComparisonHeader _currentHeader;
-        private List<MilkComparisonLineItem> _currentLines = new List<MilkComparisonLineItem>();
-        private MilkComparisonSummary _currentSummary;
+        private PurchaseSupplyComparisonHeader _currentHeader;
+        private List<PurchaseSupplyComparisonLineItem> _currentLines = new List<PurchaseSupplyComparisonLineItem>();
+        private PurchaseSupplyComparisonSummary _currentSummary;
         private string _currentPdfPath;
         private bool _isWebViewReady = false;
         private bool _isPopulatingItems = false;
 
-        public MilkComparisonViewer()
+        public PurchaseSupplyComparisonViewer()
         {
             _inventoryApiService = new InventoryApiService();
             InitializeComponentCodeFirst();
@@ -68,7 +68,7 @@ namespace ERP.Reporting
 
         private void InitializeComponentCodeFirst()
         {
-            this.Text = "Milk Comparison";
+            this.Text = "Purchase vs Supply Comparison";
             this.Size = new Size(1280, 800);
             this.MinimumSize = new Size(1000, 600);
             this.StartPosition = FormStartPosition.CenterScreen;
@@ -91,7 +91,7 @@ namespace ERP.Reporting
             // Product / Item Selector
             lblItem = new Label
             {
-                Text = "MILK PRODUCT / ITEM",
+                Text = "PRODUCT / ITEM",
                 AutoSize = true,
                 Location = new Point(14, 10),
                 Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
@@ -324,7 +324,7 @@ namespace ERP.Reporting
         {
             try
             {
-                string userDataFolder = Path.Combine(Path.GetTempPath(), "RetailSuite", "WebView2_MilkComparison");
+                string userDataFolder = Path.Combine(Path.GetTempPath(), "RetailSuite", "WebView2_PurchaseSupplyComparison");
                 if (!Directory.Exists(userDataFolder)) Directory.CreateDirectory(userDataFolder);
                 var env = await Microsoft.Web.WebView2.Core.CoreWebView2Environment.CreateAsync(null, userDataFolder);
                 await webView.EnsureCoreWebView2Async(env);
@@ -359,18 +359,8 @@ namespace ERP.Reporting
                 cmbItem.ValueMember = "Id";
                 cmbItem.DataSource = dt;
 
-                // Auto-select item containing "Milk" / "Dodh" / "دودھ" / "Doodh"
-                int targetIndex = 0;
-                for (int i = 0; i < dt.Rows.Count; i++)
-                {
-                    string t = dt.Rows[i]["Title"].ToString().ToLower();
-                    if (t.Contains("milk") || t.Contains("dodh") || t.Contains("دودھ") || t.Contains("doodh"))
-                    {
-                        targetIndex = i;
-                        break;
-                    }
-                }
-                if (cmbItem.Items.Count > targetIndex) cmbItem.SelectedIndex = targetIndex;
+                // Auto-select first item if available
+                if (cmbItem.Items.Count > 0) cmbItem.SelectedIndex = 0;
             }
             catch
             {
@@ -393,16 +383,16 @@ namespace ERP.Reporting
             DateTime toDate = dtpTo.Value.Date;
 
             prgLoading.Visible = true;
-            lblStatus.Text = "Loading milk purchase & supply data...";
+            lblStatus.Text = "Loading purchase & supply data...";
 
             try
             {
-                var data = await MilkComparisonDataService.GetComparisonDataAsync(fromDate, toDate, itemId, itemTitle);
+                var data = await PurchaseSupplyComparisonDataService.GetComparisonDataAsync(fromDate, toDate, itemId, itemTitle);
                 _currentHeader = data.Header;
                 _currentLines = data.Lines;
                 _currentSummary = data.Summary;
 
-                var doc = new MilkComparisonDocument(_currentHeader, _currentLines, _currentSummary);
+                var doc = new PurchaseSupplyComparisonDocument(_currentHeader, _currentLines, _currentSummary);
                 string newPdfPath = await doc.GeneratePdfToTempFileAsync();
 
                 CleanupTempFile();
@@ -410,7 +400,7 @@ namespace ERP.Reporting
 
                 webView.CoreWebView2.Navigate(_currentPdfPath);
 
-                lblStatus.Text = string.Format("{0} Days • Purch: {1:N0} Ltr • Disp: {2:N0} Ltr • Net: {3}{4:N0} Ltr",
+                lblStatus.Text = string.Format("{0} Days • Purch: {1:N0} • Disp: {2:N0} • Net: {3}{4:N0}",
                     _currentLines.Count, _currentSummary.TotalPurchaseQty, _currentSummary.TotalDispatchedQty,
                     _currentSummary.TotalNetDiffQty > 0 ? "+" : "", _currentSummary.TotalNetDiffQty);
             }
@@ -436,7 +426,7 @@ namespace ERP.Reporting
             string printer = !string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName) ? ConfigInfo.ThermalPrinterName : null;
             try
             {
-                var doc = new MilkComparisonDocument(_currentHeader, _currentLines, _currentSummary);
+                var doc = new PurchaseSupplyComparisonDocument(_currentHeader, _currentLines, _currentSummary);
                 doc.PrintDirectToPrinter(printer);
                 MessageBox.Show("Report sent directly to printer.", "Print Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
@@ -457,7 +447,7 @@ namespace ERP.Reporting
             using (var sfd = new SaveFileDialog())
             {
                 sfd.Filter = "Excel Workbook (*.xlsx)|*.xlsx";
-                sfd.FileName = string.Format("MilkComparison_{0:yyyyMMdd}_{1:yyyyMMdd}.xlsx", dtpFrom.Value, dtpTo.Value);
+                sfd.FileName = string.Format("PurchaseSupplyComparison_{0:yyyyMMdd}_{1:yyyyMMdd}.xlsx", dtpFrom.Value, dtpTo.Value);
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {
@@ -465,14 +455,14 @@ namespace ERP.Reporting
                     {
                         using (var workbook = new XLWorkbook())
                         {
-                            var ws = workbook.Worksheets.Add("Milk Comparison");
+                            var ws = workbook.Worksheets.Add("Purchase vs Supply");
 
                             // Title Block
                             ws.Cell("A1").Value = _currentHeader.CompanyName.ToUpper();
                             ws.Cell("A1").Style.Font.Bold = true;
                             ws.Cell("A1").Style.Font.FontSize = 14;
 
-                            ws.Cell("A2").Value = "MILK PURCHASE VS SUPPLY & DISPATCH COMPARISON REPORT";
+                            ws.Cell("A2").Value = "PURCHASE VS SUPPLY & DISPATCH COMPARISON REPORT";
                             ws.Cell("A2").Style.Font.Bold = true;
 
                             ws.Cell("A3").Value = string.Format("Item: {0} ({1}) | Period: {2:dd-MMM-yyyy} to {3:dd-MMM-yyyy}",
@@ -561,7 +551,7 @@ namespace ERP.Reporting
             using (var sfd = new SaveFileDialog())
             {
                 sfd.Filter = "CSV File (*.csv)|*.csv";
-                sfd.FileName = string.Format("MilkComparison_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", dtpFrom.Value, dtpTo.Value);
+                sfd.FileName = string.Format("PurchaseSupplyComparison_{0:yyyyMMdd}_{1:yyyyMMdd}.csv", dtpFrom.Value, dtpTo.Value);
 
                 if (sfd.ShowDialog() == DialogResult.OK)
                 {

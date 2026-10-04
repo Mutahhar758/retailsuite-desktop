@@ -71,7 +71,7 @@ namespace ERP
             this.incomeSummary2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.balanceSheet2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.customerBill2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.milkComparison2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.purchaseSupplyComparison2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.customerBalanceRecovery2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.profitByCustomer2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.profitByItem2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -363,7 +363,7 @@ namespace ERP
             this.incomeSummary2ToolStripMenuItem,
             this.balanceSheet2ToolStripMenuItem,
             this.customerBill2ToolStripMenuItem,
-            this.milkComparison2ToolStripMenuItem,
+            this.purchaseSupplyComparison2ToolStripMenuItem,
             this.customerBalanceRecovery2ToolStripMenuItem,
             this.profitByCustomer2ToolStripMenuItem,
             this.profitByItem2ToolStripMenuItem,
@@ -436,12 +436,12 @@ namespace ERP
             this.customerBill2ToolStripMenuItem.Text = "Customer Bill";
             this.customerBill2ToolStripMenuItem.Click += new System.EventHandler(this.customerBill2ToolStripMenuItem_Click);
             // 
-            // milkComparison2ToolStripMenuItem
+            // purchaseSupplyComparison2ToolStripMenuItem
             // 
-            this.milkComparison2ToolStripMenuItem.Name = "milkComparison2ToolStripMenuItem";
-            this.milkComparison2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
-            this.milkComparison2ToolStripMenuItem.Text = "Milk Comparison";
-            this.milkComparison2ToolStripMenuItem.Click += new System.EventHandler(this.milkComparison2ToolStripMenuItem_Click);
+            this.purchaseSupplyComparison2ToolStripMenuItem.Name = "purchaseSupplyComparison2ToolStripMenuItem";
+            this.purchaseSupplyComparison2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.purchaseSupplyComparison2ToolStripMenuItem.Text = "Purchase vs Supply Comparison";
+            this.purchaseSupplyComparison2ToolStripMenuItem.Click += new System.EventHandler(this.purchaseSupplyComparison2ToolStripMenuItem_Click);
             // 
             // customerBalanceRecovery2ToolStripMenuItem
             // 
@@ -740,7 +740,7 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem incomeSummary2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem balanceSheet2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerBill2ToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem milkComparison2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem purchaseSupplyComparison2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerBalanceRecovery2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem profitByCustomer2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem profitByItem2ToolStripMenuItem;

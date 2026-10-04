@@ -10,20 +10,20 @@ using QuestPDF.Infrastructure;
 
 namespace ERP.Reporting.Documents
 {
-    public class MilkComparisonDocument : IDocument
+    public class PurchaseSupplyComparisonDocument : IDocument
     {
-        private readonly MilkComparisonHeader _header;
-        private readonly List<MilkComparisonLineItem> _lines;
-        private readonly MilkComparisonSummary _summary;
+        private readonly PurchaseSupplyComparisonHeader _header;
+        private readonly List<PurchaseSupplyComparisonLineItem> _lines;
+        private readonly PurchaseSupplyComparisonSummary _summary;
 
-        public MilkComparisonDocument(
-            MilkComparisonHeader header,
-            List<MilkComparisonLineItem> lines,
-            MilkComparisonSummary summary)
+        public PurchaseSupplyComparisonDocument(
+            PurchaseSupplyComparisonHeader header,
+            List<PurchaseSupplyComparisonLineItem> lines,
+            PurchaseSupplyComparisonSummary summary)
         {
-            _header = header ?? new MilkComparisonHeader();
-            _lines = lines ?? new List<MilkComparisonLineItem>();
-            _summary = summary ?? new MilkComparisonSummary();
+            _header = header ?? new PurchaseSupplyComparisonHeader();
+            _lines = lines ?? new List<PurchaseSupplyComparisonLineItem>();
+            _summary = summary ?? new PurchaseSupplyComparisonSummary();
         }
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
@@ -58,7 +58,7 @@ namespace ERP.Reporting.Documents
                             .Bold()
                             .FontColor(Colors.Blue.Darken3);
 
-                        titleCol.Item().Text("MILK PURCHASE VS SUPPLY & DISPATCH COMPARISON")
+                        titleCol.Item().Text("PURCHASE VS SUPPLY & DISPATCH COMPARISON")
                             .FontSize(11)
                             .SemiBold()
                             .FontColor(Colors.Grey.Darken2);
@@ -300,7 +300,7 @@ namespace ERP.Reporting.Documents
 
         public async Task<string> GeneratePdfToTempFileAsync()
         {
-            string tempPath = Path.Combine(Path.GetTempPath(), string.Format("MilkComparison_{0}_{1:yyyyMMddHHmmss}.pdf", _header.FromDate.ToString("yyyyMMdd"), DateTime.Now));
+            string tempPath = Path.Combine(Path.GetTempPath(), string.Format("PurchaseSupplyComparison_{0}_{1:yyyyMMddHHmmss}.pdf", _header.FromDate.ToString("yyyyMMdd"), DateTime.Now));
             await Task.Run(() => this.GeneratePdf(tempPath));
             return tempPath;
         }
@@ -326,7 +326,7 @@ namespace ERP.Reporting.Documents
                 var fontBold = new System.Drawing.Font("Segoe UI", 8.5f, System.Drawing.FontStyle.Bold);
 
                 string compName = !string.IsNullOrWhiteSpace(_header.CompanyName) ? _header.CompanyName : (!string.IsNullOrWhiteSpace(ERP.CompanyInfo.CompanyName) ? ERP.CompanyInfo.CompanyName : "Retail Suite Enterprise");
-                g.DrawString(compName.ToUpper() + " - MILK COMPARISON REPORT", fontHeader, System.Drawing.Brushes.Black, 40, y);
+                g.DrawString(compName.ToUpper() + " - PURCHASE VS SUPPLY COMPARISON REPORT", fontHeader, System.Drawing.Brushes.Black, 40, y);
                 y += 22;
                 g.DrawString(string.Format("Item: {0} ({1}) | Period: {2:dd-MMM-yyyy} to {3:dd-MMM-yyyy}", _header.ItemTitle, _header.UnitTitle, _header.FromDate, _header.ToDate), fontSub, System.Drawing.Brushes.Black, 40, y);
                 y += 24;

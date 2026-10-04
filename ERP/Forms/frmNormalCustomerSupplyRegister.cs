@@ -613,7 +613,7 @@ namespace ERP
             public frmAddNormalSupplyEntryDialog(string customerId, string customerTitle, List<InventoryItemDto> items, List<UnitLookupDto> units, DateTime defaultDate)
             {
                 _customerId = customerId;
-                this.Text = "Add Milk/Retail Supply Entry - " + customerTitle;
+                this.Text = "Add Supply Entry - " + customerTitle;
                 this.Size = new Size(450, 360);
                 this.FormBorderStyle = FormBorderStyle.FixedDialog;
                 this.StartPosition = FormStartPosition.CenterParent;

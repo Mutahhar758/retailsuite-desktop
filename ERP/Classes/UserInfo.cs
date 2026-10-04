@@ -61,6 +61,10 @@ namespace ERP
             if (_Permissions == null) return false;
             string permissionName = $"Permissions.{resource}.{action}";
             if (_Permissions.Contains(permissionName)) return true;
+            if (resource == AppResource.PurchaseSupplyComparison)
+            {
+                if (_Permissions.Contains($"Permissions.MilkComparison.{action}")) return true;
+            }
             if (resource == AppResource.EnvelopeReport || resource == AppResource.BarcodeReport || resource == AppResource.ShipmentLabelReport)
             {
                 if (_Permissions.Contains($"Permissions.{AppResource.MiscReports}.{action}")) return true;
@@ -157,7 +161,7 @@ namespace ERP
         public const string ProfitByItem = "ProfitByItem";
         public const string BalanceSheet = "BalanceSheet";
         public const string CustomerBill = "CustomerBill";
-        public const string MilkComparison = "MilkComparison";
+        public const string PurchaseSupplyComparison = "PurchaseSupplyComparison";
         public const string CustomerBalanceRecovery = "CustomerBalanceRecovery";
         public const string EnvelopeReport = "EnvelopeReport";
         public const string BarcodeReport = "BarcodeReport";

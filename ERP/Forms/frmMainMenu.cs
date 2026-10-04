@@ -114,7 +114,7 @@ namespace ERP
             incomeSummary2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.IncomeSummary);
             balanceSheet2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BalanceSheet);
             customerBill2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBill);
-            milkComparison2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.MilkComparison);
+            purchaseSupplyComparison2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PurchaseSupplyComparison);
             customerBalanceRecovery2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBalanceRecovery);
             profitByCustomer2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ProfitByCustomer);
             profitByItem2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ProfitByItem);
@@ -127,7 +127,7 @@ namespace ERP
                 stockBalance2ToolStripMenuItem.Visible || trialBalance2ToolStripMenuItem.Visible ||
                 accountBalance2ToolStripMenuItem.Visible || itemLedger2ToolStripMenuItem.Visible ||
                 incomeSummary2ToolStripMenuItem.Visible || balanceSheet2ToolStripMenuItem.Visible ||
-                customerBill2ToolStripMenuItem.Visible || milkComparison2ToolStripMenuItem.Visible ||
+                customerBill2ToolStripMenuItem.Visible || purchaseSupplyComparison2ToolStripMenuItem.Visible ||
                 customerBalanceRecovery2ToolStripMenuItem.Visible ||
                 profitByCustomer2ToolStripMenuItem.Visible || profitByItem2ToolStripMenuItem.Visible ||
                 miscReports2ToolStripMenuItem.Visible;
@@ -290,9 +290,9 @@ namespace ERP
             }
         }
 
-        private void milkComparison2ToolStripMenuItem_Click(object sender, EventArgs e)
+        private void purchaseSupplyComparison2ToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            ERP.Reporting.MilkComparisonViewer viewer = new ERP.Reporting.MilkComparisonViewer();
+            ERP.Reporting.PurchaseSupplyComparisonViewer viewer = new ERP.Reporting.PurchaseSupplyComparisonViewer();
             viewer.MdiParent = this;
             viewer.Show();
         }

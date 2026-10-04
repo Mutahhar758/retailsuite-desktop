@@ -738,9 +738,9 @@
     <Compile Include="Reporting\ShipmentTagViewer.cs">
       <SubType>Form</SubType>
     </Compile>
-    <Compile Include="Reporting\Models\MilkComparisonReportItem.cs" />
-    <Compile Include="Reporting\Documents\MilkComparisonDocument.cs" />
-    <Compile Include="Reporting\MilkComparisonViewer.cs">
+    <Compile Include="Reporting\Models\PurchaseSupplyComparisonReportItem.cs" />
+    <Compile Include="Reporting\Documents\PurchaseSupplyComparisonDocument.cs" />
+    <Compile Include="Reporting\PurchaseSupplyComparisonViewer.cs">
       <SubType>Form</SubType>
     </Compile>
     <Compile Include="Reporting\Models\CustomerBalanceRecoveryReportItem.cs" />
