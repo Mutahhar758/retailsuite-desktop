@@ -115,6 +115,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("addLess")]
         public decimal? AddLess { get; set; }
 
+        [JsonProperty("carriage")]
+        public decimal? Carriage { get; set; }
+
         [JsonProperty("discount")]
         public decimal? Discount { get; set; }
     }

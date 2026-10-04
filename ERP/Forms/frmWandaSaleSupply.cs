@@ -273,6 +273,7 @@ namespace ERP
                     Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
                     Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
+                    Carriage = ParseDecimal(row.Cells[clnCarriage.Index].Value),
                     AddLess = ParseDecimal(row.Cells[clnAddLess.Index].Value),
                     SecQty = secQty,
                     SecRate = secRate,
@@ -397,6 +398,7 @@ namespace ERP
                     row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
                     row.Cells[clnDiscount.Index].Value = line.Discount.ToString("0.##");
                     row.Cells[clnDiscPercent.Index].Value = discountPercent.ToString("0.##");
+                    row.Cells[clnCarriage.Index].Value = (line.Carriage ?? 0).ToString("0.##");
                     row.Cells[clnAddLess.Index].Value = line.AddLess.ToString("0.##");
                     row.Cells[clnAmount.Index].Value = line.Amount.ToString("N2");
                     row.Cells[clnStatus.Index].Value = "0";
@@ -492,6 +494,15 @@ namespace ERP
             if (dgvSale.Columns.Contains("clnSecRate")) dgvSale.Columns["clnSecRate"].DisplayIndex = dIdx++;
             clnDiscount.DisplayIndex = dIdx++;
             clnDiscPercent.DisplayIndex = dIdx++;
+            if (clnCarriage != null && ApiSession.EnableCarriage)
+            {
+                clnCarriage.Visible = true;
+                clnCarriage.DisplayIndex = dIdx++;
+            }
+            else if (clnCarriage != null)
+            {
+                clnCarriage.Visible = false;
+            }
             clnAddLess.DisplayIndex = dIdx++;
             clnAmount.DisplayIndex = dIdx++;
             if (clnStatus != null) clnStatus.DisplayIndex = dIdx++;
@@ -501,6 +512,10 @@ namespace ERP
         {
             try
             {
+                if (clnCarriage != null)
+                {
+                    clnCarriage.Visible = ApiSession.EnableCarriage;
+                }
                 var clnProfile = new System.Windows.Forms.DataGridViewTextBoxColumn();
                 clnProfile.Name = "clnProfile";
                 clnProfile.HeaderText = "Profile";
@@ -581,6 +596,7 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
+                dgvSale.CurrentCell.ColumnIndex == clnCarriage.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnAddLess.Index ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnPackQty" ||
@@ -622,6 +638,8 @@ namespace ERP
                                 }
                                 if (customSetting.Discount.HasValue)
                                     dgvSale[clnDiscount.Index, rowIndex].Value = customSetting.Discount.Value.ToString("0.##");
+                                if (customSetting.Carriage.HasValue)
+                                    dgvSale[clnCarriage.Index, rowIndex].Value = customSetting.Carriage.Value.ToString("0.##");
                                 if (customSetting.AddLess.HasValue)
                                     dgvSale[clnAddLess.Index, rowIndex].Value = customSetting.AddLess.Value.ToString("0.##");
                             }
@@ -712,6 +730,7 @@ namespace ERP
             decimal bagRate = dgvSale.Columns.Contains("clnSecRate") ? ParseDecimal(row.Cells["clnSecRate"].Value) : 0;
             decimal discount = ParseDecimal(row.Cells[clnDiscount.Index].Value);
             decimal discountPercent = ParseDecimal(row.Cells[clnDiscPercent.Index].Value);
+            decimal carriage = ParseDecimal(row.Cells[clnCarriage.Index].Value);
             decimal addLess = ParseDecimal(row.Cells[clnAddLess.Index].Value);
 
             if (editedColumnIndex == clnQty.Index)
@@ -773,10 +792,11 @@ namespace ERP
             if (dgvSale.Columns.Contains("clnSecRate")) row.Cells["clnSecRate"].Value = bagRate.ToString("0.####");
             row.Cells[clnDiscount.Index].Value = discount.ToString("0.##");
             row.Cells[clnDiscPercent.Index].Value = discountPercent.ToString("0.##");
+            row.Cells[clnCarriage.Index].Value = carriage.ToString("0.##");
             row.Cells[clnAddLess.Index].Value = addLess.ToString("0.##");
 
             decimal netRate = kgRate - discount;
-            decimal lineAmount = (kgQty * netRate) + addLess;
+            decimal lineAmount = (kgQty * netRate) + carriage + addLess;
             row.Cells[clnAmount.Index].Value = decimal.Round(lineAmount, 2).ToString("N2");
         }
 
@@ -787,6 +807,7 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
                  dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
+                 dgvSale.CurrentCell.ColumnIndex == clnCarriage.Index ||
                  dgvSale.CurrentCell.ColumnIndex == clnAddLess.Index ||
                  dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
                  dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnPackQty" ||
@@ -1263,6 +1284,8 @@ namespace ERP
                                 }
                                 if (customSetting.Discount.HasValue)
                                     row.Cells[clnDiscount.Index].Value = customSetting.Discount.Value.ToString("0.##");
+                                if (customSetting.Carriage.HasValue)
+                                    row.Cells[clnCarriage.Index].Value = customSetting.Carriage.Value.ToString("0.##");
                                 if (customSetting.AddLess.HasValue)
                                     row.Cells[clnAddLess.Index].Value = customSetting.AddLess.Value.ToString("0.##");
                             }
@@ -1356,6 +1379,8 @@ namespace ERP
                                     dgvSale.Rows[idx].Cells[clnRate.Index].Value = overrideSetting.Rate.Value.ToString("0.##");
                                 if (overrideSetting.Discount.HasValue)
                                     dgvSale.Rows[idx].Cells[clnDiscount.Index].Value = overrideSetting.Discount.Value.ToString("0.##");
+                                if (overrideSetting.Carriage.HasValue)
+                                    dgvSale.Rows[idx].Cells[clnCarriage.Index].Value = overrideSetting.Carriage.Value.ToString("0.##");
                                 if (overrideSetting.AddLess.HasValue)
                                     dgvSale.Rows[idx].Cells[clnAddLess.Index].Value = overrideSetting.AddLess.Value.ToString("0.##");
                             }

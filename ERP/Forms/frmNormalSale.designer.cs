@@ -77,6 +77,7 @@ namespace ERP
             this.clnRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnDiscount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnDiscPercent = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnCarriage = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnStatus = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.grpInvoiceDetail = new System.Windows.Forms.GroupBox();
@@ -486,6 +487,7 @@ namespace ERP
             this.clnRate,
             this.clnDiscount,
             this.clnDiscPercent,
+            this.clnCarriage,
             this.clnAmount,
             this.clnStatus});
             this.dgvSale.Location = new System.Drawing.Point(7, 193);
@@ -578,6 +580,13 @@ namespace ERP
             this.clnDiscPercent.MinimumWidth = 70;
             this.clnDiscPercent.Name = "clnDiscPercent";
             this.clnDiscPercent.Width = 70;
+            // 
+            // clnCarriage
+            // 
+            this.clnCarriage.HeaderText = "Carriage";
+            this.clnCarriage.MinimumWidth = 80;
+            this.clnCarriage.Name = "clnCarriage";
+            this.clnCarriage.Width = 80;
             // 
             // clnAmount
             // 
@@ -1301,6 +1310,7 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn clnRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnDiscount;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnDiscPercent;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnCarriage;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnAmount;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnStatus;
         private System.Windows.Forms.Button btnAddNewItem;

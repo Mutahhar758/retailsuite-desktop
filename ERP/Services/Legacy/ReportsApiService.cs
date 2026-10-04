@@ -356,6 +356,7 @@ namespace ERP.Services.Legacy
                 lines.Columns.Add("qty", typeof(decimal));
                 lines.Columns.Add("rate", typeof(decimal));
                 lines.Columns.Add("addless", typeof(decimal));
+                lines.Columns.Add("carriage", typeof(decimal));
                 lines.Columns.Add("amount", typeof(decimal));
                 lines.Columns.Add("secqty", typeof(decimal));
                 lines.Columns.Add("secrate", typeof(decimal));
@@ -374,6 +375,7 @@ namespace ERP.Services.Legacy
                         row.Qty,
                         row.Rate,
                         row.AddLess,
+                        (object)row.Carriage ?? DBNull.Value,
                         row.Amount,
                         (object)row.SecQty ?? DBNull.Value,
                         (object)row.SecRate ?? DBNull.Value,
@@ -386,7 +388,8 @@ namespace ERP.Services.Legacy
                 summary.Columns.Add("PreviousBalance", typeof(decimal));
                 summary.Columns.Add("Payment", typeof(decimal));
                 summary.Columns.Add("Balance", typeof(decimal));
-                summary.Rows.Add(body.Summary.PreviousBalance, body.Summary.Payment, body.Summary.Balance);
+                summary.Columns.Add("EnableCarriage", typeof(bool));
+                summary.Rows.Add(body.Summary.PreviousBalance, body.Summary.Payment, body.Summary.Balance, body.Header?.EnableCarriage ?? false);
 
                 ds.Tables.Add(lines);
                 ds.Tables.Add(summary);
@@ -1060,8 +1063,17 @@ namespace ERP.Services.Legacy
         public decimal Bal { get; set; }
     }
 
+    internal class CustomerBillHeaderDto
+    {
+        [JsonProperty("enableCarriage")]
+        public bool EnableCarriage { get; set; }
+    }
+
     internal class CustomerBillDto
     {
+        [JsonProperty("header")]
+        public CustomerBillHeaderDto Header { get; set; } = new CustomerBillHeaderDto();
+
         [JsonProperty("lines")]
         public List<CustomerBillLineDto> Lines { get; set; } = new List<CustomerBillLineDto>();
 
@@ -1091,6 +1103,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("addLess")]
         public decimal AddLess { get; set; }
+
+        [JsonProperty("carriage")]
+        public decimal? Carriage { get; set; }
 
         [JsonProperty("amount")]
         public decimal Amount { get; set; }

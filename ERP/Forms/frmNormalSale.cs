@@ -203,6 +203,8 @@ namespace ERP
                     row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
                     row.Cells[clnDiscount.Index].Value = line.Discount.ToString("0.##");
                     row.Cells[clnDiscPercent.Index].Value = discountPercent.ToString("0.##");
+                    if (clnCarriage != null)
+                        row.Cells[clnCarriage.Index].Value = (line.Carriage ?? 0).ToString("0.##");
                     row.Cells[clnAmount.Index].Value = line.Amount.ToString("N2");
                     row.Cells[clnStatus.Index].Value = "0";
 
@@ -273,6 +275,7 @@ namespace ERP
 
         private async System.Threading.Tasks.Task SaveAsync()
         {
+            dgvSale.EndEdit();
             if (cmbAccounts.SelectedValue == null)
             {
                 MessageBox.Show("Please Select Account...!");
@@ -308,6 +311,7 @@ namespace ERP
                     Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
                     Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
+                    Carriage = clnCarriage != null ? ParseDecimal(row.Cells[clnCarriage.Index].Value) : 0,
                     SecQty = secQty,
                     SecRate = secRate,
                     SecUnit = secUnit,
@@ -429,6 +433,15 @@ namespace ERP
                 if (dgvSale.Columns.Contains("clnSecRate")) dgvSale.Columns["clnSecRate"].DisplayIndex = dIdx++;
                 clnDiscount.DisplayIndex = dIdx++;
                 clnDiscPercent.DisplayIndex = dIdx++;
+                if (clnCarriage != null && ApiSession.EnableCarriage)
+                {
+                    clnCarriage.Visible = true;
+                    clnCarriage.DisplayIndex = dIdx++;
+                }
+                else if (clnCarriage != null)
+                {
+                    clnCarriage.Visible = false;
+                }
                 clnAmount.DisplayIndex = dIdx++;
                 if (clnStatus != null) clnStatus.DisplayIndex = dIdx++;
             }
@@ -451,6 +464,15 @@ namespace ERP
                 clnRate.DisplayIndex = dIdx++;
                 clnDiscount.DisplayIndex = dIdx++;
                 clnDiscPercent.DisplayIndex = dIdx++;
+                if (clnCarriage != null && ApiSession.EnableCarriage)
+                {
+                    clnCarriage.Visible = true;
+                    clnCarriage.DisplayIndex = dIdx++;
+                }
+                else if (clnCarriage != null)
+                {
+                    clnCarriage.Visible = false;
+                }
                 clnAmount.DisplayIndex = dIdx++;
                 if (clnStatus != null) clnStatus.DisplayIndex = dIdx++;
             }
@@ -535,6 +557,10 @@ namespace ERP
         {
             try
             {
+                if (clnCarriage != null)
+                {
+                    clnCarriage.Visible = ApiSession.EnableCarriage;
+                }
                 SetupSecondaryQtyColumns();
                 SetupMobileShopColumns();
                 await LoadLookupsAsync();
@@ -612,6 +638,7 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
+                (clnCarriage != null && dgvSale.CurrentCell.ColumnIndex == clnCarriage.Index) ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
@@ -661,6 +688,7 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
+                (clnCarriage != null && dgvSale.CurrentCell.ColumnIndex == clnCarriage.Index) ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
@@ -747,6 +775,7 @@ namespace ERP
             decimal rate = ParseDecimal(dgvSale[clnRate.Index, e.RowIndex].Value);
             decimal discount = ParseDecimal(dgvSale[clnDiscount.Index, e.RowIndex].Value);
             decimal discountPercent = ParseDecimal(dgvSale[clnDiscPercent.Index, e.RowIndex].Value);
+            decimal carriage = clnCarriage != null ? ParseDecimal(dgvSale[clnCarriage.Index, e.RowIndex].Value) : 0;
 
             decimal secQty = 0;
             decimal secRate = 0;
@@ -760,6 +789,8 @@ namespace ERP
             dgvSale[clnRate.Index, e.RowIndex].Value = rate.ToString();
             dgvSale[clnDiscount.Index, e.RowIndex].Value = discount.ToString();
             dgvSale[clnDiscPercent.Index, e.RowIndex].Value = discountPercent.ToString();
+            if (clnCarriage != null)
+                dgvSale[clnCarriage.Index, e.RowIndex].Value = carriage.ToString();
             if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
             {
                 dgvSale["clnSecQty", e.RowIndex].Value = secQty.ToString();
@@ -778,7 +809,7 @@ namespace ERP
             }
 
             decimal netRate = rate - discount;
-            dgvSale[clnAmount.Index, e.RowIndex].Value = decimal.Round((qty * netRate) + (secQty * secRate), 2).ToString();
+            dgvSale[clnAmount.Index, e.RowIndex].Value = decimal.Round((qty * netRate) + carriage + (secQty * secRate), 2).ToString();
             CalcTotAmount();
         }
 
@@ -1207,10 +1238,13 @@ namespace ERP
                 qty = ParseDecimal(dgvSale[clnQty.Index, ind].Value);
                 rate = ParseDecimal(dgvSale[clnRate.Index, ind].Value);
                 discount = ParseDecimal(dgvSale[clnDiscount.Index, ind].Value);
+                decimal carriage = clnCarriage != null ? ParseDecimal(dgvSale[clnCarriage.Index, ind].Value) : 0;
                 dgvSale[clnQty.Index, ind].Value = qty.ToString();
                 dgvSale[clnRate.Index, ind].Value = rate.ToString();
                 dgvSale[clnDiscount.Index, ind].Value = discount.ToString();
-                dgvSale[clnAmount.Index, ind].Value = decimal.Round(qty * (rate - discount), 2).ToString();
+                if (clnCarriage != null)
+                    dgvSale[clnCarriage.Index, ind].Value = carriage.ToString();
+                dgvSale[clnAmount.Index, ind].Value = decimal.Round((qty * (rate - discount)) + carriage, 2).ToString();
                 CalcTotAmount();
                 txtBarcode.Text = "";
                 txtBarcode.Focus();

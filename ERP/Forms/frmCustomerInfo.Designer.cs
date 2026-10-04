@@ -34,6 +34,7 @@ namespace ERP
             this.clnSupplySecQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnSupplyRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnSupplyDiscount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnSupplyCarriage = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnSupplyAddLess = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dgvCustomers = new System.Windows.Forms.DataGridView();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -851,6 +852,7 @@ namespace ERP
             this.clnSupplySecQty,
             this.clnSupplyRate,
             this.clnSupplyDiscount,
+            this.clnSupplyCarriage,
             this.clnSupplyAddLess});
             this.dgvSupplyItems.Dock = System.Windows.Forms.DockStyle.Fill;
             this.dgvSupplyItems.Location = new System.Drawing.Point(3, 85);
@@ -896,6 +898,13 @@ namespace ERP
             this.clnSupplyDiscount.MinimumWidth = 80;
             this.clnSupplyDiscount.Name = "clnSupplyDiscount";
             this.clnSupplyDiscount.Width = 90;
+            // 
+            // clnSupplyCarriage
+            // 
+            this.clnSupplyCarriage.HeaderText = "Carriage";
+            this.clnSupplyCarriage.MinimumWidth = 80;
+            this.clnSupplyCarriage.Name = "clnSupplyCarriage";
+            this.clnSupplyCarriage.Width = 90;
             // 
             // clnSupplyAddLess
             // 
@@ -1007,6 +1016,7 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplySecQty;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplyRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplyDiscount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplyCarriage;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSupplyAddLess;
     }
 }

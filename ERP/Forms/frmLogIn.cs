@@ -173,6 +173,12 @@ namespace ERP
                     {
                         ApiSession.HasSupplyFeature = string.Equals(supplySetting, "true", StringComparison.OrdinalIgnoreCase);
                     }
+
+                    var carriageSetting = await _settingsApiService.GetSettingValueAsync("Transaction.EnableCarriage");
+                    if (!string.IsNullOrWhiteSpace(carriageSetting))
+                    {
+                        ApiSession.EnableCarriage = string.Equals(carriageSetting, "true", StringComparison.OrdinalIgnoreCase);
+                    }
                 }
                 catch
                 {

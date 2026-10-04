@@ -153,6 +153,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("discount")]
         public decimal Discount { get; set; }
 
+        [JsonProperty("carriage")]
+        public decimal? Carriage { get; set; }
+
         [JsonProperty("amount")]
         public decimal Amount { get; set; }
 
@@ -275,6 +278,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("discount")]
         public decimal Discount { get; set; }
+
+        [JsonProperty("carriage")]
+        public decimal? Carriage { get; set; }
 
         [JsonProperty("secQty")]
         public decimal? SecQty { get; set; }

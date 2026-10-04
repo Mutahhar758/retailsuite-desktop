@@ -154,6 +154,7 @@ namespace ERP
                         r.Cells[clnSupplySecQty.Index].Value = (item.SecQty ?? 0).ToString("0.##");
                     r.Cells[clnSupplyRate.Index].Value = item.Rate.HasValue ? item.Rate.Value.ToString("0.##") : string.Empty;
                     r.Cells[clnSupplyDiscount.Index].Value = item.Discount.HasValue ? item.Discount.Value.ToString("0.##") : string.Empty;
+                    r.Cells[clnSupplyCarriage.Index].Value = item.Carriage.HasValue ? item.Carriage.Value.ToString("0.##") : string.Empty;
                     r.Cells[clnSupplyAddLess.Index].Value = item.AddLess.HasValue ? item.AddLess.Value.ToString("0.##") : string.Empty;
                 }
             }
@@ -182,6 +183,7 @@ namespace ERP
 
                     decimal? rate = decimal.TryParse(Convert.ToString(r.Cells[clnSupplyRate.Index].Value), out decimal rVal) ? (decimal?)rVal : null;
                     decimal? discount = decimal.TryParse(Convert.ToString(r.Cells[clnSupplyDiscount.Index].Value), out decimal dVal) ? (decimal?)dVal : null;
+                    decimal? carriage = decimal.TryParse(Convert.ToString(r.Cells[clnSupplyCarriage.Index].Value), out decimal cVal) ? (decimal?)cVal : null;
                     decimal? addLess = decimal.TryParse(Convert.ToString(r.Cells[clnSupplyAddLess.Index].Value), out decimal aVal) ? (decimal?)aVal : null;
 
                     supplyItems.Add(new CustomerSupplyItemDto
@@ -191,6 +193,7 @@ namespace ERP
                         SecQty = secQty,
                         Rate = rate,
                         Discount = discount,
+                        Carriage = carriage,
                         AddLess = addLess
                     });
                 }
@@ -363,6 +366,7 @@ namespace ERP
                 clnSupplyItemId.DisplayMember = "Title";
                 clnSupplyItemId.ValueMember = "Id";
                 clnSupplySecQty.Visible = ApiSession.HasSecondaryQty;
+                clnSupplyCarriage.Visible = ApiSession.EnableCarriage;
 
                 await FillCustomersAsync();
                 Flogin = false;

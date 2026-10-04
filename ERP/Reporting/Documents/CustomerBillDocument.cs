@@ -369,6 +369,8 @@ namespace ERP.Reporting.Documents
                         columns.ConstantColumn(40);   // Unit
                         columns.ConstantColumn(44);   // Qty
                         columns.ConstantColumn(65);   // Rate
+                        if (_summary.EnableCarriage)
+                            columns.ConstantColumn(58);   // Carriage
                         columns.ConstantColumn(58);   // Add / Less
                         columns.ConstantColumn(75);   // Amount
                     });
@@ -382,13 +384,15 @@ namespace ERP.Reporting.Documents
                         header.Cell().Element(HeaderCell).AlignCenter().Text("Unit");
                         header.Cell().Element(HeaderCell).AlignRight().Text("Qty");
                         header.Cell().Element(HeaderCell).AlignRight().Text("Rate");
+                        if (_summary.EnableCarriage)
+                            header.Cell().Element(HeaderCell).AlignRight().Text("Carriage");
                         header.Cell().Element(HeaderCell).AlignRight().Text("Add / Less");
                         header.Cell().Element(HeaderCell).AlignRight().Text("Amount");
                     });
 
                     if (_lines.Count == 0)
                     {
-                        table.Cell().ColumnSpan(9).Element(c => BodyCell(c, QuestPDF.Helpers.Colors.White))
+                        table.Cell().ColumnSpan((uint)(_summary.EnableCarriage ? 10 : 9)).Element(c => BodyCell(c, QuestPDF.Helpers.Colors.White))
                             .AlignCenter().PaddingVertical(14).Text("No billing transactions recorded in the selected period.").Italic().FontColor(QuestPDF.Helpers.Colors.Grey.Darken1);
                     }
                     else
@@ -405,13 +409,15 @@ namespace ERP.Reporting.Documents
                             table.Cell().Element(c => BodyCell(c, bg)).AlignCenter().Text(line.Unit ?? string.Empty);
                             table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(line.FormattedQty);
                             table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(line.FormattedRate);
+                            if (_summary.EnableCarriage)
+                                table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(line.FormattedCarriage);
                             table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(line.FormattedAddLess);
                             table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(line.FormattedAmount).SemiBold();
                         }
                     }
 
                     // Total Current Bill Subtotal
-                    table.Cell().ColumnSpan(8).Element(SubtotalCell).Text("CURRENT PERIOD BILL TOTAL:").Bold().FontColor(QuestPDF.Helpers.Colors.Grey.Darken3);
+                    table.Cell().ColumnSpan((uint)(_summary.EnableCarriage ? 9 : 8)).Element(SubtotalCell).Text("CURRENT PERIOD BILL TOTAL:").Bold().FontColor(QuestPDF.Helpers.Colors.Grey.Darken3);
                     table.Cell().Element(SubtotalCell).AlignRight().Text(_summary.CurrentBillTotal.ToString("#,##0")).Bold().FontColor(QuestPDF.Helpers.Colors.Grey.Darken4);
                 });
 
@@ -832,7 +838,9 @@ namespace ERP.Reporting.Documents
                             columns.ConstantColumn(30);   // Bags
                             columns.ConstantColumn(38);   // Kg Rate
                             columns.ConstantColumn(38);   // Bag Rate
-                            columns.ConstantColumn(36);   // Carriage
+                            if (_summary.EnableCarriage)
+                                columns.ConstantColumn(36);   // Carriage
+                            columns.ConstantColumn(36);   // Add/Less
                             columns.ConstantColumn(50);   // Amount
                             columns.ConstantColumn(44);   // Receipt Date
                             columns.ConstantColumn(48);   // Receipt Amount
@@ -850,7 +858,9 @@ namespace ERP.Reporting.Documents
                             header.Cell().Element(WandaHeaderCell).AlignCenter().Text("Bags").Bold().FontSize(7.5f);
                             header.Cell().Element(WandaHeaderCell).AlignCenter().Text("Kg Rate").Bold().FontSize(7.5f);
                             header.Cell().Element(WandaHeaderCell).AlignCenter().Text("Bag Rate").Bold().FontSize(7.5f);
-                            header.Cell().Element(WandaHeaderCell).AlignCenter().Text("Carriage").Bold().FontSize(7.5f);
+                            if (_summary.EnableCarriage)
+                                header.Cell().Element(WandaHeaderCell).AlignCenter().Text("Carriage").Bold().FontSize(7.5f);
+                            header.Cell().Element(WandaHeaderCell).AlignCenter().Text("Add/Less").Bold().FontSize(7.5f);
                             header.Cell().Element(WandaHeaderCell).AlignCenter().Text("Amount").Bold().FontSize(7.5f);
                             header.Cell().Element(WandaHeaderCell).AlignCenter().Text("Receipt Date").Bold().FontSize(7f);
                             header.Cell().Element(WandaHeaderCell).AlignCenter().Text("Receipt Amount").Bold().FontSize(7f);
@@ -861,7 +871,7 @@ namespace ERP.Reporting.Documents
 
                         if (_lines.Count == 0)
                         {
-                            table.Cell().ColumnSpan(11).Element(WandaBodyCell).AlignCenter().PaddingVertical(12)
+                            table.Cell().ColumnSpan((uint)(_summary.EnableCarriage ? 12 : 11)).Element(WandaBodyCell).AlignCenter().PaddingVertical(12)
                                 .Text("No transactions in period").Italic().FontSize(8.5f);
                         }
                         else
@@ -879,6 +889,8 @@ namespace ERP.Reporting.Documents
                                 table.Cell().Element(WandaBodyCell).AlignRight().Text(bagQty > 0 ? bagQty.ToString("#,##0") : "-").FontSize(8f);
                                 table.Cell().Element(WandaBodyCell).AlignRight().Text(kgRate > 0 ? kgRate.ToString("#,##0.00") : "-").FontSize(8f);
                                 table.Cell().Element(WandaBodyCell).AlignRight().Text(bagRate > 0 ? bagRate.ToString("#,##0") : "-").FontSize(8f);
+                                if (_summary.EnableCarriage)
+                                    table.Cell().Element(WandaBodyCell).AlignRight().Text(line.Carriage != 0 ? line.Carriage.ToString("#,##0") : "0").FontSize(8f);
                                 table.Cell().Element(WandaBodyCell).AlignRight().Text(line.AddLess != 0 ? line.AddLess.ToString("#,##0") : "0").FontSize(8f);
                                 table.Cell().Element(WandaBodyCell).AlignRight().Text(line.Amount.ToString("#,##0")).Bold().FontSize(8f);
                                 table.Cell().Element(WandaBodyCell).AlignCenter().Text(line.ReceiptDate.HasValue ? line.ReceiptDate.Value.ToString("dd/MM/yy") : string.Empty).FontSize(7.5f);

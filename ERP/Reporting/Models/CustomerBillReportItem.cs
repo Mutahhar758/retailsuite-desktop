@@ -18,6 +18,7 @@ namespace ERP.Reporting.Models
         public decimal Qty { get; set; }
         public decimal Rate { get; set; }
         public decimal AddLess { get; set; }
+        public decimal Carriage { get; set; }
         public decimal Amount { get; set; }
 
         public decimal? SecQty { get; set; }
@@ -30,6 +31,7 @@ namespace ERP.Reporting.Models
         public string FormattedQty => Qty.ToString("#,##0.##");
         public string FormattedRate => Rate.ToString("#,##0");
         public string FormattedAddLess => AddLess != 0 ? AddLess.ToString("#,##0") : "-";
+        public string FormattedCarriage => Carriage != 0 ? Carriage.ToString("#,##0") : "-";
         public string FormattedAmount => Amount.ToString("#,##0");
         public string FormattedSecQty => SecQty.HasValue ? SecQty.Value.ToString("#,##0.##") : "-";
         public string FormattedSecRate => SecRate.HasValue ? SecRate.Value.ToString("#,##0") : "-";
@@ -74,6 +76,7 @@ namespace ERP.Reporting.Models
 
         public QrPaymentInfo QrPayment { get; set; }
         public bool ShowQrPayment => QrPayment != null && QrPayment.IsEnabled && NetBalance > 0;
+        public bool EnableCarriage { get; set; }
         public bool IsWandaLayout { get; set; }
     }
 
@@ -112,6 +115,7 @@ namespace ERP.Reporting.Models
             decimal prevBalance = 0m;
             decimal payment = 0m;
             decimal netBal = 0m;
+            bool enableCarriageSetting = false;
 
             if (ds != null && ds.Tables.Count > 0)
             {
@@ -141,6 +145,10 @@ namespace ERP.Reporting.Models
                         decimal addless = 0m;
                         if (row.Table.Columns.Contains("addless") && row["addless"] != DBNull.Value)
                             decimal.TryParse(row["addless"].ToString(), out addless);
+
+                        decimal carriage = 0m;
+                        if (row.Table.Columns.Contains("carriage") && row["carriage"] != DBNull.Value)
+                            decimal.TryParse(row["carriage"].ToString(), out carriage);
 
                         decimal amount = 0m;
                         if (row.Table.Columns.Contains("amount") && row["amount"] != DBNull.Value)
@@ -205,6 +213,7 @@ namespace ERP.Reporting.Models
                             Qty = qty,
                             Rate = rate,
                             AddLess = addless,
+                            Carriage = carriage,
                             Amount = amount,
                             SecQty = secQty,
                             SecRate = secRate,
@@ -226,6 +235,11 @@ namespace ERP.Reporting.Models
 
                     if (sumRow.Table.Columns.Contains("Balance") && sumRow["Balance"] != DBNull.Value)
                         decimal.TryParse(sumRow["Balance"].ToString(), out netBal);
+
+                    if (sumRow.Table.Columns.Contains("EnableCarriage") && sumRow["EnableCarriage"] != DBNull.Value)
+                    {
+                        if (bool.TryParse(sumRow["EnableCarriage"].ToString(), out var ec)) enableCarriageSetting = ec;
+                    }
                 }
             }
 
@@ -255,6 +269,7 @@ namespace ERP.Reporting.Models
                 GeneratedBy = !string.IsNullOrWhiteSpace(UserInfo.UserName) ? UserInfo.UserName : "System Operator",
                 GeneratedAt = DateTime.Now,
                 QrPayment = QrPaymentInfo.GetCached(),
+                EnableCarriage = enableCarriageSetting || ApiSession.EnableCarriage,
                 IsWandaLayout = isWandaLayout ?? ApiSession.HasVariablePackFeature
             };
 
