@@ -57,6 +57,7 @@ namespace ERP
             dtItems.Columns.Add("PrimaryUnit", typeof(string));
             dtItems.Columns.Add("SecondaryUnit", typeof(string));
             dtItems.Columns.Add("DefaultUnit", typeof(string));
+            dtItems.Columns.Add("RequireImei", typeof(bool));
 
             dtUnits.Columns.Add("Code", typeof(string));
             dtUnits.Columns.Add("Title", typeof(string));
@@ -78,7 +79,7 @@ namespace ERP
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
-                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit);
+                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.RequireImei == true);
 
             dtUnits.Rows.Clear();
             foreach (var u in unitsTask.Result)
@@ -156,14 +157,26 @@ namespace ERP
                 decimal secQtyOut = 0;
                 decimal secRate = 0;
                 string secUnit = null;
+                string itemId = Convert.ToString(row.Cells[clnItemNo.Index].Value);
+                DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
+                string imei = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei") ? Convert.ToString(row.Cells["clnImei"].Value) : null;
+                string imei2 = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei2") ? Convert.ToString(row.Cells["clnImei2"].Value) : null;
+
+                decimal qIn = ParseDecimal(row.Cells[clnQtyIn.Index].Value);
+                decimal qOut = ParseDecimal(row.Cells[clnQtyOut.Index].Value);
+                bool reqImei = itemRow != null && dtItems.Columns.Contains("RequireImei") && itemRow["RequireImei"] != DBNull.Value && Convert.ToBoolean(itemRow["RequireImei"]);
+                if (reqImei && (qIn > 0 || qOut > 0) && string.IsNullOrWhiteSpace(imei))
+                {
+                    MessageBox.Show($"Item '{itemRow["Title"]}' requires an IMEI / Serial number.", "IMEI Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQtyIn"))
                 {
                     secQtyIn = ParseDecimal(row.Cells["clnSecQtyIn"].Value);
                     secQtyOut = ParseDecimal(row.Cells["clnSecQtyOut"].Value);
                     secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
                     
-                    string itemId = Convert.ToString(row.Cells[clnItemNo.Index].Value);
-                    DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
                     if (itemRow != null)
                     {
                         secUnit = Convert.ToString(itemRow["SecondaryUnit"]);
@@ -175,13 +188,15 @@ namespace ERP
                     Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
                     ItemCategoryCode = Convert.ToString(row.Cells[clnCatagory.Index].Value),
                     ItemId = Convert.ToString(row.Cells[clnItemNo.Index].Value),
-                    QtyIn = ParseDecimal(row.Cells[clnQtyIn.Index].Value),
-                    QtyOut = ParseDecimal(row.Cells[clnQtyOut.Index].Value),
+                    QtyIn = qIn,
+                    QtyOut = qOut,
                     Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
                     SecQtyIn = secQtyIn,
                     SecQtyOut = secQtyOut,
                     SecRate = secRate,
-                    SecUnit = secUnit
+                    SecUnit = secUnit,
+                    Imei = imei,
+                    Imei2 = imei2
                 });
             }
 
@@ -318,6 +333,12 @@ namespace ERP
                         dgvSale["clnSecQtyOut", ind].Value = (line.SecQtyOut ?? 0).ToString("0.##");
                         dgvSale["clnSecRate", ind].Value = (line.SecRate ?? 0).ToString("0.##");
                     }
+
+                    if (ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei"))
+                    {
+                        dgvSale["clnImei", ind].Value = line.Imei;
+                        dgvSale["clnImei2", ind].Value = line.Imei2;
+                    }
                 }
             }
 
@@ -407,11 +428,48 @@ namespace ERP
             if (clnStatus != null) clnStatus.DisplayIndex = dIdx++;
         }
 
+        private void SetupMobileShopColumns()
+        {
+            if (ApiSession.HasMobileShopFeature)
+            {
+                if (!dgvSale.Columns.Contains("clnImei"))
+                {
+                    var colImei = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnImei",
+                        HeaderText = "IMEI / Serial",
+                        Width = 140
+                    };
+                    var colImei2 = new DataGridViewTextBoxColumn
+                    {
+                        Name = "clnImei2",
+                        HeaderText = "IMEI 2",
+                        Width = 140
+                    };
+
+                    int insertIndex = clnItemNo.Index + 1;
+                    dgvSale.Columns.Insert(insertIndex, colImei);
+                    dgvSale.Columns.Insert(insertIndex + 1, colImei2);
+                }
+                else
+                {
+                    dgvSale.Columns["clnImei"].Visible = true;
+                    dgvSale.Columns["clnImei2"].Visible = true;
+                }
+            }
+            else
+            {
+                if (dgvSale.Columns.Contains("clnImei")) dgvSale.Columns["clnImei"].Visible = false;
+                if (dgvSale.Columns.Contains("clnImei2")) dgvSale.Columns["clnImei2"].Visible = false;
+            }
+        }
+
         private async void frmPurchase_Load(object sender, EventArgs e)
         {
             try
             {
                 SetupSecondaryQtyColumns();
+                SetupMobileShopColumns();
                 await LoadLookupsAsync();
                 await FillQueryAsync();
                 btnNew_Click(null, null);

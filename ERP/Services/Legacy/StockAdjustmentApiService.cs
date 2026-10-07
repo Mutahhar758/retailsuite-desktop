@@ -171,6 +171,12 @@ namespace ERP.Services.Legacy
         [JsonProperty("packing")]
         public decimal? Packing { get; set; }
 
+        [JsonProperty("imei")]
+        public string Imei { get; set; }
+
+        [JsonProperty("imei2")]
+        public string Imei2 { get; set; }
+
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
 
@@ -251,5 +257,11 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("packing")]
         public decimal? Packing { get; set; }
+
+        [JsonProperty("imei")]
+        public string Imei { get; set; }
+
+        [JsonProperty("imei2")]
+        public string Imei2 { get; set; }
     }
 }

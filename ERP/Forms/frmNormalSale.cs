@@ -63,6 +63,7 @@ namespace ERP
             dtItems.Columns.Add("PrimaryUnit", typeof(string));
             dtItems.Columns.Add("SecondaryUnit", typeof(string));
             dtItems.Columns.Add("DefaultUnit", typeof(string));
+            dtItems.Columns.Add("RequireImei", typeof(bool));
 
             dtUnits.Columns.Add("Code", typeof(string));
             dtUnits.Columns.Add("Title", typeof(string));
@@ -88,7 +89,7 @@ namespace ERP
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
-                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit);
+                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.RequireImei == true);
 
             dtUnits.Rows.Clear();
             foreach (var u in unitsTask.Result)
@@ -291,13 +292,21 @@ namespace ERP
                 decimal secQty = 0;
                 decimal secRate = 0;
                 string secUnit = null;
+                string itemId = Convert.ToString(row.Cells[clnItemNo.Index].Value);
+                DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
+                string imei = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei") ? Convert.ToString(row.Cells["clnImei"].Value) : null;
+                bool reqImei = itemRow != null && dtItems.Columns.Contains("RequireImei") && itemRow["RequireImei"] != DBNull.Value && Convert.ToBoolean(itemRow["RequireImei"]);
+                if (reqImei && string.IsNullOrWhiteSpace(imei))
+                {
+                    MessageBox.Show($"Item '{itemRow["Title"]}' requires an IMEI / Serial number.", "IMEI Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
                 if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
                 {
                     secQty = ParseDecimal(row.Cells["clnSecQty"].Value);
                     secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
                     
-                    string itemId = Convert.ToString(row.Cells[clnItemNo.Index].Value);
-                    DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
                     if (itemRow != null)
                     {
                         secUnit = Convert.ToString(itemRow["SecondaryUnit"]);
