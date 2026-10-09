@@ -84,7 +84,7 @@ namespace ERP.Reporting.Documents
             {
                 page.ContinuousSize(80, Unit.Millimetre);
                 page.MarginVertical(2, Unit.Millimetre);
-                page.MarginHorizontal(4, Unit.Millimetre);
+                page.MarginHorizontal(3, Unit.Millimetre);
                 page.PageColor(QuestPDF.Helpers.Colors.White);
                 page.DefaultTextStyle(x => x.FontSize(8f).FontFamily("Arial").FontColor(QuestPDF.Helpers.Colors.Black));
 
@@ -694,7 +694,8 @@ namespace ERP.Reporting.Documents
         /// </summary>
         public static void PrintDirectToPrinter(IDocument document, string printerName)
         {
-            var settings = new ImageGenerationSettings { RasterDpi = 300 };
+            // 203 DPI matches native 80mm thermal printhead resolution (8 dots/mm)
+            var settings = new ImageGenerationSettings { RasterDpi = 203 };
             var pageImages = document.GenerateImages(settings).ToList();
             if (pageImages.Count == 0) return;
 
@@ -706,18 +707,26 @@ namespace ERP.Reporting.Documents
                     pd.PrinterSettings.PrinterName = printerName;
                 }
 
-                // Explicitly zero out GDI+ margins to prevent Windows from applying default 1-inch (100-unit) borders
+                // Explicitly zero out GDI+ margins to prevent Windows from applying default 1-inch borders
                 pd.DefaultPageSettings.Margins = new System.Drawing.Printing.Margins(0, 0, 0, 0);
                 pd.OriginAtMargins = false;
 
-                // If thermal receipt roll, auto-detect and select 80mm paper size from printer driver
+                // Problem 1 Fix: Select continuous roll paper size with MAXIMUM height (e.g. 80 x 3276mm)
+                // This ensures bills longer than 8 inches (210mm) are NEVER cut off prematurely!
+                System.Drawing.Printing.PaperSize maxRollSize = null;
                 foreach (System.Drawing.Printing.PaperSize ps in pd.PrinterSettings.PaperSizes)
                 {
                     if (ps.Width >= 270 && ps.Width <= 325)
                     {
-                        pd.DefaultPageSettings.PaperSize = ps;
-                        break;
+                        if (maxRollSize == null || ps.Height > maxRollSize.Height)
+                        {
+                            maxRollSize = ps;
+                        }
                     }
+                }
+                if (maxRollSize != null)
+                {
+                    pd.DefaultPageSettings.PaperSize = maxRollSize;
                 }
 
                 pd.PrintController = new StandardPrintController(); // Silent mode: suppresses "Printing page X..." pop-up
@@ -727,23 +736,35 @@ namespace ERP.Reporting.Documents
                     {
                         using (var ms = new MemoryStream(pageImages[pageIndex]))
                         using (var img = System.Drawing.Image.FromStream(ms))
+                        using (var ia = new System.Drawing.Imaging.ImageAttributes())
                         {
-                            ev.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
-                            ev.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
-                            ev.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+                            // Problem 2 Fix: High-contrast thermal matrix.
+                            // Eliminates light/dull gray dithering dots by forcing anti-aliased text to 100% solid black.
+                            // This ensures thermal printhead pins burn with maximum density for deep, crisp, dark text!
+                            float contrast = 1.8f;
+                            float delta = 0.5f * (1.0f - contrast) - 0.08f;
+                            var cm = new System.Drawing.Imaging.ColorMatrix(new float[][]
+                            {
+                                new float[] { contrast, 0, 0, 0, 0 },
+                                new float[] { 0, contrast, 0, 0, 0 },
+                                new float[] { 0, 0, contrast, 0, 0 },
+                                new float[] { 0, 0, 0, 1, 0 },
+                                new float[] { delta, delta, delta, 0, 1 }
+                            });
+                            ia.SetColorMatrix(cm, System.Drawing.Imaging.ColorMatrixFlag.Default, System.Drawing.Imaging.ColorAdjustType.Bitmap);
+
+                            ev.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBilinear;
+                            ev.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.Half;
+                            ev.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.None;
                             ev.Graphics.CompositingQuality = System.Drawing.Drawing2D.CompositingQuality.HighQuality;
 
                             // If continuous/tall roll layout (e.g. 80mm thermal receipt)
                             if (img.Height > img.Width * 1.3f)
                             {
-                                // Physical printhead on 80mm thermal printers is 72mm (~283 hundredths of an inch).
-                                // Total roll width is 80mm (~315 hundredths of an inch).
-                                // Using targetWidth = 275 hundredths of an inch (~70mm):
-                                // 1. Guarantees it never shrinks to 1 inch (we never check ev.MarginBounds).
-                                // 2. Prevents the right-side columns (ADJ and TOTAL) from falling outside the 72mm thermal printhead.
                                 float targetWidth = 275f;
                                 float targetHeight = img.Width > 0 ? (float)img.Height * (targetWidth / (float)img.Width) : ev.PageBounds.Height;
-                                ev.Graphics.DrawImage(img, new System.Drawing.RectangleF(0, 0, targetWidth, targetHeight));
+                                var destRect = new System.Drawing.Rectangle(0, 0, (int)Math.Ceiling(targetWidth), (int)Math.Ceiling(targetHeight));
+                                ev.Graphics.DrawImage(img, destRect, 0, 0, img.Width, img.Height, GraphicsUnit.Pixel, ia);
                             }
                             else
                             {
@@ -752,7 +773,7 @@ namespace ERP.Reporting.Documents
                                 {
                                     bounds = ev.MarginBounds;
                                 }
-                                ev.Graphics.DrawImage(img, bounds);
+                                ev.Graphics.DrawImage(img, bounds, 0, 0, img.Width, img.Height, GraphicsUnit.Pixel, ia);
                             }
                         }
                         pageIndex++;
@@ -998,7 +1019,7 @@ namespace ERP.Reporting.Documents
             {
                 page.ContinuousSize(80, Unit.Millimetre);
                 page.MarginVertical(2, Unit.Millimetre);
-                page.MarginHorizontal(4, Unit.Millimetre);
+                page.MarginHorizontal(3, Unit.Millimetre);
                 page.PageColor(Colors.White);
                 page.DefaultTextStyle(x => x.FontSize(8f).FontFamily("Arial").FontColor(Colors.Black));
 

@@ -283,6 +283,13 @@ namespace ERP.Reporting
             cmbLayout.SelectedIndex = 0;
             cmbLayout.SelectedIndexChanged += async (s, e) =>
             {
+                if (webView != null && _isWebViewReady && webView.CoreWebView2 != null)
+                {
+                    bool isThermal = cmbLayout.SelectedIndex == 1;
+                    webView.CoreWebView2.Settings.HiddenPdfToolbarItems = isThermal
+                        ? Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.Print
+                        : Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.None;
+                }
                 if (_currentResult != null)
                 {
                     await LoadAndRenderSingleBillAsync();
@@ -362,7 +369,7 @@ namespace ERP.Reporting
                 Cursor = Cursors.Hand
             };
             btnPrintThermalSingle.FlatAppearance.BorderSize = 0;
-            btnPrintThermalSingle.Click += (s, e) => TriggerDirectThermalPrint();
+            btnPrintThermalSingle.Click += async (s, e) => await TriggerDirectThermalPrintAsync();
 
             btnPrintDirectSingle = new Button
             {
@@ -947,6 +954,14 @@ namespace ERP.Reporting
 
                 _currentResult = result;
                 var layout = (cmbLayout != null && cmbLayout.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
+                bool isThermal = layout == CustomerBillPrintLayout.Thermal80mm;
+                if (webView != null && _isWebViewReady && webView.CoreWebView2 != null)
+                {
+                    webView.CoreWebView2.Settings.HiddenPdfToolbarItems = isThermal
+                        ? Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.Print
+                        : Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.None;
+                }
+
                 var doc = new CustomerBillDocument(result.Summary, result.Lines, layout);
                 _currentPdfPath = await doc.GeneratePdfToTempFileAsync();
 
@@ -968,35 +983,23 @@ namespace ERP.Reporting
             }
         }
 
-        private void TriggerPrintPreview()
+        private async void TriggerPrintPreview()
         {
             if (webView != null && _isWebViewReady)
             {
                 bool isThermal = cmbLayout != null && cmbLayout.SelectedIndex == 1;
-                if (isThermal && !string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName))
+                if (isThermal)
                 {
-                    var choice = MessageBox.Show(
-                        string.Format("80mm Thermal format is selected.\n\nWould you like to print directly to your configured thermal printer '{0}' with 80mm roll dimensions?\n\n• Yes: Print directly with 80mm thermal settings (Recommended)\n• No: Open browser print dialog", ConfigInfo.ThermalPrinterName),
-                        "Thermal Print",
-                        MessageBoxButtons.YesNoCancel,
-                        MessageBoxIcon.Question);
-
-                    if (choice == DialogResult.Yes)
-                    {
-                        TriggerDirectThermalPrint();
-                        return;
-                    }
-                    else if (choice == DialogResult.Cancel)
-                    {
-                        return;
-                    }
+                    await TriggerDirectThermalPrintAsync();
+                    return;
                 }
 
+                // For A4 Sheet format, open standard browser print dialog
                 webView.CoreWebView2.ShowPrintUI(Microsoft.Web.WebView2.Core.CoreWebView2PrintDialogKind.Browser);
             }
         }
 
-        private void TriggerDirectThermalPrint()
+        private async Task TriggerDirectThermalPrintAsync()
         {
             if (_currentResult == null)
             {
@@ -1016,6 +1019,32 @@ namespace ERP.Reporting
 
             try
             {
+                // Native vector printing via WebView2
+                // Directly applies the verified settings (Scale 90%, 80x3276mm continuous roll, margins 0)
+                // without showing any print dialog or requiring manual selection.
+                if (webView != null && _isWebViewReady && webView.CoreWebView2 != null)
+                {
+                    var printSettings = webView.CoreWebView2.Environment.CreatePrintSettings();
+                    printSettings.PrinterName = printer;
+                    printSettings.ScaleFactor = 0.9;
+                    printSettings.PageWidth = 3.1496; // 80mm
+                    printSettings.PageHeight = 128.976; // 3276mm continuous roll
+                    printSettings.MarginTop = 0;
+                    printSettings.MarginBottom = 0;
+                    printSettings.MarginLeft = 0;
+                    printSettings.MarginRight = 0;
+                    printSettings.ShouldPrintBackgrounds = true;
+                    printSettings.ShouldPrintHeaderAndFooter = false;
+
+                    var status = await webView.CoreWebView2.PrintAsync(printSettings);
+                    if (status == Microsoft.Web.WebView2.Core.CoreWebView2PrintStatus.Succeeded)
+                    {
+                        MessageBox.Show(string.Format("80mm Thermal Receipt sent to '{0}' successfully!", printer), "Print Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        return;
+                    }
+                }
+
+                // Fallback to GDI+ spooler if WebView2 is not ready
                 var doc = new CustomerBillDocument(_currentResult.Summary, _currentResult.Lines, CustomerBillPrintLayout.Thermal80mm);
                 CustomerBillDocument.PrintDirectToPrinter(doc, printer);
                 MessageBox.Show(string.Format("80mm Thermal Receipt sent silently to '{0}' successfully!", printer), "Print Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -1092,17 +1121,18 @@ namespace ERP.Reporting
             prgBulkProgress.Maximum = checkedItems.Count;
             prgBulkProgress.Value = 0;
 
-            int printedCount = 0;
-            int errorCount = 0;
-
             try
             {
+                await EnsureWebViewInitializedAsync();
+
+                var batch = new List<CustomerBillDataResult>();
+
                 for (int i = 0; i < checkedItems.Count; i++)
                 {
                     if (_bulkCts.IsCancellationRequested) break;
 
                     var customer = checkedItems[i];
-                    lblBulkStatus.Text = string.Format("Printing {0} of {1}: {2}...", i + 1, checkedItems.Count, customer.Title);
+                    lblBulkStatus.Text = string.Format("Compiling {0} of {1}: {2}...", i + 1, checkedItems.Count, customer.Title);
                     prgBulkProgress.Value = i + 1;
 
                     await Task.Run(() =>
@@ -1110,34 +1140,109 @@ namespace ERP.Reporting
                         try
                         {
                             DataSet ds = ReportQuery.CustomerBill(customer.Account, fromDate, toDate, dateBasis, isWandaLayout: true);
-                            var result = CustomerBillDataService.ConvertDataSet(ds, customer.Account, customer.Title, fromDate, toDate, dateBasis, isWandaLayout: true);
+                            var res = CustomerBillDataService.ConvertDataSet(ds, customer.Account, customer.Title, fromDate, toDate, dateBasis, isWandaLayout: true);
 
-                            if (result.Lines.Count > 0 || Math.Abs(result.Summary.NetBalance) > 0.01m)
+                            if (res.Lines.Count > 0 || Math.Abs(res.Summary.NetBalance) > 0.01m)
                             {
-                                var doc = new CustomerBillDocument(result.Summary, result.Lines, layout);
-                                CustomerBillDocument.PrintDirectToPrinter(doc, printer);
-                                printedCount++;
+                                batch.Add(res);
                             }
                         }
                         catch
                         {
-                            errorCount++;
                         }
                     });
-
-                    await Task.Delay(350);
                 }
 
                 if (_bulkCts.IsCancellationRequested)
                 {
-                    lblBulkStatus.Text = string.Format("Cancelled. Printed {0} bill(s).", printedCount);
+                    lblBulkStatus.Text = "Cancelled by user.";
+                    MessageBox.Show("Bulk printing was cancelled.", "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                if (batch.Count == 0)
+                {
+                    lblBulkStatus.Text = "No active transactions found.";
+                    MessageBox.Show("No active customer bills to print.", "Nothing to Print", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                int printedCount = 0;
+                for (int i = 0; i < batch.Count; i++)
+                {
+                    if (_bulkCts.IsCancellationRequested) break;
+
+                    var bill = batch[i];
+                    lblBulkStatus.Text = string.Format("Printing {0} of {1}: {2}...", i + 1, batch.Count, bill.Summary.CustomerName);
+                    prgBulkProgress.Value = i + 1;
+
+                    var singleDoc = new CustomerBillDocument(bill.Summary, bill.Lines, layout);
+
+                    if (webView != null && _isWebViewReady && webView.CoreWebView2 != null)
+                    {
+                        string singlePdfPath = await singleDoc.GeneratePdfToTempFileAsync();
+
+                        var tcs = new TaskCompletionSource<bool>();
+                        EventHandler<Microsoft.Web.WebView2.Core.CoreWebView2NavigationCompletedEventArgs> navHandler = null;
+                        navHandler = (s, e) =>
+                        {
+                            webView.NavigationCompleted -= navHandler;
+                            tcs.TrySetResult(e.IsSuccess);
+                        };
+                        webView.NavigationCompleted += navHandler;
+                        webView.CoreWebView2.Navigate(singlePdfPath);
+                        await tcs.Task;
+
+                        // Brief pause to ensure the PDF viewer has fully rendered
+                        await Task.Delay(250);
+
+                        var printSettings = webView.CoreWebView2.Environment.CreatePrintSettings();
+                        printSettings.PrinterName = printer;
+                        printSettings.ShouldPrintBackgrounds = true;
+                        printSettings.ShouldPrintHeaderAndFooter = false;
+                        printSettings.MarginTop = 0;
+                        printSettings.MarginBottom = 0;
+                        printSettings.MarginLeft = 0;
+                        printSettings.MarginRight = 0;
+
+                        if (layout == CustomerBillPrintLayout.Thermal80mm)
+                        {
+                            printSettings.ScaleFactor = 0.9;
+                            printSettings.PageWidth = 3.1496;
+                            printSettings.PageHeight = 128.976;
+                        }
+
+                        var status = await webView.CoreWebView2.PrintAsync(printSettings);
+                        if (status == Microsoft.Web.WebView2.Core.CoreWebView2PrintStatus.Succeeded)
+                        {
+                            printedCount++;
+                        }
+                    }
+                    else
+                    {
+                        CustomerBillDocument.PrintDirectToPrinter(singleDoc, printer);
+                        printedCount++;
+                    }
+
+                    // Crucial hardware buffer pacing: allow 600ms between bills so the thermal cutter can cycle and printer FIFO buffer flushes
+                    await Task.Delay(600);
+                }
+
+                if (_bulkCts.IsCancellationRequested)
+                {
+                    lblBulkStatus.Text = string.Format("Cancelled. Printed {0} of {1} bill(s).", printedCount, batch.Count);
                     MessageBox.Show(string.Format("Bulk printing cancelled by user. Printed {0} bill(s).", printedCount), "Cancelled", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 }
                 else
                 {
-                    lblBulkStatus.Text = string.Format("Complete! {0} bill(s) printed directly.", printedCount);
-                    MessageBox.Show(string.Format("{0} customer bill(s) printed directly to '{1}' without interaction!", printedCount, printer), "Bulk Print Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    lblBulkStatus.Text = string.Format("Complete! {0} bill(s) printed cleanly.", printedCount);
+                    MessageBox.Show(string.Format("{0} customer bill(s) printed cleanly to '{1}'!", printedCount, printer), "Bulk Print Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 }
+            }
+            catch (Exception ex)
+            {
+                lblBulkStatus.Text = "Error during bulk print: " + ex.Message;
+                MessageBox.Show("Bulk print error: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
@@ -1193,6 +1298,14 @@ namespace ERP.Reporting
 
                 var batchDoc = new CustomerBillBatchDocument(batch, layout);
                 _currentPdfPath = await batchDoc.GeneratePdfToTempFileAsync();
+
+                if (webView != null && _isWebViewReady && webView.CoreWebView2 != null)
+                {
+                    bool isThermalBatch = layout == CustomerBillPrintLayout.Thermal80mm;
+                    webView.CoreWebView2.Settings.HiddenPdfToolbarItems = isThermalBatch
+                        ? Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.Print
+                        : Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.None;
+                }
 
                 webView.CoreWebView2.Navigate(_currentPdfPath);
                 webView.Visible = true;
