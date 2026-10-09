@@ -423,7 +423,9 @@ namespace ERP.Reporting
                 return;
             }
 
-            string printer = !string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName) ? ConfigInfo.ThermalPrinterName : null;
+            string printer = !string.IsNullOrWhiteSpace(ConfigInfo.A4PrinterName) 
+                ? ConfigInfo.A4PrinterName 
+                : (!string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName) ? ConfigInfo.ThermalPrinterName : null);
             try
             {
                 var doc = new PurchaseSupplyComparisonDocument(_currentHeader, _currentLines, _currentSummary);

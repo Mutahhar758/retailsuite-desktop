@@ -27,8 +27,22 @@ namespace ERP.Forms
                 foreach (string strPrinter in PrinterSettings.InstalledPrinters)
                 {
                     cmbPrinter.Items.Add(strPrinter);
+                    cmbA4Printer.Items.Add(strPrinter);
                 }
 
+                // Default Bill Format options
+                cmbDefaultFormat.Items.Clear();
+                cmbDefaultFormat.Items.AddRange(new object[] { "80mm Thermal Receipt", "A4 Sheet (Commercial Invoice)" });
+                if (ConfigInfo.IsThermalDefault)
+                {
+                    cmbDefaultFormat.SelectedIndex = 0;
+                }
+                else
+                {
+                    cmbDefaultFormat.SelectedIndex = 1;
+                }
+
+                // Thermal Printer selection
                 if (!string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName) && cmbPrinter.Items.Contains(ConfigInfo.ThermalPrinterName))
                 {
                     cmbPrinter.SelectedItem = ConfigInfo.ThermalPrinterName;
@@ -38,16 +52,76 @@ namespace ERP.Forms
                     cmbPrinter.SelectedIndex = 0;
                 }
 
-                // 2. Load QR Payment & Inventory settings from API
+                // A4 Printer selection
+                if (!string.IsNullOrWhiteSpace(ConfigInfo.A4PrinterName) && cmbA4Printer.Items.Contains(ConfigInfo.A4PrinterName))
+                {
+                    cmbA4Printer.SelectedItem = ConfigInfo.A4PrinterName;
+                }
+                else if (cmbA4Printer.Items.Count > 0)
+                {
+                    try
+                    {
+                        string defaultSysPrinter = new PrinterSettings().PrinterName;
+                        if (!string.IsNullOrWhiteSpace(defaultSysPrinter) && cmbA4Printer.Items.Contains(defaultSysPrinter))
+                        {
+                            cmbA4Printer.SelectedItem = defaultSysPrinter;
+                        }
+                        else
+                        {
+                            cmbA4Printer.SelectedIndex = 0;
+                        }
+                    }
+                    catch
+                    {
+                        cmbA4Printer.SelectedIndex = 0;
+                    }
+                }
+
+                // 2. Load Tenant Printer, QR Payment & Inventory settings from API
                 lblStatus.Text = "Loading settings...";
+                await LoadTenantPrinterSettingsAsync();
                 await LoadQrSettingsAsync();
                 await LoadInventorySettingsAsync();
                 lblStatus.Text = "Ready";
             }
             catch (Exception ex)
             {
-                lblStatus.Text = "Error loading settings: " + ex.Message;
             }
+        }
+
+        private async Task LoadTenantPrinterSettingsAsync()
+        {
+            try
+            {
+                string tenantFormat = await _settingsService.GetSettingValueAsync("Bill.DefaultFormat");
+                if (!string.IsNullOrWhiteSpace(tenantFormat))
+                {
+                    ConfigInfo.DefaultBillFormat = tenantFormat;
+                    bool isThermal = tenantFormat.IndexOf("thermal", StringComparison.OrdinalIgnoreCase) >= 0;
+                    cmbDefaultFormat.SelectedIndex = isThermal ? 0 : 1;
+                }
+
+                string tenantThermal = await _settingsService.GetSettingValueAsync("Printer.ThermalPrinter");
+                if (!string.IsNullOrWhiteSpace(tenantThermal))
+                {
+                    ConfigInfo.ThermalPrinterName = tenantThermal;
+                    if (cmbPrinter.Items.Contains(tenantThermal))
+                    {
+                        cmbPrinter.SelectedItem = tenantThermal;
+                    }
+                }
+
+                string tenantA4 = await _settingsService.GetSettingValueAsync("Printer.A4Printer");
+                if (!string.IsNullOrWhiteSpace(tenantA4))
+                {
+                    ConfigInfo.A4PrinterName = tenantA4;
+                    if (cmbA4Printer.Items.Contains(tenantA4))
+                    {
+                        cmbA4Printer.SelectedItem = tenantA4;
+                    }
+                }
+            }
+            catch { }
         }
 
         private async Task LoadInventorySettingsAsync()
@@ -169,17 +243,49 @@ namespace ERP.Forms
                 btnSave.Enabled = false;
                 lblStatus.Text = "Saving configuration...";
 
-                // 1. Save Thermal Printer to INI
-                if (cmbPrinter.SelectedItem != null)
+                // 1. Save Thermal Printer, A4 Printer, and Default Bill Format to INI and ConfigInfo
+                string selectedThermal = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : "";
+                if (!string.IsNullOrWhiteSpace(selectedThermal))
                 {
-                    string selectedPrinter = cmbPrinter.SelectedItem.ToString();
-                    INIFile.WriteValue("PrinterSetting", "ThermalPrinter", selectedPrinter);
-                    ConfigInfo.ThermalPrinterName = selectedPrinter;
+                    INIFile.WriteValue("PrinterSetting", "ThermalPrinter", selectedThermal);
+                    ConfigInfo.ThermalPrinterName = selectedThermal;
                 }
 
-                // 2. Save QR Payment settings to API
+                string selectedA4 = cmbA4Printer.SelectedItem != null ? cmbA4Printer.SelectedItem.ToString() : "";
+                if (!string.IsNullOrWhiteSpace(selectedA4))
+                {
+                    INIFile.WriteValue("PrinterSetting", "A4Printer", selectedA4);
+                    ConfigInfo.A4PrinterName = selectedA4;
+                }
+
+                string selectedFormat = (cmbDefaultFormat.SelectedIndex == 0) ? "80mm Thermal" : "A4 Sheet";
+                INIFile.WriteValue("PrinterSetting", "DefaultBillFormat", selectedFormat);
+                ConfigInfo.DefaultBillFormat = selectedFormat;
+
+                // 2. Save Settings to API
                 var settingsToSave = new List<SettingItemDto>
                 {
+                    new SettingItemDto
+                    {
+                        Key = "Printer.ThermalPrinter",
+                        Value = selectedThermal,
+                        Description = "Thermal Receipt Printer Name",
+                        Category = "Printer"
+                    },
+                    new SettingItemDto
+                    {
+                        Key = "Printer.A4Printer",
+                        Value = selectedA4,
+                        Description = "A4 Standard Invoice Printer Name",
+                        Category = "Printer"
+                    },
+                    new SettingItemDto
+                    {
+                        Key = "Bill.DefaultFormat",
+                        Value = selectedFormat,
+                        Description = "Default Bill Print Format (80mm Thermal or A4 Sheet)",
+                        Category = "Bill"
+                    },
                     new SettingItemDto
                     {
                         Key = "Bill.QrPayment.Enabled",

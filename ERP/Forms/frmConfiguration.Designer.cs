@@ -30,9 +30,15 @@ namespace ERP.Forms
         {
             this.tabControl1 = new System.Windows.Forms.TabControl();
             this.tabPrinter = new System.Windows.Forms.TabPage();
+            this.lblDefaultFormatInfo = new System.Windows.Forms.Label();
+            this.cmbDefaultFormat = new System.Windows.Forms.ComboBox();
+            this.lblDefaultFormat = new System.Windows.Forms.Label();
             this.lblPrinterInfo = new System.Windows.Forms.Label();
             this.cmbPrinter = new System.Windows.Forms.ComboBox();
             this.lblNarration = new System.Windows.Forms.Label();
+            this.lblA4PrinterInfo = new System.Windows.Forms.Label();
+            this.cmbA4Printer = new System.Windows.Forms.ComboBox();
+            this.lblA4Printer = new System.Windows.Forms.Label();
             this.tabQrPayment = new System.Windows.Forms.TabPage();
             this.lblPreviewAmount = new System.Windows.Forms.Label();
             this.lblQrHint = new System.Windows.Forms.Label();
@@ -74,26 +80,61 @@ namespace ERP.Forms
             // tabPrinter
             // 
             this.tabPrinter.BackColor = System.Drawing.SystemColors.Window;
+            this.tabPrinter.Controls.Add(this.lblDefaultFormatInfo);
+            this.tabPrinter.Controls.Add(this.cmbDefaultFormat);
+            this.tabPrinter.Controls.Add(this.lblDefaultFormat);
             this.tabPrinter.Controls.Add(this.lblPrinterInfo);
             this.tabPrinter.Controls.Add(this.cmbPrinter);
             this.tabPrinter.Controls.Add(this.lblNarration);
+            this.tabPrinter.Controls.Add(this.lblA4PrinterInfo);
+            this.tabPrinter.Controls.Add(this.cmbA4Printer);
+            this.tabPrinter.Controls.Add(this.lblA4Printer);
             this.tabPrinter.Location = new System.Drawing.Point(4, 24);
             this.tabPrinter.Name = "tabPrinter";
             this.tabPrinter.Padding = new System.Windows.Forms.Padding(3);
             this.tabPrinter.Size = new System.Drawing.Size(476, 307);
             this.tabPrinter.TabIndex = 0;
-            this.tabPrinter.Text = "Thermal Printer";
+            this.tabPrinter.Text = "Printers & Bill Format";
             // 
-            // lblPrinterInfo
+            // lblDefaultFormat
             // 
-            this.lblPrinterInfo.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblPrinterInfo.ForeColor = System.Drawing.SystemColors.GrayText;
-            this.lblPrinterInfo.Location = new System.Drawing.Point(20, 75);
-            this.lblPrinterInfo.Name = "lblPrinterInfo";
-            this.lblPrinterInfo.Size = new System.Drawing.Size(425, 40);
-            this.lblPrinterInfo.TabIndex = 221;
-            this.lblPrinterInfo.Text = "Select the thermal receipt printer installed on this computer. Used for printing " +
-    "standard and feed mill customer slips and thermal receipts.";
+            this.lblDefaultFormat.AutoSize = true;
+            this.lblDefaultFormat.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDefaultFormat.Location = new System.Drawing.Point(20, 12);
+            this.lblDefaultFormat.Name = "lblDefaultFormat";
+            this.lblDefaultFormat.Size = new System.Drawing.Size(193, 17);
+            this.lblDefaultFormat.TabIndex = 222;
+            this.lblDefaultFormat.Text = "Default Bill Format / Layout :";
+            // 
+            // cmbDefaultFormat
+            // 
+            this.cmbDefaultFormat.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbDefaultFormat.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cmbDefaultFormat.FormattingEnabled = true;
+            this.cmbDefaultFormat.Location = new System.Drawing.Point(23, 33);
+            this.cmbDefaultFormat.Name = "cmbDefaultFormat";
+            this.cmbDefaultFormat.Size = new System.Drawing.Size(350, 25);
+            this.cmbDefaultFormat.TabIndex = 217;
+            // 
+            // lblDefaultFormatInfo
+            // 
+            this.lblDefaultFormatInfo.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblDefaultFormatInfo.ForeColor = System.Drawing.SystemColors.GrayText;
+            this.lblDefaultFormatInfo.Location = new System.Drawing.Point(20, 61);
+            this.lblDefaultFormatInfo.Name = "lblDefaultFormatInfo";
+            this.lblDefaultFormatInfo.Size = new System.Drawing.Size(425, 20);
+            this.lblDefaultFormatInfo.TabIndex = 223;
+            this.lblDefaultFormatInfo.Text = "Select whether customer bills open in 80mm Thermal Receipt or A4 Sheet format by default.";
+            // 
+            // lblNarration
+            // 
+            this.lblNarration.AutoSize = true;
+            this.lblNarration.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblNarration.Location = new System.Drawing.Point(20, 85);
+            this.lblNarration.Name = "lblNarration";
+            this.lblNarration.Size = new System.Drawing.Size(215, 17);
+            this.lblNarration.TabIndex = 219;
+            this.lblNarration.Text = "Thermal Receipt Printer (80mm) :";
             // 
             // cmbPrinter
             // 
@@ -102,20 +143,52 @@ namespace ERP.Forms
             this.cmbPrinter.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbPrinter.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmbPrinter.FormattingEnabled = true;
-            this.cmbPrinter.Location = new System.Drawing.Point(23, 42);
+            this.cmbPrinter.Location = new System.Drawing.Point(23, 106);
             this.cmbPrinter.Name = "cmbPrinter";
             this.cmbPrinter.Size = new System.Drawing.Size(350, 25);
             this.cmbPrinter.TabIndex = 218;
             // 
-            // lblNarration
+            // lblPrinterInfo
             // 
-            this.lblNarration.AutoSize = true;
-            this.lblNarration.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.lblNarration.Location = new System.Drawing.Point(20, 19);
-            this.lblNarration.Name = "lblNarration";
-            this.lblNarration.Size = new System.Drawing.Size(155, 17);
-            this.lblNarration.TabIndex = 219;
-            this.lblNarration.Text = "Thermal Receipt Printer :";
+            this.lblPrinterInfo.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblPrinterInfo.ForeColor = System.Drawing.SystemColors.GrayText;
+            this.lblPrinterInfo.Location = new System.Drawing.Point(20, 134);
+            this.lblPrinterInfo.Name = "lblPrinterInfo";
+            this.lblPrinterInfo.Size = new System.Drawing.Size(425, 20);
+            this.lblPrinterInfo.TabIndex = 221;
+            this.lblPrinterInfo.Text = "Select the thermal receipt printer installed on this computer for 80mm rolls and customer slips.";
+            // 
+            // lblA4Printer
+            // 
+            this.lblA4Printer.AutoSize = true;
+            this.lblA4Printer.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblA4Printer.Location = new System.Drawing.Point(20, 158);
+            this.lblA4Printer.Name = "lblA4Printer";
+            this.lblA4Printer.Size = new System.Drawing.Size(195, 17);
+            this.lblA4Printer.TabIndex = 224;
+            this.lblA4Printer.Text = "Standard / A4 Invoice Printer :";
+            // 
+            // cmbA4Printer
+            // 
+            this.cmbA4Printer.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.Append;
+            this.cmbA4Printer.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.ListItems;
+            this.cmbA4Printer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbA4Printer.Font = new System.Drawing.Font("Segoe UI", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.cmbA4Printer.FormattingEnabled = true;
+            this.cmbA4Printer.Location = new System.Drawing.Point(23, 179);
+            this.cmbA4Printer.Name = "cmbA4Printer";
+            this.cmbA4Printer.Size = new System.Drawing.Size(350, 25);
+            this.cmbA4Printer.TabIndex = 225;
+            // 
+            // lblA4PrinterInfo
+            // 
+            this.lblA4PrinterInfo.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblA4PrinterInfo.ForeColor = System.Drawing.SystemColors.GrayText;
+            this.lblA4PrinterInfo.Location = new System.Drawing.Point(20, 207);
+            this.lblA4PrinterInfo.Name = "lblA4PrinterInfo";
+            this.lblA4PrinterInfo.Size = new System.Drawing.Size(425, 32);
+            this.lblA4PrinterInfo.TabIndex = 226;
+            this.lblA4PrinterInfo.Text = "Select the standard printer installed on this computer for full-page A4 commercial invoices, account statements, and reports.";
             // 
             // tabQrPayment
             // 
@@ -381,6 +454,12 @@ namespace ERP.Forms
         private System.Windows.Forms.ComboBox cmbPrinter;
         private System.Windows.Forms.Label lblNarration;
         private System.Windows.Forms.Label lblPrinterInfo;
+        private System.Windows.Forms.Label lblDefaultFormat;
+        private System.Windows.Forms.ComboBox cmbDefaultFormat;
+        private System.Windows.Forms.Label lblDefaultFormatInfo;
+        private System.Windows.Forms.Label lblA4Printer;
+        private System.Windows.Forms.ComboBox cmbA4Printer;
+        private System.Windows.Forms.Label lblA4PrinterInfo;
         private System.Windows.Forms.Button btnSave;
         private System.Windows.Forms.Button btnClose;
         private System.Windows.Forms.Label lblStatus;

@@ -276,15 +276,20 @@ namespace ERP.Reporting
                 Font = new Font("Segoe UI", 9F)
             };
             cmbLayout.Items.AddRange(new object[] { "A4 Sheet", "80mm Thermal" });
-            cmbLayout.SelectedIndex = 0;
+            cmbLayout.SelectedIndex = ConfigInfo.IsThermalDefault ? 1 : 0;
             cmbLayout.SelectedIndexChanged += async (s, e) =>
             {
+                bool isThermal = cmbLayout.SelectedIndex == 1;
                 if (webView != null && _isWebViewReady && webView.CoreWebView2 != null)
                 {
-                    bool isThermal = cmbLayout.SelectedIndex == 1;
                     webView.CoreWebView2.Settings.HiddenPdfToolbarItems = isThermal
                         ? Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.Print
                         : Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.None;
+                }
+                string preferredPrinter = isThermal ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
+                if (!string.IsNullOrWhiteSpace(preferredPrinter) && cmbPrinter != null && cmbPrinter.Items.Contains(preferredPrinter))
+                {
+                    cmbPrinter.SelectedItem = preferredPrinter;
                 }
                 if (_currentResult != null)
                 {
@@ -579,7 +584,16 @@ namespace ERP.Reporting
                 Font = new Font("Segoe UI", 9F)
             };
             cmbBulkFormat.Items.AddRange(new object[] { "A4 Commercial Invoice (Full Page)", "80mm Thermal Receipt (POS Roll)" });
-            cmbBulkFormat.SelectedIndex = 1;
+            cmbBulkFormat.SelectedIndex = ConfigInfo.IsThermalDefault ? 1 : 0;
+            cmbBulkFormat.SelectedIndexChanged += (s, e) =>
+            {
+                bool isThermal = cmbBulkFormat.SelectedIndex == 1;
+                string preferredPrinter = isThermal ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
+                if (!string.IsNullOrWhiteSpace(preferredPrinter) && cmbPrinter != null && cmbPrinter.Items.Contains(preferredPrinter))
+                {
+                    cmbPrinter.SelectedItem = preferredPrinter;
+                }
+            };
             pnlBulkSidebar.Controls.Add(cmbBulkFormat);
             curY += 34;
 
@@ -711,7 +725,14 @@ namespace ERP.Reporting
                     cmbPrinter.Items.Add(printer);
                 }
 
-                if (!string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName) && cmbPrinter.Items.Contains(ConfigInfo.ThermalPrinterName))
+                bool isThermal = cmbLayout != null && cmbLayout.SelectedIndex == 1;
+                string preferredPrinter = isThermal ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
+
+                if (!string.IsNullOrWhiteSpace(preferredPrinter) && cmbPrinter.Items.Contains(preferredPrinter))
+                {
+                    cmbPrinter.SelectedItem = preferredPrinter;
+                }
+                else if (!string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName) && cmbPrinter.Items.Contains(ConfigInfo.ThermalPrinterName))
                 {
                     cmbPrinter.SelectedItem = ConfigInfo.ThermalPrinterName;
                 }
@@ -964,13 +985,23 @@ namespace ERP.Reporting
                 return;
             }
 
-            string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : ConfigInfo.ThermalPrinterName;
-            var layout = (cmbLayout != null && cmbLayout.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
+            bool isThermal = cmbLayout != null && cmbLayout.SelectedIndex == 1;
+            string defaultPrinter = isThermal ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
+            string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : defaultPrinter;
+
+            if (string.IsNullOrWhiteSpace(printer))
+            {
+                MessageBox.Show((isThermal ? "Thermal" : "A4") + " printer name is not configured in settings. Please select a destination printer.", "Printer Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            var layout = isThermal ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
             try
             {
                 var doc = new CustomerBillDocument(_currentResult.Summary, _currentResult.Lines, layout);
                 CustomerBillDocument.PrintDirectToPrinter(doc, printer);
-                MessageBox.Show(string.Format("Customer bill sent silently to '{0}' successfully!", printer), "Print Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                string formatTitle = isThermal ? "80mm Thermal Receipt" : "A4 Customer bill";
+                MessageBox.Show(string.Format("{0} sent silently to '{1}' successfully!", formatTitle, printer), "Print Successful", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception ex)
             {
@@ -990,7 +1021,9 @@ namespace ERP.Reporting
                 return;
             }
 
-            string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : ConfigInfo.ThermalPrinterName;
+            var layout = (cmbBulkFormat != null && cmbBulkFormat.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
+            string defaultPrinter = layout == CustomerBillPrintLayout.Thermal80mm ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
+            string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : defaultPrinter;
             if (string.IsNullOrWhiteSpace(printer))
             {
                 MessageBox.Show("Please select a destination printer.", "Printer Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -1002,7 +1035,6 @@ namespace ERP.Reporting
             string dateBasis = (cmbBulkDateBasis != null && cmbBulkDateBasis.SelectedItem != null && cmbBulkDateBasis.SelectedItem.ToString().StartsWith("Clearing", StringComparison.OrdinalIgnoreCase))
                 ? "ClearingDate"
                 : "VoucherDate";
-            var layout = (cmbBulkFormat != null && cmbBulkFormat.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
             string formatName = layout == CustomerBillPrintLayout.Thermal80mm ? "80mm Thermal Receipt" : "A4 Commercial Invoice";
 
             var confirm = MessageBox.Show(

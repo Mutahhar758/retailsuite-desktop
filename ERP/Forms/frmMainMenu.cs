@@ -34,7 +34,8 @@ namespace ERP
             // File.Create("Prii.ini");
             //INIFile MyINI = new INIFile("Settings.ini");
             ConfigInfo.ThermalPrinterName = INIFile.ReadValue("PrinterSetting", "ThermalPrinter");
-            // bool a =  INIFile.WriteValue("PrinterSetting", "ThermalPrinter", "ABC");
+            ConfigInfo.A4PrinterName = INIFile.ReadValue("PrinterSetting", "A4Printer");
+            ConfigInfo.DefaultBillFormat = INIFile.ReadValue("PrinterSetting", "DefaultBillFormat");
 
 
         }

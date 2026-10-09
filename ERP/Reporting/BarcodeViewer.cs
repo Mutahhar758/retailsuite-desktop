@@ -207,6 +207,15 @@ namespace ERP.Reporting
             };
             cmbLayout.Items.AddRange(new object[] { "Thermal Sticker Roll (50 x 30 mm)", "A4 Sticker Sheet (24 labels per sheet)" });
             cmbLayout.SelectedIndex = 0;
+            cmbLayout.SelectedIndexChanged += (s, e) =>
+            {
+                var lyt = cmbLayout.SelectedIndex == 1 ? BarcodePrintLayout.SheetA4 : BarcodePrintLayout.ThermalRoll;
+                string preferredPrinter = lyt == BarcodePrintLayout.ThermalRoll ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
+                if (!string.IsNullOrWhiteSpace(preferredPrinter) && cmbPrinter != null && cmbPrinter.Items.Contains(preferredPrinter))
+                {
+                    cmbPrinter.SelectedItem = preferredPrinter;
+                }
+            };
             pnlSidebar.Controls.Add(cmbLayout);
             curY += 34;
 
@@ -461,8 +470,9 @@ namespace ERP.Reporting
                 if (_currentItem == null) return;
             }
 
-            string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : ConfigInfo.ThermalPrinterName;
             var layout = cmbLayout.SelectedIndex == 1 ? BarcodePrintLayout.SheetA4 : BarcodePrintLayout.ThermalRoll;
+            string defaultPrinter = layout == BarcodePrintLayout.ThermalRoll ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
+            string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : defaultPrinter;
 
             var confirm = MessageBox.Show(
                 string.Format("Are you sure you want to silently send {0} barcode label(s) directly to '{1}'?", _currentItem.Copies, printer),

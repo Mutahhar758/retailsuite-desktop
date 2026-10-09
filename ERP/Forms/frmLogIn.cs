@@ -156,6 +156,8 @@ namespace ERP
 
                 try
                 {
+                    ConfigInfo.Reset();
+
                     var thankYou = await _settingsApiService.GetSettingValueAsync("Bill.ThankYouMessage");
                     if (!string.IsNullOrWhiteSpace(thankYou))
                     {
@@ -178,6 +180,24 @@ namespace ERP
                     if (!string.IsNullOrWhiteSpace(carriageSetting))
                     {
                         ApiSession.EnableCarriage = string.Equals(carriageSetting, "true", StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    var defaultFormat = await _settingsApiService.GetSettingValueAsync("Bill.DefaultFormat");
+                    if (!string.IsNullOrWhiteSpace(defaultFormat))
+                    {
+                        ConfigInfo.DefaultBillFormat = defaultFormat;
+                    }
+
+                    var thermalPrinter = await _settingsApiService.GetSettingValueAsync("Printer.ThermalPrinter");
+                    if (!string.IsNullOrWhiteSpace(thermalPrinter))
+                    {
+                        ConfigInfo.ThermalPrinterName = thermalPrinter;
+                    }
+
+                    var a4Printer = await _settingsApiService.GetSettingValueAsync("Printer.A4Printer");
+                    if (!string.IsNullOrWhiteSpace(a4Printer))
+                    {
+                        ConfigInfo.A4PrinterName = a4Printer;
                     }
                 }
                 catch
@@ -257,6 +277,7 @@ namespace ERP
             _loginService = new LoginService();
             _companyApiService = new CompanyApiService();
             _personalApiService = new PersonalApiService();
+            ConfigInfo.Reset();
         }
 
         private void frmLogIn_KeyDown(object sender, KeyEventArgs e)
