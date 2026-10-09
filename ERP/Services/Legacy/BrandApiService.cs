@@ -28,11 +28,46 @@ namespace ERP.Services.Legacy
         {
             using (var client = CreateClient())
             {
-                var response = await client.GetAsync(Endpoint + "/lookup");
-                await EnsureSuccessWithServerMessageAsync(response);
-                var json = await response.Content.ReadAsStringAsync();
-                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<BrandLookupDto>>>(json);
-                return payload?.Body ?? new List<BrandLookupDto>();
+                try
+                {
+                    var response = await client.GetAsync(Endpoint + "/lookup");
+                    if (response.IsSuccessStatusCode)
+                    {
+                        var json = await response.Content.ReadAsStringAsync();
+                        var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<BrandLookupDto>>>(json);
+                        if (payload?.Body != null && payload.Body.Count > 0)
+                            return payload.Body;
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    var activeResponse = await client.GetAsync(Endpoint + "/active");
+                    if (activeResponse.IsSuccessStatusCode)
+                    {
+                        var json = await activeResponse.Content.ReadAsStringAsync();
+                        var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<BrandLookupDto>>>(json);
+                        if (payload?.Body != null && payload.Body.Count > 0)
+                            return payload.Body;
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    var listResponse = await client.GetAsync(Endpoint);
+                    if (listResponse.IsSuccessStatusCode)
+                    {
+                        var json = await listResponse.Content.ReadAsStringAsync();
+                        var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<BrandLookupDto>>>(json);
+                        if (payload?.Body != null && payload.Body.Count > 0)
+                            return payload.Body;
+                    }
+                }
+                catch { }
+
+                return new List<BrandLookupDto>();
             }
         }
 

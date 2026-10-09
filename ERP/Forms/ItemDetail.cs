@@ -219,8 +219,12 @@ namespace ERP
                 var dtBrand = new DataTable();
                 dtBrand.Columns.Add("Id", typeof(string));
                 dtBrand.Columns.Add("Title", typeof(string));
+                dtBrand.Rows.Add("", "-- None --");
                 foreach (var b in brands)
-                    dtBrand.Rows.Add(b.Id, b.Title);
+                {
+                    if (!string.IsNullOrWhiteSpace(b.Id))
+                        dtBrand.Rows.Add(b.Id, b.Title);
+                }
 
                 var clnRequireImei = new DataGridViewCheckBoxColumn
                 {

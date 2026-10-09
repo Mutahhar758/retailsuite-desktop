@@ -65,36 +65,82 @@ namespace ERP.Forms
         {
             try
             {
-                var brandsTask = _brandApiService.GetListAsync();
-                var customersTask = _chartOfAccountApiService.GetCustomerAccountsAsync();
-                var cashTask = _chartOfAccountApiService.GetCashBankAccountsAsync();
-                var itemsTask = _inventoryApiService.GetLookupAsync(null);
-                var hrTask = _hrInfoApiService.GetAsync();
-
-                await Task.WhenAll(brandsTask, customersTask, cashTask, itemsTask, hrTask);
-
-                _brands = await brandsTask;
-                _customerAccounts = await customersTask;
-                _cashAccounts = await cashTask;
-                _cachedItems = await itemsTask;
-                _technicians = await hrTask;
+                try
+                {
+                    _brands = await _brandApiService.GetListAsync();
+                    if (_brands == null || _brands.Count == 0)
+                    {
+                        var lookup = await _brandApiService.GetLookupAsync();
+                        _brands = lookup.Select(b => new BrandDto { Id = b.Id, Title = b.Title, Active = true }).ToList();
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Error loading brands: " + ex.Message);
+                    try
+                    {
+                        var lookup = await _brandApiService.GetLookupAsync();
+                        _brands = lookup.Select(b => new BrandDto { Id = b.Id, Title = b.Title, Active = true }).ToList();
+                    }
+                    catch
+                    {
+                        _brands = new List<BrandDto>();
+                    }
+                }
 
                 cmbBrand.DisplayMember = "Title";
                 cmbBrand.ValueMember = "Id";
-                cmbBrand.DataSource = _brands.ToList();
+                cmbBrand.DataSource = _brands?.ToList() ?? new List<BrandDto>();
 
+                try
+                {
+                    _customerAccounts = await _chartOfAccountApiService.GetCustomerAccountsAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Error loading customers: " + ex.Message);
+                    _customerAccounts = new List<ChartOfAccountHeadDto>();
+                }
                 cmbCustomer.DisplayMember = "Title";
                 cmbCustomer.ValueMember = "Id";
-                cmbCustomer.DataSource = _customerAccounts.ToList();
+                cmbCustomer.DataSource = _customerAccounts?.ToList() ?? new List<ChartOfAccountHeadDto>();
 
+                try
+                {
+                    _cashAccounts = await _chartOfAccountApiService.GetCashBankAccountsAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Error loading cash accounts: " + ex.Message);
+                    _cashAccounts = new List<ChartOfAccountHeadDto>();
+                }
                 cmbAdvanceAccount.DisplayMember = "Title";
                 cmbAdvanceAccount.ValueMember = "Id";
-                cmbAdvanceAccount.DataSource = _cashAccounts.ToList();
+                cmbAdvanceAccount.DataSource = _cashAccounts?.ToList() ?? new List<ChartOfAccountHeadDto>();
 
+                try
+                {
+                    _cachedItems = await _inventoryApiService.GetLookupAsync(null);
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Error loading items: " + ex.Message);
+                    _cachedItems = new List<InventoryItemDto>();
+                }
+
+                try
+                {
+                    _technicians = await _hrInfoApiService.GetAsync();
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Error loading technicians: " + ex.Message);
+                    _technicians = new List<HRInfoDto>();
+                }
                 cmbTechnician.DisplayMember = "Name";
                 cmbTechnician.ValueMember = "Id";
                 var techList = new List<HRInfoDto> { new HRInfoDto { Id = "", Name = "-- None --" } };
-                techList.AddRange(_technicians);
+                if (_technicians != null) techList.AddRange(_technicians);
                 cmbTechnician.DataSource = techList;
             }
             catch (Exception ex)
