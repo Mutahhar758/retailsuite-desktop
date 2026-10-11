@@ -308,25 +308,41 @@ namespace ERP
                 if (model.Packing > 0)
                 {
                     if (model.SecRate > 0)
-                        model.Rate = Math.Round(model.SecRate / model.Packing, 4);
+                        model.Rate = Math.Round(model.SecRate / model.Packing, 8);
                     else if (model.Rate > 0)
-                        model.SecRate = Math.Round(model.Rate * model.Packing, 4);
+                        model.SecRate = Math.Round(model.Rate * model.Packing, 2);
                 }
                 model.IsDirty = true;
             }
             else if (colName == "colRate")
             {
-                model.Rate = ParseDecimal(row.Cells["colRate"].Value);
-                if (model.Packing > 0)
-                    model.SecRate = Math.Round(model.Rate * model.Packing, 4);
-                model.IsDirty = true;
+                decimal enteredRate = ParseDecimal(row.Cells["colRate"].Value);
+                if (model.Rate > 0 && Math.Round(enteredRate, 2) == Math.Round(model.Rate, 2))
+                {
+                    // Rate unchanged to 2 decimals, keep existing high precision rate and secRate
+                }
+                else
+                {
+                    model.Rate = enteredRate;
+                    if (model.Packing > 0)
+                        model.SecRate = Math.Round(model.Rate * model.Packing, 2);
+                    model.IsDirty = true;
+                }
             }
             else if (colName == "colSecRate")
             {
-                model.SecRate = ParseDecimal(row.Cells["colSecRate"].Value);
-                if (model.Packing > 0)
-                    model.Rate = Math.Round(model.SecRate / model.Packing, 4);
-                model.IsDirty = true;
+                decimal enteredSecRate = ParseDecimal(row.Cells["colSecRate"].Value);
+                if (model.SecRate > 0 && Math.Round(enteredSecRate, 2) == Math.Round(model.SecRate, 2))
+                {
+                    // SecRate unchanged to 2 decimals, keep existing rate
+                }
+                else
+                {
+                    model.SecRate = enteredSecRate;
+                    if (model.Packing > 0)
+                        model.Rate = Math.Round(model.SecRate / model.Packing, 8);
+                    model.IsDirty = true;
+                }
             }
             else if (colName == "colDiscount")
             {
@@ -840,9 +856,6 @@ namespace ERP
 
                     string dateStr = dtpDate.Value.ToString("yyyy-MM-dd");
                     string itemId = cmbItem.SelectedValue.ToString();
-                    decimal rate = Parse(txtRate);
-                    decimal disc = Parse(txtDiscount);
-                    decimal addLess = Parse(txtAddLess);
                     decimal secQty = Parse(txtSecQty);
                     decimal secRate = Parse(txtSecRate);
 
@@ -851,6 +864,10 @@ namespace ERP
                         defaultPack = itemObj.QtyInPack.Value;
                     else if (secQty > 0)
                         defaultPack = Math.Round(qty / secQty, 2);
+
+                    decimal rate = (defaultPack > 0 && secRate > 0) ? Math.Round(secRate / defaultPack, 8) : Parse(txtRate);
+                    decimal disc = Parse(txtDiscount);
+                    decimal addLess = Parse(txtAddLess);
 
                     var existingVouchers = await _apiService.GetListAsync(dateStr, dateStr, itemId);
 

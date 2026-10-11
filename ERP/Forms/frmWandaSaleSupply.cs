@@ -271,7 +271,9 @@ namespace ERP
                     Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
                     CustomerId = Convert.ToString(row.Cells[clnCustomer.Index].Value),
                     Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
-                    Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
+                    Rate = (row.Cells[clnRate.Index].Tag is decimal tagRate && tagRate > 0)
+                        ? tagRate
+                        : ((packing > 0 && secRate > 0) ? Math.Round(secRate / packing.Value, 8) : ParseDecimal(row.Cells[clnRate.Index].Value)),
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
                     Carriage = ParseDecimal(row.Cells[clnCarriage.Index].Value),
                     AddLess = ParseDecimal(row.Cells[clnAddLess.Index].Value),
@@ -396,6 +398,7 @@ namespace ERP
                     row.Cells[clnUnit.Index].Value = line.Unit;
                     row.Cells[clnQty.Index].Value = line.Qty.ToString("0.##");
                     row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
+                    row.Cells[clnRate.Index].Tag = line.Rate;
                     row.Cells[clnDiscount.Index].Value = line.Discount.ToString("0.##");
                     row.Cells[clnDiscPercent.Index].Value = discountPercent.ToString("0.##");
                     row.Cells[clnCarriage.Index].Value = (line.Carriage ?? 0).ToString("0.##");
@@ -683,9 +686,12 @@ namespace ERP
                     if (defaultPacking == 0) defaultPacking = 50;
 
                     if (secRate == 0 && defaultPacking > 0)
-                        secRate = priRate * defaultPacking;
+                        secRate = Math.Round(priRate * defaultPacking, 2);
 
-                    dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value = priRate.ToString("0.####");
+                    decimal kgRate = (defaultPacking > 0 && secRate > 0) ? Math.Round(secRate / defaultPacking, 8) : priRate;
+
+                    dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value = kgRate.ToString("0.##");
+                    dgvSale.Rows[rowIndex].Cells[clnRate.Index].Tag = kgRate;
 
                     if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
                     {
@@ -726,13 +732,16 @@ namespace ERP
             decimal bagQty = dgvSale.Columns.Contains("clnSecQty") ? ParseDecimal(row.Cells["clnSecQty"].Value) : 0;
             decimal packQty = dgvSale.Columns.Contains("clnPackQty") ? ParseDecimal(row.Cells["clnPackQty"].Value) : 0;
             decimal packing = dgvSale.Columns.Contains("clnPacking") ? ParseDecimal(row.Cells["clnPacking"].Value) : 0;
-            decimal kgRate = ParseDecimal(row.Cells[clnRate.Index].Value);
             decimal bagRate = dgvSale.Columns.Contains("clnSecRate") ? ParseDecimal(row.Cells["clnSecRate"].Value) : 0;
+            decimal kgRate = row.Cells[clnRate.Index].Tag is decimal tagKgRate && tagKgRate > 0
+                ? tagKgRate
+                : ((packing > 0 && bagRate > 0) ? Math.Round(bagRate / packing, 8) : ParseDecimal(row.Cells[clnRate.Index].Value));
             decimal discount = ParseDecimal(row.Cells[clnDiscount.Index].Value);
             decimal discountPercent = ParseDecimal(row.Cells[clnDiscPercent.Index].Value);
             decimal carriage = ParseDecimal(row.Cells[clnCarriage.Index].Value);
             decimal addLess = ParseDecimal(row.Cells[clnAddLess.Index].Value);
 
+            // 1. Quantity relationships
             if (editedColumnIndex == clnQty.Index)
             {
                 if (bagQty > 0)
@@ -754,25 +763,42 @@ namespace ERP
                 else if (kgQty > 0)
                     bagQty = Math.Round(kgQty / packQty, 2);
             }
-            else if (colName == "clnPacking")
+
+            // 2. Rate relationships
+            if (colName == "clnPacking")
             {
                 if (packing > 0)
                 {
                     if (bagRate > 0)
-                        kgRate = Math.Round(bagRate / packing, 4);
+                        kgRate = Math.Round(bagRate / packing, 8);
                     else if (kgRate > 0)
-                        bagRate = Math.Round(kgRate * packing, 4);
+                        bagRate = Math.Round(kgRate * packing, 2);
                 }
             }
             else if (editedColumnIndex == clnRate.Index)
             {
-                if (packing > 0)
-                    bagRate = Math.Round(kgRate * packing, 4);
+                decimal enteredRate = ParseDecimal(row.Cells[clnRate.Index].Value);
+                if (row.Cells[clnRate.Index].Tag is decimal tagRate && tagRate > 0 && Math.Round(enteredRate, 2) == Math.Round(tagRate, 2))
+                {
+                    kgRate = tagRate;
+                }
+                else
+                {
+                    kgRate = enteredRate;
+                    if (packing > 0)
+                        bagRate = Math.Round(kgRate * packing, 2);
+                }
             }
             else if (colName == "clnSecRate")
             {
                 if (packing > 0)
-                    kgRate = Math.Round(bagRate / packing, 4);
+                    kgRate = Math.Round(bagRate / packing, 8);
+            }
+            else if (packing > 0 && bagRate > 0)
+            {
+                kgRate = (row.Cells[clnRate.Index].Tag is decimal tagRate && tagRate > 0 && Math.Round(tagRate * packing, 2) == bagRate)
+                    ? tagRate
+                    : Math.Round(bagRate / packing, 8);
             }
 
             if (editedColumnIndex == clnDiscPercent.Index || (!clnDiscount.Visible && clnDiscPercent.Visible))
@@ -788,8 +814,9 @@ namespace ERP
             if (dgvSale.Columns.Contains("clnSecQty")) row.Cells["clnSecQty"].Value = bagQty.ToString("0.##");
             if (dgvSale.Columns.Contains("clnPackQty")) row.Cells["clnPackQty"].Value = packQty.ToString("0.##");
             if (dgvSale.Columns.Contains("clnPacking")) row.Cells["clnPacking"].Value = packing.ToString("0.##");
-            row.Cells[clnRate.Index].Value = kgRate.ToString("0.####");
-            if (dgvSale.Columns.Contains("clnSecRate")) row.Cells["clnSecRate"].Value = bagRate.ToString("0.####");
+            row.Cells[clnRate.Index].Value = kgRate.ToString("0.##");
+            row.Cells[clnRate.Index].Tag = kgRate;
+            if (dgvSale.Columns.Contains("clnSecRate")) row.Cells["clnSecRate"].Value = bagRate.ToString("0.##");
             row.Cells[clnDiscount.Index].Value = discount.ToString("0.##");
             row.Cells[clnDiscPercent.Index].Value = discountPercent.ToString("0.##");
             row.Cells[clnCarriage.Index].Value = carriage.ToString("0.##");
