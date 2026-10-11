@@ -190,6 +190,12 @@ namespace ERP
         }
         private async void frmItemDetail_Load(object sender, EventArgs e)
         {
+            profileImage1.Title = "Product Image";
+            profileImage1.SizeMode = PictureBoxSizeMode.Zoom;
+            profileImage1.PictureBox.BackColor = Color.White;
+            profileImage1.DefaultImage = ERP.Controls.ProfileImage.CreateProductPlaceholder(profileImage1.PictureBox.Width, profileImage1.PictureBox.Height);
+            profileImage1.ClearImage();
+
             profileImage1.SearchButton.Click += btnProductSearch_Click;
             profileImage1.CancelButton.Click += btnProductCancel_Click;
 
@@ -581,7 +587,7 @@ namespace ERP
                 return;
 
             var row = dgvItemDetail.CurrentRow;
-            if (row.Cells["clnMediaId"] != null)
+            if (row.Cells["clnMediaId"] != null && !string.IsNullOrWhiteSpace(Convert.ToString(row.Cells["clnMediaUrl"].Value)))
             {
                 var mediaId = Convert.ToString(row.Cells["clnMediaId"].Value);
                 var mediaUrl = Convert.ToString(row.Cells["clnMediaUrl"].Value);

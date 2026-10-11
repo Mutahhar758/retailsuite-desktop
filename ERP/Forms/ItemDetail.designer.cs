@@ -52,6 +52,8 @@ namespace ERP
             this.lblTotalItems = new System.Windows.Forms.Label();
             this.label17 = new System.Windows.Forms.Label();
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
+            this.grpImageSpecs = new System.Windows.Forms.GroupBox();
+            this.lblImageSpecs = new System.Windows.Forms.Label();
             this.dataGridViewTextBoxColumn1 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn2 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -560,6 +562,31 @@ namespace ERP
             this.profileImage1.TabIndex = 220;
             this.profileImage1.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
             // 
+            // grpImageSpecs
+            // 
+            this.grpImageSpecs.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Top | System.Windows.Forms.AnchorStyles.Right)));
+            this.grpImageSpecs.Controls.Add(this.lblImageSpecs);
+            this.grpImageSpecs.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.grpImageSpecs.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
+            this.grpImageSpecs.Location = new System.Drawing.Point(985, 385);
+            this.grpImageSpecs.Name = "grpImageSpecs";
+            this.grpImageSpecs.Size = new System.Drawing.Size(160, 137);
+            this.grpImageSpecs.TabIndex = 221;
+            this.grpImageSpecs.TabStop = false;
+            this.grpImageSpecs.Text = "Image Specs";
+            // 
+            // lblImageSpecs
+            // 
+            this.lblImageSpecs.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.lblImageSpecs.Font = new System.Drawing.Font("Microsoft Sans Serif", 7.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblImageSpecs.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(71)))), ((int)(((byte)(85)))), ((int)(((byte)(105)))));
+            this.lblImageSpecs.Location = new System.Drawing.Point(3, 16);
+            this.lblImageSpecs.Name = "lblImageSpecs";
+            this.lblImageSpecs.Padding = new System.Windows.Forms.Padding(4);
+            this.lblImageSpecs.Size = new System.Drawing.Size(154, 118);
+            this.lblImageSpecs.TabIndex = 0;
+            this.lblImageSpecs.Text = "• Ratio: 1:1 or 4:5\r\n• Size: 600×600 to\r\n  1000×1000 px\r\n• Max Size: 5 MB\r\n• Format: JPG, PNG\r\n• Clean white back-\r\n  ground displays best";
+            // 
             // frmItemDetail
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -571,6 +598,7 @@ namespace ERP
             this.Controls.Add(this.txtBarcode);
             this.Controls.Add(this.label12);
             this.Controls.Add(this.panel1);
+            this.Controls.Add(this.grpImageSpecs);
             this.Controls.Add(this.profileImage1);
             this.Controls.Add(this.dgvItemDetail);
             this.Controls.Add(this.cmbItemCatagory);
@@ -635,5 +663,7 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn clnstatus;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnIsEdit;
         private ERP.Controls.ProfileImage profileImage1;
+        private System.Windows.Forms.GroupBox grpImageSpecs;
+        private System.Windows.Forms.Label lblImageSpecs;
     }
 }
