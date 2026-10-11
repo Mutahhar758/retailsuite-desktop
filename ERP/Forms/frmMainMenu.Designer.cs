@@ -209,7 +209,7 @@ namespace ERP
             // 
             this.hRInfoToolStripMenuItem.Name = "hRInfoToolStripMenuItem";
             this.hRInfoToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
-            this.hRInfoToolStripMenuItem.Text = "HR Info";
+            this.hRInfoToolStripMenuItem.Text = "Employees";
             this.hRInfoToolStripMenuItem.Click += new System.EventHandler(this.hRInfoToolStripMenuItem_Click);
             // 
             // supplyOrderToolStripMenuItem

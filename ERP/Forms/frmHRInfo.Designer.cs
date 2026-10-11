@@ -772,7 +772,7 @@ namespace ERP.Forms
             this.Controls.Add(this.tabControl1);
             this.KeyPreview = true;
             this.Name = "frmHRInfo";
-            this.Text = "frmHRInfo";
+            this.Text = "Employees";
             this.Load += new System.EventHandler(this.frmHRInfo_Load);
             this.KeyDown += new System.Windows.Forms.KeyEventHandler(this.frmHRInfo_KeyDown);
             this.tabControl1.ResumeLayout(false);
