@@ -702,12 +702,12 @@ namespace ERP
                         dgvSale.Rows[rowIndex].Cells["clnSecRate"].Value = secRate.ToString("0.####");
                         if (dgvSale.Columns.Contains("clnPacking"))
                         {
-                            if (dgvSale.Rows[rowIndex].Cells["clnPacking"].Value == null || string.IsNullOrWhiteSpace(dgvSale.Rows[rowIndex].Cells["clnPacking"].Value.ToString()))
+                            if (ParseDecimal(dgvSale.Rows[rowIndex].Cells["clnPacking"].Value) == 0)
                                 dgvSale.Rows[rowIndex].Cells["clnPacking"].Value = defaultPacking.ToString("0.##");
                         }
                         if (dgvSale.Columns.Contains("clnPackQty"))
                         {
-                            if (dgvSale.Rows[rowIndex].Cells["clnPackQty"].Value == null || string.IsNullOrWhiteSpace(dgvSale.Rows[rowIndex].Cells["clnPackQty"].Value.ToString()))
+                            if (ParseDecimal(dgvSale.Rows[rowIndex].Cells["clnPackQty"].Value) == 0)
                                 dgvSale.Rows[rowIndex].Cells["clnPackQty"].Value = defaultPacking.ToString("0.##");
                         }
                     }
