@@ -617,6 +617,16 @@ namespace ERP
                     }
                     SetRateForRow(e.RowIndex);
                 }
+                else
+                {
+                    decimal defaultPack = GetSelectedItemDefaultPacking();
+                    if (dgvSale.Columns.Contains("clnPacking"))
+                        dgvSale.Rows[e.RowIndex].Cells["clnPacking"].Value = defaultPack.ToString("0.##");
+                    if (dgvSale.Columns.Contains("clnPackQty"))
+                        dgvSale.Rows[e.RowIndex].Cells["clnPackQty"].Value = defaultPack.ToString("0.##");
+                    if (dgvSale.Columns.Contains("clnSecQty"))
+                        dgvSale.Rows[e.RowIndex].Cells["clnSecQty"].Value = "0";
+                }
             }
             CalcTotals();
         }
@@ -773,9 +783,10 @@ namespace ERP
                         }
                         if (dgvSale.Columns.Contains("clnPackQty"))
                         {
-                            decimal curPack = ParseDecimal(dgvSale.Rows[rowIndex].Cells["clnPackQty"].Value);
-                            if (curPack == 0)
-                                dgvSale.Rows[rowIndex].Cells["clnPackQty"].Value = defaultPacking.ToString("0.##");
+                            decimal kQty = ParseDecimal(dgvSale.Rows[rowIndex].Cells[clnQty.Index].Value);
+                            decimal bQty = ParseDecimal(dgvSale.Rows[rowIndex].Cells["clnSecQty"].Value);
+                            decimal pQty = (bQty > 0 && kQty > 0) ? Math.Round(kQty / bQty, 2) : defaultPacking;
+                            dgvSale.Rows[rowIndex].Cells["clnPackQty"].Value = pQty.ToString("0.##");
                         }
                     }
                 }
@@ -852,6 +863,12 @@ namespace ERP
                         kgRate = Math.Round(bagRate / packing, 8);
                     else if (kgRate > 0)
                         bagRate = Math.Round(kgRate * packing, 2);
+
+                    packQty = packing;
+                    if (bagQty > 0)
+                        kgQty = Math.Round(bagQty * packQty, 2);
+                    else if (kgQty > 0)
+                        bagQty = Math.Round(kgQty / packQty, 2);
                 }
             }
             else if (editedColumnIndex == clnRate.Index)
