@@ -229,7 +229,9 @@ namespace ERP
 
         private async System.Threading.Tasks.Task SaveAsync()
         {
-            if (cmbItem.SelectedValue == null)
+            dgvSale.EndEdit();
+
+            if (cmbItem.SelectedIndex == -1 || cmbItem.SelectedValue == null || string.IsNullOrWhiteSpace(cmbItem.SelectedValue.ToString()))
             {
                 MessageBox.Show("Please Select Item...!");
                 return;
@@ -238,7 +240,15 @@ namespace ERP
             var lines = new List<SaleSupplyLineApiRequest>();
             foreach (DataGridViewRow row in dgvSale.Rows)
             {
-                if (row.Cells[clnCustomer.Index].Value == null)
+                if (row.IsNewRow)
+                    continue;
+
+                string custId = Convert.ToString(row.Cells[clnCustomer.Index].Value);
+                if (string.IsNullOrWhiteSpace(custId))
+                    continue;
+
+                decimal qty = ParseDecimal(row.Cells[clnQty.Index].Value);
+                if (qty <= 0)
                     continue;
 
                 decimal secQty = 0;
@@ -251,9 +261,15 @@ namespace ERP
                     secQty = ParseDecimal(row.Cells["clnSecQty"].Value);
                     secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
                     if (dgvSale.Columns.Contains("clnPackQty"))
-                        qtyInPack = ParseDecimal(row.Cells["clnPackQty"].Value);
+                    {
+                        decimal pQty = ParseDecimal(row.Cells["clnPackQty"].Value);
+                        if (pQty > 0) qtyInPack = pQty;
+                    }
                     if (dgvSale.Columns.Contains("clnPacking"))
-                        packing = ParseDecimal(row.Cells["clnPacking"].Value);
+                    {
+                        decimal pck = ParseDecimal(row.Cells["clnPacking"].Value);
+                        if (pck > 0) packing = pck;
+                    }
                     
                     if (cmbItem.SelectedValue != null)
                     {
@@ -264,16 +280,25 @@ namespace ERP
                             secUnit = Convert.ToString(itemRow["SecondaryUnit"]);
                         }
                     }
+                    if (string.IsNullOrWhiteSpace(secUnit))
+                        secUnit = "Bags";
                 }
+
+                decimal enteredRate = ParseDecimal(row.Cells[clnRate.Index].Value);
+                decimal finalRate = (row.Cells[clnRate.Index].Tag is decimal tagRate && tagRate > 0 && Math.Round(tagRate, 2) == Math.Round(enteredRate, 2))
+                    ? tagRate
+                    : ((packing > 0 && secRate > 0) ? Math.Round(secRate / packing.Value, 8) : enteredRate);
+
+                int seq = int.TryParse(Convert.ToString(row.Cells[clnSeq.Index].Value), out int parsedSeq) && parsedSeq > 0
+                    ? parsedSeq
+                    : (lines.Count + 1);
 
                 lines.Add(new SaleSupplyLineApiRequest
                 {
-                    Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
-                    CustomerId = Convert.ToString(row.Cells[clnCustomer.Index].Value),
-                    Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
-                    Rate = (row.Cells[clnRate.Index].Tag is decimal tagRate && tagRate > 0)
-                        ? tagRate
-                        : ((packing > 0 && secRate > 0) ? Math.Round(secRate / packing.Value, 8) : ParseDecimal(row.Cells[clnRate.Index].Value)),
+                    Seq = seq,
+                    CustomerId = custId,
+                    Qty = qty,
+                    Rate = finalRate,
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
                     Carriage = ParseDecimal(row.Cells[clnCarriage.Index].Value),
                     AddLess = ParseDecimal(row.Cells[clnAddLess.Index].Value),
@@ -293,8 +318,26 @@ namespace ERP
 
             try
             {
-                string voucher = txtVoucherNo.Text != "" ? txtVoucherNo.Text.Substring(3) : null;
+                string rawVoucher = txtVoucherNo.Text?.Trim();
+                string voucher = null;
+                if (!string.IsNullOrWhiteSpace(rawVoucher))
+                {
+                    voucher = rawVoucher.StartsWith("SP-", StringComparison.OrdinalIgnoreCase)
+                        ? rawVoucher.Substring(3)
+                        : rawVoucher;
+                }
                 bool isNew = string.IsNullOrWhiteSpace(voucher);
+
+                int? supplyOrderId = null;
+                if (cmbSupplyOrder.SelectedIndex >= 0 && cmbSupplyOrder.SelectedValue != null)
+                {
+                    if (int.TryParse(cmbSupplyOrder.SelectedValue.ToString(), out int parsedSoId) && parsedSoId > 0)
+                        supplyOrderId = parsedSoId;
+                }
+
+                string narration = (cmbNarration.SelectedIndex >= 0 && cmbNarration.SelectedValue != null && !string.IsNullOrWhiteSpace(cmbNarration.SelectedValue.ToString()))
+                    ? cmbNarration.SelectedValue.ToString()
+                    : null;
 
                 if (isNew)
                 {
@@ -303,8 +346,8 @@ namespace ERP
                         Date = dtpDate.Value.ToString("yyyy-MM-dd"),
                         ItemId = cmbItem.SelectedValue.ToString(),
                         Description = txtDescription.Text,
-                        Narration = cmbNarration.SelectedValue?.ToString(),
-                        SupplyOrderMasterId = cmbSupplyOrder.SelectedValue != null ? (int?)Convert.ToInt32(cmbSupplyOrder.SelectedValue) : null,
+                        Narration = narration,
+                        SupplyOrderMasterId = supplyOrderId,
                         Lines = lines
                     };
                     voucher = await _apiService.CreateAsync(request);
@@ -316,8 +359,8 @@ namespace ERP
                         Date = dtpDate.Value.ToString("yyyy-MM-dd"),
                         ItemId = cmbItem.SelectedValue.ToString(),
                         Description = txtDescription.Text,
-                        Narration = cmbNarration.SelectedValue?.ToString(),
-                        SupplyOrderMasterId = cmbSupplyOrder.SelectedValue != null ? (int?)Convert.ToInt32(cmbSupplyOrder.SelectedValue) : null,
+                        Narration = narration,
+                        SupplyOrderMasterId = supplyOrderId,
                         Lines = lines
                     };
                     await _apiService.UpdateAsync(voucher, request);
