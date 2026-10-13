@@ -81,6 +81,16 @@ namespace ERP
 
             return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetCustomerBillAsync(account, Fdate, Tdate, dateBasis, isWandaLayout)).GetAwaiter().GetResult();
         }
+
+        internal static DataSet NormalCustomerBill(string account, DateTime Fdate, DateTime Tdate, string dateBasis = "VoucherDate")
+        {
+            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetNormalCustomerBillAsync(account, Fdate, Tdate, dateBasis)).GetAwaiter().GetResult();
+        }
+
+        internal static DataSet WandaCustomerBill(string account, DateTime Fdate, DateTime Tdate, string dateBasis = "VoucherDate")
+        {
+            return System.Threading.Tasks.Task.Run(() => _reportsApiService.GetWandaCustomerBillAsync(account, Fdate, Tdate, dateBasis)).GetAwaiter().GetResult();
+        }
         internal static DataTable EnvelopeDetail(string[] account)
         {
 

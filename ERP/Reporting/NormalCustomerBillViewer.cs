@@ -870,9 +870,8 @@ namespace ERP.Reporting
             {
                 await EnsureWebViewInitializedAsync();
 
-                // Explicitly pass isWandaLayout: false
-                DataSet ds = await Task.Run(() => ReportQuery.CustomerBill(customerCode, fromDate, toDate, dateBasis, isWandaLayout: false));
-                CustomerBillDataResult result = CustomerBillDataService.ConvertDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis, isWandaLayout: false);
+                DataSet ds = await Task.Run(() => ReportQuery.NormalCustomerBill(customerCode, fromDate, toDate, dateBasis));
+                CustomerBillDataResult result = CustomerBillDataService.ConvertNormalDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis);
 
                 _currentResult = result;
                 var layout = (cmbLayout != null && cmbLayout.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
@@ -1072,8 +1071,8 @@ namespace ERP.Reporting
                     {
                         try
                         {
-                            DataSet ds = ReportQuery.CustomerBill(customer.Account, fromDate, toDate, dateBasis, isWandaLayout: false);
-                            var res = CustomerBillDataService.ConvertDataSet(ds, customer.Account, customer.Title, fromDate, toDate, dateBasis, isWandaLayout: false);
+                            DataSet ds = ReportQuery.NormalCustomerBill(customer.Account, fromDate, toDate, dateBasis);
+                            var res = CustomerBillDataService.ConvertNormalDataSet(ds, customer.Account, customer.Title, fromDate, toDate, dateBasis);
 
                             if (res.Lines.Count > 0 || Math.Abs(res.Summary.NetBalance) > 0.01m)
                             {
@@ -1218,8 +1217,8 @@ namespace ERP.Reporting
                     {
                         try
                         {
-                            DataSet ds = ReportQuery.CustomerBill(cust.Account, fromDate, toDate, dateBasis, isWandaLayout: false);
-                            var res = CustomerBillDataService.ConvertDataSet(ds, cust.Account, cust.Title, fromDate, toDate, dateBasis, isWandaLayout: false);
+                            DataSet ds = ReportQuery.NormalCustomerBill(cust.Account, fromDate, toDate, dateBasis);
+                            var res = CustomerBillDataService.ConvertNormalDataSet(ds, cust.Account, cust.Title, fromDate, toDate, dateBasis);
                             batch.Add(res);
                         }
                         catch

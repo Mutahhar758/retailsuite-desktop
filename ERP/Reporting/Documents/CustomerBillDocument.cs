@@ -794,11 +794,11 @@ namespace ERP.Reporting.Documents
 
         private void ComposeWandaA4(IDocumentContainer container)
         {
-            decimal totalSaleKg = _lines.Sum(x => x.Qty);
-            decimal totalSaleBags = _lines.Sum(x => x.SecQty ?? (x.QtyInPack.HasValue && x.QtyInPack.Value > 0 ? Math.Round(x.Qty / x.QtyInPack.Value) : 0));
-            decimal totalSaleAmount = _lines.Sum(x => x.Amount);
+            decimal totalSaleKg = _lines.Where(x => x.TransactionType == "Sale" || string.IsNullOrEmpty(x.TransactionType)).Sum(x => x.Qty);
+            decimal totalSaleBags = _lines.Where(x => x.TransactionType == "Sale" || string.IsNullOrEmpty(x.TransactionType)).Sum(x => x.SecQty ?? (x.QtyInPack.HasValue && x.QtyInPack.Value > 0 ? Math.Round(x.Qty / x.QtyInPack.Value) : 0));
+            decimal totalSaleAmount = _summary.TotalSales > 0 ? _summary.TotalSales : _lines.Where(x => x.TransactionType == "Sale" || string.IsNullOrEmpty(x.TransactionType)).Sum(x => x.Amount);
 
-            decimal totalBill = totalSaleAmount;
+            decimal totalBill = _summary.CurrentBillTotal;
             decimal previousBal = _summary.PreviousBalance;
             decimal grandTotal = previousBal + totalBill;
             decimal receipts = _summary.PaymentsReceived;
@@ -914,7 +914,7 @@ namespace ERP.Reporting.Documents
                                 if (_summary.EnableCarriage)
                                     table.Cell().Element(WandaBodyCell).AlignRight().Text(line.Carriage != 0 ? line.Carriage.ToString("#,##0") : "0").FontSize(8f);
                                 table.Cell().Element(WandaBodyCell).AlignRight().Text(line.AddLess != 0 ? line.AddLess.ToString("#,##0") : "0").FontSize(8f);
-                                table.Cell().Element(WandaBodyCell).AlignRight().Text(line.Amount.ToString("#,##0")).Bold().FontSize(8f);
+                                table.Cell().Element(WandaBodyCell).AlignRight().Text(line.Amount.ToString("#,##0;(#,##0);0")).Bold().FontSize(8f);
                                 table.Cell().Element(WandaBodyCell).AlignCenter().Text(line.ReceiptDate.HasValue ? line.ReceiptDate.Value.ToString("dd/MM/yy") : string.Empty).FontSize(7.5f);
                                 table.Cell().Element(WandaBodyCell).AlignRight().Text(line.ReceiptAmount.HasValue && line.ReceiptAmount.Value != 0 ? line.ReceiptAmount.Value.ToString("#,##0") : string.Empty).FontSize(8f);
                             }
@@ -954,13 +954,46 @@ namespace ERP.Reporting.Documents
                                 r.RelativeItem().Text("Previous Balance:").FontSize(8.5f);
                                 r.AutoItem().Text(previousBal.ToString("#,##0.00")).Bold().FontSize(8.5f);
                             });
-                            c2.Item().PaddingTop(3).Row(r =>
+                            c2.Item().PaddingTop(2).Row(r =>
                             {
-                                r.RelativeItem().Text("Total Bill:").FontSize(8.5f);
-                                r.AutoItem().Text(totalBill.ToString("#,##0.00")).Bold().FontSize(8.5f);
+                                r.RelativeItem().Text("Total Sales:").FontSize(8.5f);
+                                r.AutoItem().Text(_summary.TotalSales.ToString("#,##0.00")).Bold().FontSize(8.5f);
                             });
 
-                            c2.Item().PaddingVertical(5).LineHorizontal(1f).LineColor(Colors.Black);
+                            if (_summary.TotalPurchases > 0)
+                            {
+                                c2.Item().PaddingTop(2).Row(r =>
+                                {
+                                    r.RelativeItem().Text("Less Purchases:").FontSize(8f);
+                                    r.AutoItem().Text(string.Format("({0:#,##0.00})", _summary.TotalPurchases)).Bold().FontSize(8f);
+                                });
+                            }
+                            if (_summary.TotalSaleReturns > 0)
+                            {
+                                c2.Item().PaddingTop(2).Row(r =>
+                                {
+                                    r.RelativeItem().Text("Less Sale Ret:").FontSize(8f);
+                                    r.AutoItem().Text(string.Format("({0:#,##0.00})", _summary.TotalSaleReturns)).Bold().FontSize(8f);
+                                });
+                            }
+                            if (_summary.TotalPurchaseReturns > 0)
+                            {
+                                c2.Item().PaddingTop(2).Row(r =>
+                                {
+                                    r.RelativeItem().Text("Add Purch Ret:").FontSize(8f);
+                                    r.AutoItem().Text(_summary.TotalPurchaseReturns.ToString("#,##0.00")).Bold().FontSize(8f);
+                                });
+                            }
+                            if (_summary.TotalPurchases > 0 || _summary.TotalSaleReturns > 0 || _summary.TotalPurchaseReturns > 0)
+                            {
+                                c2.Item().PaddingTop(2).Row(r =>
+                                {
+                                    r.RelativeItem().Text("Net Bill:").FontSize(8.5f);
+                                    r.AutoItem().Text(totalBill.ToString("#,##0.00")).Bold().FontSize(8.5f);
+                                });
+                            }
+
+                            c2.Item().PaddingVertical(4).LineHorizontal(1f).LineColor(Colors.Black);
 
                             c2.Item().Row(r =>
                             {
@@ -1008,10 +1041,10 @@ namespace ERP.Reporting.Documents
 
         private void ComposeWandaThermal80(IDocumentContainer container)
         {
-            decimal totalSaleKg = _lines.Sum(x => x.Qty);
-            decimal totalSaleBags = _lines.Sum(x => x.SecQty ?? (x.QtyInPack.HasValue && x.QtyInPack.Value > 0 ? Math.Round(x.Qty / x.QtyInPack.Value) : 0));
-            decimal totalSaleAmount = _lines.Sum(x => x.Amount);
-            decimal totalBill = totalSaleAmount;
+            decimal totalSaleKg = _lines.Where(x => x.TransactionType == "Sale" || string.IsNullOrEmpty(x.TransactionType)).Sum(x => x.Qty);
+            decimal totalSaleBags = _lines.Where(x => x.TransactionType == "Sale" || string.IsNullOrEmpty(x.TransactionType)).Sum(x => x.SecQty ?? (x.QtyInPack.HasValue && x.QtyInPack.Value > 0 ? Math.Round(x.Qty / x.QtyInPack.Value) : 0));
+            decimal totalSaleAmount = _summary.TotalSales > 0 ? _summary.TotalSales : _lines.Where(x => x.TransactionType == "Sale" || string.IsNullOrEmpty(x.TransactionType)).Sum(x => x.Amount);
+            decimal totalBill = _summary.CurrentBillTotal;
             decimal previousBal = _summary.PreviousBalance;
             decimal receipts = _summary.PaymentsReceived;
             decimal netBalance = _summary.NetBalance;
@@ -1079,7 +1112,7 @@ namespace ERP.Reporting.Documents
                             table.Cell().AlignRight().PaddingVertical(1).Text(line.Qty.ToString("#,##0")).FontSize(8f).SemiBold();
                             table.Cell().AlignRight().PaddingVertical(1).Text(bagQty > 0 ? bagQty.ToString("#,##0") : "-").FontSize(8f).SemiBold();
                             table.Cell().AlignRight().PaddingVertical(1).Text(string.Format("{0:N0}", line.Rate)).FontSize(8f).SemiBold();
-                            table.Cell().AlignRight().PaddingVertical(1).Text(string.Format("{0:N0}", line.Amount)).FontSize(8.5f).Bold();
+                            table.Cell().AlignRight().PaddingVertical(1).Text(line.Amount.ToString("#,##0;(#,##0);0")).FontSize(8.5f).Bold();
                         }
                     });
 
@@ -1103,9 +1136,41 @@ namespace ERP.Reporting.Documents
                     });
                     col.Item().Row(r =>
                     {
-                        r.RelativeItem().Text("Total Bill:").FontSize(8.5f).SemiBold();
-                        r.AutoItem().Text(string.Format("{0:N0}", totalBill)).FontSize(8.5f).SemiBold();
+                        r.RelativeItem().Text("Total Sales:").FontSize(8.5f).SemiBold();
+                        r.AutoItem().Text(string.Format("{0:N0}", _summary.TotalSales)).FontSize(8.5f).SemiBold();
                     });
+                    if (_summary.TotalPurchases > 0)
+                    {
+                        col.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Less Purchases:").FontSize(8f);
+                            r.AutoItem().Text(string.Format("({0:N0})", _summary.TotalPurchases)).FontSize(8f);
+                        });
+                    }
+                    if (_summary.TotalSaleReturns > 0)
+                    {
+                        col.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Less Sale Returns:").FontSize(8f);
+                            r.AutoItem().Text(string.Format("({0:N0})", _summary.TotalSaleReturns)).FontSize(8f);
+                        });
+                    }
+                    if (_summary.TotalPurchaseReturns > 0)
+                    {
+                        col.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Add Purch Returns:").FontSize(8f);
+                            r.AutoItem().Text(string.Format("{0:N0}", _summary.TotalPurchaseReturns)).FontSize(8f);
+                        });
+                    }
+                    if (_summary.TotalPurchases > 0 || _summary.TotalSaleReturns > 0 || _summary.TotalPurchaseReturns > 0)
+                    {
+                        col.Item().Row(r =>
+                        {
+                            r.RelativeItem().Text("Net Bill:").FontSize(8.5f).SemiBold();
+                            r.AutoItem().Text(string.Format("{0:N0}", totalBill)).FontSize(8.5f).SemiBold();
+                        });
+                    }
                     col.Item().Row(r =>
                     {
                         r.RelativeItem().Text("Receipts:").FontSize(8.5f).SemiBold();

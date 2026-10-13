@@ -27,12 +27,14 @@ namespace ERP.Reporting.Models
         public DateTime? ReceiptDate { get; set; }
         public decimal? ReceiptAmount { get; set; }
 
+        public string TransactionType { get; set; } = "Sale";
+
         public string FormattedDate => Date != DateTime.MinValue ? Date.ToString("dd-MMM-yyyy") : string.Empty;
         public string FormattedQty => Qty.ToString("#,##0.##");
         public string FormattedRate => Rate.ToString("#,##0");
         public string FormattedAddLess => AddLess != 0 ? AddLess.ToString("#,##0") : "-";
         public string FormattedCarriage => Carriage != 0 ? Carriage.ToString("#,##0") : "-";
-        public string FormattedAmount => Amount.ToString("#,##0");
+        public string FormattedAmount => Amount.ToString("#,##0;(#,##0);0");
         public string FormattedSecQty => SecQty.HasValue ? SecQty.Value.ToString("#,##0.##") : "-";
         public string FormattedSecRate => SecRate.HasValue ? SecRate.Value.ToString("#,##0") : "-";
         public string FormattedReceiptDate => ReceiptDate.HasValue && ReceiptDate.Value != DateTime.MinValue ? ReceiptDate.Value.ToString("dd-MMM-yyyy") : "-";
@@ -58,6 +60,10 @@ namespace ERP.Reporting.Models
         public string DateBasis { get; set; } = "VoucherDate";
 
         public decimal PreviousBalance { get; set; }
+        public decimal TotalSales { get; set; }
+        public decimal TotalPurchases { get; set; }
+        public decimal TotalSaleReturns { get; set; }
+        public decimal TotalPurchaseReturns { get; set; }
         public decimal CurrentBillTotal { get; set; }
         public decimal GrossTotal => PreviousBalance + CurrentBillTotal;
         public decimal PaymentsReceived { get; set; }
@@ -100,6 +106,32 @@ namespace ERP.Reporting.Models
     /// </summary>
     public static class CustomerBillDataService
     {
+        public static CustomerBillDataResult ConvertNormalDataSet(
+            DataSet ds,
+            string customerCode,
+            string customerTitle,
+            DateTime fromDate,
+            DateTime toDate,
+            string dateBasis = "VoucherDate",
+            string customerAddress = "",
+            string customerPhone = "")
+        {
+            return ConvertDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis, customerAddress, customerPhone, isWandaLayout: false);
+        }
+
+        public static CustomerBillDataResult ConvertWandaDataSet(
+            DataSet ds,
+            string customerCode,
+            string customerTitle,
+            DateTime fromDate,
+            DateTime toDate,
+            string dateBasis = "VoucherDate",
+            string customerAddress = "",
+            string customerPhone = "")
+        {
+            return ConvertDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis, customerAddress, customerPhone, isWandaLayout: true);
+        }
+
         public static CustomerBillDataResult ConvertDataSet(
             DataSet ds,
             string customerCode,
@@ -115,6 +147,10 @@ namespace ERP.Reporting.Models
             decimal prevBalance = 0m;
             decimal payment = 0m;
             decimal netBal = 0m;
+            decimal totalSales = 0m;
+            decimal totalPurchases = 0m;
+            decimal totalSaleReturns = 0m;
+            decimal totalPurchaseReturns = 0m;
             bool enableCarriageSetting = false;
 
             if (ds != null && ds.Tables.Count > 0)
@@ -204,6 +240,12 @@ namespace ERP.Reporting.Models
                             if (decimal.TryParse(row["ReceiptAmount"].ToString(), out var ra)) receiptAmount = ra;
                         }
 
+                        string transactionType = "Sale";
+                        if (row.Table.Columns.Contains("transactiontype") && row["transactiontype"] != DBNull.Value)
+                            transactionType = row["transactiontype"].ToString().Trim();
+                        else if (row.Table.Columns.Contains("TransactionType") && row["TransactionType"] != DBNull.Value)
+                            transactionType = row["TransactionType"].ToString().Trim();
+
                         lines.Add(new CustomerBillLineItem
                         {
                             Date = date,
@@ -219,7 +261,8 @@ namespace ERP.Reporting.Models
                             SecRate = secRate,
                             QtyInPack = qtyInPack,
                             ReceiptDate = receiptDate,
-                            ReceiptAmount = receiptAmount
+                            ReceiptAmount = receiptAmount,
+                            TransactionType = transactionType
                         });
                     }
                 }
@@ -229,6 +272,18 @@ namespace ERP.Reporting.Models
                     var sumRow = ds.Tables[1].Rows[0];
                     if (sumRow.Table.Columns.Contains("PreviousBalance") && sumRow["PreviousBalance"] != DBNull.Value)
                         decimal.TryParse(sumRow["PreviousBalance"].ToString(), out prevBalance);
+
+                    if (sumRow.Table.Columns.Contains("TotalSales") && sumRow["TotalSales"] != DBNull.Value)
+                        decimal.TryParse(sumRow["TotalSales"].ToString(), out totalSales);
+
+                    if (sumRow.Table.Columns.Contains("TotalPurchases") && sumRow["TotalPurchases"] != DBNull.Value)
+                        decimal.TryParse(sumRow["TotalPurchases"].ToString(), out totalPurchases);
+
+                    if (sumRow.Table.Columns.Contains("TotalSaleReturns") && sumRow["TotalSaleReturns"] != DBNull.Value)
+                        decimal.TryParse(sumRow["TotalSaleReturns"].ToString(), out totalSaleReturns);
+
+                    if (sumRow.Table.Columns.Contains("TotalPurchaseReturns") && sumRow["TotalPurchaseReturns"] != DBNull.Value)
+                        decimal.TryParse(sumRow["TotalPurchaseReturns"].ToString(), out totalPurchaseReturns);
 
                     if (sumRow.Table.Columns.Contains("Payment") && sumRow["Payment"] != DBNull.Value)
                         decimal.TryParse(sumRow["Payment"].ToString(), out payment);
@@ -261,6 +316,10 @@ namespace ERP.Reporting.Models
                 DateBasis = dateBasis,
 
                 PreviousBalance = prevBalance,
+                TotalSales = totalSales > 0 ? totalSales : currentBillTotal,
+                TotalPurchases = totalPurchases,
+                TotalSaleReturns = totalSaleReturns,
+                TotalPurchaseReturns = totalPurchaseReturns,
                 CurrentBillTotal = currentBillTotal,
                 PaymentsReceived = payment,
                 ExplicitNetBalance = netBal,
