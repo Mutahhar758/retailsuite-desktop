@@ -740,19 +740,19 @@ namespace ERP
                 dgvSale["clnSecRate", e.RowIndex].Value = secRate.ToString();
             }
 
+            decimal lineGross = (qty * rate) + (secQty * secRate);
             if (!clnDiscount.Visible)
             {
-                discount = rate * (discountPercent / 100);
+                discount = lineGross * (discountPercent / 100);
                 dgvSale[clnDiscount.Index, e.RowIndex].Value = discount.ToString();
             }
             else
             {
-                discountPercent = rate == 0 ? 0 : (discount / rate) * 100;
+                discountPercent = lineGross == 0 ? 0 : (discount / lineGross) * 100;
                 dgvSale[clnDiscPercent.Index, e.RowIndex].Value = discountPercent.ToString();
             }
 
-            decimal netRate = rate - discount;
-            dgvSale[clnAmount.Index, e.RowIndex].Value = decimal.Round((qty * netRate) + (secQty * secRate), 2).ToString();
+            dgvSale[clnAmount.Index, e.RowIndex].Value = decimal.Round(lineGross - discount, 2).ToString();
             CalcTotAmount();
         }
 

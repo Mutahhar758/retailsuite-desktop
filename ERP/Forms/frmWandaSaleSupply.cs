@@ -897,13 +897,14 @@ namespace ERP
                     : Math.Round(bagRate / packing, 8);
             }
 
+            decimal lineGross = kgQty * kgRate;
             if (editedColumnIndex == clnDiscPercent.Index || (!clnDiscount.Visible && clnDiscPercent.Visible))
             {
-                discount = decimal.Round(kgRate * (discountPercent / 100), 2);
+                discount = decimal.Round(lineGross * (discountPercent / 100), 2);
             }
             else
             {
-                discountPercent = kgRate == 0 ? 0 : decimal.Round((discount / kgRate) * 100, 2);
+                discountPercent = lineGross == 0 ? 0 : decimal.Round((discount / lineGross) * 100, 2);
             }
 
             row.Cells[clnQty.Index].Value = kgQty.ToString("0.##");
@@ -918,8 +919,7 @@ namespace ERP
             row.Cells[clnCarriage.Index].Value = carriage.ToString("0.##");
             row.Cells[clnAddLess.Index].Value = addLess.ToString("0.##");
 
-            decimal netRate = kgRate - discount;
-            decimal lineAmount = (kgQty * netRate) + carriage + addLess;
+            decimal lineAmount = (lineGross - discount) + carriage + addLess;
             row.Cells[clnAmount.Index].Value = decimal.Round(lineAmount, 2).ToString("N2");
         }
 

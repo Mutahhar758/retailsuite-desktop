@@ -785,19 +785,19 @@ namespace ERP
             if (clnCarriage != null)
                 dgvSale[clnCarriage.Index, e.RowIndex].Value = carriage.ToString("0.##");
 
+            decimal lineGross = kgQty * kgRate;
             if (!clnDiscount.Visible)
             {
-                discount = kgRate * (discountPercent / 100);
+                discount = lineGross * (discountPercent / 100);
                 dgvSale[clnDiscount.Index, e.RowIndex].Value = discount.ToString("0.##");
             }
             else
             {
-                discountPercent = kgRate == 0 ? 0 : (discount / kgRate) * 100;
+                discountPercent = lineGross == 0 ? 0 : (discount / lineGross) * 100;
                 dgvSale[clnDiscPercent.Index, e.RowIndex].Value = discountPercent.ToString("0.##");
             }
 
-            decimal netRate = kgRate - discount;
-            dgvSale[clnAmount.Index, e.RowIndex].Value = Math.Round((kgQty * netRate) + carriage, 2).ToString("N2");
+            dgvSale[clnAmount.Index, e.RowIndex].Value = Math.Round((kgQty * kgRate) - discount + carriage, 2).ToString("N2");
             CalcTotAmount();
         }
 
@@ -1232,7 +1232,7 @@ namespace ERP
                 dgvSale[clnDiscount.Index, ind].Value = discount.ToString();
                 if (clnCarriage != null)
                     dgvSale[clnCarriage.Index, ind].Value = carriage.ToString();
-                dgvSale[clnAmount.Index, ind].Value = decimal.Round((qty * (rate - discount)) + carriage, 2).ToString();
+                dgvSale[clnAmount.Index, ind].Value = decimal.Round((qty * rate) - discount + carriage, 2).ToString();
                 CalcTotAmount();
                 txtBarcode.Text = "";
                 txtBarcode.Focus();

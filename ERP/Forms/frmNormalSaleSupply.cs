@@ -686,14 +686,15 @@ namespace ERP
                 secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
             }
 
+            decimal lineGross = (Qty * Rate) + (secQty * secRate);
             if (editedColumnIndex == clnDiscPercent.Index || (!clnDiscount.Visible && clnDiscPercent.Visible))
             {
-                Discount = decimal.Round(Rate * (DiscountPercent / 100), 2);
+                Discount = decimal.Round(lineGross * (DiscountPercent / 100), 2);
                 row.Cells[clnDiscount.Index].Value = Discount.ToString("0.##");
             }
             else
             {
-                DiscountPercent = Rate == 0 ? 0 : decimal.Round((Discount / Rate) * 100, 2);
+                DiscountPercent = lineGross == 0 ? 0 : decimal.Round((Discount / lineGross) * 100, 2);
                 row.Cells[clnDiscPercent.Index].Value = DiscountPercent.ToString("0.##");
             }
 
@@ -709,8 +710,7 @@ namespace ERP
                 row.Cells["clnSecRate"].Value = secRate.ToString();
             }
 
-            decimal netRate = Rate - Discount;
-            decimal lineAmount = (Qty * netRate) + Carriage + AddLess + (secQty * secRate);
+            decimal lineAmount = (lineGross - Discount) + Carriage + AddLess;
             row.Cells[clnAmount.Index].Value = decimal.Round(lineAmount, 2).ToString();
         }
 

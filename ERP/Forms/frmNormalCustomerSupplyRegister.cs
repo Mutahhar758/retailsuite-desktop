@@ -296,8 +296,8 @@ namespace ERP
                 model.IsDirty = true;
             }
 
-            // Pure Normal formula: (Qty * (Rate - Discount)) + AddLess
-            model.Amount = Math.Round((model.Qty * (model.Rate - model.Discount)) + model.AddLess, 2);
+            // Pure Normal formula: (Qty * Rate) - Discount + AddLess
+            model.Amount = Math.Round(((model.Qty * model.Rate) - model.Discount) + model.AddLess, 2);
 
             _isPopulatingGrid = true;
             row.Cells["colAmount"].Value = model.Amount.ToString("N2");
@@ -732,7 +732,7 @@ namespace ERP
                 decimal rate = Parse(txtRate);
                 decimal disc = Parse(txtDiscount);
                 decimal addLess = Parse(txtAddLess);
-                decimal amt = Math.Round((qty * (rate - disc)) + addLess, 2);
+                decimal amt = Math.Round((qty * rate) - disc + addLess, 2);
 
                 if (lblAmountPreview != null)
                 {
