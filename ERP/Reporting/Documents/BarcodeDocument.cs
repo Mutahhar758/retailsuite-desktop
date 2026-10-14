@@ -15,8 +15,9 @@ namespace ERP.Reporting.Documents
 {
     public enum BarcodePrintLayout
     {
-        ThermalRoll, // 50mm x 30mm sticker roll
-        SheetA4      // A4 3x8 = 24 stickers per sheet
+        Roll4Inch3Up, // 4-inch roll (101.6mm x 25.4mm) with 3 barcodes horizontally across
+        ThermalRoll,  // 50mm x 30mm sticker roll
+        SheetA4       // A4 3x8 = 24 stickers per sheet
     }
 
     /// <summary>
@@ -28,7 +29,7 @@ namespace ERP.Reporting.Documents
         private readonly BarcodePrintLayout _layout;
         private readonly string _companyName;
 
-        public BarcodeDocument(List<BarcodeLabelItem> items, BarcodePrintLayout layout = BarcodePrintLayout.ThermalRoll)
+        public BarcodeDocument(List<BarcodeLabelItem> items, BarcodePrintLayout layout = BarcodePrintLayout.Roll4Inch3Up)
         {
             _items = items ?? new List<BarcodeLabelItem>();
             _layout = layout;
@@ -40,13 +41,103 @@ namespace ERP.Reporting.Documents
 
         public void Compose(IDocumentContainer container)
         {
-            if (_layout == BarcodePrintLayout.ThermalRoll)
+            if (_layout == BarcodePrintLayout.Roll4Inch3Up)
+            {
+                ComposeRoll4Inch3Up(container);
+            }
+            else if (_layout == BarcodePrintLayout.ThermalRoll)
             {
                 ComposeThermalRoll(container);
             }
             else
             {
                 ComposeSheetA4(container);
+            }
+        }
+
+        /// <summary>
+        /// 4-inch continuous thermal roll with 3 barcodes horizontally across per feed row (101.6mm x 25.4mm / 4" x 1").
+        /// </summary>
+        private void ComposeRoll4Inch3Up(IDocumentContainer container)
+        {
+            var expanded = new List<BarcodeLabelItem>();
+            foreach (var item in _items)
+            {
+                int count = Math.Max(1, item.Copies);
+                for (int i = 0; i < count; i++) expanded.Add(item);
+            }
+
+            if (expanded.Count == 0)
+            {
+                container.Page(p =>
+                {
+                    p.Size(101.6f, 25.4f, Unit.Millimetre);
+                    p.Content().AlignCenter().AlignMiddle().Text("No barcode items.");
+                });
+                return;
+            }
+
+            int pageSize = 3; // 3 stickers across per row
+            int totalRows = (int)Math.Ceiling(expanded.Count / (double)pageSize);
+
+            for (int r = 0; r < totalRows; r++)
+            {
+                var rowItems = expanded.Skip(r * pageSize).Take(pageSize).ToList();
+
+                container.Page(page =>
+                {
+                    page.Size(101.6f, 25.4f, Unit.Millimetre);
+                    page.MarginVertical(0.5f, Unit.Millimetre);
+                    page.MarginHorizontal(1.5f, Unit.Millimetre);
+                    page.PageColor(QuestPDF.Helpers.Colors.White);
+
+                    page.Content().Row(row =>
+                    {
+                        for (int c = 0; c < 3; c++)
+                        {
+                            if (c > 0)
+                            {
+                                row.ConstantItem(2, Unit.Millimetre); // Gap between stickers
+                            }
+
+                            if (c < rowItems.Count)
+                            {
+                                var item = rowItems[c];
+                                var barcodeBytes = BarcodeDataService.GenerateBarcodeBytes(item.Barcode, 120, 36);
+
+                                string comp = _companyName ?? string.Empty;
+                                if (comp.Length > 24) comp = comp.Substring(0, 22) + "..";
+
+                                string title = item.Title ?? string.Empty;
+                                if (title.Length > 22) title = title.Substring(0, 20) + "..";
+
+                                row.RelativeItem().Padding(0.5f, Unit.Millimetre).Column(col =>
+                                {
+                                    col.Item().AlignCenter().Text(comp)
+                                        .FontSize(5.5f)
+                                        .Bold()
+                                        .FontColor(QuestPDF.Helpers.Colors.Grey.Darken3);
+
+                                    col.Item().AlignCenter().Text(title)
+                                        .FontSize(6.5f)
+                                        .Bold()
+                                        .FontColor(QuestPDF.Helpers.Colors.Black);
+
+                                    col.Item().PaddingVertical(0.5f).AlignCenter().Height(8.5f, Unit.Millimetre).Image(barcodeBytes);
+
+                                    col.Item().AlignCenter().Text(item.FormattedRate)
+                                        .FontSize(7.5f)
+                                        .Bold()
+                                        .FontColor(QuestPDF.Helpers.Colors.Black);
+                                });
+                            }
+                            else
+                            {
+                                row.RelativeItem(); // Empty space to preserve 3-column width
+                            }
+                        }
+                    });
+                });
             }
         }
 

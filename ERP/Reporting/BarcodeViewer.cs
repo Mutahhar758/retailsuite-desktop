@@ -205,12 +205,19 @@ namespace ERP.Reporting
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9F)
             };
-            cmbLayout.Items.AddRange(new object[] { "Thermal Sticker Roll (50 x 30 mm)", "A4 Sticker Sheet (24 labels per sheet)" });
+            cmbLayout.Items.AddRange(new object[]
+            {
+                "4\" Thermal Roll (3 Across - 3-Up)",
+                "Thermal Sticker Roll (50 x 30 mm)",
+                "A4 Sticker Sheet (24 labels per sheet)"
+            });
             cmbLayout.SelectedIndex = 0;
             cmbLayout.SelectedIndexChanged += (s, e) =>
             {
-                var lyt = cmbLayout.SelectedIndex == 1 ? BarcodePrintLayout.SheetA4 : BarcodePrintLayout.ThermalRoll;
-                string preferredPrinter = lyt == BarcodePrintLayout.ThermalRoll ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
+                var lyt = GetSelectedLayout();
+                string preferredPrinter = (lyt == BarcodePrintLayout.Roll4Inch3Up || lyt == BarcodePrintLayout.ThermalRoll)
+                    ? ConfigInfo.ThermalPrinterName
+                    : ConfigInfo.A4PrinterName;
                 if (!string.IsNullOrWhiteSpace(preferredPrinter) && cmbPrinter != null && cmbPrinter.Items.Contains(preferredPrinter))
                 {
                     cmbPrinter.SelectedItem = preferredPrinter;
@@ -411,6 +418,24 @@ namespace ERP.Reporting
             }
         }
 
+        private BarcodePrintLayout GetSelectedLayout()
+        {
+            if (cmbLayout.SelectedIndex == 1) return BarcodePrintLayout.ThermalRoll;
+            if (cmbLayout.SelectedIndex == 2) return BarcodePrintLayout.SheetA4;
+            return BarcodePrintLayout.Roll4Inch3Up;
+        }
+
+        private string GetLayoutDisplayName(BarcodePrintLayout layout)
+        {
+            switch (layout)
+            {
+                case BarcodePrintLayout.Roll4Inch3Up: return "4\" Thermal Roll (3 Across)";
+                case BarcodePrintLayout.ThermalRoll: return "Thermal Roll (50x30mm)";
+                case BarcodePrintLayout.SheetA4: return "A4 Sheet (24 labels)";
+                default: return "4\" Thermal Roll (3 Across)";
+            }
+        }
+
         private async Task LoadAndRenderBarcodeAsync()
         {
             var item = cmbItem.SelectedItem as InventoryItemDto;
@@ -423,7 +448,7 @@ namespace ERP.Reporting
             decimal price = item.PriRate;
             decimal.TryParse(txtPrice.Text, out price);
             int copies = (int)nudCopies.Value;
-            var layout = cmbLayout.SelectedIndex == 1 ? BarcodePrintLayout.SheetA4 : BarcodePrintLayout.ThermalRoll;
+            var layout = GetSelectedLayout();
 
             string barcode = !string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : ("200" + (item.Id ?? "101").PadLeft(7, '0'));
 
@@ -448,7 +473,7 @@ namespace ERP.Reporting
                 webView.CoreWebView2.Navigate(_currentPdfPath);
                 webView.Visible = true;
                 lblStatus.Text = string.Format("Previewing {0} label(s) for '{1}' (Barcode: {2}) • Format: {3}",
-                    copies, item.Title, barcode, layout == BarcodePrintLayout.ThermalRoll ? "Thermal Roll (50x30mm)" : "A4 Sheet");
+                    copies, item.Title, barcode, GetLayoutDisplayName(layout));
                 lblStatus.ForeColor = Color.FromArgb(30, 41, 59);
             }
             catch (Exception ex)
@@ -470,8 +495,10 @@ namespace ERP.Reporting
                 if (_currentItem == null) return;
             }
 
-            var layout = cmbLayout.SelectedIndex == 1 ? BarcodePrintLayout.SheetA4 : BarcodePrintLayout.ThermalRoll;
-            string defaultPrinter = layout == BarcodePrintLayout.ThermalRoll ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
+            var layout = GetSelectedLayout();
+            string defaultPrinter = (layout == BarcodePrintLayout.Roll4Inch3Up || layout == BarcodePrintLayout.ThermalRoll)
+                ? ConfigInfo.ThermalPrinterName
+                : ConfigInfo.A4PrinterName;
             string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : defaultPrinter;
 
             var confirm = MessageBox.Show(
