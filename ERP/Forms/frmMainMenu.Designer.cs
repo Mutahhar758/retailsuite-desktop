@@ -43,6 +43,7 @@ namespace ERP
             this.brandToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.hRInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.supplyOrderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.bomToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.dailyEntryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.paymentVoucherToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.receiptVoucherToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -57,6 +58,7 @@ namespace ERP
             this.saleReturnToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
             this.stockAdjustmentToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.manufacturingToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator4 = new System.Windows.Forms.ToolStripSeparator();
             this.bankReconcilationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.payrollToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -128,6 +130,7 @@ namespace ERP
             this.unitIndexToolStripMenuItem,
             this.itemCatagoryToolStripMenuItem,
             this.brandToolStripMenuItem,
+            this.bomToolStripMenuItem,
             this.hRInfoToolStripMenuItem,
             this.supplyOrderToolStripMenuItem});
             this.setupToolStripMenuItem.Name = "setupToolStripMenuItem";
@@ -235,6 +238,7 @@ namespace ERP
             this.saleReturnToolStripMenuItem,
             this.toolStripSeparator3,
             this.stockAdjustmentToolStripMenuItem,
+            this.manufacturingToolStripMenuItem,
             this.toolStripSeparator4,
             this.bankReconcilationToolStripMenuItem,
             this.payrollToolStripMenuItem});
@@ -326,6 +330,20 @@ namespace ERP
             this.stockAdjustmentToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
             this.stockAdjustmentToolStripMenuItem.Text = "Stock Adjustment";
             this.stockAdjustmentToolStripMenuItem.Click += new System.EventHandler(this.stockAdjustmentToolStripMenuItem_Click);
+            // 
+            // manufacturingToolStripMenuItem
+            // 
+            this.manufacturingToolStripMenuItem.Name = "manufacturingToolStripMenuItem";
+            this.manufacturingToolStripMenuItem.Size = new System.Drawing.Size(175, 22);
+            this.manufacturingToolStripMenuItem.Text = "Manufacturing Voucher";
+            this.manufacturingToolStripMenuItem.Click += new System.EventHandler(this.manufacturingToolStripMenuItem_Click);
+            // 
+            // bomToolStripMenuItem
+            // 
+            this.bomToolStripMenuItem.Name = "bomToolStripMenuItem";
+            this.bomToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
+            this.bomToolStripMenuItem.Text = "Bill of Materials / Recipe";
+            this.bomToolStripMenuItem.Click += new System.EventHandler(this.bomToolStripMenuItem_Click);
             // 
             // toolStripSeparator4
             // 
@@ -721,6 +739,8 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem configurationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem detailAccountsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem stockAdjustmentToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem manufacturingToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem bomToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem changePasswordToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saleReturnToolStripMenuItem;
         private System.Windows.Forms.ToolStripSeparator toolStripSeparator1;

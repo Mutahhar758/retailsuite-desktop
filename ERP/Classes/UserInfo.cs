@@ -183,5 +183,9 @@ namespace ERP
         public const string RepairJobs     = "RepairJobs";
         public const string ImeiStock      = "ImeiStock";
         public const string WarrantyLookup = "WarrantyLookup";
+
+        // Manufacturing module
+        public const string BillOfMaterials = "BillOfMaterials";
+        public const string Manufacturing = "Manufacturing";
     }
 }

@@ -9,6 +9,7 @@ using System.Windows.Forms;
 using System.Threading;
 using System.IO;
 using ERP.Classes;
+using ERP.Forms;
 namespace ERP
 {
     public partial class frmMainMenu : Form
@@ -97,6 +98,7 @@ namespace ERP
             brandToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Brands);
             hRInfoToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.HRInfo);
             supplyOrderToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SupplyOrders);
+            bomToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BillOfMaterials);
             
             paymentVoucherToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PaymentVouchers);
             receiptVoucherToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ReceiptVouchers);
@@ -108,6 +110,7 @@ namespace ERP
             saleOrderToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Sales);
             saleReturnToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SaleReturns);
             stockAdjustmentToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockAdjustments);
+            manufacturingToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Manufacturing);
             bankReconcilationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BankReconciliations);
             payrollToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Payrolls);
             
@@ -602,6 +605,20 @@ namespace ERP
                 frm.MdiParent = this;
                 frm.Show();
             }
+        }
+
+        private void manufacturingToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmManufacturing frm = new frmManufacturing();
+            frm.MdiParent = this;
+            frm.Show();
+        }
+
+        private void bomToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmBOM frm = new frmBOM();
+            frm.MdiParent = this;
+            frm.Show();
         }
 
 

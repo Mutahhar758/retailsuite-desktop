@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Net.Http;
 using System.Net.Http.Headers;
@@ -40,11 +41,19 @@ namespace ERP.Services.Legacy
                 var payload = JsonConvert.DeserializeObject<HttpResponseDto<object>>(content);
                 if (payload?.Metadata != null)
                 {
-                    if (!string.IsNullOrWhiteSpace(payload.Metadata.Message))
-                        return payload.Metadata.Message;
+                    var msg = payload.Metadata.Message;
+                    var valErrors = payload.Metadata.ValidationErrors;
+                    if (valErrors != null)
+                    {
+                        var errStr = valErrors.ToString();
+                        if (!string.IsNullOrWhiteSpace(errStr) && errStr != "[]" && errStr != "{}")
+                        {
+                            return string.IsNullOrWhiteSpace(msg) ? errStr : $"{msg}: {errStr}";
+                        }
+                    }
 
-                    if (payload.Metadata.ValidationErrors != null)
-                        return payload.Metadata.ValidationErrors.ToString();
+                    if (!string.IsNullOrWhiteSpace(msg))
+                        return msg;
                 }
             }
             catch
@@ -58,6 +67,39 @@ namespace ERP.Services.Legacy
                               ?? (string)obj["message"]
                               ?? (string)obj["detail"]
                               ?? (string)obj["title"];
+
+                var valTokens = obj["metadata"]?["validationErrors"] ?? obj["validationErrors"] ?? obj["errors"];
+                if (valTokens != null && valTokens.HasValues)
+                {
+                    var details = new List<string>();
+                    if (valTokens is JArray arr)
+                    {
+                        foreach (var token in arr)
+                        {
+                            if (token is JObject jobj)
+                            {
+                                foreach (var prop in jobj.Properties())
+                                    details.Add($"{prop.Name}: {prop.Value}");
+                            }
+                            else if (token is JValue jval)
+                            {
+                                details.Add(jval.ToString());
+                            }
+                        }
+                    }
+                    else if (valTokens is JObject jobj)
+                    {
+                        foreach (var prop in jobj.Properties())
+                            details.Add($"{prop.Name}: {prop.Value}");
+                    }
+
+                    if (details.Count > 0)
+                    {
+                        var detailStr = string.Join(", ", details);
+                        return string.IsNullOrWhiteSpace(message) ? detailStr : $"{message}: {detailStr}";
+                    }
+                }
+
                 return message;
             }
             catch
