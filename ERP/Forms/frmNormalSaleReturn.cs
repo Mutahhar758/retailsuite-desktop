@@ -55,6 +55,7 @@ namespace ERP
             dtItems.Columns.Add("Title", typeof(string));
             dtItems.Columns.Add("fkItemcatagory", typeof(string));
             dtItems.Columns.Add("ItemKey", typeof(string));
+            dtItems.Columns.Add("Barcode", typeof(string));
             dtItems.Columns.Add("PriRate", typeof(decimal));
             dtItems.Columns.Add("SecRate", typeof(decimal));
             dtItems.Columns.Add("PrimaryUnit", typeof(string));
@@ -86,7 +87,7 @@ namespace ERP
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
-                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.RequireImei == true);
+                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.RequireImei == true);
 
             dtUnits.Rows.Clear();
             foreach (var u in unitsTask.Result)
@@ -498,6 +499,7 @@ namespace ERP
             {
                 SetupSecondaryQtyColumns();
                 SetupMobileShopColumns();
+                ApplyBarcodeFastScanVisibility();
                 await LoadLookupsAsync();
                 await FillQueryAsync();
                 if (_queryList.Count > 0 && txtVoucherNo.Text == "")
@@ -508,6 +510,30 @@ namespace ERP
             {
                 MessageBox.Show("Error loading sale return data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private void ApplyBarcodeFastScanVisibility()
+        {
+            try
+            {
+                if (groupBox2 == null) return;
+
+                if (!ApiSession.IsBarcodeFastScanEnabled)
+                {
+                    groupBox2.Visible = false;
+                    dgvSale.Location = new System.Drawing.Point(8, 137);
+                    dgvSale.Height = panel1.Top - dgvSale.Top - 8;
+                }
+                else
+                {
+                    groupBox2.Visible = true;
+                    groupBox2.Location = new System.Drawing.Point(8, 135);
+                    dgvSale.Location = new System.Drawing.Point(8, groupBox2.Bottom + 4);
+                    dgvSale.Height = panel1.Top - dgvSale.Top - 8;
+                    txtBarcode.Focus();
+                }
+            }
+            catch { }
         }
 
         private void dgvPurchase_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
@@ -530,7 +556,14 @@ namespace ERP
 
         private async void frmPurchase_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter && !dgvSale.Focused)
+            if (e.KeyCode == Keys.F2 && ApiSession.IsBarcodeFastScanEnabled && groupBox2 != null && groupBox2.Visible)
+            {
+                txtBarcode.Focus();
+                txtBarcode.SelectAll();
+                e.SuppressKeyPress = true;
+                e.Handled = true;
+            }
+            else if (txtBarcode != null && !txtBarcode.Focused && e.KeyCode == Keys.Enter && !dgvSale.Focused)
             {
                 e.SuppressKeyPress = true;
                 SendKeys.Send("{tab}");
@@ -608,17 +641,27 @@ namespace ERP
         private void SetcmbItemSource(string itemCategory, int rowInd)
         {
             DataTable dt = dtItems.Clone();
-            DataRow[] rows = dtItems.Select("fkItemcatagory = '" + itemCategory.Replace("'", "''") + "'");
-            if (rows.Length > 0)
+            if (!string.IsNullOrWhiteSpace(itemCategory))
             {
-                for (int i = 0; i < rows.Length; i++)
-                    dt.ImportRow(rows[i]);
+                DataRow[] rows = dtItems.Select("fkItemcatagory = '" + itemCategory.Replace("'", "''") + "'");
+                if (rows.Length > 0)
+                {
+                    for (int i = 0; i < rows.Length; i++)
+                        dt.ImportRow(rows[i]);
+                }
+            }
+            if (dt.Rows.Count == 0)
+            {
+                dt = dtItems.Copy();
             }
 
             DataGridViewComboBoxCell cmb = dgvSale[clnItemNo.Index, rowInd] as DataGridViewComboBoxCell;
-            cmb.DataSource = dt;
-            cmb.DisplayMember = "Title";
-            cmb.ValueMember = "Id";
+            if (cmb != null)
+            {
+                cmb.DataSource = dt;
+                cmb.DisplayMember = "Title";
+                cmb.ValueMember = "Id";
+            }
         }
 
         private void SetAllUnitsSource(int rowInd)
@@ -1052,6 +1095,256 @@ namespace ERP
         {
             txtCashBack.Text = (txtCashReceipt.Value - txtTotAmount.Value <= 0 ? 0 : txtCashReceipt.Value - txtTotAmount.Value).ToString("N2");
             txtBalance.Text = (txtTotAmount.Value - (txtCashReceipt.Value - txtCashBack.Value)).ToString("N2");
+        }
+
+        private bool _isProcessingBarcodeScan = false;
+
+        private void txtBarcode_TextChanged(object sender, EventArgs e)
+        {
+            if (!_isProcessingBarcodeScan && txtBarcode.Text != "" && (txtBarcode.Text.Contains("\n") || txtBarcode.Text.Contains("\r")))
+            {
+                ProcessBarcodeScan();
+            }
+        }
+
+        private void txtBarcode_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                e.Handled = true;
+                if (!_isProcessingBarcodeScan)
+                {
+                    ProcessBarcodeScan();
+                }
+            }
+        }
+
+        private DataRow FindItemByBarcodeOrCode(string code)
+        {
+            if (string.IsNullOrWhiteSpace(code) || dtItems == null || dtItems.Rows.Count == 0)
+                return null;
+
+            string clean = code.Trim();
+
+            // 1. Exact Barcode match (case-insensitive)
+            DataRow match = dtItems.AsEnumerable().FirstOrDefault(r =>
+                r["Barcode"] != DBNull.Value &&
+                string.Equals(r["Barcode"].ToString().Trim(), clean, StringComparison.OrdinalIgnoreCase));
+
+            // 2. Exact ItemKey match (case-insensitive)
+            if (match == null)
+            {
+                match = dtItems.AsEnumerable().FirstOrDefault(r =>
+                    r["ItemKey"] != DBNull.Value &&
+                    string.Equals(r["ItemKey"].ToString().Trim(), clean, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // 3. Exact Id match (case-insensitive)
+            if (match == null)
+            {
+                match = dtItems.AsEnumerable().FirstOrDefault(r =>
+                    r["Id"] != DBNull.Value &&
+                    string.Equals(r["Id"].ToString().Trim(), clean, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // 4. Exact Title match (case-insensitive)
+            if (match == null)
+            {
+                match = dtItems.AsEnumerable().FirstOrDefault(r =>
+                    r["Title"] != DBNull.Value &&
+                    string.Equals(r["Title"].ToString().Trim(), clean, StringComparison.OrdinalIgnoreCase));
+            }
+
+            // 5. Partial Barcode or Title match if length >= 3
+            if (match == null && clean.Length >= 3)
+            {
+                var partials = dtItems.AsEnumerable().Where(r =>
+                    (r["Barcode"] != DBNull.Value && r["Barcode"].ToString().IndexOf(clean, StringComparison.OrdinalIgnoreCase) >= 0) ||
+                    (r["Title"] != DBNull.Value && r["Title"].ToString().IndexOf(clean, StringComparison.OrdinalIgnoreCase) >= 0)
+                ).Take(2).ToList();
+
+                if (partials.Count == 1)
+                {
+                    match = partials[0];
+                }
+            }
+
+            return match;
+        }
+
+        private void ProcessBarcodeScan()
+        {
+            if (_isProcessingBarcodeScan) return;
+            try
+            {
+                _isProcessingBarcodeScan = true;
+
+                string raw = txtBarcode.Text.Trim();
+                txtBarcode.Clear();
+                if (string.IsNullOrWhiteSpace(raw)) return;
+
+                decimal qtyToScan = 1m;
+                string barcode = raw;
+                if (raw.Contains("*"))
+                {
+                    string[] parts = raw.Split('*');
+                    if (parts.Length == 2)
+                    {
+                        if (decimal.TryParse(parts[0].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal q1) && q1 > 0 && !decimal.TryParse(parts[1].Trim(), out _))
+                        {
+                            qtyToScan = q1;
+                            barcode = parts[1].Trim();
+                        }
+                        else if (decimal.TryParse(parts[1].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal q2) && q2 > 0 && !decimal.TryParse(parts[0].Trim(), out _))
+                        {
+                            qtyToScan = q2;
+                            barcode = parts[0].Trim();
+                        }
+                    }
+                }
+
+                DataRow dr = FindItemByBarcodeOrCode(barcode);
+                if (dr == null)
+                {
+                    ScannerToneHelper.PlayError();
+                    return;
+                }
+
+                string itemId = dr["Id"].ToString();
+                string itemKey = dr["ItemKey"] != DBNull.Value ? dr["ItemKey"].ToString() : "";
+                string itemCategory = dr["fkItemcatagory"] != DBNull.Value ? dr["fkItemcatagory"].ToString() : "";
+                string defaultUnit = dr["DefaultUnit"] != DBNull.Value ? dr["DefaultUnit"].ToString() : "";
+                decimal itemPriRate = dr["PriRate"] != DBNull.Value ? ParseDecimal(dr["PriRate"]) : 0m;
+
+                DataRowView drv = dtItems.DefaultView[dtItems.Rows.IndexOf(dr)];
+                bool isFind = false;
+                int ind = -1;
+
+                if (ApiSession.FastScanAutoIncrement)
+                {
+                    for (int i = 0; i < dgvSale.Rows.Count; i++)
+                    {
+                        if (Convert.ToString(dgvSale[clnItemNo.Index, i].Value) == itemId)
+                        {
+                            decimal existingQty = ParseDecimal(dgvSale[clnQty.Index, i].Value);
+                            dgvSale[clnQty.Index, i].Value = (existingQty + qtyToScan).ToString("0.##");
+                            isFind = true;
+                            ind = i;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isFind)
+                {
+                    int emptyRowIdx = -1;
+                    for (int i = 0; i < dgvSale.Rows.Count; i++)
+                    {
+                        var cellVal = dgvSale[clnItemNo.Index, i].Value;
+                        if (cellVal == null || string.IsNullOrWhiteSpace(cellVal.ToString()))
+                        {
+                            emptyRowIdx = i;
+                            break;
+                        }
+                    }
+
+                    if (emptyRowIdx >= 0)
+                    {
+                        ind = emptyRowIdx;
+                    }
+                    else
+                    {
+                        ind = dgvSale.Rows.Add();
+                    }
+
+                    if (dgvSale[clnSeq.Index, ind].Value == null || string.IsNullOrWhiteSpace(dgvSale[clnSeq.Index, ind].Value.ToString()))
+                    {
+                        int maxSeq = 0;
+                        for (int i = 0; i < dgvSale.Rows.Count; i++)
+                        {
+                            if (i != ind && dgvSale[clnSeq.Index, i].Value != null && int.TryParse(dgvSale[clnSeq.Index, i].Value.ToString(), out int s))
+                            {
+                                if (s > maxSeq) maxSeq = s;
+                            }
+                        }
+                        dgvSale[clnSeq.Index, ind].Value = (maxSeq + 1).ToString();
+                    }
+
+                    dgvSale[clnItemKey.Index, ind].Value = itemKey;
+                    if (!string.IsNullOrWhiteSpace(itemCategory) && dtCategories.AsEnumerable().Any(c => c["Code"].ToString() == itemCategory))
+                    {
+                        dgvSale[clnCatagory.Index, ind].Value = itemCategory;
+                    }
+
+                    SetcmbItemSource(itemCategory, ind);
+                    dgvSale[clnItemNo.Index, ind].Value = itemId;
+                    SetcmbUnitSource(drv, ind);
+
+                    try
+                    {
+                        if (!string.IsNullOrWhiteSpace(defaultUnit))
+                            dgvSale[clnUnit.Index, ind].Value = defaultUnit;
+                    }
+                    catch { }
+
+                    dgvSale[clnRate.Index, ind].Value = itemPriRate.ToString("0.##");
+                    dgvSale[clnQty.Index, ind].Value = qtyToScan.ToString("0.##");
+                    if (dgvSale[clnDiscount.Index, ind].Value == null)
+                        dgvSale[clnDiscount.Index, ind].Value = "0";
+                    if (dgvSale[clnDiscPercent.Index, ind].Value == null)
+                        dgvSale[clnDiscPercent.Index, ind].Value = "0";
+                    dgvSale[clnStatus.Index, ind].Value = "0";
+
+                    if (ind == dgvSale.Rows.Count - 1)
+                    {
+                        dgvSale.Rows.Add();
+                    }
+                }
+
+                decimal qty = ParseDecimal(dgvSale[clnQty.Index, ind].Value);
+                decimal rate = ParseDecimal(dgvSale[clnRate.Index, ind].Value);
+                decimal discount = ParseDecimal(dgvSale[clnDiscount.Index, ind].Value);
+                decimal discountPercent = ParseDecimal(dgvSale[clnDiscPercent.Index, ind].Value);
+
+                decimal secQty = 0m;
+                decimal secRate = 0m;
+                if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+                {
+                    secQty = ParseDecimal(dgvSale["clnSecQty", ind].Value);
+                    secRate = ParseDecimal(dgvSale["clnSecRate", ind].Value);
+                    dgvSale["clnSecQty", ind].Value = secQty.ToString("0.##");
+                    dgvSale["clnSecRate", ind].Value = secRate.ToString("0.##");
+                }
+
+                decimal lineGross = (qty * rate) + (secQty * secRate);
+                if (!clnDiscount.Visible)
+                {
+                    discount = lineGross * (discountPercent / 100m);
+                    dgvSale[clnDiscount.Index, ind].Value = discount.ToString("0.##");
+                }
+                else
+                {
+                    discountPercent = lineGross == 0m ? 0m : (discount / lineGross) * 100m;
+                    dgvSale[clnDiscPercent.Index, ind].Value = discountPercent.ToString("0.##");
+                }
+
+                dgvSale[clnAmount.Index, ind].Value = decimal.Round(lineGross - discount, 2).ToString("N2");
+                CalcTotAmount();
+
+                ScannerToneHelper.PlaySuccess();
+            }
+            catch (Exception ex)
+            {
+                ScannerToneHelper.PlayError();
+                MessageBox.Show("Error adding item from barcode scan: " + ex.Message, "Fast Scan Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+            }
+            finally
+            {
+                txtBarcode.Clear();
+                txtBarcode.Focus();
+                _isProcessingBarcodeScan = false;
+            }
         }
     }
 }

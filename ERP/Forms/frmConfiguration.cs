@@ -82,6 +82,7 @@ namespace ERP.Forms
                 await LoadTenantPrinterSettingsAsync();
                 await LoadQrSettingsAsync();
                 await LoadInventorySettingsAsync();
+                await LoadBarcodeSettingsAsync();
                 lblStatus.Text = "Ready";
             }
             catch (Exception ex)
@@ -141,6 +142,45 @@ namespace ERP.Forms
             catch
             {
                 chkEnableSecondaryQty.Checked = ApiSession.HasSecondaryQty;
+            }
+        }
+
+        private async Task LoadBarcodeSettingsAsync()
+        {
+            try
+            {
+                string enabledStr = await _settingsService.GetSettingValueAsync("Barcode.FastScanEnabled");
+                string incStr = await _settingsService.GetSettingValueAsync("Barcode.FastScanIncrement");
+                string soundStr = await _settingsService.GetSettingValueAsync("Barcode.FastScanSound");
+
+                chkEnableBarcodeFastScan.Checked = string.Equals(enabledStr, "true", StringComparison.OrdinalIgnoreCase);
+                chkFastScanAutoIncrement.Checked = string.IsNullOrWhiteSpace(incStr) || !string.Equals(incStr, "false", StringComparison.OrdinalIgnoreCase);
+                chkFastScanSound.Checked = string.IsNullOrWhiteSpace(soundStr) || !string.Equals(soundStr, "false", StringComparison.OrdinalIgnoreCase);
+            }
+            catch
+            {
+                chkEnableBarcodeFastScan.Checked = ConfigInfo.IsBarcodeFastScanEnabled;
+                chkFastScanAutoIncrement.Checked = ConfigInfo.FastScanAutoIncrement;
+                chkFastScanSound.Checked = ConfigInfo.FastScanSound;
+            }
+        }
+
+        private void txtScannerTest_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                string scanned = txtScannerTest.Text.Trim();
+                if (!string.IsNullOrEmpty(scanned))
+                {
+                    if (chkFastScanSound.Checked)
+                    {
+                        ScannerToneHelper.PlaySuccess();
+                    }
+                    lblTestResult.ForeColor = Color.Green;
+                    lblTestResult.Text = "Scanned: " + scanned + " (Tone played!)";
+                    txtScannerTest.Clear();
+                }
             }
         }
 
@@ -320,6 +360,27 @@ namespace ERP.Forms
                         Value = chkEnableSecondaryQty.Checked ? "true" : "false",
                         Description = "Enable secondary quantity (pack/single) on transaction forms",
                         Category = "Inventory"
+                    },
+                    new SettingItemDto
+                    {
+                        Key = "Barcode.FastScanEnabled",
+                        Value = chkEnableBarcodeFastScan.Checked ? "true" : "false",
+                        Description = "Enable Barcode Fast Scanning on Transaction Grids",
+                        Category = "Barcode"
+                    },
+                    new SettingItemDto
+                    {
+                        Key = "Barcode.FastScanIncrement",
+                        Value = chkFastScanAutoIncrement.Checked ? "true" : "false",
+                        Description = "Auto-Increment Quantity When Scanning Duplicate Items",
+                        Category = "Barcode"
+                    },
+                    new SettingItemDto
+                    {
+                        Key = "Barcode.FastScanSound",
+                        Value = chkFastScanSound.Checked ? "true" : "false",
+                        Description = "Play Audio Tone on Successful Barcode Scan",
+                        Category = "Barcode"
                     }
                 };
 
@@ -327,6 +388,9 @@ namespace ERP.Forms
 
                 // Update active session flag immediately
                 ApiSession.HasSecondaryQty = chkEnableSecondaryQty.Checked;
+                ConfigInfo.IsBarcodeFastScanEnabled = chkEnableBarcodeFastScan.Checked;
+                ConfigInfo.FastScanAutoIncrement = chkFastScanAutoIncrement.Checked;
+                ConfigInfo.FastScanSound = chkFastScanSound.Checked;
 
                 // Clear cached QrPaymentInfo so new bills immediately use updated settings
                 QrPaymentInfo.ClearCache();

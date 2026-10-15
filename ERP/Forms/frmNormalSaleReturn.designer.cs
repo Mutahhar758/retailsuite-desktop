@@ -1,4 +1,4 @@
-﻿namespace ERP
+namespace ERP
 {
     partial class frmNormalSaleReturn
     {
@@ -66,6 +66,9 @@
             this.btnHome = new System.Windows.Forms.Button();
             this.btnNew = new System.Windows.Forms.Button();
             this.dgvSale = new System.Windows.Forms.DataGridView();
+            this.groupBox2 = new System.Windows.Forms.GroupBox();
+            this.txtBarcode = new System.Windows.Forms.TextBox();
+            this.label12 = new System.Windows.Forms.Label();
             this.clnSeq = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnItemKey = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnCatagory = new System.Windows.Forms.DataGridViewComboBoxColumn();
@@ -132,6 +135,7 @@
             this.panel1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvSale)).BeginInit();
             this.grpInvoiceDetail.SuspendLayout();
+            this.groupBox2.SuspendLayout();
             this.tbQuery.SuspendLayout();
             this.groupBox1.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvQuery)).BeginInit();
@@ -156,6 +160,7 @@
             // 
             // tbDetail
             // 
+            this.tbDetail.Controls.Add(this.groupBox2);
             this.tbDetail.Controls.Add(this.groupBox3);
             this.tbDetail.Controls.Add(this.panel1);
             this.tbDetail.Controls.Add(this.dgvSale);
@@ -1093,7 +1098,37 @@
             this.dataGridViewTextBoxColumn12.HeaderText = "Edit By";
             this.dataGridViewTextBoxColumn12.MinimumWidth = 180;
             this.dataGridViewTextBoxColumn12.Name = "dataGridViewTextBoxColumn12";
-            this.dataGridViewTextBoxColumn12.ReadOnly = true;
+            // 
+            // groupBox2
+            // 
+            this.groupBox2.Controls.Add(this.txtBarcode);
+            this.groupBox2.Controls.Add(this.label12);
+            this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.groupBox2.Location = new System.Drawing.Point(8, 135);
+            this.groupBox2.Name = "groupBox2";
+            this.groupBox2.Size = new System.Drawing.Size(340, 48);
+            this.groupBox2.TabIndex = 214;
+            this.groupBox2.TabStop = false;
+            this.groupBox2.Text = "Product Detail ";
+            // 
+            // txtBarcode
+            // 
+            this.txtBarcode.Location = new System.Drawing.Point(82, 19);
+            this.txtBarcode.Name = "txtBarcode";
+            this.txtBarcode.Size = new System.Drawing.Size(240, 22);
+            this.txtBarcode.TabIndex = 0;
+            this.txtBarcode.TextChanged += new System.EventHandler(this.txtBarcode_TextChanged);
+            this.txtBarcode.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtBarcode_KeyDown);
+            // 
+            // label12
+            // 
+            this.label12.AutoSize = true;
+            this.label12.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.label12.Location = new System.Drawing.Point(8, 22);
+            this.label12.Name = "label12";
+            this.label12.Size = new System.Drawing.Size(68, 16);
+            this.label12.TabIndex = 210;
+            this.label12.Text = "Barcode : ";
             // 
             // frmNormalSaleReturn
             // 
@@ -1114,6 +1149,8 @@
             this.groupBox3.ResumeLayout(false);
             this.groupBox3.PerformLayout();
             this.panel1.ResumeLayout(false);
+            this.groupBox2.ResumeLayout(false);
+            this.groupBox2.PerformLayout();
             ((System.ComponentModel.ISupportInitialize)(this.dgvSale)).EndInit();
             this.grpInvoiceDetail.ResumeLayout(false);
             this.grpInvoiceDetail.PerformLayout();
@@ -1213,6 +1250,9 @@
         private System.Windows.Forms.DataGridViewTextBoxColumn clnDiscPercent;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnAmount;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnStatus;
+        private System.Windows.Forms.GroupBox groupBox2;
+        private System.Windows.Forms.TextBox txtBarcode;
+        private System.Windows.Forms.Label label12;
     }
 }
 

@@ -1,4 +1,4 @@
-﻿namespace ERP
+namespace ERP
 {
     partial class frmNormalPurchaseReturn
     {
@@ -168,25 +168,25 @@
             this.groupBox2.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox2.Location = new System.Drawing.Point(16, 135);
             this.groupBox2.Name = "groupBox2";
-            this.groupBox2.Size = new System.Drawing.Size(290, 49);
+            this.groupBox2.Size = new System.Drawing.Size(340, 48);
             this.groupBox2.TabIndex = 214;
             this.groupBox2.TabStop = false;
             this.groupBox2.Text = "Product Detail ";
             // 
             // txtBarcode
             // 
-            this.txtBarcode.Location = new System.Drawing.Point(82, 20);
-            this.txtBarcode.Multiline = true;
+            this.txtBarcode.Location = new System.Drawing.Point(82, 19);
             this.txtBarcode.Name = "txtBarcode";
-            this.txtBarcode.Size = new System.Drawing.Size(191, 22);
+            this.txtBarcode.Size = new System.Drawing.Size(240, 22);
             this.txtBarcode.TabIndex = 0;
             this.txtBarcode.TextChanged += new System.EventHandler(this.txtBarcode_TextChanged);
+            this.txtBarcode.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtBarcode_KeyDown);
             // 
             // label13
             // 
             this.label13.AutoSize = true;
             this.label13.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.label13.Location = new System.Drawing.Point(8, 23);
+            this.label13.Location = new System.Drawing.Point(8, 22);
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(68, 16);
             this.label13.TabIndex = 210;

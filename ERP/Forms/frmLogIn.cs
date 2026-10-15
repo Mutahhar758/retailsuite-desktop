@@ -182,6 +182,21 @@ namespace ERP
                         ApiSession.EnableCarriage = string.Equals(carriageSetting, "true", StringComparison.OrdinalIgnoreCase);
                     }
 
+                    var fastScanSetting = await _settingsApiService.GetSettingValueAsync("Barcode.FastScanEnabled");
+                    ApiSession.IsBarcodeFastScanEnabled = string.Equals(fastScanSetting, "true", StringComparison.OrdinalIgnoreCase);
+
+                    var incSetting = await _settingsApiService.GetSettingValueAsync("Barcode.FastScanIncrement");
+                    if (!string.IsNullOrWhiteSpace(incSetting))
+                    {
+                        ApiSession.FastScanAutoIncrement = !string.Equals(incSetting, "false", StringComparison.OrdinalIgnoreCase);
+                    }
+
+                    var soundSetting = await _settingsApiService.GetSettingValueAsync("Barcode.FastScanSound");
+                    if (!string.IsNullOrWhiteSpace(soundSetting))
+                    {
+                        ApiSession.FastScanSound = !string.Equals(soundSetting, "false", StringComparison.OrdinalIgnoreCase);
+                    }
+
                     var defaultFormat = await _settingsApiService.GetSettingValueAsync("Bill.DefaultFormat");
                     if (!string.IsNullOrWhiteSpace(defaultFormat))
                     {

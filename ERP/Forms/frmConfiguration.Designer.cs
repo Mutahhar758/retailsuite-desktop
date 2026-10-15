@@ -52,9 +52,19 @@ namespace ERP.Forms
             this.lblBankName = new System.Windows.Forms.Label();
             this.chkQrEnabled = new System.Windows.Forms.CheckBox();
             this.tabInventory = new System.Windows.Forms.TabPage();
+            this.tabBarcode = new System.Windows.Forms.TabPage();
             this.chkEnableSecondaryQty = new System.Windows.Forms.CheckBox();
             this.lblSecQtyTitle = new System.Windows.Forms.Label();
             this.lblSecQtyInfo = new System.Windows.Forms.Label();
+            this.lblBarcodeTitle = new System.Windows.Forms.Label();
+            this.chkEnableBarcodeFastScan = new System.Windows.Forms.CheckBox();
+            this.chkFastScanAutoIncrement = new System.Windows.Forms.CheckBox();
+            this.chkFastScanSound = new System.Windows.Forms.CheckBox();
+            this.lblBarcodeInfo = new System.Windows.Forms.Label();
+            this.grpScannerTest = new System.Windows.Forms.GroupBox();
+            this.txtScannerTest = new System.Windows.Forms.TextBox();
+            this.lblScannerTest = new System.Windows.Forms.Label();
+            this.lblTestResult = new System.Windows.Forms.Label();
             this.btnSave = new System.Windows.Forms.Button();
             this.btnClose = new System.Windows.Forms.Button();
             this.lblStatus = new System.Windows.Forms.Label();
@@ -62,6 +72,8 @@ namespace ERP.Forms
             this.tabPrinter.SuspendLayout();
             this.tabQrPayment.SuspendLayout();
             this.tabInventory.SuspendLayout();
+            this.tabBarcode.SuspendLayout();
+            this.grpScannerTest.SuspendLayout();
             ((System.ComponentModel.ISupportInitialize)(this.picQrPreview)).BeginInit();
             this.SuspendLayout();
             // 
@@ -70,6 +82,7 @@ namespace ERP.Forms
             this.tabControl1.Controls.Add(this.tabPrinter);
             this.tabControl1.Controls.Add(this.tabQrPayment);
             this.tabControl1.Controls.Add(this.tabInventory);
+            this.tabControl1.Controls.Add(this.tabBarcode);
             this.tabControl1.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.tabControl1.Location = new System.Drawing.Point(12, 12);
             this.tabControl1.Name = "tabControl1";
@@ -369,6 +382,116 @@ namespace ERP.Forms
             this.lblSecQtyInfo.TabIndex = 2;
             this.lblSecQtyInfo.Text = "• When ENABLED: Invoices and transaction entries (Sales, Purchases, Supplies, Adjustments) display both Primary (Single) and Secondary (Pack) Quantity and Rate columns.\r\n\r\n• When DISABLED: Transaction forms show only standard Primary Quantity and Rate columns.\r\n\r\n• Unit selection dropdown is omitted from transaction forms. Printed bills and statements automatically display each item\'s configured Default Unit.";
             // 
+            // tabBarcode
+            // 
+            this.tabBarcode.BackColor = System.Drawing.SystemColors.Window;
+            this.tabBarcode.Controls.Add(this.grpScannerTest);
+            this.tabBarcode.Controls.Add(this.lblBarcodeInfo);
+            this.tabBarcode.Controls.Add(this.chkFastScanSound);
+            this.tabBarcode.Controls.Add(this.chkFastScanAutoIncrement);
+            this.tabBarcode.Controls.Add(this.chkEnableBarcodeFastScan);
+            this.tabBarcode.Controls.Add(this.lblBarcodeTitle);
+            this.tabBarcode.Location = new System.Drawing.Point(4, 24);
+            this.tabBarcode.Name = "tabBarcode";
+            this.tabBarcode.Padding = new System.Windows.Forms.Padding(3);
+            this.tabBarcode.Size = new System.Drawing.Size(476, 307);
+            this.tabBarcode.TabIndex = 3;
+            this.tabBarcode.Text = "Barcode Scanning";
+            // 
+            // lblBarcodeTitle
+            // 
+            this.lblBarcodeTitle.AutoSize = true;
+            this.lblBarcodeTitle.Font = new System.Drawing.Font("Segoe UI Semibold", 9.75F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblBarcodeTitle.Location = new System.Drawing.Point(20, 15);
+            this.lblBarcodeTitle.Name = "lblBarcodeTitle";
+            this.lblBarcodeTitle.Size = new System.Drawing.Size(185, 17);
+            this.lblBarcodeTitle.TabIndex = 0;
+            this.lblBarcodeTitle.Text = "Barcode Fast Scanning";
+            // 
+            // chkEnableBarcodeFastScan
+            // 
+            this.chkEnableBarcodeFastScan.AutoSize = true;
+            this.chkEnableBarcodeFastScan.Font = new System.Drawing.Font("Segoe UI Semibold", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkEnableBarcodeFastScan.Location = new System.Drawing.Point(23, 40);
+            this.chkEnableBarcodeFastScan.Name = "chkEnableBarcodeFastScan";
+            this.chkEnableBarcodeFastScan.Size = new System.Drawing.Size(332, 19);
+            this.chkEnableBarcodeFastScan.TabIndex = 1;
+            this.chkEnableBarcodeFastScan.Text = "Enable Barcode Fast Scanning on Transaction Forms";
+            this.chkEnableBarcodeFastScan.UseVisualStyleBackColor = true;
+            // 
+            // chkFastScanAutoIncrement
+            // 
+            this.chkFastScanAutoIncrement.AutoSize = true;
+            this.chkFastScanAutoIncrement.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkFastScanAutoIncrement.Location = new System.Drawing.Point(23, 65);
+            this.chkFastScanAutoIncrement.Name = "chkFastScanAutoIncrement";
+            this.chkFastScanAutoIncrement.Size = new System.Drawing.Size(325, 19);
+            this.chkFastScanAutoIncrement.TabIndex = 2;
+            this.chkFastScanAutoIncrement.Text = "Auto-Increment Quantity When Scanning Duplicate Items";
+            this.chkFastScanAutoIncrement.UseVisualStyleBackColor = true;
+            // 
+            // chkFastScanSound
+            // 
+            this.chkFastScanSound.AutoSize = true;
+            this.chkFastScanSound.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.chkFastScanSound.Location = new System.Drawing.Point(23, 90);
+            this.chkFastScanSound.Name = "chkFastScanSound";
+            this.chkFastScanSound.Size = new System.Drawing.Size(258, 19);
+            this.chkFastScanSound.TabIndex = 3;
+            this.chkFastScanSound.Text = "Play Audio Beep Tone on Successful Scan";
+            this.chkFastScanSound.UseVisualStyleBackColor = true;
+            // 
+            // lblBarcodeInfo
+            // 
+            this.lblBarcodeInfo.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblBarcodeInfo.ForeColor = System.Drawing.SystemColors.GrayText;
+            this.lblBarcodeInfo.Location = new System.Drawing.Point(20, 116);
+            this.lblBarcodeInfo.Name = "lblBarcodeInfo";
+            this.lblBarcodeInfo.Size = new System.Drawing.Size(430, 80);
+            this.lblBarcodeInfo.TabIndex = 4;
+            this.lblBarcodeInfo.Text = "• Adds a high-speed barcode input box directly above the items grid in Sale and Purchase entry forms.\r\n• Press F2 anywhere on the form to jump directly to the barcode box.\r\n• Supports multiplier syntax (e.g., \'5*CODE\') to quickly add multiple units.\r\n• Excludes Wanda forms.";
+            // 
+            // grpScannerTest
+            // 
+            this.grpScannerTest.Controls.Add(this.lblTestResult);
+            this.grpScannerTest.Controls.Add(this.txtScannerTest);
+            this.grpScannerTest.Controls.Add(this.lblScannerTest);
+            this.grpScannerTest.Font = new System.Drawing.Font("Segoe UI Semibold", 8.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.grpScannerTest.Location = new System.Drawing.Point(20, 204);
+            this.grpScannerTest.Name = "grpScannerTest";
+            this.grpScannerTest.Size = new System.Drawing.Size(430, 90);
+            this.grpScannerTest.TabIndex = 5;
+            this.grpScannerTest.TabStop = false;
+            this.grpScannerTest.Text = "Hardware Scanner Test Box";
+            // 
+            // lblScannerTest
+            // 
+            this.lblScannerTest.AutoSize = true;
+            this.lblScannerTest.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblScannerTest.Location = new System.Drawing.Point(12, 23);
+            this.lblScannerTest.Name = "lblScannerTest";
+            this.lblScannerTest.Size = new System.Drawing.Size(262, 13);
+            this.lblScannerTest.TabIndex = 0;
+            this.lblScannerTest.Text = "Scan a physical barcode or press Enter to test tone:";
+            // 
+            // txtScannerTest
+            // 
+            this.txtScannerTest.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtScannerTest.Location = new System.Drawing.Point(15, 43);
+            this.txtScannerTest.Name = "txtScannerTest";
+            this.txtScannerTest.Size = new System.Drawing.Size(220, 23);
+            this.txtScannerTest.TabIndex = 1;
+            this.txtScannerTest.KeyDown += new System.Windows.Forms.KeyEventHandler(this.txtScannerTest_KeyDown);
+            // 
+            // lblTestResult
+            // 
+            this.lblTestResult.Font = new System.Drawing.Font("Segoe UI Semibold", 8.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblTestResult.ForeColor = System.Drawing.Color.Green;
+            this.lblTestResult.Location = new System.Drawing.Point(245, 43);
+            this.lblTestResult.Name = "lblTestResult";
+            this.lblTestResult.Size = new System.Drawing.Size(175, 38);
+            this.lblTestResult.TabIndex = 2;
+            // 
             // btnSave
             // 
             this.btnSave.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(25)))), ((int)(((byte)(118)))), ((int)(((byte)(210)))));
@@ -474,5 +597,15 @@ namespace ERP.Forms
         private System.Windows.Forms.PictureBox picQrPreview;
         private System.Windows.Forms.Label lblQrHint;
         private System.Windows.Forms.Label lblPreviewAmount;
+        private System.Windows.Forms.TabPage tabBarcode;
+        private System.Windows.Forms.Label lblBarcodeTitle;
+        private System.Windows.Forms.CheckBox chkEnableBarcodeFastScan;
+        private System.Windows.Forms.CheckBox chkFastScanAutoIncrement;
+        private System.Windows.Forms.CheckBox chkFastScanSound;
+        private System.Windows.Forms.Label lblBarcodeInfo;
+        private System.Windows.Forms.GroupBox grpScannerTest;
+        private System.Windows.Forms.TextBox txtScannerTest;
+        private System.Windows.Forms.Label lblScannerTest;
+        private System.Windows.Forms.Label lblTestResult;
     }
 }

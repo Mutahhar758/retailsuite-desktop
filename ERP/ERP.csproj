@@ -215,6 +215,7 @@
     <Compile Include="Classes\INIFile.cs" />
     <Compile Include="Classes\Query.cs" />
     <Compile Include="Classes\ReportQuery.cs" />
+    <Compile Include="Classes\ScannerToneHelper.cs" />
     <Compile Include="Classes\SoftwareInfo.cs" />
     <Compile Include="Classes\stringValidation.cs" />
     <Compile Include="Classes\UserInfo.cs" />
