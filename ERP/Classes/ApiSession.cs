@@ -27,5 +27,8 @@ namespace ERP.Classes
         public static bool HasVariablePackFeature { get; set; } = false;
         public static bool HasMobileShopFeature { get; set; } = false;
         public static bool EnableCarriage { get; set; } = false;
+        public static bool IsBarcodeFastScanEnabled { get; set; } = false;
+        public static bool FastScanAutoIncrement { get; set; } = true;
+        public static bool FastScanSound { get; set; } = true;
     }
 }

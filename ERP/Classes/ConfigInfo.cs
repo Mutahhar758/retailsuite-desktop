@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Linq;
 using System.Text;
+using ERP.Classes;
 
 namespace ERP
 {
@@ -168,6 +169,24 @@ namespace ERP
             }
 
             return "Thank you for shopping with us!";
+        }
+
+        public static bool IsBarcodeFastScanEnabled
+        {
+            get => ApiSession.IsBarcodeFastScanEnabled;
+            set => ApiSession.IsBarcodeFastScanEnabled = value;
+        }
+
+        public static bool FastScanAutoIncrement
+        {
+            get => ApiSession.FastScanAutoIncrement;
+            set => ApiSession.FastScanAutoIncrement = value;
+        }
+
+        public static bool FastScanSound
+        {
+            get => ApiSession.FastScanSound;
+            set => ApiSession.FastScanSound = value;
         }
 
         public static void Reset()
