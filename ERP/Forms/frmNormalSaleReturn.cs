@@ -1184,38 +1184,23 @@ namespace ERP
                 txtBarcode.Clear();
                 if (string.IsNullOrWhiteSpace(raw)) return;
 
-                decimal qtyToScan = 1m;
-                string barcode = raw;
-                if (raw.Contains("*"))
-                {
-                    string[] parts = raw.Split('*');
-                    if (parts.Length == 2)
-                    {
-                        if (decimal.TryParse(parts[0].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal q1) && q1 > 0 && !decimal.TryParse(parts[1].Trim(), out _))
-                        {
-                            qtyToScan = q1;
-                            barcode = parts[1].Trim();
-                        }
-                        else if (decimal.TryParse(parts[1].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal q2) && q2 > 0 && !decimal.TryParse(parts[0].Trim(), out _))
-                        {
-                            qtyToScan = q2;
-                            barcode = parts[0].Trim();
-                        }
-                    }
-                }
-
-                DataRow dr = FindItemByBarcodeOrCode(barcode);
-                if (dr == null)
+                var parsed = BarcodeParser.Parse(raw, dtItems);
+                if (parsed == null)
                 {
                     ScannerToneHelper.PlayError();
                     return;
                 }
 
+                DataRow dr = parsed.ItemRow;
+                decimal qtyToScan = parsed.Qty;
+                decimal itemPriRate = parsed.Rate;
+
                 string itemId = dr["Id"].ToString();
                 string itemKey = dr["ItemKey"] != DBNull.Value ? dr["ItemKey"].ToString() : "";
                 string itemCategory = dr["fkItemcatagory"] != DBNull.Value ? dr["fkItemcatagory"].ToString() : "";
-                string defaultUnit = dr["DefaultUnit"] != DBNull.Value ? dr["DefaultUnit"].ToString() : "";
-                decimal itemPriRate = dr["PriRate"] != DBNull.Value ? ParseDecimal(dr["PriRate"]) : 0m;
+                string defaultUnit = !string.IsNullOrWhiteSpace(parsed.Unit)
+                    ? parsed.Unit
+                    : (dr["DefaultUnit"] != DBNull.Value ? dr["DefaultUnit"].ToString() : "");
 
                 DataRowView drv = dtItems.DefaultView[dtItems.Rows.IndexOf(dr)];
                 bool isFind = false;
@@ -1227,11 +1212,16 @@ namespace ERP
                     {
                         if (Convert.ToString(dgvSale[clnItemNo.Index, i].Value) == itemId)
                         {
-                            decimal existingQty = ParseDecimal(dgvSale[clnQty.Index, i].Value);
-                            dgvSale[clnQty.Index, i].Value = (existingQty + qtyToScan).ToString("0.##");
-                            isFind = true;
-                            ind = i;
-                            break;
+                            decimal existingRate = ParseDecimal(dgvSale[clnRate.Index, i].Value);
+                            // If same item with same rate, increment quantity
+                            if (Math.Abs(existingRate - itemPriRate) < 0.001m)
+                            {
+                                decimal existingQty = ParseDecimal(dgvSale[clnQty.Index, i].Value);
+                                dgvSale[clnQty.Index, i].Value = (existingQty + qtyToScan).ToString("0.##");
+                                isFind = true;
+                                ind = i;
+                                break;
+                            }
                         }
                     }
                 }

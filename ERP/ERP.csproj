@@ -207,6 +207,7 @@
     </Compile>
     <Compile Include="Classes\AccountHead.cs" />
     <Compile Include="Classes\Barcode.cs" />
+    <Compile Include="Classes\BarcodeParser.cs" />
     <Compile Include="Classes\ApiSession.cs" />
     <Compile Include="Classes\clsConnection.cs" />
     <Compile Include="Classes\CompanyInfo.cs" />

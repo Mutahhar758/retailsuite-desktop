@@ -18,8 +18,12 @@ namespace ERP.Reporting.Models
         public decimal Rate { get; set; }
         public string Category { get; set; }
         public int Copies { get; set; } = 1;
+        public decimal? Qty { get; set; }
+        public string Unit { get; set; }
+        public decimal? TotalAmount { get; set; }
+        public bool IsVariableWeight { get; set; }
 
-        public string FormattedRate => "Rs. " + Rate.ToString("#,##0.00");
+        public string FormattedRate => "Rs. " + Math.Round(Rate).ToString("#,##0");
     }
 
     public readonly struct BarcodeSlice
@@ -201,32 +205,41 @@ namespace ERP.Reporting.Models
             using (var graphics = Graphics.FromImage(img))
             using (var barBrush = new SolidBrush(Color.Black))
             using (var textBrush = new SolidBrush(Color.Black))
-            using (var font = new Font("Segoe UI", 7.5f, FontStyle.Regular))
             {
-                graphics.Clear(Color.White);
-
-                float unitWidth = (float)width / totalUnits;
-                float currentX = 0;
-                int barHeight = Math.Max(1, height - 14);
-
-                foreach (var slice in slices)
+                float fontSize = data.Length > 20 ? 5.5f : (data.Length > 14 ? 6.5f : 7.5f);
+                using (var font = new Font("Segoe UI", fontSize, FontStyle.Regular))
                 {
-                    float sliceW = slice.Width * unitWidth;
-                    if (slice.IsBlack)
+                    graphics.Clear(Color.White);
+
+                    float unitWidth = (float)width / totalUnits;
+                    float currentX = 0;
+                    int barHeight = Math.Max(1, height - 14);
+
+                    foreach (var slice in slices)
                     {
-                        graphics.FillRectangle(barBrush, currentX, 2, sliceW, barHeight);
+                        float sliceW = slice.Width * unitWidth;
+                        if (slice.IsBlack)
+                        {
+                            graphics.FillRectangle(barBrush, currentX, 2, sliceW, barHeight);
+                        }
+                        currentX += sliceW;
                     }
-                    currentX += sliceW;
-                }
 
-                var textRectangle = new RectangleF(0, height - 12, width, 12);
-                var textFormat = new StringFormat { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center };
-                graphics.DrawString(data, font, textBrush, textRectangle, textFormat);
+                    string displayData = data.Replace('-', '\u2011');
+                    var textRectangle = new RectangleF(0, height - 12, width, 12);
+                    var textFormat = new StringFormat
+                    {
+                        Alignment = StringAlignment.Center,
+                        LineAlignment = StringAlignment.Center,
+                        FormatFlags = StringFormatFlags.NoWrap
+                    };
+                    graphics.DrawString(displayData, font, textBrush, textRectangle, textFormat);
 
-                using (var ms = new MemoryStream())
-                {
-                    img.Save(ms, ImageFormat.Png);
-                    return ms.ToArray();
+                    using (var ms = new MemoryStream())
+                    {
+                        img.Save(ms, ImageFormat.Png);
+                        return ms.ToArray();
+                    }
                 }
             }
         }

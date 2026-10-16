@@ -123,11 +123,20 @@ namespace ERP.Services.Legacy
         [JsonProperty("primaryUnit")]
         public string PrimaryUnit { get; set; }
 
+        [JsonProperty("primaryUnitTitle")]
+        public string PrimaryUnitTitle { get; set; }
+
         [JsonProperty("secondaryUnit")]
         public string SecondaryUnit { get; set; }
 
+        [JsonProperty("secondaryUnitTitle")]
+        public string SecondaryUnitTitle { get; set; }
+
         [JsonProperty("defaultUnit")]
         public string DefaultUnit { get; set; }
+
+        [JsonProperty("defaultUnitTitle")]
+        public string DefaultUnitTitle { get; set; }
 
         [JsonProperty("qtyInPack")]
         public decimal? QtyInPack { get; set; }

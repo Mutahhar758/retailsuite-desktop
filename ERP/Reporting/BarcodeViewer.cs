@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Printing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Threading.Tasks;
@@ -22,6 +23,8 @@ namespace ERP.Reporting
     {
         private readonly InventoryApiService _inventoryApiService;
         private readonly ItemCategoryApiService _itemCategoryApiService;
+        private readonly UnitApiService _unitApiService;
+        private readonly Dictionary<string, string> _unitsMap = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         // UI Controls - Sidebar
         private Panel pnlSidebar;
@@ -33,6 +36,13 @@ namespace ERP.Reporting
         private NumericUpDown nudCopies;
         private Label lblPrice;
         private TextBox txtPrice;
+        private CheckBox chkVariableWeight;
+        private Label lblWeightQty;
+        private NumericUpDown nudWeightQty;
+        private Label lblUnitName;
+        private Label lblTotalAmount;
+        private TextBox txtTotalAmount;
+        private bool _isSyncingAmounts = false;
         private Label lblLayout;
         private ComboBox cmbLayout;
         private Label lblPrinter;
@@ -58,6 +68,7 @@ namespace ERP.Reporting
         {
             _inventoryApiService = new InventoryApiService();
             _itemCategoryApiService = new ItemCategoryApiService();
+            _unitApiService = new UnitApiService();
 
             InitializeComponentCodeFirst();
             this.Load += async (s, e) => await InitializeDataAsync();
@@ -78,7 +89,8 @@ namespace ERP.Reporting
                 Dock = DockStyle.Left,
                 Width = 360,
                 BackColor = Color.White,
-                Padding = new Padding(14)
+                Padding = new Padding(14),
+                AutoScroll = true
             };
             pnlSidebar.Paint += (s, pe) =>
             {
@@ -185,6 +197,115 @@ namespace ERP.Reporting
             };
             pnlSidebar.Controls.Add(txtPrice);
             curY += 34;
+
+            // Variable Weight Checkbox
+            chkVariableWeight = new CheckBox
+            {
+                Text = "Variable Weight / Quantity (e.g. Meat / Produce)",
+                Location = new Point(14, curY),
+                Width = 330,
+                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42)
+            };
+            pnlSidebar.Controls.Add(chkVariableWeight);
+            curY += 26;
+
+            // Variable Weight Controls: Qty & Total Amount
+            lblWeightQty = new Label
+            {
+                Text = "QTY (PRIMARY UNIT):",
+                Location = new Point(14, curY),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(lblWeightQty);
+
+            lblTotalAmount = new Label
+            {
+                Text = "TOTAL AMOUNT (RS):",
+                Location = new Point(180, curY),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(lblTotalAmount);
+            curY += 18;
+
+            nudWeightQty = new NumericUpDown
+            {
+                Location = new Point(14, curY),
+                Width = 110,
+                DecimalPlaces = 3,
+                Minimum = 0.001m,
+                Maximum = 9999m,
+                Value = 1.000m,
+                Increment = 0.1m,
+                Font = new Font("Segoe UI", 9F),
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(nudWeightQty);
+
+            lblUnitName = new Label
+            {
+                Text = "kg",
+                Location = new Point(128, curY + 3),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Italic),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(lblUnitName);
+
+            txtTotalAmount = new TextBox
+            {
+                Location = new Point(180, curY),
+                Width = 164,
+                Font = new Font("Segoe UI", 9F),
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(txtTotalAmount);
+            curY += 34;
+
+            chkVariableWeight.CheckedChanged += (s, e) =>
+            {
+                bool isVar = chkVariableWeight.Checked;
+                lblWeightQty.Visible = isVar;
+                nudWeightQty.Visible = isVar;
+                lblUnitName.Visible = isVar;
+                lblTotalAmount.Visible = isVar;
+                txtTotalAmount.Visible = isVar;
+                lblPrice.Text = isVar ? "UNIT RATE (RS):" : "PRINT PRICE (RS):";
+                SyncVariableWeightTotal();
+            };
+
+            nudWeightQty.ValueChanged += (s, e) => SyncVariableWeightTotal();
+            txtPrice.TextChanged += (s, e) =>
+            {
+                if (chkVariableWeight.Checked)
+                    SyncVariableWeightTotal();
+            };
+            txtTotalAmount.TextChanged += (s, e) =>
+            {
+                if (chkVariableWeight.Checked && !_isSyncingAmounts && nudWeightQty.Value > 0)
+                {
+                    if (decimal.TryParse(txtTotalAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal tot))
+                    {
+                        try
+                        {
+                            _isSyncingAmounts = true;
+                            decimal computedRate = Math.Round(tot / nudWeightQty.Value);
+                            txtPrice.Text = computedRate.ToString("0");
+                        }
+                        finally
+                        {
+                            _isSyncingAmounts = false;
+                        }
+                    }
+                }
+            };
 
             // Layout Format
             lblLayout = new Label
@@ -364,6 +485,23 @@ namespace ERP.Reporting
                 foreach (var c in _allCategories) cmbCategory.Items.Add(c.Title);
                 cmbCategory.SelectedIndex = 0;
 
+                // Load Units for Title Resolution
+                try
+                {
+                    var units = await _unitApiService.GetLookupAsync();
+                    if (units != null)
+                    {
+                        foreach (var u in units)
+                        {
+                            if (!string.IsNullOrWhiteSpace(u.Code) && !string.IsNullOrWhiteSpace(u.Title))
+                            {
+                                _unitsMap[u.Code] = u.Title;
+                            }
+                        }
+                    }
+                }
+                catch { }
+
                 // Load Items
                 var items = await _inventoryApiService.GetLookupAsync(null);
                 _allItems = items ?? new List<InventoryItemDto>();
@@ -409,12 +547,62 @@ namespace ERP.Reporting
             if (list.Count > 0) cmbItem.SelectedIndex = 0;
         }
 
+        private void SyncVariableWeightTotal()
+        {
+            if (_isSyncingAmounts) return;
+            try
+            {
+                _isSyncingAmounts = true;
+                decimal rate = 0m;
+                decimal.TryParse(txtPrice.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out rate);
+                rate = Math.Round(rate);
+                decimal qty = nudWeightQty.Value;
+                decimal total = Math.Round(qty * rate);
+                txtTotalAmount.Text = total.ToString("0");
+            }
+            finally
+            {
+                _isSyncingAmounts = false;
+            }
+        }
+
+        private string GetUnitTitle(InventoryItemDto item)
+        {
+            if (item == null) return "kg";
+
+            // 1. If item has populated unit title directly from API
+            if (!string.IsNullOrWhiteSpace(item.PrimaryUnitTitle)) return item.PrimaryUnitTitle;
+            if (!string.IsNullOrWhiteSpace(item.DefaultUnitTitle)) return item.DefaultUnitTitle;
+
+            // 2. Lookup by code in unit dictionary
+            string code = !string.IsNullOrWhiteSpace(item.PrimaryUnit) ? item.PrimaryUnit : item.DefaultUnit;
+            if (!string.IsNullOrWhiteSpace(code))
+            {
+                if (_unitsMap.TryGetValue(code, out string title) && !string.IsNullOrWhiteSpace(title))
+                {
+                    return title;
+                }
+                if (!decimal.TryParse(code, out _))
+                {
+                    return code;
+                }
+            }
+
+            return "kg";
+        }
+
         private void OnItemSelected()
         {
             var item = cmbItem.SelectedItem as InventoryItemDto;
             if (item != null)
             {
-                txtPrice.Text = item.PriRate.ToString("N0");
+                txtPrice.Text = Math.Round(item.PriRate).ToString("0");
+                string u = GetUnitTitle(item);
+                if (lblUnitName != null) lblUnitName.Text = u;
+                if (chkVariableWeight != null && chkVariableWeight.Checked)
+                {
+                    SyncVariableWeightTotal();
+                }
             }
         }
 
@@ -446,11 +634,38 @@ namespace ERP.Reporting
             }
 
             decimal price = item.PriRate;
-            decimal.TryParse(txtPrice.Text, out price);
+            decimal.TryParse(txtPrice.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out price);
             int copies = (int)nudCopies.Value;
             var layout = GetSelectedLayout();
 
-            string barcode = !string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : ("200" + (item.Id ?? "101").PadLeft(7, '0'));
+            string barcode;
+            bool isVariable = chkVariableWeight.Checked;
+            decimal? varQty = null;
+            string varUnit = null;
+            decimal? varTotal = null;
+
+            if (isVariable)
+            {
+                decimal qty = nudWeightQty.Value;
+                decimal rate = Math.Round(price);
+                decimal total = Math.Round(qty * rate);
+                if (decimal.TryParse(txtTotalAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsedTot))
+                {
+                    total = Math.Round(parsedTot);
+                }
+
+                string baseCode = !string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : (!string.IsNullOrWhiteSpace(item.ItemKey) ? item.ItemKey : item.Id);
+                barcode = string.Format(CultureInfo.InvariantCulture, "VW-{0}-Q{1:0.###}-R{2:0}", baseCode, qty, rate);
+
+                varQty = qty;
+                varUnit = GetUnitTitle(item);
+                varTotal = total;
+                price = rate;
+            }
+            else
+            {
+                barcode = !string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : ("200" + (item.Id ?? "101").PadLeft(7, '0'));
+            }
 
             var labelItem = new BarcodeLabelItem
             {
@@ -458,7 +673,11 @@ namespace ERP.Reporting
                 Title = item.Title,
                 Barcode = barcode,
                 Rate = price,
-                Copies = copies
+                Copies = copies,
+                IsVariableWeight = isVariable,
+                Qty = varQty,
+                Unit = varUnit,
+                TotalAmount = varTotal
             };
             _currentItem = labelItem;
 
