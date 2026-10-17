@@ -86,9 +86,9 @@ namespace ERP.Reporting.Documents
 
                 container.Page(page =>
                 {
-                    page.Size(101.6f, 25.4f, Unit.Millimetre);
-                    page.MarginVertical(0.5f, Unit.Millimetre);
-                    page.MarginHorizontal(1.5f, Unit.Millimetre);
+                    page.Size(100f, 22.86f, Unit.Millimetre);
+                    page.MarginVertical(0.3f, Unit.Millimetre);
+                    page.MarginHorizontal(1.0f, Unit.Millimetre);
                     page.PageColor(QuestPDF.Helpers.Colors.White);
 
                     page.Content().Row(row =>
@@ -103,7 +103,7 @@ namespace ERP.Reporting.Documents
                             if (c < rowItems.Count)
                             {
                                 var item = rowItems[c];
-                                var barcodeBytes = BarcodeDataService.GenerateBarcodeBytes(item.Barcode, 120, 36);
+                                var slices = BarcodeDataService.GenerateSlices(item.Barcode, 3);
 
                                 string comp = _companyName ?? string.Empty;
                                 if (comp.Length > 24) comp = comp.Substring(0, 22) + "..";
@@ -111,7 +111,7 @@ namespace ERP.Reporting.Documents
                                 string title = item.Title ?? string.Empty;
                                 if (title.Length > 22) title = title.Substring(0, 20) + "..";
 
-                                row.RelativeItem().Padding(0.5f, Unit.Millimetre).Column(col =>
+                                row.RelativeItem().PaddingHorizontal(1.5f, Unit.Millimetre).Column(col =>
                                 {
                                     col.Item().AlignCenter().Text(comp)
                                         .FontSize(5.5f)
@@ -123,7 +123,24 @@ namespace ERP.Reporting.Documents
                                         .Bold()
                                         .FontColor(QuestPDF.Helpers.Colors.Black);
 
-                                    col.Item().PaddingVertical(0.5f).AlignCenter().Height(item.IsVariableWeight ? 7.5f : 8.5f, Unit.Millimetre).Image(barcodeBytes);
+                                    col.Item()
+                                        .PaddingVertical(0.3f, Unit.Millimetre)
+                                        .AlignCenter()
+                                        .Height(item.IsVariableWeight ? 8.5f : 9.5f, Unit.Millimetre)
+                                        .Row(bRow =>
+                                        {
+                                            foreach (var slice in slices)
+                                            {
+                                                if (slice.IsBlack)
+                                                    bRow.RelativeItem(slice.Width).Background(QuestPDF.Helpers.Colors.Black);
+                                                else
+                                                    bRow.RelativeItem(slice.Width);
+                                            }
+                                        });
+
+                                    col.Item().AlignCenter().Text(item.Barcode)
+                                        .FontSize(item.Barcode.Length > 18 ? 3.8f : (item.Barcode.Length > 13 ? 4.5f : 5.5f))
+                                        .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
 
                                     if (item.IsVariableWeight && item.Qty.HasValue)
                                     {
@@ -323,7 +340,8 @@ namespace ERP.Reporting.Documents
 
         public static void PrintDirectToPrinter(IDocument document, string printerName)
         {
-            var images = document.GenerateImages().ToList();
+            var settings = new ImageGenerationSettings { RasterDpi = 300 };
+            var images = document.GenerateImages(settings).ToList();
             if (images.Count == 0) return;
 
             int pageIndex = 0;
@@ -334,6 +352,8 @@ namespace ERP.Reporting.Documents
                     pd.PrinterSettings.PrinterName = printerName;
                 }
 
+                pd.DefaultPageSettings.Margins = new System.Drawing.Printing.Margins(0, 0, 0, 0);
+                pd.OriginAtMargins = false;
                 pd.PrintController = new StandardPrintController();
                 pd.PrintPage += (s, ev) =>
                 {
@@ -342,8 +362,9 @@ namespace ERP.Reporting.Documents
                         using (var ms = new MemoryStream(images[pageIndex]))
                         using (var img = System.Drawing.Image.FromStream(ms))
                         {
-                            System.Drawing.Rectangle bounds = ev.MarginBounds;
-                            if (bounds.Width <= 0 || bounds.Height <= 0) bounds = ev.PageBounds;
+                            System.Drawing.Rectangle bounds = ev.PageBounds;
+                            ev.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+                            ev.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
                             ev.Graphics.DrawImage(img, bounds);
                         }
                         pageIndex++;

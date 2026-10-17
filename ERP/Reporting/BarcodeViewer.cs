@@ -656,7 +656,15 @@ namespace ERP.Reporting
 
                 string rawBase = !string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : (!string.IsNullOrWhiteSpace(item.ItemKey) ? item.ItemKey : item.Id);
                 string baseCode = rawBase?.Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
-                barcode = string.Format(CultureInfo.InvariantCulture, "VW-{0}-Q{1:0.###}-R{2:0}", baseCode, qty, rate);
+                decimal defaultRate = Math.Round(item.PriRate);
+                if (rate == defaultRate)
+                {
+                    barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
+                }
+                else
+                {
+                    barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}*{2:0}", baseCode, qty, rate);
+                }
 
                 varQty = qty;
                 varUnit = GetUnitTitle(item);

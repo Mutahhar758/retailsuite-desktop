@@ -94,11 +94,11 @@ namespace ERP.Classes
                 }
             }
 
-            // 2. Delimited 3-Part Syntax: {ItemCode}*{qty}*{rate}
+            // 2. Delimited Syntax: {ItemCode}*{qty} or {ItemCode}*{qty}*{rate} (No VW, Q, R needed)
             if (raw.Contains("*"))
             {
                 string[] starParts = raw.Split('*');
-                if (starParts.Length == 3)
+                if (starParts.Length == 3 || starParts.Length == 2)
                 {
                     string codePart = starParts[0].Trim();
                     if (decimal.TryParse(starParts[1].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal qVal) && qVal > 0)
@@ -107,7 +107,7 @@ namespace ERP.Classes
                         if (dr != null)
                         {
                             decimal rate = dr["PriRate"] != DBNull.Value ? Convert.ToDecimal(dr["PriRate"]) : 0m;
-                            if (decimal.TryParse(starParts[2].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal rVal) && rVal >= 0)
+                            if (starParts.Length == 3 && decimal.TryParse(starParts[2].Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal rVal) && rVal >= 0)
                             {
                                 rate = decimal.Round(rVal, 2);
                             }
