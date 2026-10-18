@@ -209,6 +209,12 @@ namespace ERP
             await LoadItemDetailAsync();
             FillUnits();
 
+            try
+            {
+                clnCategoryRates.DisplayIndex = clnSecRate.DisplayIndex + 1;
+            }
+            catch { }
+
             DataTable dtItemTypes = new DataTable();
             dtItemTypes.Columns.Add("Value", typeof(int));
             dtItemTypes.Columns.Add("Name", typeof(string));
@@ -653,6 +659,32 @@ namespace ERP
                 row.Cells["clnIsEdit"].Value = "1";
             }
             profileImage1.ClearImage();
+        }
+
+        private void dgvItemDetail_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex >= 0 && e.ColumnIndex == clnCategoryRates.Index)
+            {
+                var row = dgvItemDetail.Rows[e.RowIndex];
+                var itemId = row.Cells[clnId.Index].Value?.ToString();
+                var itemTitle = row.Cells[clnItem.Index].Value?.ToString() ?? string.Empty;
+
+                if (string.IsNullOrWhiteSpace(itemId))
+                {
+                    MessageBox.Show("Please save the item before configuring category rates.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                decimal.TryParse(row.Cells[clnPriRate.Index].Value?.ToString(), out decimal priRate);
+                decimal? secRate = null;
+                if (decimal.TryParse(row.Cells[clnSecRate.Index].Value?.ToString(), out decimal sVal))
+                    secRate = sVal;
+
+                using (var frm = new ERP.Forms.frmItemCategoryRates(itemId, itemTitle, priRate, secRate))
+                {
+                    frm.ShowDialog(this);
+                }
+            }
         }
     }
 }

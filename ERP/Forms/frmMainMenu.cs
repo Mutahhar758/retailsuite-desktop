@@ -90,6 +90,7 @@ namespace ERP
             chartOfAccountToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ChartOfAccounts);
             detailAccountsToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.DetailAccounts);
             customerInformationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Customers);
+            customerCategoryToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerCategories);
             supplierInformationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Vendors);
             narrationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Narrations);
             itemDetailToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.InventoryItems);
@@ -505,6 +506,13 @@ namespace ERP
         private void itemCatagoryToolStripMenuItem_Click(object sender, EventArgs e)
         {
             frmItemCatagory frm = new frmItemCatagory();
+            frm.MdiParent = this;
+            frm.Show();
+        }
+
+        private void customerCategoryToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var frm = new ERP.Forms.frmCustomerCategory();
             frm.MdiParent = this;
             frm.Show();
         }

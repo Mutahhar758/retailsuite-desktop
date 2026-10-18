@@ -13,6 +13,7 @@ namespace ERP
         bool Flogin = true;
         private readonly CustomerApiService _customerApiService;
         private readonly InventoryApiService _inventoryApiService;
+        private readonly CustomerCategoryApiService _customerCategoryApiService;
         private List<CustomerDto> _customers;
         private bool _isSaving;
         private bool _isDeleting;
@@ -23,6 +24,7 @@ namespace ERP
             InitializeComponent();
             _customerApiService = new CustomerApiService();
             _inventoryApiService = new InventoryApiService();
+            _customerCategoryApiService = new CustomerCategoryApiService();
             _customers = new List<CustomerDto>();
             UserInfo.ApplyFormPermissions(this, AppResource.Customers);
         }
@@ -60,6 +62,8 @@ namespace ERP
             lblCreatedBy.Text = lblEditBy.Text = "-";
             chkActive.Checked = true;
             chkSMSAlert.Checked = chkEmailAlert.Checked = false;
+            if (cmbCustomerCategory != null && cmbCustomerCategory.DataSource != null)
+                cmbCustomerCategory.SelectedValue = string.Empty;
             profileImage1?.ClearImage();
             dgvSupplyItems?.Rows.Clear();
             if (lblSupplyCustomerInfo != null)
@@ -88,7 +92,7 @@ namespace ERP
             if (list == null) return;
             foreach (var c in list)
                 dgvCustomers.Rows.Add(c.Account, c.Title, c.Phone1,
-                                      c.Email, c.Address, c.Active ? "Yes" : "No");
+                                      c.Email, c.Address, c.CustomerCategoryTitle ?? "-", c.Active ? "Yes" : "No");
         }
 
         private async void FillDetail(string code)
@@ -114,6 +118,8 @@ namespace ERP
             chkSMSAlert.Checked   = c.SmsAlert;
             chkEmailAlert.Checked = c.EmailAlert;
             chkActive.Checked     = c.Active;
+            if (cmbCustomerCategory != null && cmbCustomerCategory.DataSource != null)
+                cmbCustomerCategory.SelectedValue = c.CustomerCategoryId ?? string.Empty;
 
             lblCreatedBy.Text = FormatAudit(c.CreatedBy,       c.CreatedOn);
             lblEditBy.Text    = FormatAudit(c.LastModifiedBy,  c.LastModifiedOn);
@@ -215,6 +221,9 @@ namespace ERP
                 EmailAlert    = chkEmailAlert.Checked,
                 Active        = chkActive.Checked,
                 MediaId       = profileImage1?.MediaId,
+                CustomerCategoryId = cmbCustomerCategory != null && cmbCustomerCategory.SelectedValue != null && !string.IsNullOrWhiteSpace(cmbCustomerCategory.SelectedValue.ToString())
+                    ? cmbCustomerCategory.SelectedValue.ToString()
+                    : null,
                 SupplyItems   = supplyItems
             };
         }
@@ -367,6 +376,22 @@ namespace ERP
                 clnSupplyItemId.ValueMember = "Id";
                 clnSupplySecQty.Visible = ApiSession.HasSecondaryQty;
                 clnSupplyCarriage.Visible = ApiSession.EnableCarriage;
+
+                try
+                {
+                    var categories = await _customerCategoryApiService.GetLookupAsync();
+                    var catList = new List<CustomerCategoryLookupDto>
+                    {
+                        new CustomerCategoryLookupDto { Code = string.Empty, Title = "-- None --" }
+                    };
+                    if (categories != null)
+                        catList.AddRange(categories);
+
+                    cmbCustomerCategory.DataSource = catList;
+                    cmbCustomerCategory.DisplayMember = "Title";
+                    cmbCustomerCategory.ValueMember = "Code";
+                }
+                catch { }
 
                 await FillCustomersAsync();
                 Flogin = false;

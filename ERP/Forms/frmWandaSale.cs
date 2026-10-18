@@ -32,6 +32,14 @@ namespace ERP
         private int VoucherIndex = 0;
         private string VoucherNum = null;
         private bool _isSaving;
+        private readonly Dictionary<string, (decimal PriRate, decimal? SecRate)> _categoryPriceMap = new Dictionary<string, (decimal, decimal?)>(StringComparer.OrdinalIgnoreCase);
+        private string _originalAccountId = null;
+
+        private class SavedRowRateInfo
+        {
+            public decimal Rate { get; set; }
+            public decimal SecRate { get; set; }
+        }
 
         enum Navigators { Up, Down, Home, End }
 
@@ -71,6 +79,7 @@ namespace ERP
 
             dtAccounts.Columns.Add("Account", typeof(string));
             dtAccounts.Columns.Add("Title", typeof(string));
+            dtAccounts.Columns.Add("CustomerCategoryId", typeof(string));
 
             dtNarration.Columns.Add("Code", typeof(string));
             dtNarration.Columns.Add("Title", typeof(string));
@@ -83,7 +92,17 @@ namespace ERP
             var categoriesTask = _itemCategoryApiService.GetLookupAsync();
             var unitsTask = _unitApiService.GetLookupAsync();
             var itemsTask = _inventoryApiService.GetLookupAsync(null);
-            await System.Threading.Tasks.Task.WhenAll(accountsTask, narrationsTask, categoriesTask, unitsTask, itemsTask);
+            var categoryPricesTask = _inventoryApiService.GetCustomerCategoryPricesAsync();
+            await System.Threading.Tasks.Task.WhenAll(accountsTask, narrationsTask, categoriesTask, unitsTask, itemsTask, categoryPricesTask);
+
+            _categoryPriceMap.Clear();
+            foreach (var cp in categoryPricesTask.Result)
+            {
+                if (!string.IsNullOrWhiteSpace(cp.ItemId) && !string.IsNullOrWhiteSpace(cp.CustomerCategoryId))
+                {
+                    _categoryPriceMap[$"{cp.ItemId}_{cp.CustomerCategoryId}"] = (cp.PriRate, cp.SecRate);
+                }
+            }
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
@@ -99,7 +118,7 @@ namespace ERP
 
             dtAccounts.Rows.Clear();
             foreach (var a in accountsTask.Result)
-                dtAccounts.Rows.Add(a.Account, a.Title);
+                dtAccounts.Rows.Add(a.Account, a.Title, a.CustomerCategoryId);
 
             dtNarration.Rows.Clear();
             foreach (var n in narrationsTask.Result)
@@ -171,6 +190,7 @@ namespace ERP
             if (lines.Count > 0)
             {
                 var first = lines[0];
+                _originalAccountId = first.AccountId;
                 dtpDate.Value = first.Date;
                 if (string.IsNullOrWhiteSpace(first.Narration))
                     cmbNarration.SelectedIndex = -1;
@@ -235,6 +255,12 @@ namespace ERP
                             dgvSale["clnPacking", ind].Value = (line.Packing ?? 0).ToString("0.##");
                         dgvSale["clnSecRate", ind].Value = (line.SecRate ?? 0).ToString("0.##");
                     }
+
+                    row.Tag = new SavedRowRateInfo
+                    {
+                        Rate = line.Rate,
+                        SecRate = line.SecRate ?? 0
+                    };
                 }
             }
 
@@ -637,6 +663,26 @@ namespace ERP
             }
         }
 
+        private string GetSelectedCustomerCategoryId()
+        {
+            if (cmbAccounts.SelectedValue == null) return null;
+            string account = cmbAccounts.SelectedValue.ToString();
+            var row = dtAccounts.AsEnumerable().FirstOrDefault(r => r["Account"].ToString() == account);
+            return row != null && row.Table.Columns.Contains("CustomerCategoryId") && row["CustomerCategoryId"] != DBNull.Value
+                ? row["CustomerCategoryId"].ToString()
+                : null;
+        }
+
+        private (decimal PriRate, decimal? SecRate) ResolveItemRates(string itemId, decimal defaultPriRate, decimal? defaultSecRate)
+        {
+            string catId = GetSelectedCustomerCategoryId();
+            if (!string.IsNullOrWhiteSpace(catId) && _categoryPriceMap.TryGetValue($"{itemId}_{catId}", out var catPrice))
+            {
+                return (catPrice.PriRate, catPrice.SecRate ?? defaultSecRate);
+            }
+            return (defaultPriRate, defaultSecRate);
+        }
+
         private void SetcmbUnitSource(DataRowView dr, int rowInd)
         {
             decimal qtyInPack = dr.Row.Table.Columns.Contains("QtyInPack") ? ParseDecimal(dr["QtyInPack"]) : 0;
@@ -645,8 +691,11 @@ namespace ERP
             if (dgvSale.Columns.Contains("clnPacking"))
                 dgvSale["clnPacking", rowInd].Value = qtyInPack > 0 ? qtyInPack.ToString("0.##") : "0";
 
-            decimal priRate = ParseDecimal(dr["PriRate"]);
-            decimal secRate = ParseDecimal(dr["SecRate"]);
+            string itemId = dr["Id"].ToString();
+            decimal defaultPriRate = ParseDecimal(dr["PriRate"]);
+            decimal? defaultSecRate = dr["SecRate"] != DBNull.Value ? (decimal?)ParseDecimal(dr["SecRate"]) : null;
+            var (priRate, secRateVal) = ResolveItemRates(itemId, defaultPriRate, defaultSecRate);
+            decimal secRate = secRateVal ?? 0m;
             if (secRate == 0 && qtyInPack > 0)
                 secRate = Math.Round(priRate * qtyInPack, 2);
 
@@ -799,6 +848,31 @@ namespace ERP
 
             dgvSale[clnAmount.Index, e.RowIndex].Value = Math.Round((kgQty * kgRate) - discount + carriage, 2).ToString("N2");
             CalcTotAmount();
+
+            bool isRateColumn = e.ColumnIndex == clnRate.Index ||
+                (dgvSale.Columns.Contains("clnSecRate") && e.ColumnIndex == dgvSale.Columns["clnSecRate"].Index);
+
+            string currentAccountId = cmbAccounts.SelectedItem is DataRowView drvAcc && drvAcc.Row.Table.Columns.Contains("Account")
+                ? drvAcc["Account"]?.ToString()
+                : cmbAccounts.SelectedValue?.ToString();
+
+            if (isRateColumn && !string.IsNullOrEmpty(_originalAccountId) &&
+                string.Equals(currentAccountId?.Trim(), _originalAccountId.Trim(), StringComparison.OrdinalIgnoreCase) &&
+                e.RowIndex >= 0 && e.RowIndex < dgvSale.Rows.Count)
+            {
+                var row = dgvSale.Rows[e.RowIndex];
+                if (!row.IsNewRow)
+                {
+                    var savedRate = row.Tag as SavedRowRateInfo;
+                    if (savedRate == null)
+                    {
+                        savedRate = new SavedRowRateInfo();
+                        row.Tag = savedRate;
+                    }
+                    savedRate.Rate = kgRate;
+                    savedRate.SecRate = bagRate;
+                }
+            }
         }
 
         private void dgvPurchase_SelectionChanged(object sender, EventArgs e)
@@ -893,6 +967,7 @@ namespace ERP
             txtBarcode.Text = "";
             txtVoucherNo.Text = "";
             VoucherNum = null;
+            _originalAccountId = null;
             txtTotAmount.Text = "0";
             txtCashReceipt.Text = "0";
             txtCashBack.Text = "0";
@@ -1148,6 +1223,7 @@ namespace ERP
             {
                 txtVoucherNo.Text = "";
                 VoucherNum = "";
+                _originalAccountId = null;
                 txtCreatedBy.Text = "";
                 txtEditBy.Text = "";
                 dtpDate.Value = DateTime.Now;
@@ -1170,6 +1246,72 @@ namespace ERP
 
         private void cmbAccounts_SelectedIndexChanged(object sender, EventArgs e)
         {
+            if (FLogIn) return;
+            UpdateExistingLineRates();
+        }
+
+        private void UpdateExistingLineRates()
+        {
+            string currentAccountId = cmbAccounts.SelectedItem is DataRowView drvAcc && drvAcc.Row.Table.Columns.Contains("Account")
+                ? drvAcc["Account"]?.ToString()
+                : cmbAccounts.SelectedValue?.ToString();
+
+            bool isSameAsOriginal = !string.IsNullOrEmpty(_originalAccountId) &&
+                                    string.Equals(currentAccountId?.Trim(), _originalAccountId.Trim(), StringComparison.OrdinalIgnoreCase);
+
+            for (int i = 0; i < dgvSale.Rows.Count; i++)
+            {
+                var itemIdObj = dgvSale[clnItemNo.Index, i].Value;
+                if (itemIdObj == null || string.IsNullOrWhiteSpace(itemIdObj.ToString()))
+                    continue;
+
+                var row = dgvSale.Rows[i];
+                if (row.IsNewRow) continue;
+
+                decimal kgRate;
+                decimal secRate = 0m;
+
+                if (isSameAsOriginal && row.Tag is SavedRowRateInfo savedRate)
+                {
+                    kgRate = savedRate.Rate;
+                    secRate = savedRate.SecRate;
+                }
+                else
+                {
+                    string itemId = itemIdObj.ToString();
+                    DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
+                    if (itemRow == null) continue;
+
+                    decimal qtyInPack = itemRow.Table.Columns.Contains("QtyInPack") ? ParseDecimal(itemRow["QtyInPack"]) : 0;
+                    decimal defaultPriRate = ParseDecimal(itemRow["PriRate"]);
+                    decimal? defaultSecRate = itemRow["SecRate"] != DBNull.Value ? (decimal?)ParseDecimal(itemRow["SecRate"]) : null;
+
+                    var (priRate, secRateVal) = ResolveItemRates(itemId, defaultPriRate, defaultSecRate);
+                    secRate = secRateVal ?? 0m;
+                    if (secRate == 0 && qtyInPack > 0)
+                        secRate = Math.Round(priRate * qtyInPack, 2);
+
+                    kgRate = (qtyInPack > 0 && secRate > 0) ? Math.Round(secRate / qtyInPack, 8) : priRate;
+                }
+
+                dgvSale[clnRate.Index, i].Value = kgRate.ToString("0.##");
+                dgvSale[clnRate.Index, i].Tag = kgRate;
+
+                if (dgvSale.Columns.Contains("clnSecRate"))
+                    dgvSale["clnSecRate", i].Value = secRate > 0 ? secRate.ToString("0.##") : "0";
+
+                decimal qty = ParseDecimal(dgvSale[clnQty.Index, i].Value);
+                decimal discount = ParseDecimal(dgvSale[clnDiscount.Index, i].Value);
+                decimal carriage = clnCarriage != null ? ParseDecimal(dgvSale[clnCarriage.Index, i].Value) : 0;
+
+                decimal secQty = 0;
+                if (dgvSale.Columns.Contains("clnSecQty"))
+                    secQty = ParseDecimal(dgvSale["clnSecQty", i].Value);
+
+                decimal lineGross = (qty * kgRate) + (secQty * secRate);
+                dgvSale[clnAmount.Index, i].Value = decimal.Round(lineGross - discount + carriage, 2).ToString();
+            }
+            CalcTotAmount();
         }
 
         private async void btnAddNewItem_Click(object sender, EventArgs e)

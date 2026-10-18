@@ -35,6 +35,7 @@ namespace ERP
             this.chartOfAccountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.detailAccountsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.customerInformationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.customerCategoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.supplierInformationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.narrationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.itemDetailToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -124,6 +125,7 @@ namespace ERP
             this.chartOfAccountToolStripMenuItem,
             this.detailAccountsToolStripMenuItem,
             this.customerInformationToolStripMenuItem,
+            this.customerCategoryToolStripMenuItem,
             this.supplierInformationToolStripMenuItem,
             this.narrationToolStripMenuItem,
             this.itemDetailToolStripMenuItem,
@@ -164,6 +166,13 @@ namespace ERP
             this.customerInformationToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
             this.customerInformationToolStripMenuItem.Text = "Customer Information";
             this.customerInformationToolStripMenuItem.Click += new System.EventHandler(this.customerInformationToolStripMenuItem_Click);
+            // 
+            // customerCategoryToolStripMenuItem
+            // 
+            this.customerCategoryToolStripMenuItem.Name = "customerCategoryToolStripMenuItem";
+            this.customerCategoryToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
+            this.customerCategoryToolStripMenuItem.Text = "Customer Categories";
+            this.customerCategoryToolStripMenuItem.Click += new System.EventHandler(this.customerCategoryToolStripMenuItem_Click);
             // 
             // supplierInformationToolStripMenuItem
             // 
@@ -715,6 +724,7 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem setupToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem chartOfAccountToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerInformationToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem customerCategoryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem supplierInformationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem dailyEntryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem paymentVoucherToolStripMenuItem;

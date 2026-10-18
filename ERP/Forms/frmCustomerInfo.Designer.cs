@@ -42,6 +42,7 @@ namespace ERP
             this.dataGridViewTextBoxColumn3 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn4 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn5 = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnCustomerCategory = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.dataGridViewTextBoxColumn6 = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.pnlListHeader = new System.Windows.Forms.Panel();
             this.lblSearch = new System.Windows.Forms.Label();
@@ -75,6 +76,8 @@ namespace ERP
             this.label1 = new System.Windows.Forms.Label();
             this.txtIBAN = new System.Windows.Forms.TextBox();
             this.groupBox1 = new System.Windows.Forms.GroupBox();
+            this.lblCustomerCategory = new System.Windows.Forms.Label();
+            this.cmbCustomerCategory = new System.Windows.Forms.ComboBox();
             this.chkSMSAlert = new System.Windows.Forms.CheckBox();
             this.chkEmailAlert = new System.Windows.Forms.CheckBox();
             this.label4 = new System.Windows.Forms.Label();
@@ -149,6 +152,7 @@ namespace ERP
             this.dataGridViewTextBoxColumn3,
             this.dataGridViewTextBoxColumn4,
             this.dataGridViewTextBoxColumn5,
+            this.clnCustomerCategory,
             this.dataGridViewTextBoxColumn6});
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle3.BackColor = System.Drawing.SystemColors.Window;
@@ -200,6 +204,13 @@ namespace ERP
             this.dataGridViewTextBoxColumn5.HeaderText = "Address";
             this.dataGridViewTextBoxColumn5.Name = "dataGridViewTextBoxColumn5";
             this.dataGridViewTextBoxColumn5.ReadOnly = true;
+            // 
+            // clnCustomerCategory
+            // 
+            this.clnCustomerCategory.HeaderText = "Category";
+            this.clnCustomerCategory.Name = "clnCustomerCategory";
+            this.clnCustomerCategory.ReadOnly = true;
+            this.clnCustomerCategory.Width = 110;
             // 
             // dataGridViewTextBoxColumn6
             // 
@@ -300,6 +311,8 @@ namespace ERP
             this.tpDetails.Controls.Add(this.txtSMSNumber);
             this.tpDetails.Controls.Add(this.label1);
             this.tpDetails.Controls.Add(this.txtIBAN);
+            this.tpDetails.Controls.Add(this.lblCustomerCategory);
+            this.tpDetails.Controls.Add(this.cmbCustomerCategory);
             this.tpDetails.Controls.Add(this.groupBox1);
             this.tpDetails.Controls.Add(this.label4);
             this.tpDetails.Controls.Add(this.lblCreatedBy);
@@ -578,6 +591,27 @@ namespace ERP
             this.txtIBAN.Name = "txtIBAN";
             this.txtIBAN.Size = new System.Drawing.Size(162, 21);
             this.txtIBAN.TabIndex = 10;
+            // 
+            // lblCustomerCategory
+            // 
+            this.lblCustomerCategory.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
+            this.lblCustomerCategory.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
+            this.lblCustomerCategory.Location = new System.Drawing.Point(220, 312);
+            this.lblCustomerCategory.Name = "lblCustomerCategory";
+            this.lblCustomerCategory.Size = new System.Drawing.Size(90, 20);
+            this.lblCustomerCategory.TabIndex = 125;
+            this.lblCustomerCategory.Text = "Category :";
+            this.lblCustomerCategory.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // cmbCustomerCategory
+            // 
+            this.cmbCustomerCategory.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbCustomerCategory.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
+            this.cmbCustomerCategory.FormattingEnabled = true;
+            this.cmbCustomerCategory.Location = new System.Drawing.Point(314, 310);
+            this.cmbCustomerCategory.Name = "cmbCustomerCategory";
+            this.cmbCustomerCategory.Size = new System.Drawing.Size(236, 23);
+            this.cmbCustomerCategory.TabIndex = 13;
             // 
             // groupBox1
             // 
@@ -1001,6 +1035,9 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn2;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn3;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
+        private System.Windows.Forms.Label lblCustomerCategory;
+        private System.Windows.Forms.ComboBox cmbCustomerCategory;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnCustomerCategory;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;
         private System.Windows.Forms.TabPage tpSupplyItems;

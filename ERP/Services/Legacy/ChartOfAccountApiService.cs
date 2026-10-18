@@ -155,6 +155,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("title")]
         public string Title { get; set; }
+
+        [JsonProperty("customerCategoryId")]
+        public string CustomerCategoryId { get; set; }
     }
 
     internal class ChartOfAccountDto

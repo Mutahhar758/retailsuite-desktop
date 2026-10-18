@@ -75,6 +75,7 @@ namespace ERP
             this.clnItemType = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnPriRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnSecRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnCategoryRates = new System.Windows.Forms.DataGridViewButtonColumn();
             this.clnPriUnit = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnSecUnit = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnDefUnif = new System.Windows.Forms.DataGridViewComboBoxColumn();
@@ -150,7 +151,8 @@ namespace ERP
             this.clnOpnStock,
             this.clnOpnRate,
             this.clnstatus,
-            this.clnIsEdit});
+            this.clnIsEdit,
+            this.clnCategoryRates});
             dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Window;
             dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -175,6 +177,7 @@ namespace ERP
             this.dgvItemDetail.Size = new System.Drawing.Size(980, 387);
             this.dgvItemDetail.TabIndex = 164;
             this.dgvItemDetail.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvItemDetail_CellEndEdit);
+            this.dgvItemDetail.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvItemDetail_CellContentClick);
             this.dgvItemDetail.CellMouseUp += new System.Windows.Forms.DataGridViewCellMouseEventHandler(this.dgvItemDetail_CellMouseUp);
             this.dgvItemDetail.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvItemDetail_CellValueChanged);
             this.dgvItemDetail.DataError += new System.Windows.Forms.DataGridViewDataErrorEventHandler(this.dgvItemDetail_DataError);
@@ -478,6 +481,15 @@ namespace ERP
             this.clnSecRate.Name = "clnSecRate";
             this.clnSecRate.Width = 60;
             // 
+            // clnCategoryRates
+            // 
+            this.clnCategoryRates.HeaderText = "Cat Rates";
+            this.clnCategoryRates.MinimumWidth = 65;
+            this.clnCategoryRates.Name = "clnCategoryRates";
+            this.clnCategoryRates.Text = "Rates...";
+            this.clnCategoryRates.UseColumnTextForButtonValue = true;
+            this.clnCategoryRates.Width = 65;
+            // 
             // clnPriUnit
             // 
             this.clnPriUnit.HeaderText = "Primary Unit";
@@ -652,6 +664,7 @@ namespace ERP
         private System.Windows.Forms.DataGridViewComboBoxColumn clnItemType;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnPriRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSecRate;
+        private System.Windows.Forms.DataGridViewButtonColumn clnCategoryRates;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnPriUnit;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnSecUnit;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnDefUnif;

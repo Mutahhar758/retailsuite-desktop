@@ -140,6 +140,7 @@ namespace ERP
         public const string ChartOfAccounts = "ChartOfAccounts";
         public const string DetailAccounts = "DetailAccounts";
         public const string Customers = "Customers";
+        public const string CustomerCategories = "CustomerCategories";
         public const string Vendors = "Vendors";
         public const string InventoryItems = "InventoryItems";
         public const string ItemCategories = "ItemCategories";

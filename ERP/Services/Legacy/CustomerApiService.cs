@@ -184,6 +184,12 @@ namespace ERP.Services.Legacy
         [JsonProperty("mediaUrl")]
         public string MediaUrl { get; set; }
 
+        [JsonProperty("customerCategoryId")]
+        public string CustomerCategoryId { get; set; }
+
+        [JsonProperty("customerCategoryTitle")]
+        public string CustomerCategoryTitle { get; set; }
+
         [JsonProperty("supplyItems")]
         public List<CustomerSupplyItemDto> SupplyItems { get; set; } = new List<CustomerSupplyItemDto>();
     }
@@ -231,6 +237,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("mediaId")]
         public string MediaId { get; set; }
+
+        [JsonProperty("customerCategoryId")]
+        public string CustomerCategoryId { get; set; }
 
         [JsonProperty("supplyItems")]
         public List<CustomerSupplyItemDto> SupplyItems { get; set; } = new List<CustomerSupplyItemDto>();

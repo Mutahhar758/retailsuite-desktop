@@ -95,6 +95,79 @@ namespace ERP.Services.Legacy
                 return payload?.Body;
             }
         }
+
+        public async Task<List<ItemCustomerCategoryPriceDto>> GetCustomerCategoryPricesAsync(string customerCategoryId = null)
+        {
+            using (var client = CreateClient())
+            {
+                var url = Endpoint + "/customer-category-prices";
+                if (!string.IsNullOrWhiteSpace(customerCategoryId))
+                    url += "?customerCategoryId=" + Uri.EscapeDataString(customerCategoryId);
+
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<ItemCustomerCategoryPriceDto>>>(json);
+                return payload != null && payload.Body != null ? payload.Body : new List<ItemCustomerCategoryPriceDto>();
+            }
+        }
+
+        public async Task<List<ItemCustomerCategoryPriceDto>> GetItemCategoryPricesAsync(string itemId)
+        {
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(Endpoint + "/items/" + Uri.EscapeDataString(itemId) + "/customer-category-prices");
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<ItemCustomerCategoryPriceDto>>>(json);
+                return payload != null && payload.Body != null ? payload.Body : new List<ItemCustomerCategoryPriceDto>();
+            }
+        }
+
+        public async Task SaveItemCategoryPricesAsync(string itemId, List<ItemCustomerCategoryPriceUpsertRequest> request)
+        {
+            using (var client = CreateClient())
+            {
+                var content = new StringContent(JsonConvert.SerializeObject(request), Encoding.UTF8, "application/json");
+                var response = await client.PutAsync(Endpoint + "/items/" + Uri.EscapeDataString(itemId) + "/customer-category-prices", content);
+                await EnsureSuccessWithServerMessageAsync(response);
+            }
+        }
+    }
+
+    internal class ItemCustomerCategoryPriceDto
+    {
+        [JsonProperty("id")]
+        public int Id { get; set; }
+
+        [JsonProperty("itemId")]
+        public string ItemId { get; set; }
+
+        [JsonProperty("customerCategoryId")]
+        public string CustomerCategoryId { get; set; }
+
+        [JsonProperty("customerCategoryTitle")]
+        public string CustomerCategoryTitle { get; set; }
+
+        [JsonProperty("priRate")]
+        public decimal PriRate { get; set; }
+
+        [JsonProperty("secRate")]
+        public decimal? SecRate { get; set; }
+    }
+
+    internal class ItemCustomerCategoryPriceUpsertRequest
+    {
+        [JsonProperty("customerCategoryId")]
+        public string CustomerCategoryId { get; set; }
+
+        [JsonProperty("priRate")]
+        public decimal PriRate { get; set; }
+
+        [JsonProperty("secRate")]
+        public decimal? SecRate { get; set; }
     }
 
     internal class InventoryItemDto

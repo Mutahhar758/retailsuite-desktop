@@ -29,7 +29,7 @@ namespace ERP.Classes
     {
         private static readonly string[] DefaultScalePrefixes = new[] { "20", "21", "22", "23", "24", "25", "28" };
 
-        public static ParsedBarcodeItem Parse(string rawInput, DataTable dtItems)
+        public static ParsedBarcodeItem Parse(string rawInput, DataTable dtItems, Func<string, decimal, decimal> rateResolver = null)
         {
             if (string.IsNullOrWhiteSpace(rawInput) || dtItems == null || dtItems.Rows.Count == 0)
                 return null;
@@ -57,6 +57,9 @@ namespace ERP.Classes
                         if (dr != null)
                         {
                             decimal baseRate = dr["PriRate"] != DBNull.Value ? Convert.ToDecimal(dr["PriRate"]) : 0m;
+                            if (rateResolver != null && dr.Table.Columns.Contains("Id") && dr["Id"] != DBNull.Value)
+                                baseRate = rateResolver(dr["Id"].ToString(), baseRate);
+
                             decimal effectiveRate = baseRate;
                             decimal effectiveAmount;
 
@@ -111,6 +114,10 @@ namespace ERP.Classes
                             {
                                 rate = decimal.Round(rVal, 2);
                             }
+                            else if (rateResolver != null && dr.Table.Columns.Contains("Id") && dr["Id"] != DBNull.Value)
+                            {
+                                rate = rateResolver(dr["Id"].ToString(), rate);
+                            }
 
                             string unit = dr.Table.Columns.Contains("DefaultUnit") && dr["DefaultUnit"] != DBNull.Value
                                 ? dr["DefaultUnit"].ToString()
@@ -146,6 +153,8 @@ namespace ERP.Classes
                     {
                         bool isWeightScale = prefix == "21" || prefix == "28" || prefix == "23";
                         decimal baseRate = dr["PriRate"] != DBNull.Value ? Convert.ToDecimal(dr["PriRate"]) : 0m;
+                        if (rateResolver != null && dr.Table.Columns.Contains("Id") && dr["Id"] != DBNull.Value)
+                            baseRate = rateResolver(dr["Id"].ToString(), baseRate);
 
                         string unit = dr.Table.Columns.Contains("DefaultUnit") && dr["DefaultUnit"] != DBNull.Value
                             ? dr["DefaultUnit"].ToString()
@@ -230,6 +239,8 @@ namespace ERP.Classes
             if (stdItem != null)
             {
                 decimal rate = stdItem["PriRate"] != DBNull.Value ? Convert.ToDecimal(stdItem["PriRate"]) : 0m;
+                if (rateResolver != null && stdItem.Table.Columns.Contains("Id") && stdItem["Id"] != DBNull.Value)
+                    rate = rateResolver(stdItem["Id"].ToString(), rate);
                 string unit = stdItem.Table.Columns.Contains("DefaultUnit") && stdItem["DefaultUnit"] != DBNull.Value
                     ? stdItem["DefaultUnit"].ToString()
                     : (stdItem.Table.Columns.Contains("PrimaryUnit") && stdItem["PrimaryUnit"] != DBNull.Value ? stdItem["PrimaryUnit"].ToString() : "");
