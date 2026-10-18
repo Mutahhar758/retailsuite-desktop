@@ -187,6 +187,7 @@ namespace ERP
             dgvItemDetail.Rows.Add();
             CalcTotals();
             await UpdateProductPictureAsync();
+            UpdateSaveButtonState(false);
         }
         private async void frmItemDetail_Load(object sender, EventArgs e)
         {
@@ -360,6 +361,7 @@ namespace ERP
                 if (!FLogin && dgvItemDetail.CurrentRow != null)
                 {
                     dgvItemDetail.CurrentRow.Cells[clnIsEdit.Index].Value = "1";
+                    UpdateSaveButtonState(true);
                 }
                 DataGridViewComboBoxCell cmb = (dgvItemDetail[clnDefUnif.Index, e.RowIndex] as DataGridViewComboBoxCell);
                 string Filter = " Code in (";
@@ -389,6 +391,8 @@ namespace ERP
              dgvItemDetail.Rows[e.RowIndex].Cells[clnId.Index].Value = "0";           
             if (dgvItemDetail.Rows[e.RowIndex].Cells[clnItemType.Index].Value == null)
                 dgvItemDetail.Rows[e.RowIndex].Cells[clnItemType.Index].Value = 0;
+            if (!FLogin)
+                UpdateSaveButtonState(true);
         }
         #endregion
         
@@ -439,12 +443,25 @@ namespace ERP
 
                             var id = request.Id ?? string.Empty;
                             if (id == string.Empty || id == "0")
-                                await _inventoryApiService.CreateItemAsync(request);
+                            {
+                                var newId = await _inventoryApiService.CreateItemAsync(request);
+                                if (!string.IsNullOrWhiteSpace(newId) && row.Tag is List<ItemCustomerCategoryPriceUpsertRequest> pendingRates && pendingRates.Count > 0)
+                                {
+                                    try
+                                    {
+                                        await _inventoryApiService.SaveItemCategoryPricesAsync(newId, pendingRates);
+                                    }
+                                    catch { }
+                                }
+                            }
                             else
+                            {
                                 await _inventoryApiService.UpdateItemAsync(id, request);
+                            }
                         }
                 }
                 MessageBox.Show("Record Successfully Saved..!");
+                UpdateSaveButtonState(false);
                 await LoadItemDetailAsync();
                 await FillformAsync((string)cmbItemCatagory.SelectedValue);
                 this.DialogResult = System.Windows.Forms.DialogResult.OK;
@@ -637,6 +654,7 @@ namespace ERP
                             profileImage1.MediaId = presigned.FileId;
                             profileImage1.MediaUrl = openFileDialog.FileName;
                             profileImage1.PictureBox.Image = Image.FromFile(openFileDialog.FileName);
+                            UpdateSaveButtonState(true);
                             
                             MessageBox.Show("Image uploaded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
@@ -657,6 +675,7 @@ namespace ERP
                 row.Cells["clnMediaId"].Value = string.Empty;
                 row.Cells["clnMediaUrl"].Value = string.Empty;
                 row.Cells["clnIsEdit"].Value = "1";
+                UpdateSaveButtonState(true);
             }
             profileImage1.ClearImage();
         }
@@ -669,21 +688,43 @@ namespace ERP
                 var itemId = row.Cells[clnId.Index].Value?.ToString();
                 var itemTitle = row.Cells[clnItem.Index].Value?.ToString() ?? string.Empty;
 
-                if (string.IsNullOrWhiteSpace(itemId))
-                {
-                    MessageBox.Show("Please save the item before configuring category rates.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
                 decimal.TryParse(row.Cells[clnPriRate.Index].Value?.ToString(), out decimal priRate);
                 decimal? secRate = null;
                 if (decimal.TryParse(row.Cells[clnSecRate.Index].Value?.ToString(), out decimal sVal))
                     secRate = sVal;
 
-                using (var frm = new ERP.Forms.frmItemCategoryRates(itemId, itemTitle, priRate, secRate))
+                var initialRates = row.Tag as List<ItemCustomerCategoryPriceUpsertRequest>;
+
+                using (var frm = new ERP.Forms.frmItemCategoryRates(itemId, itemTitle, priRate, secRate, initialRates))
                 {
-                    frm.ShowDialog(this);
+                    if (frm.ShowDialog(this) == DialogResult.OK)
+                    {
+                        if (string.IsNullOrWhiteSpace(itemId) || itemId == "0")
+                        {
+                            row.Tag = frm.ConfiguredRates;
+                            row.Cells[clnIsEdit.Index].Value = "1";
+                            UpdateSaveButtonState(true);
+                        }
+                    }
                 }
+            }
+        }
+
+        private void UpdateSaveButtonState(bool hasPendingChanges)
+        {
+            if (hasPendingChanges)
+            {
+                btnSave.Text = "* Save";
+                btnSave.BackColor = Color.FromArgb(254, 215, 170); // Amber-200 accent
+                btnSave.ForeColor = Color.FromArgb(154, 52, 18);   // Amber-800 text
+                btnSave.Font = new Font(btnSave.Font, FontStyle.Bold);
+            }
+            else
+            {
+                btnSave.Text = "&Save";
+                btnSave.BackColor = SystemColors.ControlLight;
+                btnSave.ForeColor = SystemColors.ControlText;
+                btnSave.Font = new Font(btnSave.Font, FontStyle.Regular);
             }
         }
     }

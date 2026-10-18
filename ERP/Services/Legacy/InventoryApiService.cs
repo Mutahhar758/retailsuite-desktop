@@ -137,7 +137,7 @@ namespace ERP.Services.Legacy
         }
     }
 
-    internal class ItemCustomerCategoryPriceDto
+    public class ItemCustomerCategoryPriceDto
     {
         [JsonProperty("id")]
         public int Id { get; set; }
@@ -158,7 +158,7 @@ namespace ERP.Services.Legacy
         public decimal? SecRate { get; set; }
     }
 
-    internal class ItemCustomerCategoryPriceUpsertRequest
+    public class ItemCustomerCategoryPriceUpsertRequest
     {
         [JsonProperty("customerCategoryId")]
         public string CustomerCategoryId { get; set; }

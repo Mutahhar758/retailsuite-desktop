@@ -18,18 +18,24 @@ namespace ERP.Forms
         private readonly CustomerCategoryApiService _customerCategoryApiService;
         private bool _isSaving;
 
-        public frmItemCategoryRates(string itemId, string itemTitle, decimal defaultPriRate, decimal? defaultSecRate)
+        public List<ItemCustomerCategoryPriceUpsertRequest> ConfiguredRates { get; private set; }
+        private readonly List<ItemCustomerCategoryPriceUpsertRequest> _initialRates;
+
+        public frmItemCategoryRates(string itemId, string itemTitle, decimal defaultPriRate, decimal? defaultSecRate, List<ItemCustomerCategoryPriceUpsertRequest> initialRates = null)
         {
             InitializeComponent();
             _itemId = itemId;
             _itemTitle = itemTitle;
             _defaultPriRate = defaultPriRate;
             _defaultSecRate = defaultSecRate;
+            _initialRates = initialRates;
 
             _inventoryApiService = new InventoryApiService();
             _customerCategoryApiService = new CustomerCategoryApiService();
 
-            lblTitle.Text = $"Category Rates - {_itemTitle} ({_itemId})";
+            lblTitle.Text = string.IsNullOrWhiteSpace(_itemId) || _itemId == "0"
+                ? $"Category Rates - {_itemTitle} (New Product)"
+                : $"Category Rates - {_itemTitle} ({_itemId})";
             lblDefaults.Text = $"Default Rates: Primary = {_defaultPriRate:N2}" + (_defaultSecRate.HasValue ? $", Secondary = {_defaultSecRate.Value:N2}" : "");
         }
 
@@ -45,23 +51,44 @@ namespace ERP.Forms
                 dgvRates.Rows.Clear();
 
                 var categoriesTask = _customerCategoryApiService.GetLookupAsync();
-                var existingRatesTask = _inventoryApiService.GetItemCategoryPricesAsync(_itemId);
+                Task<List<ItemCustomerCategoryPriceDto>> existingRatesTask = null;
 
-                await Task.WhenAll(categoriesTask, existingRatesTask);
+                if (!string.IsNullOrWhiteSpace(_itemId) && _itemId != "0")
+                {
+                    existingRatesTask = _inventoryApiService.GetItemCategoryPricesAsync(_itemId);
+                    await Task.WhenAll(categoriesTask, existingRatesTask);
+                }
+                else
+                {
+                    await categoriesTask;
+                }
 
                 var categories = categoriesTask.Result ?? new List<CustomerCategoryLookupDto>();
-                var existingRates = existingRatesTask.Result ?? new List<ItemCustomerCategoryPriceDto>();
+                var existingRates = existingRatesTask?.Result ?? new List<ItemCustomerCategoryPriceDto>();
 
                 var ratesDict = existingRates
                     .Where(r => !string.IsNullOrWhiteSpace(r.CustomerCategoryId))
                     .ToDictionary(r => r.CustomerCategoryId, StringComparer.OrdinalIgnoreCase);
 
+                var initialDict = _initialRates != null
+                    ? _initialRates.ToDictionary(r => r.CustomerCategoryId, StringComparer.OrdinalIgnoreCase)
+                    : null;
+
                 foreach (var cat in categories)
                 {
-                    ratesDict.TryGetValue(cat.Code, out var existing);
+                    string priRateStr = string.Empty;
+                    string secRateStr = string.Empty;
 
-                    string priRateStr = existing != null ? existing.PriRate.ToString("0.##") : string.Empty;
-                    string secRateStr = existing != null && existing.SecRate.HasValue ? existing.SecRate.Value.ToString("0.##") : string.Empty;
+                    if (initialDict != null && initialDict.TryGetValue(cat.Code, out var initR))
+                    {
+                        priRateStr = initR.PriRate > 0 ? initR.PriRate.ToString("0.##") : string.Empty;
+                        secRateStr = initR.SecRate.HasValue ? initR.SecRate.Value.ToString("0.##") : string.Empty;
+                    }
+                    else if (ratesDict.TryGetValue(cat.Code, out var existing))
+                    {
+                        priRateStr = existing != null ? existing.PriRate.ToString("0.##") : string.Empty;
+                        secRateStr = existing != null && existing.SecRate.HasValue ? existing.SecRate.Value.ToString("0.##") : string.Empty;
+                    }
 
                     dgvRates.Rows.Add(cat.Code, cat.Title, priRateStr, secRateStr);
                 }
@@ -108,8 +135,18 @@ namespace ERP.Forms
                     }
                 }
 
-                await _inventoryApiService.SaveItemCategoryPricesAsync(_itemId, request);
-                MessageBox.Show("Category rates saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                ConfiguredRates = request;
+
+                if (!string.IsNullOrWhiteSpace(_itemId) && _itemId != "0")
+                {
+                    await _inventoryApiService.SaveItemCategoryPricesAsync(_itemId, request);
+                    MessageBox.Show("Category rates saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Category rates configured. Please click Save on Item Detail to save your changes.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+
                 this.DialogResult = DialogResult.OK;
                 this.Close();
             }
