@@ -749,9 +749,10 @@ namespace ERP
                 }
 
                 decimal qty = Parse(txtQty);
-                if (qty <= 0)
+                decimal addLess = Parse(txtAddLess);
+                if (qty <= 0 && addLess == 0)
                 {
-                    MessageBox.Show("Quantity must be greater than 0.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Quantity or Add/Less must be greater than 0.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -764,7 +765,6 @@ namespace ERP
                     string itemId = cmbItem.SelectedValue.ToString();
                     decimal rate = Parse(txtRate);
                     decimal disc = Parse(txtDiscount);
-                    decimal addLess = Parse(txtAddLess);
 
                     var existingVouchers = await _apiService.GetListAsync(dateStr, dateStr, itemId);
 

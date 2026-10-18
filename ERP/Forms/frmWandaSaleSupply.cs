@@ -267,8 +267,9 @@ namespace ERP
                     continue;
 
                 decimal qty = ParseDecimal(row.Cells[clnQty.Index].Value);
-                if (qty <= 0)
-                    continue;
+                decimal discount = ParseDecimal(row.Cells[clnDiscount.Index].Value);
+                decimal carriage = ParseDecimal(row.Cells[clnCarriage.Index].Value);
+                decimal addLess = ParseDecimal(row.Cells[clnAddLess.Index].Value);
 
                 decimal secQty = 0;
                 decimal secRate = 0;
@@ -307,6 +308,9 @@ namespace ERP
                         secUnit = "Bags";
                 }
 
+                if (qty <= 0 && secQty <= 0 && addLess == 0)
+                    continue;
+
                 decimal enteredRate = ParseDecimal(row.Cells[clnRate.Index].Value);
                 decimal finalRate = (row.Cells[clnRate.Index].Tag is decimal tagRate && tagRate > 0 && Math.Round(tagRate, 2) == Math.Round(enteredRate, 2))
                     ? tagRate
@@ -322,9 +326,9 @@ namespace ERP
                     CustomerId = custId,
                     Qty = qty,
                     Rate = finalRate,
-                    Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
-                    Carriage = ParseDecimal(row.Cells[clnCarriage.Index].Value),
-                    AddLess = ParseDecimal(row.Cells[clnAddLess.Index].Value),
+                    Discount = discount,
+                    Carriage = carriage,
+                    AddLess = addLess,
                     SecQty = secQty,
                     SecRate = secRate,
                     SecUnit = secUnit,

@@ -843,9 +843,11 @@ namespace ERP
                 }
 
                 decimal qty = Parse(txtQty);
-                if (qty <= 0)
+                decimal secQty = Parse(txtSecQty);
+                decimal addLess = Parse(txtAddLess);
+                if (qty <= 0 && secQty <= 0 && addLess == 0)
                 {
-                    MessageBox.Show("Weight (Kg) must be greater than 0.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    MessageBox.Show("Weight (Kg), Bags, or Carriage/AddLess must be greater than 0.", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
                     return;
                 }
 
@@ -856,7 +858,6 @@ namespace ERP
 
                     string dateStr = dtpDate.Value.ToString("yyyy-MM-dd");
                     string itemId = cmbItem.SelectedValue.ToString();
-                    decimal secQty = Parse(txtSecQty);
                     decimal secRate = Parse(txtSecRate);
 
                     decimal defaultPack = 50;
@@ -867,7 +868,6 @@ namespace ERP
 
                     decimal rate = (defaultPack > 0 && secRate > 0) ? Math.Round(secRate / defaultPack, 8) : Parse(txtRate);
                     decimal disc = Parse(txtDiscount);
-                    decimal addLess = Parse(txtAddLess);
 
                     var existingVouchers = await _apiService.GetListAsync(dateStr, dateStr, itemId);
 
