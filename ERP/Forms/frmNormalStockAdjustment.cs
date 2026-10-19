@@ -95,6 +95,7 @@ namespace ERP
 
             FillNarration();
             FillCategories();
+            FillItems();
             FillFilterCategories();
         }
 
@@ -108,9 +109,13 @@ namespace ERP
 
         private void FillCategories()
         {
-            clnCatagory.DataSource = dtCategories.Copy();
-            clnCatagory.DisplayMember = "Title";
-            clnCatagory.ValueMember = "Code";
+        }
+
+        private void FillItems()
+        {
+            clnItemNo.DataSource = dtItems.Copy();
+            clnItemNo.DisplayMember = "Title";
+            clnItemNo.ValueMember = "Id";
         }
 
         private void FillFilterCategories()
@@ -186,7 +191,7 @@ namespace ERP
                 lines.Add(new StockAdjustmentLineApiRequest
                 {
                     Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
-                    ItemCategoryCode = Convert.ToString(row.Cells[clnCatagory.Index].Value),
+                    ItemCategoryCode = itemRow != null && dtItems.Columns.Contains("fkItemcatagory") ? Convert.ToString(itemRow["fkItemcatagory"]) : "",
                     ItemId = Convert.ToString(row.Cells[clnItemNo.Index].Value),
                     QtyIn = qIn,
                     QtyOut = qOut,
@@ -300,7 +305,6 @@ namespace ERP
                     
                     row.Cells[clnSeq.Index].Value = line.Seq.ToString();
                     row.Cells[clnItemKey.Index].Value = line.ItemKey;
-                    row.Cells[clnCatagory.Index].Value = line.ItemCategoryCode;
                     row.Cells[clnItemNo.Index].Value = null;
                     row.Cells[clnUnit.Index].Value = null;
                     row.Cells[clnQtyIn.Index].Value = line.QtyIn.ToString("0.##");
@@ -415,7 +419,6 @@ namespace ERP
             int dIdx = 0;
             clnSeq.DisplayIndex = dIdx++;
             clnItemKey.DisplayIndex = dIdx++;
-            clnCatagory.DisplayIndex = dIdx++;
             clnItemNo.DisplayIndex = dIdx++;
             clnUnit.DisplayIndex = dIdx++;
             clnQtyIn.DisplayIndex = dIdx++;
@@ -515,7 +518,7 @@ namespace ERP
 
         private void dgvPurchase_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
-            if (dgvSale.CurrentCellAddress.X == clnItemNo.DisplayIndex)
+            if (dgvSale.CurrentCellAddress.X == clnItemNo.DisplayIndex || dgvSale.CurrentCell.ColumnIndex == clnItemNo.Index)
             {
                 ComboBox cmbItem = e.Control as ComboBox;
                 if (cmbItem != null)
@@ -523,18 +526,8 @@ namespace ERP
                     cmbItem.DropDownStyle = ComboBoxStyle.DropDown;
                     cmbItem.AutoCompleteSource = AutoCompleteSource.ListItems;
                     cmbItem.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    cmbItem.SelectedIndexChanged -= new EventHandler(cmbItem_SelectedIndexChanged);
                     cmbItem.SelectedIndexChanged += new EventHandler(cmbItem_SelectedIndexChanged);
-                }
-            }
-            else if (dgvSale.CurrentCellAddress.X == clnCatagory.DisplayIndex)
-            {
-                ComboBox cmbCatagory = e.Control as ComboBox;
-                if (cmbCatagory != null)
-                {
-                    cmbCatagory.DropDownStyle = ComboBoxStyle.DropDown;
-                    cmbCatagory.AutoCompleteSource = AutoCompleteSource.ListItems;
-                    cmbCatagory.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-                    cmbCatagory.SelectedIndexChanged += new EventHandler(cmbCatagory_SelectedIndexChanged);
                 }
             }
             else if (dgvSale.CurrentCell.ColumnIndex == clnRate.Index ||
@@ -552,36 +545,15 @@ namespace ERP
             }
         }
 
-
-
-        void cmbCatagory_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            if (dgvSale.CurrentCellAddress.X == clnCatagory.DisplayIndex)
-            {
-                if ((sender as ComboBox).SelectedIndex != -1)
-                {
-                    DataRowView dr = (DataRowView)(sender as ComboBox).SelectedItem;
-                    if ((sender as ComboBox).SelectedValue == null)
-                        (sender as ComboBox).SelectedValue = dr[0].ToString();
-                    SetcmbItemSource(dr[0].ToString(), dgvSale.CurrentCellAddress.Y);
-                }
-            }
-        }
-
         private void SetcmbItemSource(string itemCategory, int rowInd)
         {
-            DataTable dt = dtItems.Clone();
-            DataRow[] rows = dtItems.Select("fkItemcatagory = '" + itemCategory.Replace("'", "''") + "'");
-            if (rows.Length > 0)
-            {
-                for (int i = 0; i < rows.Length; i++)
-                    dt.ImportRow(rows[i]);
-            }
-
             DataGridViewComboBoxCell cmb = dgvSale[clnItemNo.Index, rowInd] as DataGridViewComboBoxCell;
-            cmb.DataSource = dt;
-            cmb.DisplayMember = "Title";
-            cmb.ValueMember = "Id";
+            if (cmb != null)
+            {
+                cmb.DataSource = dtItems.Copy();
+                cmb.DisplayMember = "Title";
+                cmb.ValueMember = "Id";
+            }
         }
 
         private void SetAllUnitsSource(int rowInd)
@@ -619,15 +591,29 @@ namespace ERP
 
         void cmbItem_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (dgvSale.CurrentCellAddress.X == clnItemNo.DisplayIndex)
+            if (dgvSale.CurrentCellAddress.X == clnItemNo.DisplayIndex || dgvSale.CurrentCell.ColumnIndex == clnItemNo.Index)
             {
                 if ((sender as ComboBox).SelectedIndex != -1)
                 {
                     DataRowView dr = (DataRowView)(sender as ComboBox).SelectedItem;
-                    if ((sender as ComboBox).SelectedValue == null)
+                    if ((sender as ComboBox).SelectedValue == null && dr != null)
                         (sender as ComboBox).SelectedValue = dr[0].ToString();
                     if (dr != null)
                     {
+                        int rowInd = dgvSale.CurrentCellAddress.Y;
+                        if (rowInd >= 0 && rowInd < dgvSale.Rows.Count)
+                        {
+                            if (dr.Row.Table.Columns.Contains("ItemKey"))
+                                dgvSale[clnItemKey.Index, rowInd].Value = dr["ItemKey"]?.ToString();
+                            if (dr.Row.Table.Columns.Contains("DefaultUnit"))
+                            {
+                                try
+                                {
+                                    dgvSale[clnUnit.Index, rowInd].Value = dr["DefaultUnit"]?.ToString();
+                                }
+                                catch { }
+                            }
+                        }
                         SetcmbUnitSource(dr, dgvSale.CurrentCellAddress.Y);
                     }
                 }
@@ -670,7 +656,6 @@ namespace ERP
                 if (dr != null)
                 {
                     DataRowView drv = dtItems.DefaultView[dtItems.Rows.IndexOf(dr)];
-                    dgvSale[clnCatagory.Index, e.RowIndex].Value = dr["fkItemcatagory"].ToString();
                     SetcmbItemSource(dr["fkItemcatagory"].ToString(), dgvSale.CurrentCellAddress.Y);
                     dgvSale[clnItemNo.Index, e.RowIndex].Value = dr["Id"].ToString();
                     SetcmbUnitSource(drv, e.RowIndex);

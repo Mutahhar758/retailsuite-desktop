@@ -1,4 +1,4 @@
-﻿namespace ERP
+namespace ERP
 {
     partial class frmWandaSaleReturn
     {
@@ -68,7 +68,6 @@
             this.dgvSale = new System.Windows.Forms.DataGridView();
             this.clnSeq = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnItemKey = new System.Windows.Forms.DataGridViewTextBoxColumn();
-            this.clnCatagory = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnItemNo = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnUnit = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -444,7 +443,6 @@
             this.dgvSale.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.clnSeq,
             this.clnItemKey,
-            this.clnCatagory,
             this.clnItemNo,
             this.clnUnit,
             this.clnQty,
@@ -486,18 +484,10 @@
             this.clnItemKey.SortMode = System.Windows.Forms.DataGridViewColumnSortMode.NotSortable;
             this.clnItemKey.Width = 50;
             // 
-            // clnCatagory
-            // 
-            this.clnCatagory.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.clnCatagory.FillWeight = 50F;
-            this.clnCatagory.HeaderText = "Item Catagory";
-            this.clnCatagory.MinimumWidth = 120;
-            this.clnCatagory.Name = "clnCatagory";
-            // 
             // clnItemNo
             // 
             this.clnItemNo.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.clnItemNo.HeaderText = "ItemNo";
+            this.clnItemNo.HeaderText = "Item Description";
             this.clnItemNo.MinimumWidth = 120;
             this.clnItemNo.Name = "clnItemNo";
             this.clnItemNo.Resizable = System.Windows.Forms.DataGridViewTriState.True;
@@ -1204,7 +1194,6 @@
         private System.Windows.Forms.Label label16;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSeq;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnItemKey;
-        private System.Windows.Forms.DataGridViewComboBoxColumn clnCatagory;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnItemNo;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnUnit;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnQty;
