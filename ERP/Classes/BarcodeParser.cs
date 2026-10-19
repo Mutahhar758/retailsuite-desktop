@@ -35,6 +35,42 @@ namespace ERP.Classes
                 return null;
 
             string raw = rawInput.Trim();
+            string cleanDigits = Regex.Replace(raw, @"\D", "");
+
+            // 0. Compact 18-digit Variable Barcode: 2 + IIIIII + QQQQQ + AAAAAA
+            // Prefix 2 (1 digit) + Item ID (6 digits) + Qty*1000 (5 digits) + Amount (6 digits, whole number max 9 lac)
+            // e.g. 200010500325000450 -> Item 000105, 0.325 kg (325g), Rs. 450
+            if (cleanDigits.Length == 18 && cleanDigits.StartsWith("2"))
+            {
+                string itemCode = cleanDigits.Substring(1, 6);
+                string qtyStr = cleanDigits.Substring(7, 5);
+                string amtStr = cleanDigits.Substring(12, 6);
+
+                DataRow dr = FindItemByPlu(itemCode, dtItems) ?? FindItemByCode(itemCode, dtItems);
+                if (dr != null &&
+                    int.TryParse(qtyStr, out int rawQty) &&
+                    int.TryParse(amtStr, out int rawAmt) && rawQty > 0)
+                {
+                    decimal parsedQty = decimal.Round(rawQty / 1000m, 3);
+                    decimal totalAmt = decimal.Round(rawAmt, 2);
+                    decimal effectiveRate = parsedQty > 0 ? decimal.Round(totalAmt / parsedQty, 2) : 0m;
+
+                    string unit = dr.Table.Columns.Contains("DefaultUnit") && dr["DefaultUnit"] != DBNull.Value
+                        ? dr["DefaultUnit"].ToString()
+                        : (dr.Table.Columns.Contains("PrimaryUnit") && dr["PrimaryUnit"] != DBNull.Value ? dr["PrimaryUnit"].ToString() : "kg");
+
+                    return new ParsedBarcodeItem
+                    {
+                        ItemRow = dr,
+                        Qty = parsedQty,
+                        Rate = effectiveRate,
+                        Amount = totalAmt,
+                        IsVariableWeight = true,
+                        Unit = unit,
+                        RawCode = raw
+                    };
+                }
+            }
 
             // 1. RetailSuite Variable Code-128: "VW-{ItemCode}-Q{qty}-R{rate}" or "-P{amount}"
             if (raw.StartsWith("VW-", StringComparison.OrdinalIgnoreCase) || raw.StartsWith("VW:", StringComparison.OrdinalIgnoreCase))
@@ -139,7 +175,6 @@ namespace ERP.Classes
             }
 
             // 3. Mart Weighing Machine Barcodes (EAN-13 Scale Barcodes: 2X IIIII WWWWW C)
-            string cleanDigits = Regex.Replace(raw, @"\D", "");
             if (cleanDigits.Length == 13)
             {
                 string prefix = cleanDigits.Substring(0, 2);

@@ -655,15 +655,29 @@ namespace ERP.Reporting
                 }
 
                 string rawBase = !string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : (!string.IsNullOrWhiteSpace(item.ItemKey) ? item.ItemKey : item.Id);
-                string baseCode = rawBase?.Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
-                decimal defaultRate = Math.Round(item.PriRate);
-                if (rate == defaultRate)
+                string baseCode = rawBase?.Replace("\r", string.Empty).Replace("\n", string.Empty).Trim() ?? "000000";
+
+                // Format as compact 18-digit Code 128C format:
+                // 2 (prefix) + 6-digit Item ID + 5-digit Qty (x1000) + 6-digit Amount (whole number)
+                string idStr = !string.IsNullOrWhiteSpace(item.Id) ? item.Id.Trim() : baseCode;
+                if (long.TryParse(idStr, out long numId) && numId <= 999999)
                 {
-                    barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
+                    string idPart = numId.ToString("D6");
+                    int qtyGrams = Math.Min(99999, Math.Max(1, (int)Math.Round(qty * 1000m)));
+                    int amtWhole = Math.Min(999999, Math.Max(0, (int)Math.Round(total)));
+                    barcode = string.Format(CultureInfo.InvariantCulture, "2{0}{1:D5}{2:D6}", idPart, qtyGrams, amtWhole);
                 }
                 else
                 {
-                    barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}*{2:0}", baseCode, qty, rate);
+                    decimal defaultRate = Math.Round(item.PriRate);
+                    if (rate == defaultRate)
+                    {
+                        barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
+                    }
+                    else
+                    {
+                        barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}*{2:0}", baseCode, qty, rate);
+                    }
                 }
 
                 varQty = qty;

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Linq;
 using System.Text;
 
 namespace ERP.Reporting.Models
@@ -154,23 +155,50 @@ namespace ERP.Reporting.Models
             new byte[] { 2, 3, 3, 1, 1, 1, 2 } // 106 (Stop)
         };
 
-        public static List<BarcodeSlice> GenerateSlices(string text, int quietZone = 4)
+        private static List<int> GetEncodedValues(string text)
         {
             if (string.IsNullOrWhiteSpace(text)) text = "1000001";
 
-            var encodedValues = new List<int> { 104 }; // Start B
-            int checkSum = 104;
+            bool isNumericEven = text.Length % 2 == 0 && text.All(char.IsDigit);
+            var encodedValues = new List<int>();
+            int checkSum;
 
-            for (int i = 0; i < text.Length; i++)
+            if (isNumericEven)
             {
-                int code = text[i] - 32;
-                if (code < 0 || code > 95) code = 0;
-                encodedValues.Add(code);
-                checkSum += code * (i + 1);
+                // Code 128 Subset C (numeric pairs 00-99 for minimum width)
+                encodedValues.Add(105); // Start C
+                checkSum = 105;
+                int pairCount = text.Length / 2;
+                for (int i = 0; i < pairCount; i++)
+                {
+                    int val = (text[i * 2] - '0') * 10 + (text[i * 2 + 1] - '0');
+                    encodedValues.Add(val);
+                    checkSum += val * (i + 1);
+                }
+            }
+            else
+            {
+                // Code 128 Subset B (standard alphanumeric)
+                encodedValues.Add(104); // Start B
+                checkSum = 104;
+                for (int i = 0; i < text.Length; i++)
+                {
+                    int code = text[i] - 32;
+                    if (code < 0 || code > 95) code = 0;
+                    encodedValues.Add(code);
+                    checkSum += code * (i + 1);
+                }
             }
 
             encodedValues.Add(checkSum % 103);
             encodedValues.Add(106); // Stop
+
+            return encodedValues;
+        }
+
+        public static List<BarcodeSlice> GenerateSlices(string text, int quietZone = 4)
+        {
+            var encodedValues = GetEncodedValues(text);
 
             var slices = new List<BarcodeSlice>();
             if (quietZone > 0) slices.Add(new BarcodeSlice(quietZone, false));
