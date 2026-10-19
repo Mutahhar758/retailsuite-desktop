@@ -55,9 +55,7 @@ namespace ERP.Classes
                     decimal totalAmt = decimal.Round(rawAmt, 2);
                     decimal effectiveRate = parsedQty > 0 ? decimal.Round(totalAmt / parsedQty, 2) : 0m;
 
-                    string unit = dr.Table.Columns.Contains("DefaultUnit") && dr["DefaultUnit"] != DBNull.Value
-                        ? dr["DefaultUnit"].ToString()
-                        : (dr.Table.Columns.Contains("PrimaryUnit") && dr["PrimaryUnit"] != DBNull.Value ? dr["PrimaryUnit"].ToString() : "kg");
+                    string unit = ResolveUnitTitle(dr);
 
                     return new ParsedBarcodeItem
                     {
@@ -114,9 +112,7 @@ namespace ERP.Classes
                                 effectiveAmount = decimal.Round(parsedQty * effectiveRate, 2);
                             }
 
-                            string unit = dr.Table.Columns.Contains("DefaultUnit") && dr["DefaultUnit"] != DBNull.Value
-                                ? dr["DefaultUnit"].ToString()
-                                : (dr.Table.Columns.Contains("PrimaryUnit") && dr["PrimaryUnit"] != DBNull.Value ? dr["PrimaryUnit"].ToString() : "kg");
+                            string unit = ResolveUnitTitle(dr);
 
                             return new ParsedBarcodeItem
                             {
@@ -155,9 +151,7 @@ namespace ERP.Classes
                                 rate = rateResolver(dr["Id"].ToString(), rate);
                             }
 
-                            string unit = dr.Table.Columns.Contains("DefaultUnit") && dr["DefaultUnit"] != DBNull.Value
-                                ? dr["DefaultUnit"].ToString()
-                                : (dr.Table.Columns.Contains("PrimaryUnit") && dr["PrimaryUnit"] != DBNull.Value ? dr["PrimaryUnit"].ToString() : "kg");
+                            string unit = ResolveUnitTitle(dr);
 
                             return new ParsedBarcodeItem
                             {
@@ -191,9 +185,7 @@ namespace ERP.Classes
                         if (rateResolver != null && dr.Table.Columns.Contains("Id") && dr["Id"] != DBNull.Value)
                             baseRate = rateResolver(dr["Id"].ToString(), baseRate);
 
-                        string unit = dr.Table.Columns.Contains("DefaultUnit") && dr["DefaultUnit"] != DBNull.Value
-                            ? dr["DefaultUnit"].ToString()
-                            : (dr.Table.Columns.Contains("PrimaryUnit") && dr["PrimaryUnit"] != DBNull.Value ? dr["PrimaryUnit"].ToString() : "kg");
+                        string unit = ResolveUnitTitle(dr);
 
                         if (isWeightScale)
                         {
@@ -276,9 +268,7 @@ namespace ERP.Classes
                 decimal rate = stdItem["PriRate"] != DBNull.Value ? Convert.ToDecimal(stdItem["PriRate"]) : 0m;
                 if (rateResolver != null && stdItem.Table.Columns.Contains("Id") && stdItem["Id"] != DBNull.Value)
                     rate = rateResolver(stdItem["Id"].ToString(), rate);
-                string unit = stdItem.Table.Columns.Contains("DefaultUnit") && stdItem["DefaultUnit"] != DBNull.Value
-                    ? stdItem["DefaultUnit"].ToString()
-                    : (stdItem.Table.Columns.Contains("PrimaryUnit") && stdItem["PrimaryUnit"] != DBNull.Value ? stdItem["PrimaryUnit"].ToString() : "");
+                string unit = ResolveUnitTitle(stdItem);
 
                 return new ParsedBarcodeItem
                 {
@@ -363,6 +353,25 @@ namespace ERP.Classes
             }
 
             return null;
+        }
+
+        private static string ResolveUnitTitle(DataRow dr)
+        {
+            if (dr == null) return "kg";
+
+            if (dr.Table.Columns.Contains("DefaultUnitTitle") && dr["DefaultUnitTitle"] != DBNull.Value && !string.IsNullOrWhiteSpace(dr["DefaultUnitTitle"].ToString()))
+                return dr["DefaultUnitTitle"].ToString().Trim();
+            if (dr.Table.Columns.Contains("PrimaryUnitTitle") && dr["PrimaryUnitTitle"] != DBNull.Value && !string.IsNullOrWhiteSpace(dr["PrimaryUnitTitle"].ToString()))
+                return dr["PrimaryUnitTitle"].ToString().Trim();
+
+            string def = dr.Table.Columns.Contains("DefaultUnit") && dr["DefaultUnit"] != DBNull.Value ? dr["DefaultUnit"].ToString().Trim() : "";
+            string pri = dr.Table.Columns.Contains("PrimaryUnit") && dr["PrimaryUnit"] != DBNull.Value ? dr["PrimaryUnit"].ToString().Trim() : "";
+
+            // If unit is user-readable text (not numeric ID like "004"), use it
+            if (!string.IsNullOrWhiteSpace(def) && !decimal.TryParse(def, out _)) return def;
+            if (!string.IsNullOrWhiteSpace(pri) && !decimal.TryParse(pri, out _)) return pri;
+
+            return "kg";
         }
     }
 }
