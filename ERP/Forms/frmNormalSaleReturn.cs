@@ -62,9 +62,13 @@ namespace ERP
             dtItems.Columns.Add("SecondaryUnit", typeof(string));
             dtItems.Columns.Add("DefaultUnit", typeof(string));
             dtItems.Columns.Add("RequireImei", typeof(bool));
+            dtItems.Columns.Add("AdditionalUnits", typeof(string));
 
             dtUnits.Columns.Add("Code", typeof(string));
             dtUnits.Columns.Add("Title", typeof(string));
+            dtUnits.Columns.Add("ShortTitle", typeof(string));
+            dtUnits.Columns.Add("ParentUnitId", typeof(string));
+            dtUnits.Columns.Add("ConversionRatio", typeof(decimal));
 
             dtCategories.Columns.Add("Code", typeof(string));
             dtCategories.Columns.Add("Title", typeof(string));
@@ -87,11 +91,11 @@ namespace ERP
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
-                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.RequireImei == true);
+                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.RequireImei == true, item.AdditionalUnits);
 
             dtUnits.Rows.Clear();
             foreach (var u in unitsTask.Result)
-                dtUnits.Rows.Add(u.Code, u.Title);
+                dtUnits.Rows.Add(u.Code, u.Title, u.ShortTitle, u.ParentUnitId, u.ConversionRatio.HasValue ? (object)u.ConversionRatio.Value : DBNull.Value);
 
             dtCategories.Rows.Clear();
             foreach (var c in categoriesTask.Result)
@@ -214,9 +218,15 @@ namespace ERP
                     dgvSale[clnItemNo.Index, ind].Value = line.ItemId;
 
                     DataRow itemRow = dtItems.Select("Id = '" + line.ItemId.Replace("'", "''") + "'").FirstOrDefault();
+                    decimal displayQty = line.Qty;
+                    string displayUnit = line.Unit;
                     if (itemRow != null)
                     {
                         DataRowView drv = dtItems.DefaultView[dtItems.Rows.IndexOf(itemRow)];
+                        var resolved = UnitConversionHelper.ResolveDisplayQtyAndUnit(line.Qty, itemRow, dtUnits);
+                        displayQty = resolved.DisplayQty;
+                        displayUnit = resolved.UnitCode;
+                        UnitConversionHelper.BindRowUnitComboBox(dgvSale, clnUnit.Index, ind, itemRow, dtUnits, displayUnit);
                         SetcmbUnitSource(drv, ind);
                     }
                     else
@@ -224,7 +234,8 @@ namespace ERP
                         SetAllUnitsSource(ind);
                     }
 
-                    dgvSale[clnUnit.Index, ind].Value = line.Unit;
+                    dgvSale[clnQty.Index, ind].Value = displayQty.ToString("0.###");
+                    dgvSale[clnUnit.Index, ind].Value = displayUnit;
                     dgvSale[clnRate.Index, ind].Value = line.Rate.ToString("0.##");
 
                     if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
@@ -242,6 +253,7 @@ namespace ERP
             }
 
             dgvSale.Rows.Add();
+            UnitConversionHelper.UpdateUnitColumnVisibility(dgvSale, clnUnit.Index, clnItemNo.Index, dtItems, dtUnits);
             CalcTotAmount();
         }
 
@@ -310,11 +322,15 @@ namespace ERP
                     }
                 }
 
+                decimal inputQty = ParseDecimal(row.Cells[clnQty.Index].Value);
+                string selectedUnit = Convert.ToString(row.Cells[clnUnit.Index].Value);
+                decimal baseQty = UnitConversionHelper.ConvertToBasePrimaryQty(inputQty, selectedUnit, itemRow, dtUnits);
+
                 lines.Add(new SaleReturnLineRequest
                 {
                     Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
                     ItemId = Convert.ToString(row.Cells[clnItemNo.Index].Value),
-                    Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
+                    Qty = baseQty,
                     Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
                     SecQty = secQty,
@@ -697,6 +713,12 @@ namespace ERP
         private void SetcmbUnitSource(DataRowView dr, int rowInd)
         {
             dgvSale[clnRate.Index, rowInd].Value = dr["PriRate"].ToString();
+            if (dr != null && dr.Row != null)
+            {
+                string currentUnit = Convert.ToString(dgvSale[clnUnit.Index, rowInd].Value);
+                UnitConversionHelper.BindRowUnitComboBox(dgvSale, clnUnit.Index, rowInd, dr.Row, dtUnits, currentUnit);
+                UnitConversionHelper.UpdateUnitColumnVisibility(dgvSale, clnUnit.Index, clnItemNo.Index, dtItems, dtUnits);
+            }
 
             if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
             {
@@ -731,8 +753,8 @@ namespace ERP
                     DataRowView drv = dtItems.DefaultView[dtItems.Rows.IndexOf(dr)];
                     SetcmbItemSource(dr["fkItemcatagory"].ToString(), dgvSale.CurrentCellAddress.Y);
                     dgvSale[clnItemNo.Index, e.RowIndex].Value = dr["Id"].ToString();
-                    SetcmbUnitSource(drv, e.RowIndex);
                     dgvSale[clnUnit.Index, e.RowIndex].Value = dr["DefaultUnit"].ToString();
+                    SetcmbUnitSource(drv, e.RowIndex);
                 }
             }
 
@@ -744,6 +766,13 @@ namespace ERP
             decimal rate = ParseDecimal(dgvSale[clnRate.Index, e.RowIndex].Value);
             decimal discount = ParseDecimal(dgvSale[clnDiscount.Index, e.RowIndex].Value);
             decimal discountPercent = ParseDecimal(dgvSale[clnDiscPercent.Index, e.RowIndex].Value);
+
+            string rowItemId = Convert.ToString(dgvSale[clnItemNo.Index, e.RowIndex].Value);
+            DataRow rowItem = !string.IsNullOrWhiteSpace(rowItemId)
+                ? dtItems.Select("Id = '" + rowItemId.Replace("'", "''") + "'").FirstOrDefault()
+                : null;
+            string selectedUnit = Convert.ToString(dgvSale[clnUnit.Index, e.RowIndex].Value);
+            decimal baseQty = UnitConversionHelper.ConvertToBasePrimaryQty(qty, selectedUnit, rowItem, dtUnits);
 
             decimal secQty = 0;
             decimal secRate = 0;
@@ -763,7 +792,7 @@ namespace ERP
                 dgvSale["clnSecRate", e.RowIndex].Value = secRate.ToString();
             }
 
-            decimal lineGross = (qty * rate) + (secQty * secRate);
+            decimal lineGross = (baseQty * rate) + (secQty * secRate);
             if (!clnDiscount.Visible)
             {
                 discount = lineGross * (discountPercent / 100);
@@ -1272,6 +1301,9 @@ namespace ERP
                 decimal discount = ParseDecimal(dgvSale[clnDiscount.Index, ind].Value);
                 decimal discountPercent = ParseDecimal(dgvSale[clnDiscPercent.Index, ind].Value);
 
+                string selectedUnit = Convert.ToString(dgvSale[clnUnit.Index, ind].Value);
+                decimal baseQty = UnitConversionHelper.ConvertToBasePrimaryQty(qty, selectedUnit, dr, dtUnits);
+
                 decimal secQty = 0m;
                 decimal secRate = 0m;
                 if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
@@ -1282,7 +1314,7 @@ namespace ERP
                     dgvSale["clnSecRate", ind].Value = secRate.ToString("0.##");
                 }
 
-                decimal lineGross = (qty * rate) + (secQty * secRate);
+                decimal lineGross = (baseQty * rate) + (secQty * secRate);
                 if (!clnDiscount.Visible)
                 {
                     discount = lineGross * (discountPercent / 100m);

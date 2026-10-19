@@ -1,4 +1,4 @@
-﻿namespace ERP
+namespace ERP
 {
     partial class frmUnits
     {
@@ -40,6 +40,9 @@
             this.calendarColumn2 = new CalendarColumn();
             this.clnCode = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnUnits = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnShortTitle = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnParentUnit = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.clnConversionRatio = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnStatus = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnIsEdit = new System.Windows.Forms.DataGridViewTextBoxColumn();
             ((System.ComponentModel.ISupportInitialize)(this.dgvUnits)).BeginInit();
@@ -50,7 +53,7 @@
             // 
             this.dgvUnits.AllowUserToDeleteRows = false;
             this.dgvUnits.AllowUserToOrderColumns = true;
-            this.dgvUnits.AllowUserToResizeColumns = false;
+            this.dgvUnits.AllowUserToResizeColumns = true;
             this.dgvUnits.BackgroundColor = System.Drawing.SystemColors.ControlLightLight;
             dataGridViewCellStyle1.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleCenter;
             dataGridViewCellStyle1.BackColor = System.Drawing.SystemColors.Control;
@@ -64,6 +67,9 @@
             this.dgvUnits.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.clnCode,
             this.clnUnits,
+            this.clnShortTitle,
+            this.clnParentUnit,
+            this.clnConversionRatio,
             this.clnStatus,
             this.clnIsEdit});
             this.dgvUnits.Location = new System.Drawing.Point(10, 77);
@@ -71,7 +77,7 @@
             this.dgvUnits.Name = "dgvUnits";
             this.dgvUnits.RowHeadersWidth = 30;
             this.dgvUnits.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvUnits.Size = new System.Drawing.Size(404, 251);
+            this.dgvUnits.Size = new System.Drawing.Size(660, 251);
             this.dgvUnits.TabIndex = 162;
             this.dgvUnits.CellValueChanged += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvNarration_CellValueChanged);
             this.dgvUnits.UserAddedRow += new System.Windows.Forms.DataGridViewRowEventHandler(this.dataGridView1_UserAddedRow);
@@ -81,7 +87,7 @@
             this.panel1.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.panel1.Controls.Add(this.btnClose);
             this.panel1.Controls.Add(this.btnSave);
-            this.panel1.Location = new System.Drawing.Point(127, 334);
+            this.panel1.Location = new System.Drawing.Point(255, 334);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(170, 41);
             this.panel1.TabIndex = 169;
@@ -149,17 +155,39 @@
             // clnCode
             // 
             this.clnCode.HeaderText = "Code";
-            this.clnCode.MinimumWidth = 80;
+            this.clnCode.MinimumWidth = 65;
             this.clnCode.Name = "clnCode";
             this.clnCode.ReadOnly = true;
-            this.clnCode.Width = 80;
+            this.clnCode.Width = 65;
             // 
             // clnUnits
             // 
             this.clnUnits.AutoSizeMode = System.Windows.Forms.DataGridViewAutoSizeColumnMode.Fill;
-            this.clnUnits.HeaderText = "Units";
-            this.clnUnits.MinimumWidth = 250;
+            this.clnUnits.HeaderText = "Unit Title";
+            this.clnUnits.MinimumWidth = 140;
             this.clnUnits.Name = "clnUnits";
+            // 
+            // clnShortTitle
+            // 
+            this.clnShortTitle.HeaderText = "Short Title";
+            this.clnShortTitle.MinimumWidth = 85;
+            this.clnShortTitle.Name = "clnShortTitle";
+            this.clnShortTitle.Width = 90;
+            // 
+            // clnParentUnit
+            // 
+            this.clnParentUnit.DisplayStyle = System.Windows.Forms.DataGridViewComboBoxDisplayStyle.ComboBox;
+            this.clnParentUnit.HeaderText = "Parent Unit";
+            this.clnParentUnit.MinimumWidth = 130;
+            this.clnParentUnit.Name = "clnParentUnit";
+            this.clnParentUnit.Width = 140;
+            // 
+            // clnConversionRatio
+            // 
+            this.clnConversionRatio.HeaderText = "Ratio (> 1)";
+            this.clnConversionRatio.MinimumWidth = 95;
+            this.clnConversionRatio.Name = "clnConversionRatio";
+            this.clnConversionRatio.Width = 100;
             // 
             // clnStatus
             // 
@@ -180,7 +208,7 @@
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.BackColor = System.Drawing.SystemColors.ButtonHighlight;
-            this.ClientSize = new System.Drawing.Size(430, 389);
+            this.ClientSize = new System.Drawing.Size(684, 389);
             this.Controls.Add(this.panel1);
             this.Controls.Add(this.dgvUnits);
             this.Name = "frmUnits";
@@ -206,6 +234,9 @@
         private CalendarColumn calendarColumn2;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnCode;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnUnits;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnShortTitle;
+        private System.Windows.Forms.DataGridViewComboBoxColumn clnParentUnit;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnConversionRatio;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnStatus;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnIsEdit;
     }

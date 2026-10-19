@@ -255,6 +255,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("color")]
         public string Color { get; set; }
+
+        [JsonProperty("additionalUnits")]
+        public string AdditionalUnits { get; set; }
     }
 
     internal class InventoryItemUpsertApiRequest
@@ -327,5 +330,8 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("color")]
         public string Color { get; set; }
+
+        [JsonProperty("additionalUnits")]
+        public string AdditionalUnits { get; set; }
     }
 }

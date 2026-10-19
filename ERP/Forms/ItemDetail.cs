@@ -65,15 +65,7 @@ namespace ERP
         async System.Threading.Tasks.Task LoadUnitsAsync()
         {
             var units = await _unitApiService.GetLookupAsync();
-
-            dtUnits = new DataTable();
-            dtUnits.Columns.Add("Code", typeof(string));
-            dtUnits.Columns.Add("Title", typeof(string));
-
-            for (int i = 0; i < units.Count; i++)
-            {
-                dtUnits.Rows.Add(units[i].Code, units[i].Title);
-            }
+            dtUnits = UnitConversionHelper.CreateUnitsTable(units);
         }
         void FillUnits()
         {
@@ -114,6 +106,7 @@ namespace ERP
             dtItemDetail.Columns.Add("Storage", typeof(string));
             dtItemDetail.Columns.Add("Ram", typeof(string));
             dtItemDetail.Columns.Add("Color", typeof(string));
+            dtItemDetail.Columns.Add("AdditionalUnits", typeof(string));
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -142,7 +135,8 @@ namespace ERP
                     items[i].ModelName,
                     items[i].Storage,
                     items[i].Ram,
-                    items[i].Color);
+                    items[i].Color,
+                    items[i].AdditionalUnits);
             }
         }
         async System.Threading.Tasks.Task FillformAsync(string catagory)
@@ -173,6 +167,10 @@ namespace ERP
                     "0");
                 dgvItemDetail.Rows[rIdx].Cells["clnMediaId"].Value = dtfilter.Rows[i]["MediaId"]?.ToString() ?? string.Empty;
                 dgvItemDetail.Rows[rIdx].Cells["clnMediaUrl"].Value = dtfilter.Rows[i]["MediaUrl"]?.ToString() ?? string.Empty;
+                if (dgvItemDetail.Columns.Contains("clnAdditionalUnits"))
+                {
+                    dgvItemDetail.Rows[rIdx].Cells["clnAdditionalUnits"].Value = dtfilter.Rows[i]["AdditionalUnits"]?.ToString() ?? string.Empty;
+                }
 
                 if (ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnRequireImei"))
                 {
@@ -202,8 +200,20 @@ namespace ERP
 
             var clnMediaId = new DataGridViewTextBoxColumn { Name = "clnMediaId", Visible = false };
             var clnMediaUrl = new DataGridViewTextBoxColumn { Name = "clnMediaUrl", Visible = false };
+            var clnAdditionalUnits = new DataGridViewTextBoxColumn { Name = "clnAdditionalUnits", Visible = false };
+            var clnSubUnits = new DataGridViewButtonColumn
+            {
+                Name = "clnSubUnits",
+                HeaderText = "Sub-Units",
+                Text = "Sub-Units",
+                UseColumnTextForButtonValue = true,
+                Width = 75,
+                FlatStyle = FlatStyle.Flat
+            };
             dgvItemDetail.Columns.Add(clnMediaId);
             dgvItemDetail.Columns.Add(clnMediaUrl);
+            dgvItemDetail.Columns.Add(clnAdditionalUnits);
+            dgvItemDetail.Columns.Add(clnSubUnits);
 
             await LoadUnitsAsync();
             await fillItemCatagory();
@@ -213,6 +223,7 @@ namespace ERP
             try
             {
                 clnCategoryRates.DisplayIndex = clnSecRate.DisplayIndex + 1;
+                clnSubUnits.DisplayIndex = clnPriUnit.DisplayIndex + 1;
             }
             catch { }
 
@@ -438,7 +449,10 @@ namespace ERP
                                 ModelName = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnModel") ? Convert.ToString(row.Cells["clnModel"].Value) : null,
                                 Storage = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnStorage") ? Convert.ToString(row.Cells["clnStorage"].Value) : null,
                                 Ram = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnRam") ? Convert.ToString(row.Cells["clnRam"].Value) : null,
-                                Color = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnColor") ? Convert.ToString(row.Cells["clnColor"].Value) : null
+                                Color = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnColor") ? Convert.ToString(row.Cells["clnColor"].Value) : null,
+                                AdditionalUnits = isService || !dgvItemDetail.Columns.Contains("clnAdditionalUnits") || string.IsNullOrWhiteSpace(Convert.ToString(row.Cells["clnAdditionalUnits"].Value))
+                                    ? null
+                                    : Convert.ToString(row.Cells["clnAdditionalUnits"].Value)
                             };
 
                             var id = request.Id ?? string.Empty;
@@ -682,6 +696,36 @@ namespace ERP
 
         private void dgvItemDetail_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
+            if (e.RowIndex >= 0 && dgvItemDetail.Columns.Contains("clnSubUnits") && e.ColumnIndex == dgvItemDetail.Columns["clnSubUnits"].Index)
+            {
+                var row = dgvItemDetail.Rows[e.RowIndex];
+                var itemTitle = row.Cells[clnItem.Index].Value?.ToString() ?? string.Empty;
+                var priUnitId = row.Cells[clnPriUnit.Index].Value?.ToString() ?? string.Empty;
+                if (string.IsNullOrWhiteSpace(priUnitId))
+                {
+                    MessageBox.Show("Please select a Primary Unit first.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+
+                var currentAdditionalUnits = dgvItemDetail.Columns.Contains("clnAdditionalUnits")
+                    ? row.Cells["clnAdditionalUnits"].Value?.ToString()
+                    : null;
+
+                using (var frm = new frmItemSubUnits(itemTitle, priUnitId, dtUnits, currentAdditionalUnits))
+                {
+                    if (frm.ShowDialog(this) == DialogResult.OK)
+                    {
+                        if (dgvItemDetail.Columns.Contains("clnAdditionalUnits"))
+                        {
+                            row.Cells["clnAdditionalUnits"].Value = frm.ResultAdditionalUnitsJson ?? string.Empty;
+                        }
+                        row.Cells[clnIsEdit.Index].Value = "1";
+                        UpdateSaveButtonState(true);
+                    }
+                }
+                return;
+            }
+
             if (e.RowIndex >= 0 && e.ColumnIndex == clnCategoryRates.Index)
             {
                 var row = dgvItemDetail.Rows[e.RowIndex];

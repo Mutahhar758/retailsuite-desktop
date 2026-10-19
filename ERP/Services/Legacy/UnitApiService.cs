@@ -55,12 +55,33 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("title")]
         public string Title { get; set; }
+
+        [JsonProperty("shortTitle")]
+        public string ShortTitle { get; set; }
+
+        [JsonProperty("parentUnitId")]
+        public string ParentUnitId { get; set; }
+
+        [JsonProperty("parentUnitTitle")]
+        public string ParentUnitTitle { get; set; }
+
+        [JsonProperty("conversionRatio")]
+        public decimal? ConversionRatio { get; set; }
     }
 
     internal class UnitUpsertApiRequest
     {
         [JsonProperty("title")]
         public string Title { get; set; }
+
+        [JsonProperty("shortTitle")]
+        public string ShortTitle { get; set; }
+
+        [JsonProperty("parentUnitId")]
+        public string ParentUnitId { get; set; }
+
+        [JsonProperty("conversionRatio")]
+        public decimal? ConversionRatio { get; set; }
 
         [JsonProperty("active")]
         public bool Active { get; set; }

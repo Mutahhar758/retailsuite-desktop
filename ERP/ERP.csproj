@@ -221,6 +221,7 @@
     <Compile Include="Classes\stringValidation.cs" />
     <Compile Include="Classes\UserInfo.cs" />
     <Compile Include="Classes\Validation.cs" />
+    <Compile Include="Classes\UnitConversionHelper.cs" />
     <Compile Include="Dtos\Authentication\HttpResponseDto.cs" />
     <Compile Include="Dtos\Authentication\HttpResponseMetadataDto.cs" />
     <Compile Include="Dtos\Authentication\LoginRequestDto.cs" />
@@ -257,6 +258,9 @@
     <Compile Include="Services\Legacy\SettingsApiService.cs" />
     <Compile Include="Services\Legacy\UnitApiService.cs" />
     <Compile Include="Services\Legacy\VendorApiService.cs" />
+    <Compile Include="Forms\frmItemSubUnits.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Forms\frmBOM.cs">
       <SubType>Form</SubType>
     </Compile>

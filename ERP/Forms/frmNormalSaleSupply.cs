@@ -71,9 +71,13 @@ namespace ERP
             dtItems.Columns.Add("PrimaryUnit", typeof(string));
             dtItems.Columns.Add("SecondaryUnit", typeof(string));
             dtItems.Columns.Add("DefaultUnit", typeof(string));
+            dtItems.Columns.Add("AdditionalUnits", typeof(string));
 
             dtUnits.Columns.Add("Code", typeof(string));
             dtUnits.Columns.Add("Title", typeof(string));
+            dtUnits.Columns.Add("ShortTitle", typeof(string));
+            dtUnits.Columns.Add("ParentUnitId", typeof(string));
+            dtUnits.Columns.Add("ConversionRatio", typeof(decimal));
 
             dtCustomers.Columns.Add("Account", typeof(string));
             dtCustomers.Columns.Add("Title", typeof(string));
@@ -107,11 +111,9 @@ namespace ERP
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
-                dtItems.Rows.Add(item.Id, item.Title, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit);
+                dtItems.Rows.Add(item.Id, item.Title, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.AdditionalUnits);
 
-            dtUnits.Rows.Clear();
-            foreach (var u in unitsTask.Result)
-                dtUnits.Rows.Add(u.Code, u.Title);
+            dtUnits = UnitConversionHelper.CreateUnitsTable(unitsTask.Result);
 
             dtCustomers.Rows.Clear();
             foreach (var c in customersTask.Result)
@@ -130,6 +132,18 @@ namespace ERP
             FillNarration();
             FillFilterItems();
             FillSupplyOrders();
+        }
+
+        private DataRow GetSelectedHeaderItemRow()
+        {
+            if (cmbItem.SelectedItem is DataRowView drv)
+                return drv.Row;
+            if (cmbItem.SelectedValue != null)
+            {
+                string itemId = Convert.ToString(cmbItem.SelectedValue);
+                return dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
+            }
+            return null;
         }
 
         private void FillItems()
@@ -184,6 +198,7 @@ namespace ERP
             decimal totSecQty = 0;
             decimal totAddLess = 0;
             decimal totAmount = 0;
+            DataRow headerItemRow = GetSelectedHeaderItemRow();
 
             try
             {
@@ -198,7 +213,10 @@ namespace ERP
                         count++;
                     }
 
-                    totQty += ParseDecimal(row.Cells[clnQty.Index].Value);
+                    decimal enteredQty = ParseDecimal(row.Cells[clnQty.Index].Value);
+                    string selectedUnitId = Convert.ToString(row.Cells[clnUnit.Index].Value);
+                    decimal baseQty = UnitConversionHelper.ConvertToBasePrimaryQty(enteredQty, selectedUnitId, headerItemRow, dtUnits);
+                    totQty += baseQty;
                     if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
                     {
                         totSecQty += ParseDecimal(row.Cells["clnSecQty"].Value);
@@ -253,6 +271,7 @@ namespace ERP
                 return;
             }
 
+            DataRow headerItemRow = GetSelectedHeaderItemRow();
             var lines = new List<SaleSupplyLineApiRequest>();
             foreach (DataGridViewRow row in dgvSale.Rows)
             {
@@ -267,22 +286,21 @@ namespace ERP
                     secQty = ParseDecimal(row.Cells["clnSecQty"].Value);
                     secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
                     
-                    if (cmbItem.SelectedValue != null)
+                    if (headerItemRow != null)
                     {
-                        string itemId = Convert.ToString(cmbItem.SelectedValue);
-                        DataRow itemRow = dtItems.Select("Id = '" + itemId.Replace("'", "''") + "'").FirstOrDefault();
-                        if (itemRow != null)
-                        {
-                            secUnit = Convert.ToString(itemRow["SecondaryUnit"]);
-                        }
+                        secUnit = Convert.ToString(headerItemRow["SecondaryUnit"]);
                     }
                 }
+
+                decimal enteredQty = ParseDecimal(row.Cells[clnQty.Index].Value);
+                string selectedUnitId = Convert.ToString(row.Cells[clnUnit.Index].Value);
+                decimal baseQty = UnitConversionHelper.ConvertToBasePrimaryQty(enteredQty, selectedUnitId, headerItemRow, dtUnits);
 
                 lines.Add(new SaleSupplyLineApiRequest
                 {
                     Seq = int.Parse(Convert.ToString(row.Cells[clnSeq.Index].Value)),
                     CustomerId = Convert.ToString(row.Cells[clnCustomer.Index].Value),
-                    Qty = ParseDecimal(row.Cells[clnQty.Index].Value),
+                    Qty = baseQty,
                     Rate = ParseDecimal(row.Cells[clnRate.Index].Value),
                     Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value),
                     Carriage = ParseDecimal(row.Cells[clnCarriage.Index].Value),
@@ -394,6 +412,8 @@ namespace ERP
                     ? first.LastModifiedBy + " | " + first.LastModifiedOn.Value.ToString("dd-MMM-yyyy hh:mm:ss tt")
                     : null;
 
+                DataRow itemRow = dtItems.Select("Id = '" + first.ItemId.Replace("'", "''") + "'").FirstOrDefault();
+
                 for (int i = 0; i < lines.Count; i++)
                 {
                     var line = lines[i];
@@ -402,10 +422,21 @@ namespace ERP
                     int ind = dgvSale.Rows.Add();
                     var row = dgvSale.Rows[ind];
                     
+                    decimal displayQty = line.Qty;
+                    string displayUnitId = line.Unit;
+                    if (itemRow != null)
+                    {
+                        UnitConversionHelper.ResolveDisplayQtyAndUnit(line.Qty, itemRow, dtUnits, out displayQty, out displayUnitId);
+                        UnitConversionHelper.BindRowUnitComboBox(row, clnUnit.Index, itemRow, dtUnits, displayUnitId);
+                    }
+                    else
+                    {
+                        row.Cells[clnUnit.Index].Value = line.Unit;
+                    }
+
                     row.Cells[clnSeq.Index].Value = line.Seq.ToString();
                     row.Cells[clnCustomer.Index].Value = line.CustomerId;
-                    row.Cells[clnUnit.Index].Value = line.Unit;
-                    row.Cells[clnQty.Index].Value = line.Qty.ToString("0.##");
+                    row.Cells[clnQty.Index].Value = displayQty.ToString("0.####");
                     row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
                     row.Cells[clnDiscount.Index].Value = line.Discount.ToString("0.##");
                     row.Cells[clnDiscPercent.Index].Value = discountPercent.ToString("0.##");
@@ -554,14 +585,11 @@ namespace ERP
                 dgvSale.Rows[e.RowIndex].Cells[clnSeq.Index].Value = (seq + 1).ToString();
                 dgvSale.Rows[e.RowIndex].Cells[clnStatus.Index].Value = "0";
 
-                if (cmbItem.SelectedValue != null)
+                DataRow itemRow = GetSelectedHeaderItemRow();
+                if (itemRow != null)
                 {
-                    DataRowView dr = (DataRowView)cmbItem.SelectedItem;
-                    if (dr != null && dr["PrimaryUnit"] != null)
-                    {
-                        dgvSale.Rows[e.RowIndex].Cells[clnUnit.Index].Value = dr["PrimaryUnit"].ToString();
-                        SetRateForRow(e.RowIndex);
-                    }
+                    UnitConversionHelper.BindRowUnitComboBox(dgvSale.Rows[e.RowIndex], clnUnit.Index, itemRow, dtUnits);
+                    SetRateForRow(e.RowIndex);
                 }
             }
             CalcTotals();
@@ -624,13 +652,22 @@ namespace ERP
                     if (cmbItem.SelectedValue != null)
                     {
                         string itemId = cmbItem.SelectedValue.ToString();
+                        DataRow headerItemRow = GetSelectedHeaderItemRow();
                         try
                         {
                             var customItems = await _customerApiService.GetSupplyItemsAsync(custId, itemId);
                             var customSetting = customItems?.FirstOrDefault();
                             if (customSetting != null)
                             {
-                                dgvSale[clnQty.Index, rowIndex].Value = (customSetting.Qty > 0 ? customSetting.Qty : 1).ToString("0.##");
+                                decimal rawDefaultQty = customSetting.Qty > 0 ? customSetting.Qty : 1;
+                                decimal dispQty = rawDefaultQty;
+                                string dispUnitId = headerItemRow != null ? Convert.ToString(headerItemRow["PrimaryUnit"]) : "";
+                                if (headerItemRow != null)
+                                {
+                                    UnitConversionHelper.ResolveDisplayQtyAndUnit(rawDefaultQty, headerItemRow, dtUnits, out dispQty, out dispUnitId);
+                                    UnitConversionHelper.BindRowUnitComboBox(dgvSale.Rows[rowIndex], clnUnit.Index, headerItemRow, dtUnits, dispUnitId);
+                                }
+                                dgvSale[clnQty.Index, rowIndex].Value = dispQty.ToString("0.####");
                                 if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
                                 {
                                     dgvSale["clnSecQty", rowIndex].Value = (customSetting.SecQty ?? 0).ToString("0.##");
@@ -720,6 +757,10 @@ namespace ERP
                 return;
 
             decimal Qty = ParseDecimal(row.Cells[clnQty.Index].Value);
+            DataRow headerItemRow = GetSelectedHeaderItemRow();
+            string selectedUnitId = Convert.ToString(row.Cells[clnUnit.Index].Value);
+            decimal baseQty = UnitConversionHelper.ConvertToBasePrimaryQty(Qty, selectedUnitId, headerItemRow, dtUnits);
+
             decimal Rate = ParseDecimal(row.Cells[clnRate.Index].Value);
             decimal Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value);
             decimal DiscountPercent = ParseDecimal(row.Cells[clnDiscPercent.Index].Value);
@@ -734,7 +775,7 @@ namespace ERP
                 secRate = ParseDecimal(row.Cells["clnSecRate"].Value);
             }
 
-            decimal lineGross = (Qty * Rate) + (secQty * secRate);
+            decimal lineGross = (baseQty * Rate) + (secQty * secRate);
             if (editedColumnIndex == clnDiscPercent.Index || (!clnDiscount.Visible && clnDiscPercent.Visible))
             {
                 Discount = decimal.Round(lineGross * (DiscountPercent / 100), 2);
@@ -796,6 +837,26 @@ namespace ERP
 
         private void SetclnUnitSource()
         {
+            DataRow headerItemRow = GetSelectedHeaderItemRow();
+            var selectableUnits = UnitConversionHelper.GetSelectableUnitsTable(headerItemRow, dtUnits);
+            bool hasMulti = selectableUnits.Rows.Count > 1;
+            clnUnit.Visible = hasMulti;
+            if (hasMulti)
+            {
+                clnUnit.HeaderText = "Unit";
+                clnUnit.Width = 65;
+                clnUnit.ReadOnly = false;
+                try
+                {
+                    clnUnit.DisplayIndex = clnQty.DisplayIndex + 1;
+                }
+                catch { }
+            }
+            for (int i = 0; i < dgvSale.Rows.Count; i++)
+            {
+                string currentUnit = Convert.ToString(dgvSale.Rows[i].Cells[clnUnit.Index].Value);
+                UnitConversionHelper.BindRowUnitComboBox(dgvSale.Rows[i], clnUnit.Index, headerItemRow, dtUnits, currentUnit);
+            }
         }
 
         private void dgvPurchase_DataError(object sender, DataGridViewDataErrorEventArgs e)
@@ -1265,11 +1326,21 @@ namespace ERP
                 }
             }
 
+            DataRow headerItemRow = GetSelectedHeaderItemRow();
+
             foreach (DataGridViewRow row in dgvSale.Rows)
                     {
                         if (row.IsNewRow) continue;
 
-                        row.Cells[clnUnit.Index].Value = primaryUnit;
+                        if (!isSameAsOriginal)
+                        {
+                            UnitConversionHelper.BindRowUnitComboBox(row, clnUnit.Index, headerItemRow, dtUnits, primaryUnit);
+                        }
+                        else
+                        {
+                            string existingUnit = Convert.ToString(row.Cells[clnUnit.Index].Value);
+                            UnitConversionHelper.BindRowUnitComboBox(row, clnUnit.Index, headerItemRow, dtUnits, !string.IsNullOrWhiteSpace(existingUnit) ? existingUnit : primaryUnit);
+                        }
 
                         if (isSameAsOriginal && row.Tag is SavedRowRateInfo savedRate)
                         {
@@ -1288,12 +1359,6 @@ namespace ERP
                             SetRateForRow(row.Index);
                         }
 
-                        // Only apply the prefill default qty when the row does not already
-                        // have a qty value. This prevents overwriting manually-entered or
-                        // previously-saved quantities when an existing voucher is loaded
-                        // and cmbItem.SelectedValue is set, which re-triggers this event.
-                        // Note: a user-entered zero is still a valid qty, so we only check
-                        // for null/whitespace — NOT for non-zero.
                         bool hasExistingQty = row.Cells[clnQty.Index].Value != null &&
                                               !string.IsNullOrWhiteSpace(row.Cells[clnQty.Index].Value.ToString());
 
@@ -1302,7 +1367,15 @@ namespace ERP
                             string custId = row.Cells[clnCustomer.Index].Value?.ToString();
                             if (!string.IsNullOrEmpty(custId) && itemQtyMap.TryGetValue(custId, out var customSetting))
                             {
-                                row.Cells[clnQty.Index].Value = (customSetting.Qty > 0 ? customSetting.Qty : 1).ToString("0.##");
+                                decimal rawDefaultQty = customSetting.Qty > 0 ? customSetting.Qty : 1;
+                                decimal dispQty = rawDefaultQty;
+                                string dispUnitId = primaryUnit;
+                                if (headerItemRow != null)
+                                {
+                                    UnitConversionHelper.ResolveDisplayQtyAndUnit(rawDefaultQty, headerItemRow, dtUnits, out dispQty, out dispUnitId);
+                                    UnitConversionHelper.BindRowUnitComboBox(row, clnUnit.Index, headerItemRow, dtUnits, dispUnitId);
+                                }
+                                row.Cells[clnQty.Index].Value = dispQty.ToString("0.####");
                                 if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
                                 {
                                     bool hasExistingSecQty = row.Cells["clnSecQty"].Value != null &&
@@ -1368,6 +1441,7 @@ namespace ERP
 
                     if (supplyOrder != null && supplyOrder.Details != null)
                     {
+                        DataRow headerItemRow = GetSelectedHeaderItemRow();
                         for (int i = 0; i < supplyOrder.Details.Count; i++)
                         {
                             int idx = dgvSale.Rows.Add();
@@ -1383,20 +1457,19 @@ namespace ERP
                                 secQty = customSetting.SecQty ?? 0;
                             }
 
-                            dgvSale.Rows[idx].Cells[clnQty.Index].Value = qty.ToString("0.##");
+                            decimal dispQty = qty;
+                            string dispUnit = headerItemRow != null ? Convert.ToString(headerItemRow["PrimaryUnit"]) : "";
+                            if (headerItemRow != null)
+                            {
+                                UnitConversionHelper.ResolveDisplayQtyAndUnit(qty, headerItemRow, dtUnits, out dispQty, out dispUnit);
+                                UnitConversionHelper.BindRowUnitComboBox(dgvSale.Rows[idx], clnUnit.Index, headerItemRow, dtUnits, dispUnit);
+                                SetRateForRow(idx);
+                            }
+
+                            dgvSale.Rows[idx].Cells[clnQty.Index].Value = dispQty.ToString("0.####");
                             if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
                             {
                                 dgvSale.Rows[idx].Cells["clnSecQty"].Value = secQty.ToString("0.##");
-                            }
-
-                            if (cmbItem.SelectedValue != null)
-                            {
-                                DataRowView itemDr = cmbItem.SelectedItem as DataRowView;
-                                if (itemDr != null && itemDr["PrimaryUnit"] != null)
-                                {
-                                    dgvSale.Rows[idx].Cells[clnUnit.Index].Value = itemDr["PrimaryUnit"].ToString();
-                                    SetRateForRow(idx);
-                                }
                             }
 
                             // Apply rate / discount / addLess overrides after SetRateForRow
