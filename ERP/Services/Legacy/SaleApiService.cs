@@ -86,6 +86,19 @@ namespace ERP.Services.Legacy
                 await EnsureSuccessWithServerMessageAsync(response);
             }
         }
+
+        public async Task<CustomerItemPriceHistoryResponse> GetCustomerItemHistoryAsync(string accountId, string itemId)
+        {
+            var url = $"{SaleEndpoint}/customer-history?accountId={Uri.EscapeDataString(accountId)}&itemId={Uri.EscapeDataString(itemId)}";
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<CustomerItemPriceHistoryResponse>>(json);
+                return payload?.Body;
+            }
+        }
     }
 
     internal class SaleDto
@@ -317,5 +330,59 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("warrantyExpiryDate")]
         public string WarrantyExpiryDate { get; set; }
+    }
+
+    internal class CustomerItemSaleRecord
+    {
+        [JsonProperty("voucherNo")]
+        public string VoucherNo { get; set; }
+
+        [JsonProperty("vType")]
+        public string VType { get; set; }
+
+        [JsonProperty("date")]
+        public DateTime Date { get; set; }
+
+        [JsonProperty("qty")]
+        public decimal Qty { get; set; }
+
+        [JsonProperty("rate")]
+        public decimal Rate { get; set; }
+
+        [JsonProperty("secQty")]
+        public decimal? SecQty { get; set; }
+
+        [JsonProperty("secRate")]
+        public decimal? SecRate { get; set; }
+
+        [JsonProperty("amount")]
+        public decimal Amount { get; set; }
+    }
+
+    internal class CustomerItemPriceHistoryResponse
+    {
+        [JsonProperty("hasHistory")]
+        public bool HasHistory { get; set; }
+
+        [JsonProperty("lastSaleDate")]
+        public DateTime? LastSaleDate { get; set; }
+
+        [JsonProperty("lastRate")]
+        public decimal? LastRate { get; set; }
+
+        [JsonProperty("lastQty")]
+        public decimal? LastQty { get; set; }
+
+        [JsonProperty("lastSecRate")]
+        public decimal? LastSecRate { get; set; }
+
+        [JsonProperty("lastVoucherNo")]
+        public string LastVoucherNo { get; set; }
+
+        [JsonProperty("lastVType")]
+        public string LastVType { get; set; }
+
+        [JsonProperty("recentSales")]
+        public List<CustomerItemSaleRecord> RecentSales { get; set; } = new List<CustomerItemSaleRecord>();
     }
 }

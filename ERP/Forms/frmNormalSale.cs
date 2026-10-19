@@ -56,7 +56,72 @@ namespace ERP
             _mobileShopApiService = new MobileShopApiService();
             InitializeLookupTables();
             dgvSale.Rows.Add();
+            SetupGridContextMenu();
             UserInfo.ApplyFormPermissions(this, AppResource.Sales);
+        }
+
+        private void SetupGridContextMenu()
+        {
+            var ctx = new ContextMenuStrip();
+            var mnuHistory = new ToolStripMenuItem("Customer Price History (F9)", null, (s, e) => ShowCustomerPriceHistory());
+            ctx.Items.Add(mnuHistory);
+            dgvSale.ContextMenuStrip = ctx;
+        }
+
+        private void SetupF9Hints()
+        {
+            try
+            {
+                if (clnRate != null)
+                {
+                    clnRate.ToolTipText = "Press [F9] to view customer's last sale price & history";
+                }
+
+                if (tbDetail != null)
+                {
+                    var pnlHint = new Panel
+                    {
+                        Name = "pnlPriceHistoryHint",
+                        Location = new System.Drawing.Point(885, 12),
+                        Size = new System.Drawing.Size(190, 82),
+                        BackColor = System.Drawing.Color.FromArgb(239, 246, 255),
+                        BorderStyle = BorderStyle.FixedSingle,
+                        Cursor = Cursors.Hand
+                    };
+
+                    var lblTitle = new Label
+                    {
+                        Text = "💡 Price History [F9]",
+                        Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold),
+                        ForeColor = System.Drawing.Color.FromArgb(30, 64, 175),
+                        Location = new System.Drawing.Point(6, 6),
+                        AutoSize = true,
+                        Cursor = Cursors.Hand
+                    };
+
+                    var lblDesc = new Label
+                    {
+                        Text = "Press [F9] or Right-Click on any item row to check Customer's last sale price.",
+                        Font = new System.Drawing.Font("Segoe UI", 8.25F),
+                        ForeColor = System.Drawing.Color.FromArgb(51, 65, 85),
+                        Location = new System.Drawing.Point(6, 26),
+                        Size = new System.Drawing.Size(175, 50),
+                        Cursor = Cursors.Hand
+                    };
+
+                    Action openHistory = () => ShowCustomerPriceHistory();
+                    pnlHint.Click += (s, e) => openHistory();
+                    lblTitle.Click += (s, e) => openHistory();
+                    lblDesc.Click += (s, e) => openHistory();
+
+                    pnlHint.Controls.Add(lblTitle);
+                    pnlHint.Controls.Add(lblDesc);
+
+                    tbDetail.Controls.Add(pnlHint);
+                    pnlHint.BringToFront();
+                }
+            }
+            catch { }
         }
 
         private void InitializeLookupTables()
@@ -599,6 +664,7 @@ namespace ERP
                 SetupSecondaryQtyColumns();
                 SetupMobileShopColumns();
                 ApplyBarcodeFastScanVisibility();
+                SetupF9Hints();
                 await LoadLookupsAsync();
                 await FillQueryAsync();
                 if (_queryList.Count > 0 && txtVoucherNo.Text == "")
@@ -849,6 +915,65 @@ namespace ERP
             {
                 e.SuppressKeyPress = true;
                 SendKeys.Send("{tab}");
+            }
+            else if (e.KeyCode == Keys.F9)
+            {
+                e.SuppressKeyPress = true;
+                e.Handled = true;
+                ShowCustomerPriceHistory();
+            }
+        }
+
+        private void ShowCustomerPriceHistory()
+        {
+            if (cmbAccounts.SelectedValue == null || string.IsNullOrWhiteSpace(cmbAccounts.SelectedValue.ToString()))
+            {
+                MessageBox.Show("Please select a customer first.", "Customer Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cmbAccounts.Focus();
+                return;
+            }
+
+            int rowIndex = dgvSale.CurrentCellAddress.Y >= 0 ? dgvSale.CurrentCellAddress.Y : currentRow;
+            if (rowIndex < 0 || rowIndex >= dgvSale.Rows.Count) return;
+
+            var itemIdVal = dgvSale[clnItemNo.Index, rowIndex].Value;
+            if (itemIdVal == null || string.IsNullOrWhiteSpace(itemIdVal.ToString()))
+            {
+                MessageBox.Show("Please select an item in the current row first.", "Item Required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            string accountId = cmbAccounts.SelectedValue.ToString();
+            string customerName = cmbAccounts.Text;
+            string itemId = itemIdVal.ToString();
+            string itemTitle = dgvSale[clnItemNo.Index, rowIndex].FormattedValue?.ToString() ?? itemId;
+
+            using (var historyForm = new ERP.Forms.frmCustomerPriceHistory(
+                accountId,
+                customerName,
+                itemId,
+                itemTitle,
+                ApiSession.HasSecondaryQty))
+            {
+                if (historyForm.ShowDialog(this) == DialogResult.OK)
+                {
+                    dgvSale[clnRate.Index, rowIndex].Value = historyForm.SelectedRate.ToString("0.##");
+                    if (ApiSession.HasSecondaryQty && historyForm.SelectedSecRate.HasValue && dgvSale.Columns.Contains("clnSecRate"))
+                    {
+                        dgvSale["clnSecRate", rowIndex].Value = historyForm.SelectedSecRate.Value.ToString("0.##");
+                    }
+
+                    // Recalculate amount
+                    decimal qty = ParseDecimal(dgvSale[clnQty.Index, rowIndex].Value);
+                    decimal rate = historyForm.SelectedRate;
+                    decimal discount = ParseDecimal(dgvSale[clnDiscount.Index, rowIndex].Value);
+                    decimal carriage = clnCarriage != null ? ParseDecimal(dgvSale[clnCarriage.Index, rowIndex].Value) : 0;
+                    decimal secQty = (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty")) ? ParseDecimal(dgvSale["clnSecQty", rowIndex].Value) : 0;
+                    decimal secRate = (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecRate")) ? ParseDecimal(dgvSale["clnSecRate", rowIndex].Value) : 0;
+
+                    dgvSale[clnAmount.Index, rowIndex].Value = ((qty * rate) + (secQty * secRate) - discount + carriage).ToString("0.##");
+                    CalcTotAmount();
+                }
             }
         }
 

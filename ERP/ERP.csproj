@@ -532,6 +532,12 @@
     <Compile Include="Forms\frmCustomerInfo.Designer.cs">
       <DependentUpon>frmCustomerInfo.cs</DependentUpon>
     </Compile>
+    <Compile Include="Forms\frmCustomerPriceHistory.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmCustomerPriceHistory.Designer.cs">
+      <DependentUpon>frmCustomerPriceHistory.cs</DependentUpon>
+    </Compile>
     <Compile Include="Forms\frmNarration.cs">
       <SubType>Form</SubType>
     </Compile>
