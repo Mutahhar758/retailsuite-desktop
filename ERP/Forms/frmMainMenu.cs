@@ -92,6 +92,7 @@ namespace ERP
             customerInformationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Customers);
             customerCategoryToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerCategories);
             supplierInformationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Vendors);
+            bankAccountToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BankAccounts);
             narrationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Narrations);
             itemDetailToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.InventoryItems);
             unitIndexToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Units);
@@ -453,6 +454,13 @@ namespace ERP
             frmSupplierInfo supp = new frmSupplierInfo();
             supp.MdiParent = this;
             supp.Show();
+        }
+
+        private void bankAccountToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            frmBankInfo bank = new frmBankInfo();
+            bank.MdiParent = this;
+            bank.Show();
         }
 
         private void monthlyInstallmentsToolStripMenuItem_Click(object sender, EventArgs e)

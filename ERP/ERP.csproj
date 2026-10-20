@@ -258,6 +258,7 @@
     <Compile Include="Services\Legacy\SettingsApiService.cs" />
     <Compile Include="Services\Legacy\UnitApiService.cs" />
     <Compile Include="Services\Legacy\VendorApiService.cs" />
+    <Compile Include="Services\Legacy\BankAccountApiService.cs" />
     <Compile Include="Forms\frmItemSubUnits.cs">
       <SubType>Form</SubType>
     </Compile>
@@ -559,6 +560,12 @@
     </Compile>
     <Compile Include="Forms\frmSupplierInfo.designer.cs">
       <DependentUpon>frmSupplierInfo.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmBankInfo.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmBankInfo.Designer.cs">
+      <DependentUpon>frmBankInfo.cs</DependentUpon>
     </Compile>
     <Compile Include="Forms\frmUnits.cs">
       <SubType>Form</SubType>

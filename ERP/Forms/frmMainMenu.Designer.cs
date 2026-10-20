@@ -37,6 +37,7 @@ namespace ERP
             this.customerInformationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.customerCategoryToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.supplierInformationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.bankAccountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.narrationToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.itemDetailToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.unitIndexToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -127,6 +128,7 @@ namespace ERP
             this.customerInformationToolStripMenuItem,
             this.customerCategoryToolStripMenuItem,
             this.supplierInformationToolStripMenuItem,
+            this.bankAccountToolStripMenuItem,
             this.narrationToolStripMenuItem,
             this.itemDetailToolStripMenuItem,
             this.unitIndexToolStripMenuItem,
@@ -180,6 +182,13 @@ namespace ERP
             this.supplierInformationToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
             this.supplierInformationToolStripMenuItem.Text = "Supplier Information";
             this.supplierInformationToolStripMenuItem.Click += new System.EventHandler(this.supplierInformationToolStripMenuItem_Click);
+            // 
+            // bankAccountToolStripMenuItem
+            // 
+            this.bankAccountToolStripMenuItem.Name = "bankAccountToolStripMenuItem";
+            this.bankAccountToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
+            this.bankAccountToolStripMenuItem.Text = "Bank Account Information";
+            this.bankAccountToolStripMenuItem.Click += new System.EventHandler(this.bankAccountToolStripMenuItem_Click);
             // 
             // narrationToolStripMenuItem
             // 
@@ -726,6 +735,7 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem customerInformationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerCategoryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem supplierInformationToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem bankAccountToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem dailyEntryToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem paymentVoucherToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem receiptVoucherToolStripMenuItem;

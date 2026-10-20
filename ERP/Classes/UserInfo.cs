@@ -142,6 +142,7 @@ namespace ERP
         public const string Customers = "Customers";
         public const string CustomerCategories = "CustomerCategories";
         public const string Vendors = "Vendors";
+        public const string BankAccounts = "BankAccounts";
         public const string InventoryItems = "InventoryItems";
         public const string ItemCategories = "ItemCategories";
         public const string Units = "Units";
