@@ -56,6 +56,8 @@ namespace ERP
             this.btnSave = new System.Windows.Forms.Button();
             this.btnHome = new System.Windows.Forms.Button();
             this.btnNew = new System.Windows.Forms.Button();
+            this.btnScanSheet = new System.Windows.Forms.Button();
+            this.btnScanSheetTop = new System.Windows.Forms.Button();
             this.dgvSale = new System.Windows.Forms.DataGridView();
             this.clnSeq = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnCustomer = new System.Windows.Forms.DataGridViewComboBoxColumn();
@@ -169,6 +171,7 @@ namespace ERP
             this.tbDetail.Controls.Add(this.grpInvoiceDetail);
             this.tbDetail.Controls.Add(this.lblSearchCustomer);
             this.tbDetail.Controls.Add(this.txtSearchCustomer);
+            this.tbDetail.Controls.Add(this.btnScanSheetTop);
             this.tbDetail.Location = new System.Drawing.Point(4, 25);
             this.tbDetail.Name = "tbDetail";
             this.tbDetail.Padding = new System.Windows.Forms.Padding(3);
@@ -191,18 +194,33 @@ namespace ERP
             this.panel1.Controls.Add(this.btnSave);
             this.panel1.Controls.Add(this.btnHome);
             this.panel1.Controls.Add(this.btnNew);
+            this.panel1.Controls.Add(this.btnScanSheet);
             this.panel1.Location = new System.Drawing.Point(7, 363);
             this.panel1.Name = "panel1";
             this.panel1.Size = new System.Drawing.Size(446, 38);
             this.panel1.TabIndex = 3;
             // 
+            // 
+            // btnScanSheet
+            // 
+            this.btnScanSheet.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(244)))), ((int)(((byte)(255)))));
+            this.btnScanSheet.FlatStyle = System.Windows.Forms.FlatStyle.Standard;
+            this.btnScanSheet.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnScanSheet.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(60)))), ((int)(((byte)(140)))));
+            this.btnScanSheet.Location = new System.Drawing.Point(227, 3);
+            this.btnScanSheet.Name = "btnScanSheet";
+            this.btnScanSheet.Size = new System.Drawing.Size(95, 29);
+            this.btnScanSheet.TabIndex = 170;
+            this.btnScanSheet.Text = "AI &Scan";
+            this.btnScanSheet.UseVisualStyleBackColor = false;
+            this.btnScanSheet.Click += new System.EventHandler(this.btnScanSheet_Click);
             // btnCopyAsNew
             // 
             this.btnCopyAsNew.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnCopyAsNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnCopyAsNew.Location = new System.Drawing.Point(166, 3);
+            this.btnCopyAsNew.Location = new System.Drawing.Point(130, 3);
             this.btnCopyAsNew.Name = "btnCopyAsNew";
-            this.btnCopyAsNew.Size = new System.Drawing.Size(114, 29);
+            this.btnCopyAsNew.Size = new System.Drawing.Size(95, 29);
             this.btnCopyAsNew.TabIndex = 169;
             this.btnCopyAsNew.Text = "Copy as &New";
             this.btnCopyAsNew.UseVisualStyleBackColor = false;
@@ -212,9 +230,9 @@ namespace ERP
             // 
             this.btnDelete.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnDelete.Location = new System.Drawing.Point(286, 3);
+            this.btnDelete.Location = new System.Drawing.Point(324, 3);
             this.btnDelete.Name = "btnDelete";
-            this.btnDelete.Size = new System.Drawing.Size(73, 29);
+            this.btnDelete.Size = new System.Drawing.Size(60, 29);
             this.btnDelete.TabIndex = 168;
             this.btnDelete.Text = "&Delete";
             this.btnDelete.UseVisualStyleBackColor = false;
@@ -238,9 +256,9 @@ namespace ERP
             // 
             this.btnClose.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnClose.Location = new System.Drawing.Point(365, 3);
+            this.btnClose.Location = new System.Drawing.Point(386, 3);
             this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(73, 29);
+            this.btnClose.Size = new System.Drawing.Size(56, 29);
             this.btnClose.TabIndex = 163;
             this.btnClose.Text = "Close";
             this.btnClose.UseVisualStyleBackColor = false;
@@ -278,9 +296,9 @@ namespace ERP
             // 
             this.btnSave.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnSave.Location = new System.Drawing.Point(88, 3);
+            this.btnSave.Location = new System.Drawing.Point(68, 3);
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(73, 29);
+            this.btnSave.Size = new System.Drawing.Size(60, 29);
             this.btnSave.TabIndex = 0;
             this.btnSave.Text = "&Save";
             this.btnSave.UseVisualStyleBackColor = false;
@@ -304,9 +322,9 @@ namespace ERP
             // 
             this.btnNew.BackColor = System.Drawing.SystemColors.ControlLight;
             this.btnNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
-            this.btnNew.Location = new System.Drawing.Point(10, 3);
+            this.btnNew.Location = new System.Drawing.Point(6, 3);
             this.btnNew.Name = "btnNew";
-            this.btnNew.Size = new System.Drawing.Size(73, 29);
+            this.btnNew.Size = new System.Drawing.Size(60, 29);
             this.btnNew.TabIndex = 1;
             this.btnNew.Text = "&New";
             this.btnNew.UseVisualStyleBackColor = false;
@@ -761,6 +779,20 @@ namespace ERP
             this.txtSearchCustomer.Size = new System.Drawing.Size(260, 22);
             this.txtSearchCustomer.TabIndex = 221;
             this.txtSearchCustomer.TextChanged += new System.EventHandler(this.txtSearchCustomer_TextChanged);
+            // 
+            // btnScanSheetTop
+            // 
+            this.btnScanSheetTop.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(238)))), ((int)(((byte)(244)))), ((int)(((byte)(255)))));
+            this.btnScanSheetTop.FlatStyle = System.Windows.Forms.FlatStyle.Standard;
+            this.btnScanSheetTop.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnScanSheetTop.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(60)))), ((int)(((byte)(140)))));
+            this.btnScanSheetTop.Location = new System.Drawing.Point(396, 171);
+            this.btnScanSheetTop.Name = "btnScanSheetTop";
+            this.btnScanSheetTop.Size = new System.Drawing.Size(130, 28);
+            this.btnScanSheetTop.TabIndex = 222;
+            this.btnScanSheetTop.Text = "AI &Scan Sheet";
+            this.btnScanSheetTop.UseVisualStyleBackColor = false;
+            this.btnScanSheetTop.Click += new System.EventHandler(this.btnScanSheet_Click);
             // 
             // tbQuery
             // 
@@ -1254,6 +1286,8 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn10;
         private System.Windows.Forms.Button btnCopyAsNew;
         private System.Windows.Forms.Button btnDelete;
+        private System.Windows.Forms.Button btnScanSheet;
+        private System.Windows.Forms.Button btnScanSheetTop;
         private System.Windows.Forms.ContextMenuStrip contextMenuStrip1;
         private System.Windows.Forms.ToolStripMenuItem deleteRecordToolStripMenuItem;
         private System.Windows.Forms.Label label17;

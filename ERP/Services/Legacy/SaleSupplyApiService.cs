@@ -127,6 +127,85 @@ namespace ERP.Services.Legacy
                 await EnsureSuccessWithServerMessageAsync(response);
             }
         }
+
+        public async Task<SaleSupplyScanResponseDto> ScanSheetAsync(List<string> filePaths, string targetDate = null)
+        {
+            using (var client = CreateClient())
+            {
+                client.Timeout = TimeSpan.FromSeconds(120);
+                using (var content = new MultipartFormDataContent())
+                {
+                    foreach (var path in filePaths)
+                    {
+                        if (!System.IO.File.Exists(path)) continue;
+                        var fileBytes = System.IO.File.ReadAllBytes(path);
+                        var fileContent = new ByteArrayContent(fileBytes);
+                        var fileName = System.IO.Path.GetFileName(path);
+                        var ext = System.IO.Path.GetExtension(path).ToLowerInvariant();
+                        string mediaType = "image/jpeg";
+                        if (ext == ".png") mediaType = "image/png";
+                        else if (ext == ".pdf") mediaType = "application/pdf";
+                        fileContent.Headers.ContentType = new System.Net.Http.Headers.MediaTypeHeaderValue(mediaType);
+                        content.Add(fileContent, "files", fileName);
+                    }
+
+                    if (!string.IsNullOrWhiteSpace(targetDate))
+                    {
+                        content.Add(new StringContent(targetDate), "targetDate");
+                    }
+
+                    var response = await client.PostAsync(Endpoint + "/scan-sheet", content);
+                    await EnsureSuccessWithServerMessageAsync(response);
+                    var json = await response.Content.ReadAsStringAsync();
+                    var payload = JsonConvert.DeserializeObject<HttpResponseDto<SaleSupplyScanResponseDto>>(json);
+                    return payload != null && payload.Body != null ? payload.Body : new SaleSupplyScanResponseDto();
+                }
+            }
+        }
+
+        public async Task<PresignedUploadUrlDto> GetAttachmentUploadUrlAsync(string fileName)
+        {
+            using (var client = CreateClient())
+            {
+                var response = await client.PostAsync(Endpoint + "/attachments/presigned-upload-url?fileName=" + Uri.EscapeDataString(fileName), null);
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<PresignedUploadUrlDto>>(json);
+                return payload != null ? payload.Body : null;
+            }
+        }
+
+        public async Task<string> UploadAttachmentDirectAsync(string filePath)
+        {
+            var fileName = System.IO.Path.GetFileName(filePath);
+            var presigned = await GetAttachmentUploadUrlAsync(fileName);
+            if (presigned == null || string.IsNullOrWhiteSpace(presigned.UploadUrl))
+                throw new Exception("Failed to retrieve upload URL for attachment.");
+
+            await UploadFileAsync(presigned.UploadUrl, filePath);
+            return presigned.FileId;
+        }
+
+        public async Task<SaleSupplyAttachmentDto> AddAttachmentAsync(string voucherNo, string mediaId, string fileName, string description = "Scanned paper slip")
+        {
+            using (var client = CreateClient())
+            {
+                var body = new
+                {
+                    vNo = voucherNo,
+                    vType = "SP",
+                    mediaId = mediaId,
+                    fileName = fileName,
+                    description = description
+                };
+                var content = new StringContent(JsonConvert.SerializeObject(body), Encoding.UTF8, "application/json");
+                var response = await client.PostAsync(Endpoint + "/" + Uri.EscapeDataString(voucherNo) + "/attachments", content);
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<SaleSupplyAttachmentDto>>(json);
+                return payload != null ? payload.Body : null;
+            }
+        }
     }
 
     internal class SaleSupplyDto
@@ -262,6 +341,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lines")]
         public List<SaleSupplyLineApiRequest> Lines { get; set; } = new List<SaleSupplyLineApiRequest>();
+
+        [JsonProperty("attachmentMediaIds")]
+        public List<string> AttachmentMediaIds { get; set; } = new List<string>();
     }
 
     internal class SaleSupplyUpdateApiRequest
@@ -283,6 +365,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lines")]
         public List<SaleSupplyLineApiRequest> Lines { get; set; } = new List<SaleSupplyLineApiRequest>();
+
+        [JsonProperty("attachmentMediaIds")]
+        public List<string> AttachmentMediaIds { get; set; } = new List<string>();
     }
 
     internal class SaleSupplyLineApiRequest
@@ -334,5 +419,89 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("line")]
         public SaleSupplyLineApiRequest Line { get; set; }
+    }
+
+    public class ScannedSaleSupplyLineDto
+    {
+        [JsonProperty("seq")]
+        public int Seq { get; set; }
+
+        [JsonProperty("rawCustomerName")]
+        public string RawCustomerName { get; set; }
+
+        [JsonProperty("matchedCustomerId")]
+        public string MatchedCustomerId { get; set; }
+
+        [JsonProperty("matchedCustomerName")]
+        public string MatchedCustomerName { get; set; }
+
+        [JsonProperty("qty")]
+        public decimal Qty { get; set; }
+
+        [JsonProperty("rate")]
+        public decimal Rate { get; set; }
+
+        [JsonProperty("discount")]
+        public decimal Discount { get; set; }
+
+        [JsonProperty("addLess")]
+        public decimal AddLess { get; set; }
+
+        [JsonProperty("carriage")]
+        public decimal Carriage { get; set; }
+
+        [JsonProperty("amount")]
+        public decimal Amount { get; set; }
+
+        [JsonProperty("isCustomerMatched")]
+        public bool IsCustomerMatched { get; set; }
+    }
+
+    public class SaleSupplyScanResponseDto
+    {
+        [JsonProperty("lines")]
+        public List<ScannedSaleSupplyLineDto> Lines { get; set; } = new List<ScannedSaleSupplyLineDto>();
+
+        [JsonProperty("remainingScansThisMonth")]
+        public int RemainingScansThisMonth { get; set; }
+
+        [JsonProperty("monthlyLimit")]
+        public int MonthlyLimit { get; set; }
+
+        [JsonProperty("rawDetectedText")]
+        public string RawDetectedText { get; set; }
+    }
+
+    public class SaleSupplyAttachmentDto
+    {
+        [JsonProperty("id")]
+        public int Id { get; set; }
+
+        [JsonProperty("vType")]
+        public string VType { get; set; }
+
+        [JsonProperty("vNo")]
+        public string VNo { get; set; }
+
+        [JsonProperty("mediaId")]
+        public string MediaId { get; set; }
+
+        [JsonProperty("fileName")]
+        public string FileName { get; set; }
+
+        [JsonProperty("fileUrl")]
+        public string FileUrl { get; set; }
+
+        [JsonProperty("downloadUrl")]
+        public string DownloadUrl { get; set; }
+
+        [JsonProperty("description")]
+        public string Description { get; set; }
+
+        [JsonProperty("createdOn")]
+        public DateTime CreatedOn { get; set; }
+
+        [JsonProperty("createdBy")]
+        public string CreatedBy { get; set; }
     }
 }

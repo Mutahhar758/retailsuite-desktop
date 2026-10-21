@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -1507,7 +1507,7 @@ namespace ERP
                         // previously-saved quantities when an existing voucher is loaded
                         // and cmbItem.SelectedValue is set, which re-triggers this event.
                         // Note: a user-entered zero is still a valid qty, so we only check
-                        // for null/whitespace — NOT for non-zero.
+                        // for null/whitespace â€” NOT for non-zero.
                         bool hasExistingQty = row.Cells[clnQty.Index].Value != null &&
                                               !string.IsNullOrWhiteSpace(row.Cells[clnQty.Index].Value.ToString());
 
@@ -1643,6 +1643,72 @@ namespace ERP
         private void lblSearchCustomer_Click(object sender, EventArgs e)
         {
 
+        }
+
+        private async void btnScanSheet_Click(object sender, EventArgs e)
+        {
+            DateTime voucherDate = dtpDate.Value;
+            using (var dlg = new ERP.Forms.frmScanSupplySheet(voucherDate, dtCustomers))
+            {
+                if (dlg.ShowDialog(this) == DialogResult.OK && dlg.ImportedLines.Count > 0)
+                {
+                    if (dgvSale.Rows.Count == 1)
+                    {
+                        var firstRow = dgvSale.Rows[0];
+                        var custVal = firstRow.Cells[clnCustomer.Index].Value?.ToString();
+                        if (string.IsNullOrWhiteSpace(custVal))
+                        {
+                            dgvSale.Rows.Clear();
+                        }
+                    }
+
+                    var headerItemRow = dtItems.AsEnumerable().FirstOrDefault(r => r.Field<string>("Id") == cmbItem.SelectedValue?.ToString());
+
+                    foreach (var line in dlg.ImportedLines)
+                    {
+                        int newRowIdx = dgvSale.Rows.Add();
+                        var row = dgvSale.Rows[newRowIdx];
+                        row.Cells[clnSeq.Index].Value = (newRowIdx + 1).ToString();
+                        row.Cells[clnStatus.Index].Value = "0";
+
+                        if (!string.IsNullOrWhiteSpace(line.MatchedCustomerId))
+                        {
+                            row.Cells[clnCustomer.Index].Value = line.MatchedCustomerId;
+                        }
+
+                        if (headerItemRow != null)
+                        {
+                            row.Cells[clnUnit.Index].Value = headerItemRow.Field<string>("PrimaryUnit");
+                        }
+
+                        row.Cells[clnQty.Index].Value = line.Qty > 0 ? line.Qty.ToString("0.####") : "1";
+                        row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
+                        row.Cells[clnDiscount.Index].Value = line.Discount.ToString("0.##");
+                        RecalculateRow(newRowIdx);
+                    }
+
+                    dgvSale.Rows.Add();
+                    CalcTotals();
+
+                    if (!string.IsNullOrWhiteSpace(VoucherNum) && VoucherNum != "NEW" && dlg.ScannedFilePaths.Count > 0)
+                    {
+                        try
+                        {
+                            foreach (var path in dlg.ScannedFilePaths)
+                            {
+                                var mediaId = await _apiService.UploadAttachmentDirectAsync(path);
+                                await _apiService.AddAttachmentAsync(VoucherNum, mediaId, System.IO.Path.GetFileName(path));
+                            }
+                        }
+                        catch (Exception ex)
+                        {
+                            MessageBox.Show(this, "Lines imported, but failed to upload attachments: " + ex.Message, "Attachment Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        }
+                    }
+
+                    MessageBox.Show(this, $"Successfully imported {dlg.ImportedLines.Count} line(s) into voucher.", "Import Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
         }
     }
 }
