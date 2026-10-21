@@ -76,6 +76,7 @@ namespace ERP
             this.clnPriRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnSecRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnCategoryRates = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.clnMinSalePrice = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnPriUnit = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnSecUnit = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.clnDefUnif = new System.Windows.Forms.DataGridViewComboBoxColumn();
@@ -154,7 +155,8 @@ namespace ERP
             this.clnOpnRate,
             this.clnstatus,
             this.clnIsEdit,
-            this.clnCategoryRates});
+            this.clnCategoryRates,
+            this.clnMinSalePrice});
             dataGridViewCellStyle5.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleLeft;
             dataGridViewCellStyle5.BackColor = System.Drawing.SystemColors.Window;
             dataGridViewCellStyle5.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
@@ -551,6 +553,13 @@ namespace ERP
             this.clnLowStockQty.Visible = true;
             this.clnLowStockQty.Width = 80;
             // 
+            // clnMinSalePrice
+            // 
+            this.clnMinSalePrice.HeaderText = "Min Sale Price";
+            this.clnMinSalePrice.MinimumWidth = 80;
+            this.clnMinSalePrice.Name = "clnMinSalePrice";
+            this.clnMinSalePrice.Width = 90;
+            // 
             // clnOpnStock
             // 
             this.clnOpnStock.HeaderText = "OpnStock";
@@ -675,6 +684,7 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn clnPriRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnSecRate;
         private System.Windows.Forms.DataGridViewButtonColumn clnCategoryRates;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnMinSalePrice;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnPriUnit;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnSecUnit;
         private System.Windows.Forms.DataGridViewComboBoxColumn clnDefUnif;

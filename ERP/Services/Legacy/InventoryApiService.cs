@@ -231,6 +231,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("lowStockQty")]
         public decimal? LowStockQty { get; set; }
 
+        [JsonProperty("minSalePrice")]
+        public decimal? MinSalePrice { get; set; }
+
         [JsonProperty("opnStock")]
         public decimal? OpnStock { get; set; }
 
@@ -314,6 +317,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lowStockQty")]
         public decimal? LowStockQty { get; set; }
+
+        [JsonProperty("minSalePrice")]
+        public decimal? MinSalePrice { get; set; }
 
         [JsonProperty("opnStock")]
         public decimal? OpnStock { get; set; }

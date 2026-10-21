@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Data;
+using System.Drawing;
 using System.Globalization;
 using System.Linq;
 using System.Text.RegularExpressions;
@@ -32,6 +33,7 @@ namespace ERP
         private int VoucherIndex = 0;
         private string VoucherNum = null;
         private bool _isSaving;
+        private readonly Dictionary<string, decimal> _minSalePriceMap = new Dictionary<string, decimal>(StringComparer.OrdinalIgnoreCase);
         private readonly Dictionary<string, (decimal PriRate, decimal? SecRate)> _categoryPriceMap = new Dictionary<string, (decimal, decimal?)>(StringComparer.OrdinalIgnoreCase);
         private string _originalAccountId = null;
 
@@ -53,6 +55,7 @@ namespace ERP
             _unitApiService = new UnitApiService();
             _inventoryApiService = new InventoryApiService();
             InitializeLookupTables();
+            dgvSale.CellFormatting += dgvSale_CellFormattingMinSalePrice;
             dgvSale.Rows.Add();
             SetupGridContextMenu();
             UserInfo.ApplyFormPermissions(this, AppResource.Sales);
@@ -167,6 +170,13 @@ namespace ERP
                 {
                     _categoryPriceMap[$"{cp.ItemId}_{cp.CustomerCategoryId}"] = (cp.PriRate, cp.SecRate);
                 }
+            }
+
+            _minSalePriceMap.Clear();
+            foreach (var item in itemsTask.Result)
+            {
+                if (!string.IsNullOrWhiteSpace(item.Id) && item.MinSalePrice.HasValue && item.MinSalePrice.Value > 0)
+                    _minSalePriceMap[item.Id] = item.MinSalePrice.Value;
             }
 
             dtItems.Rows.Clear();
@@ -342,6 +352,35 @@ namespace ERP
             _ = FillSaleAsync(vno);
         }
 
+        /// <summary>
+        /// Highlights the rate cell (with a tooltip) when the selling rate is at or below the
+        /// minimum sale price defined on the item.
+        /// </summary>
+        private void dgvSale_CellFormattingMinSalePrice(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.ColumnIndex != clnRate.Index || e.RowIndex >= dgvSale.Rows.Count)
+                return;
+
+            var row = dgvSale.Rows[e.RowIndex];
+            if (row.IsNewRow)
+                return;
+
+            string itemId = Convert.ToString(row.Cells[clnItemNo.Index].Value);
+            var cell = row.Cells[e.ColumnIndex];
+            if (!string.IsNullOrWhiteSpace(itemId)
+                && _minSalePriceMap.TryGetValue(itemId, out decimal minPrice)
+                && ParseDecimal(cell.Value) <= minPrice)
+            {
+                e.CellStyle.BackColor = Color.FromArgb(255, 235, 156);
+                e.CellStyle.ForeColor = Color.FromArgb(156, 87, 0);
+                e.CellStyle.SelectionBackColor = Color.FromArgb(255, 192, 0);
+                cell.ToolTipText = "Rate is at the minimum sale price (" + minPrice.ToString("0.##") + ")";
+            }
+            else
+            {
+                cell.ToolTipText = clnRate.ToolTipText;
+            }
+        }
         private static decimal ParseDecimal(object value)
         {
             decimal parsed;
