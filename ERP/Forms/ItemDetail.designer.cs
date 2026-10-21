@@ -81,7 +81,8 @@ namespace ERP
             this.clnDefUnif = new System.Windows.Forms.DataGridViewComboBoxColumn();
             this.ClnQtyInPack = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnAlert = new System.Windows.Forms.DataGridViewCheckBoxColumn();
-            this.clnLowStockAlert = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnLowStockAlert = new System.Windows.Forms.DataGridViewCheckBoxColumn();
+            this.clnLowStockQty = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnOpnStock = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnOpnRate = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.clnstatus = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -148,6 +149,7 @@ namespace ERP
             this.ClnQtyInPack,
             this.clnAlert,
             this.clnLowStockAlert,
+            this.clnLowStockQty,
             this.clnOpnStock,
             this.clnOpnRate,
             this.clnstatus,
@@ -535,11 +537,19 @@ namespace ERP
             // 
             // clnLowStockAlert
             // 
-            this.clnLowStockAlert.HeaderText = "Low Stock Alert On";
-            this.clnLowStockAlert.MinimumWidth = 70;
+            this.clnLowStockAlert.HeaderText = "Low Stock Alert";
+            this.clnLowStockAlert.MinimumWidth = 80;
             this.clnLowStockAlert.Name = "clnLowStockAlert";
-            this.clnLowStockAlert.Visible = false;
-            this.clnLowStockAlert.Width = 70;
+            this.clnLowStockAlert.Visible = true;
+            this.clnLowStockAlert.Width = 80;
+            // 
+            // clnLowStockQty
+            // 
+            this.clnLowStockQty.HeaderText = "Low Stock Qty";
+            this.clnLowStockQty.MinimumWidth = 80;
+            this.clnLowStockQty.Name = "clnLowStockQty";
+            this.clnLowStockQty.Visible = true;
+            this.clnLowStockQty.Width = 80;
             // 
             // clnOpnStock
             // 
@@ -670,7 +680,8 @@ namespace ERP
         private System.Windows.Forms.DataGridViewComboBoxColumn clnDefUnif;
         private System.Windows.Forms.DataGridViewTextBoxColumn ClnQtyInPack;
         private System.Windows.Forms.DataGridViewCheckBoxColumn clnAlert;
-        private System.Windows.Forms.DataGridViewTextBoxColumn clnLowStockAlert;
+        private System.Windows.Forms.DataGridViewCheckBoxColumn clnLowStockAlert;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnLowStockQty;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnOpnStock;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnOpnRate;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnstatus;

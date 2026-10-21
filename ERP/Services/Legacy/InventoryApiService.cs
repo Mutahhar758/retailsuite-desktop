@@ -220,6 +220,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("lowStockAlert")]
         public bool? LowStockAlert { get; set; }
 
+        [JsonProperty("lowStockQty")]
+        public decimal? LowStockQty { get; set; }
+
         [JsonProperty("opnStock")]
         public decimal? OpnStock { get; set; }
 
@@ -300,6 +303,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lowStockAlert")]
         public bool? LowStockAlert { get; set; }
+
+        [JsonProperty("lowStockQty")]
+        public decimal? LowStockQty { get; set; }
 
         [JsonProperty("opnStock")]
         public decimal? OpnStock { get; set; }

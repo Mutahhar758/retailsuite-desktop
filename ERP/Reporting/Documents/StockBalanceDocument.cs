@@ -194,7 +194,14 @@ namespace ERP.Reporting.Documents
                         table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text("-").FontColor(Colors.Grey.Lighten1);
 
                     // Closing Qty
-                    table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.ClosingQty.ToString("#,##0.##")).SemiBold();
+                    table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(text =>
+                    {
+                        text.Span(item.ClosingQty.ToString("#,##0.##")).SemiBold().FontColor(item.Status == "Low Stock" ? Colors.Orange.Darken3 : (item.Status == "Out of Stock" ? Colors.Red.Darken2 : Colors.Grey.Darken4));
+                        if (item.Status == "Low Stock")
+                        {
+                            text.Span(" (Low)").FontSize(7f).Bold().FontColor(Colors.Orange.Darken3);
+                        }
+                    });
 
                     if (_showStockValue)
                     {

@@ -94,6 +94,7 @@ namespace ERP
             dtItemDetail.Columns.Add("QtyInPack", typeof(decimal));
             dtItemDetail.Columns.Add("Alert", typeof(string));
             dtItemDetail.Columns.Add("LowStockAlert", typeof(bool));
+            dtItemDetail.Columns.Add("LowStockQty", typeof(decimal));
             dtItemDetail.Columns.Add("OpnStock", typeof(decimal));
             dtItemDetail.Columns.Add("OpnRate", typeof(decimal));
             dtItemDetail.Columns.Add("status", typeof(string));
@@ -124,6 +125,7 @@ namespace ERP
                     items[i].QtyInPack.HasValue ? (object)items[i].QtyInPack.Value : DBNull.Value,
                     items[i].Alert ? "1" : "0",
                     items[i].LowStockAlert.HasValue ? (object)items[i].LowStockAlert.Value : DBNull.Value,
+                    items[i].LowStockQty.HasValue ? (object)items[i].LowStockQty.Value : DBNull.Value,
                     items[i].OpnStock.HasValue ? (object)items[i].OpnStock.Value : DBNull.Value,
                     items[i].OpnRate.HasValue ? (object)items[i].OpnRate.Value : DBNull.Value,
                     "0",
@@ -160,7 +162,8 @@ namespace ERP
                     dtfilter.Rows[i]["DefaultUnit"].ToString().EmptyToNull(),
                     dtfilter.Rows[i]["QtyInPack"].ToString().EmptyToNull(),
                     Validation.ToBool(dtfilter.Rows[i]["Alert"].ToString()),
-                    dtfilter.Rows[i]["LowStockAlert"].ToString().EmptyToNull(),
+                    Validation.ToBool(dtfilter.Rows[i]["LowStockAlert"].ToString()),
+                    dtfilter.Rows[i]["LowStockQty"] != DBNull.Value ? dtfilter.Rows[i]["LowStockQty"].ToString() : string.Empty,
                     dtfilter.Rows[i]["OpnStock"].ToString().EmptyToNull(),
                     dtfilter.Rows[i]["OpnRate"].ToString().EmptyToNull(),
                     dtfilter.Rows[i]["status"].ToString(),
@@ -337,7 +340,7 @@ namespace ERP
         }
         private void dgvItemDetail_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
-            if (dgvItemDetail.CurrentCell.ColumnIndex == clnPriRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnSecRate.Index)
+            if (dgvItemDetail.CurrentCell.ColumnIndex == clnPriRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnSecRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnLowStockQty.Index)
             {
                 TextBox tb = e.Control as TextBox;
                 if (tb != null && e.Control.Text != null)
@@ -348,7 +351,7 @@ namespace ERP
         }
         void tb_KeyPress(object sender, KeyPressEventArgs e)
         {
-            if (dgvItemDetail.CurrentCell.ColumnIndex == clnPriRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnSecRate.Index)
+            if (dgvItemDetail.CurrentCell.ColumnIndex == clnPriRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnSecRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnLowStockQty.Index)
             {
                 if ((sender as TextBox).SelectedText.Length > 0)
                 {
@@ -440,6 +443,7 @@ namespace ERP
                                 QtyInPack = isService ? null : ParseNullableDecimal(row.Cells[ClnQtyInPack.Index].Value),
                                 Alert = Validation.ToBool(row.Cells[clnAlert.Index].Value),
                                 LowStockAlert = isService ? (bool?)null : ParseNullableBool(row.Cells[clnLowStockAlert.Index].Value),
+                                LowStockQty = isService || !dgvItemDetail.Columns.Contains("clnLowStockQty") ? (decimal?)null : ParseNullableDecimal(row.Cells["clnLowStockQty"].Value),
                                 OpnStock = isService ? 0 : ParseNullableDecimal(row.Cells[clnOpnStock.Index].Value),
                                 OpnRate = isService ? 0 : ParseNullableDecimal(row.Cells[clnOpnRate.Index].Value),
                                 ItemType = isService ? "Service" : "Product",

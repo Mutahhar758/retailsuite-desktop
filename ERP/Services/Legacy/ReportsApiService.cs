@@ -242,10 +242,12 @@ namespace ERP.Services.Legacy
                 dt.Columns.Add("qtyout", typeof(decimal));
                 dt.Columns.Add("qtybal", typeof(decimal));
                 dt.Columns.Add("rate", typeof(decimal));
+                dt.Columns.Add("status", typeof(string));
+                dt.Columns.Add("lowstockqty", typeof(decimal));
 
                 for (int i = 0; i < rows.Count; i++)
                 {
-                    dt.Rows.Add(rows[i].Item ?? string.Empty, rows[i].Unit ?? string.Empty, rows[i].PriQty, rows[i].Qty, rows[i].QtyIn, rows[i].QtyOut, rows[i].QtyBal, rows[i].Rate);
+                    dt.Rows.Add(rows[i].Item ?? string.Empty, rows[i].Unit ?? string.Empty, rows[i].PriQty, rows[i].Qty, rows[i].QtyIn, rows[i].QtyOut, rows[i].QtyBal, rows[i].Rate, rows[i].Status ?? "In Stock", (object)rows[i].LowStockQty ?? DBNull.Value);
                 }
 
                 return dt;
@@ -1121,6 +1123,12 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("rate")]
         public decimal Rate { get; set; }
+
+        [JsonProperty("status")]
+        public string Status { get; set; }
+
+        [JsonProperty("lowStockQty")]
+        public decimal? LowStockQty { get; set; }
     }
 
     internal class BalanceSheetLineDto

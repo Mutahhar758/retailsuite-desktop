@@ -22,6 +22,8 @@ namespace ERP.Reporting.Models
         /// Total inventory valuation for this SKU (ClosingQty * Rate).
         /// </summary>
         public decimal TotalValue => ClosingQty * Rate;
+        public decimal? LowStockQty { get; set; }
+        public string Status { get; set; } = "In Stock";
     }
 
     /// <summary>
@@ -97,7 +99,13 @@ namespace ERP.Reporting.Models
                         : 0m,
                     Rate = row.Table.Columns.Contains("rate") && row["rate"] != DBNull.Value
                         ? Convert.ToDecimal(row["rate"])
-                        : 0m
+                        : 0m,
+                    Status = row.Table.Columns.Contains("status") && row["status"] != DBNull.Value
+                        ? row["status"].ToString()
+                        : "In Stock",
+                    LowStockQty = row.Table.Columns.Contains("lowstockqty") && row["lowstockqty"] != DBNull.Value
+                        ? Convert.ToDecimal(row["lowstockqty"])
+                        : (decimal?)null
                 };
 
                 items.Add(item);

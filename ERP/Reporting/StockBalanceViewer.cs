@@ -161,7 +161,7 @@ namespace ERP.Reporting
                 DropDownStyle = ComboBoxStyle.DropDownList,
                 Font = new Font("Segoe UI", 9F)
             };
-            cmbFilter.Items.AddRange(new object[] { "All Stock", "Positive (> 0)", "Negative (< 0)", "Zero (= 0)" });
+            cmbFilter.Items.AddRange(new object[] { "All Stock", "Low Stock Only", "Positive (> 0)", "Negative (< 0)", "Zero (= 0)" });
             cmbFilter.SelectedIndex = 0;
 
             // Generate Button
@@ -376,9 +376,10 @@ namespace ERP.Reporting
                 DateTime to = dtpTo.Value.Date.AddDays(1).AddSeconds(-1);
                 string filterSelection = cmbFilter.SelectedItem?.ToString() ?? "All Items";
                 string queryFilter = "All";
-                if (filterSelection == "Closing Qty > 0") queryFilter = "> 0";
-                else if (filterSelection == "Closing Qty < 0") queryFilter = "< 0";
-                else if (filterSelection == "Closing Qty = 0") queryFilter = "= 0";
+                if (filterSelection == "Closing Qty > 0" || filterSelection == "Positive (> 0)") queryFilter = "> 0";
+                else if (filterSelection == "Closing Qty < 0" || filterSelection == "Negative (< 0)") queryFilter = "< 0";
+                else if (filterSelection == "Closing Qty = 0" || filterSelection == "Zero (= 0)") queryFilter = "= 0";
+                else if (filterSelection == "Low Stock Only") queryFilter = "LowStock";
 
                 var reportData = await Task.Run(() =>
                 {
@@ -389,6 +390,7 @@ namespace ERP.Reporting
                     if (queryFilter == "> 0") items = items.Where(x => x.ClosingQty > 0).ToList();
                     else if (queryFilter == "< 0") items = items.Where(x => x.ClosingQty < 0).ToList();
                     else if (queryFilter == "= 0") items = items.Where(x => x.ClosingQty == 0).ToList();
+                    else if (queryFilter == "LowStock") items = items.Where(x => x.Status == "Low Stock").ToList();
 
                     // Re-index
                     for (int i = 0; i < items.Count; i++) items[i].Index = i + 1;
