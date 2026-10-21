@@ -80,12 +80,12 @@ namespace ERP
             var narrationsTask = _narrationApiService.GetLookupAsync();
             var categoriesTask = _itemCategoryApiService.GetLookupAsync();
             var unitsTask = _unitApiService.GetLookupAsync();
-            var itemsTask = _inventoryApiService.GetLookupAsync(null);
+            var itemsTask = _inventoryApiService.GetLookupAsync(null, true);
             await System.Threading.Tasks.Task.WhenAll(accountsTask, narrationsTask, categoriesTask, unitsTask, itemsTask);
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
-                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.QtyInPack ?? 0);
+                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.LastPurchaseRate ?? item.PriRate, item.LastPurchaseSecRate ?? item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.QtyInPack ?? 0);
 
             dtUnits.Rows.Clear();
             foreach (var u in unitsTask.Result)

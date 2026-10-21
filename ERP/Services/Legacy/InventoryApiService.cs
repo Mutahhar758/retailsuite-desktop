@@ -29,13 +29,15 @@ namespace ERP.Services.Legacy
             }
         }
 
-        public async Task<List<InventoryItemDto>> GetLookupAsync(string itemCategoryCode)
+        public async Task<List<InventoryItemDto>> GetLookupAsync(string itemCategoryCode, bool includeLastPurchaseRate = false)
         {
             using (var client = CreateClient())
             {
                 var url = Endpoint + "/items/lookup";
                 if (!string.IsNullOrWhiteSpace(itemCategoryCode))
                     url += "?itemCategoryCode=" + Uri.EscapeDataString(itemCategoryCode);
+                if (includeLastPurchaseRate)
+                    url += (url.Contains("?") ? "&" : "?") + "includeLastPurchaseRate=true";
 
                 var response = await client.GetAsync(url);
                 await EnsureSuccessWithServerMessageAsync(response);
@@ -192,6 +194,12 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("secRate")]
         public decimal SecRate { get; set; }
+
+        [JsonProperty("lastPurchaseRate")]
+        public decimal? LastPurchaseRate { get; set; }
+
+        [JsonProperty("lastPurchaseSecRate")]
+        public decimal? LastPurchaseSecRate { get; set; }
 
         [JsonProperty("primaryUnit")]
         public string PrimaryUnit { get; set; }
