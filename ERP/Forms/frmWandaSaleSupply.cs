@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Globalization;
@@ -968,7 +968,8 @@ namespace ERP
             row.Cells[clnCarriage.Index].Value = carriage.ToString("0.##");
             row.Cells[clnAddLess.Index].Value = addLess.ToString("0.##");
 
-            decimal lineAmount = (lineGross - discount) + carriage + addLess;
+            decimal carriageAmount = bagQty * carriage;
+            decimal lineAmount = (lineGross - discount) + carriageAmount + addLess;
             row.Cells[clnAmount.Index].Value = decimal.Round(lineAmount, 2).ToString("N2");
         }
 

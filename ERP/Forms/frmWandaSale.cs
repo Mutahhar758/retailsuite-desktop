@@ -849,7 +849,9 @@ namespace ERP
                     decimal discount = ParseDecimal(dgvSale[clnDiscount.Index, rowIndex].Value);
                     decimal carriage = clnCarriage != null ? ParseDecimal(dgvSale[clnCarriage.Index, rowIndex].Value) : 0;
 
-                    dgvSale[clnAmount.Index, rowIndex].Value = ((qty * rate) - discount + carriage).ToString("0.##");
+                    decimal bagQty = dgvSale.Columns.Contains("clnSecQty") ? ParseDecimal(dgvSale["clnSecQty", rowIndex].Value) : 0;
+                    decimal carriageAmount = bagQty * carriage;
+                    dgvSale[clnAmount.Index, rowIndex].Value = ((qty * rate) - discount + carriageAmount).ToString("0.##");
                     CalcTotAmount();
                 }
             }
@@ -972,7 +974,8 @@ namespace ERP
                 dgvSale[clnDiscPercent.Index, e.RowIndex].Value = discountPercent.ToString("0.##");
             }
 
-            dgvSale[clnAmount.Index, e.RowIndex].Value = Math.Round((kgQty * kgRate) - discount + carriage, 2).ToString("N2");
+            decimal carriageAmount = bagQty * carriage;
+            dgvSale[clnAmount.Index, e.RowIndex].Value = Math.Round((kgQty * kgRate) - discount + carriageAmount, 2).ToString("N2");
             CalcTotAmount();
 
             bool isRateColumn = e.ColumnIndex == clnRate.Index ||
@@ -1435,7 +1438,8 @@ namespace ERP
                     secQty = ParseDecimal(dgvSale["clnSecQty", i].Value);
 
                 decimal lineGross = (qty * kgRate) + (secQty * secRate);
-                dgvSale[clnAmount.Index, i].Value = decimal.Round(lineGross - discount + carriage, 2).ToString();
+                decimal carriageAmount = secQty * carriage;
+                dgvSale[clnAmount.Index, i].Value = decimal.Round(lineGross - discount + carriageAmount, 2).ToString();
             }
             CalcTotAmount();
         }
@@ -1499,7 +1503,9 @@ namespace ERP
                 dgvSale[clnDiscount.Index, ind].Value = discount.ToString();
                 if (clnCarriage != null)
                     dgvSale[clnCarriage.Index, ind].Value = carriage.ToString();
-                dgvSale[clnAmount.Index, ind].Value = decimal.Round((qty * rate) - discount + carriage, 2).ToString();
+                decimal secQty = dgvSale.Columns.Contains("clnSecQty") ? ParseDecimal(dgvSale["clnSecQty", ind].Value) : 0;
+                decimal carriageAmount = secQty * carriage;
+                dgvSale[clnAmount.Index, ind].Value = decimal.Round((qty * rate) - discount + carriageAmount, 2).ToString();
                 CalcTotAmount();
                 txtBarcode.Text = "";
                 txtBarcode.Focus();
