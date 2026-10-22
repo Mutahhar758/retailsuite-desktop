@@ -833,6 +833,11 @@
     </Compile>
     <Compile Include="Reporting\Models\ProfitByItemReportItem.cs" />
     <Compile Include="Reporting\Documents\ProfitByItemDocument.cs" />
+    <Compile Include="Reporting\Models\SaleReceiptReportItem.cs" />
+    <Compile Include="Reporting\Documents\SaleReceiptDocument.cs" />
+    <Compile Include="Reporting\SaleReceiptViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Reporting\ProfitByItemViewer.cs">
       <SubType>Form</SubType>
     </Compile>

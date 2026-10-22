@@ -415,7 +415,7 @@ namespace ERP
             txtTotAmount.Text = totAmount.ToString("N2");
         }
 
-        private async System.Threading.Tasks.Task SaveAsync()
+        private async System.Threading.Tasks.Task SaveAsync(bool shouldPrint = false)
         {
             dgvSale.EndEdit();
             if (cmbAccounts.SelectedValue == null)
@@ -517,6 +517,11 @@ namespace ERP
                 VoucherIndex = _queryList.FindIndex(x => x.VoucherNo == voucher);
                 if (VoucherIndex < 0)
                     VoucherIndex = 0;
+
+                if (shouldPrint)
+                {
+                    Print(true);
+                }
 
                 MessageBox.Show("Record Successfully Saved...!");
                 btnNew.Focus();
@@ -788,9 +793,13 @@ namespace ERP
             {
                 Print(false);
             }
+            else if (e.KeyCode == Keys.F6)
+            {
+                await ExecuteSaveAsync(true);
+            }
             else if (e.KeyCode == Keys.F5)
             {
-                await SaveAsync();
+                await ExecuteSaveAsync(false);
             }
         }
 
@@ -1117,23 +1126,36 @@ namespace ERP
             }
         }
 
+        private async void btnSaveAndPrint_Click(object sender, EventArgs e)
+        {
+            await ExecuteSaveAsync(true);
+        }
+
         private async void btnSave_Click(object sender, EventArgs e)
+        {
+            await ExecuteSaveAsync(false);
+        }
+
+        private async System.Threading.Tasks.Task ExecuteSaveAsync(bool shouldPrint)
         {
             if (_isSaving)
                 return;
 
-            if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to save this...!", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            string confirmMsg = shouldPrint ? ("Are you sure?" + Environment.NewLine + "You want to Save & Print this...!") : ("Are you sure?" + Environment.NewLine + "You want to save this...!");
+            if (MessageBox.Show(confirmMsg, "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 _isSaving = true;
                 btnSave.Enabled = false;
+                if (btnSaveAndPrint != null) btnSaveAndPrint.Enabled = false;
                 try
                 {
-                    await SaveAsync();
+                    await SaveAsync(shouldPrint);
                 }
                 finally
                 {
                     _isSaving = false;
                     btnSave.Enabled = true;
+                    if (btnSaveAndPrint != null) btnSaveAndPrint.Enabled = true;
                 }
             }
         }
@@ -1359,83 +1381,24 @@ namespace ERP
             Print(false);
         }
 
-        private void Print2(bool IsDirect)
+        private async void Print2(bool IsDirect)
         {
-            Cursor.Current = Cursors.WaitCursor;
-            if (txtVoucherNo.Text != "")
-            {
-                DataSet ds = ReportQuery.SaleBill(txtVoucherNo.Text.Substring(3));
-                if (ds.Tables[1].Rows.Count > 0)
-                {
-                    Reports.rpt_SaleInvoiceA5 rpt = new Reports.rpt_SaleInvoiceA5();
+            if (string.IsNullOrWhiteSpace(txtVoucherNo.Text)) return;
+            string vno = txtVoucherNo.Text.StartsWith("SL-", StringComparison.OrdinalIgnoreCase)
+                ? txtVoucherNo.Text.Substring(3)
+                : txtVoucherNo.Text;
 
-                    rpt.SetDataSource(ds.Tables[0]);
-                    rpt.SetParameterValue("@CompanyName", CompanyInfo.CompanyName);
-                    rpt.SetParameterValue("@Address", CompanyInfo.Address);
-                    rpt.SetParameterValue("@ContactHeader", CompanyInfo.ContactHead);
-                    rpt.SetParameterValue("@Account", (string)ds.Tables[1].Rows[0]["Title"]);
-                    rpt.SetParameterValue("@VoucherNo", txtVoucherNo.Text);
-                    rpt.SetParameterValue("@VDate", (DateTime)ds.Tables[1].Rows[0]["vdate"]);
-                    rpt.SetParameterValue("@Amount", ds.Tables[1].Rows[0]["Amount"]);
-                    rpt.SetParameterValue("@Discount", ds.Tables[1].Rows[0]["Discount"]);
-                    rpt.SetParameterValue("@NetAmount", ds.Tables[1].Rows[0]["NetAmount"]);
-                    rpt.SetParameterValue("@Remarks", (string)ds.Tables[1].Rows[0]["descr"]);
-                    rpt.SetParameterValue("@Balance", (decimal)ds.Tables[1].Rows[0]["Balance"]);
-                    rpt.SetParameterValue("@LogoPath", Application.StartupPath + "\\Logo.png");
-                    Cursor.Current = Cursors.Default;
-                    if (IsDirect)
-                    {
-                        rpt.PrintOptions.PrinterName = ConfigInfo.ThermalPrinterName;
-                        rpt.PrintToPrinter(1, true, 0, 0);
-                    }
-                    else
-                    {
-                        frmReportView frm = new frmReportView();
-                        frm.rptViewer.ReportSource = rpt;
-                        frm.ShowDialog();
-                    }
-                }
-            }
+            await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewAsync(vno, IsDirect, ERP.Reporting.Models.SaleReceiptPrintLayout.A5Sheet);
         }
 
-        private void Print(bool IsDirect)
+        private async void Print(bool IsDirect)
         {
-            Cursor.Current = Cursors.WaitCursor;
-            if (txtVoucherNo.Text != "")
-            {
-                DataSet ds = ReportQuery.SaleBill2(txtVoucherNo.Text.Substring(3));
-                if (ds.Tables[1].Rows.Count > 0)
-                {
-                    Reports.SaleReceipt rpt = new Reports.SaleReceipt();
+            if (string.IsNullOrWhiteSpace(txtVoucherNo.Text)) return;
+            string vno = txtVoucherNo.Text.StartsWith("SL-", StringComparison.OrdinalIgnoreCase)
+                ? txtVoucherNo.Text.Substring(3)
+                : txtVoucherNo.Text;
 
-                    rpt.SetDataSource(ds.Tables[0]);
-                    rpt.SetParameterValue("@CompanyName", CompanyInfo.CompanyName);
-                    rpt.SetParameterValue("@Address", CompanyInfo.Address);
-                    rpt.SetParameterValue("@ContactHeader", CompanyInfo.ContactHead);
-                    rpt.SetParameterValue("@Account", (string)ds.Tables[1].Rows[0]["Title"]);
-                    rpt.SetParameterValue("@VoucherNo", txtVoucherNo.Text);
-                    rpt.SetParameterValue("@Date", (DateTime)ds.Tables[1].Rows[0]["vdate"]);
-                    rpt.SetParameterValue("@CashPaid", (decimal)ds.Tables[1].Rows[0]["CashReceipt"]);
-                    rpt.SetParameterValue("@CashBack", (decimal)ds.Tables[1].Rows[0]["CashBack"]);
-                    rpt.SetParameterValue("@ServerDate", DateTime.Now);
-                    rpt.SetParameterValue("@User", UserInfo.UserName);
-                    rpt.SetParameterValue("@Address", CompanyInfo.Address);
-                    rpt.SetParameterValue("@ContactHeader", CompanyInfo.ContactHead);
-                    rpt.SetParameterValue("@ThankyouLine", ConfigInfo.ThankyouLine);
-                    Cursor.Current = Cursors.Default;
-                    if (IsDirect)
-                    {
-                        rpt.PrintOptions.PrinterName = ConfigInfo.ThermalPrinterName;
-                        rpt.PrintToPrinter(1, true, 0, 0);
-                    }
-                    else
-                    {
-                        frmReportView frm = new frmReportView();
-                        frm.rptViewer.ReportSource = rpt;
-                        frm.ShowDialog();
-                    }
-                }
-            }
+            await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewAsync(vno, IsDirect, ERP.Reporting.Models.SaleReceiptPrintLayout.Thermal80mm);
         }
 
         private void txtCashReceipt_TextChanged(object sender, EventArgs e)
