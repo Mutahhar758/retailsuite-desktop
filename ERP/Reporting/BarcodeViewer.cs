@@ -45,6 +45,9 @@ namespace ERP.Reporting
         private bool _isSyncingAmounts = false;
         private Label lblLayout;
         private ComboBox cmbLayout;
+        private Label lblSpread;
+        private NumericUpDown nudSpread;
+        private Label lblSpreadHelp;
         private Label lblPrinter;
         private ComboBox cmbPrinter;
         private Button btnPreview;
@@ -336,6 +339,11 @@ namespace ERP.Reporting
             cmbLayout.SelectedIndexChanged += (s, e) =>
             {
                 var lyt = GetSelectedLayout();
+                bool is3Up = (lyt == BarcodePrintLayout.Roll4Inch3Up);
+                if (lblSpread != null) lblSpread.Visible = is3Up;
+                if (nudSpread != null) nudSpread.Visible = is3Up;
+                if (lblSpreadHelp != null) lblSpreadHelp.Visible = is3Up;
+
                 string preferredPrinter = (lyt == BarcodePrintLayout.Roll4Inch3Up || lyt == BarcodePrintLayout.ThermalRoll)
                     ? ConfigInfo.ThermalPrinterName
                     : ConfigInfo.A4PrinterName;
@@ -345,6 +353,59 @@ namespace ERP.Reporting
                 }
             };
             pnlSidebar.Controls.Add(cmbLayout);
+            curY += 34;
+
+            // 3-Up Outer Margin Offset / Spread Control
+            lblSpread = new Label
+            {
+                Text = "3-UP SIDE STICKERS MARGIN / SPREAD (MM):",
+                Location = new Point(14, curY),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139)
+            };
+            pnlSidebar.Controls.Add(lblSpread);
+            curY += 18;
+
+            nudSpread = new NumericUpDown
+            {
+                Location = new Point(14, curY),
+                Width = 100,
+                DecimalPlaces = 1,
+                Minimum = 0.0m,
+                Maximum = 6.0m,
+                Increment = 0.5m,
+                Value = 2.0m,
+                Font = new Font("Segoe UI", 9F)
+            };
+            try
+            {
+                string savedSpread = INIFile.ReadValue("PrinterSetting", "Barcode3UpSideSpread");
+                if (decimal.TryParse(savedSpread, NumberStyles.Any, CultureInfo.InvariantCulture, out decimal sVal))
+                {
+                    nudSpread.Value = Math.Max(nudSpread.Minimum, Math.Min(nudSpread.Maximum, sVal));
+                }
+            }
+            catch { }
+            nudSpread.ValueChanged += (s, e) =>
+            {
+                try
+                {
+                    INIFile.WriteValue("PrinterSetting", "Barcode3UpSideSpread", nudSpread.Value.ToString("0.0", CultureInfo.InvariantCulture));
+                }
+                catch { }
+            };
+            pnlSidebar.Controls.Add(nudSpread);
+
+            lblSpreadHelp = new Label
+            {
+                Text = "Decreases outer margins (Default: 2.0 mm)",
+                Location = new Point(120, curY + 2),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 7.5F, FontStyle.Italic),
+                ForeColor = Color.FromArgb(100, 116, 139)
+            };
+            pnlSidebar.Controls.Add(lblSpreadHelp);
             curY += 34;
 
             // Destination Printer
@@ -709,7 +770,8 @@ namespace ERP.Reporting
 
             try
             {
-                var doc = new BarcodeDocument(new List<BarcodeLabelItem> { labelItem }, layout);
+                float spread = nudSpread != null ? (float)nudSpread.Value : 2.0f;
+                var doc = new BarcodeDocument(new List<BarcodeLabelItem> { labelItem }, layout, spread);
                 _currentPdfPath = await doc.GeneratePdfToTempFileAsync();
 
                 webView.CoreWebView2.Navigate(_currentPdfPath);
@@ -758,7 +820,8 @@ namespace ERP.Reporting
 
                 await Task.Run(() =>
                 {
-                    var doc = new BarcodeDocument(new List<BarcodeLabelItem> { _currentItem }, layout);
+                    float spread = nudSpread != null ? (float)nudSpread.Value : 2.0f;
+                    var doc = new BarcodeDocument(new List<BarcodeLabelItem> { _currentItem }, layout, spread);
                     BarcodeDocument.PrintDirectToPrinter(doc, printer);
                 });
 

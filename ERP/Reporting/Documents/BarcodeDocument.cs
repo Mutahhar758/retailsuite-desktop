@@ -28,12 +28,14 @@ namespace ERP.Reporting.Documents
         private readonly List<BarcodeLabelItem> _items;
         private readonly BarcodePrintLayout _layout;
         private readonly string _companyName;
+        private readonly float _sideStickersSpreadMm;
 
-        public BarcodeDocument(List<BarcodeLabelItem> items, BarcodePrintLayout layout = BarcodePrintLayout.Roll4Inch3Up)
+        public BarcodeDocument(List<BarcodeLabelItem> items, BarcodePrintLayout layout = BarcodePrintLayout.Roll4Inch3Up, float sideStickersSpreadMm = 2.0f)
         {
             _items = items ?? new List<BarcodeLabelItem>();
             _layout = layout;
             _companyName = !string.IsNullOrWhiteSpace(CompanyInfo.CompanyName) ? CompanyInfo.CompanyName : "Retail Suite";
+            _sideStickersSpreadMm = Math.Max(0f, sideStickersSpreadMm);
         }
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
@@ -80,6 +82,10 @@ namespace ERP.Reporting.Documents
             int pageSize = 3; // 3 stickers across per row
             int totalRows = (int)Math.Ceiling(expanded.Count / (double)pageSize);
 
+            float spread = _sideStickersSpreadMm;
+            float pageMarginH = Math.Max(0.2f, 1.0f - (spread * 0.35f));
+            float interStickerGap = 2.0f + (spread * 0.65f);
+
             for (int r = 0; r < totalRows; r++)
             {
                 var rowItems = expanded.Skip(r * pageSize).Take(pageSize).ToList();
@@ -88,7 +94,7 @@ namespace ERP.Reporting.Documents
                 {
                     page.Size(100f, 22.86f, Unit.Millimetre);
                     page.MarginVertical(0.3f, Unit.Millimetre);
-                    page.MarginHorizontal(1.0f, Unit.Millimetre);
+                    page.MarginHorizontal(pageMarginH, Unit.Millimetre);
                     page.PageColor(QuestPDF.Helpers.Colors.White);
 
                     page.Content().Row(row =>
@@ -97,7 +103,7 @@ namespace ERP.Reporting.Documents
                         {
                             if (c > 0)
                             {
-                                row.ConstantItem(2, Unit.Millimetre); // Gap between stickers
+                                row.ConstantItem(interStickerGap, Unit.Millimetre); // Gap between stickers
                             }
 
                             if (c < rowItems.Count)
@@ -111,7 +117,25 @@ namespace ERP.Reporting.Documents
                                 string title = item.Title ?? string.Empty;
                                 if (title.Length > 22) title = title.Substring(0, 20) + "..";
 
-                                row.RelativeItem().PaddingHorizontal(1.5f, Unit.Millimetre).Column(col =>
+                                float leftPad = 1.0f;
+                                float rightPad = 1.0f;
+                                if (c == 0)
+                                {
+                                    // Shift leftmost sticker outward (left) to decrease outer left margin and prevent cutting on inner right side
+                                    leftPad = Math.Max(0.2f, 1.0f - (spread * 0.4f));
+                                    rightPad = 1.0f + (spread * 0.4f);
+                                }
+                                else if (c == 2)
+                                {
+                                    // Shift rightmost sticker outward (right) to decrease outer right margin and prevent cutting on inner left side
+                                    leftPad = 1.0f + (spread * 0.4f);
+                                    rightPad = Math.Max(0.2f, 1.0f - (spread * 0.4f));
+                                }
+
+                                row.RelativeItem()
+                                    .PaddingLeft(leftPad, Unit.Millimetre)
+                                    .PaddingRight(rightPad, Unit.Millimetre)
+                                    .Column(col =>
                                 {
                                     col.Item().AlignCenter().Text(comp)
                                         .FontSize(5.5f)
