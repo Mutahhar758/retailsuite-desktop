@@ -187,7 +187,7 @@ namespace ERP.Reporting
                 Width = 150,
                 Minimum = 1,
                 Maximum = 5000,
-                Value = 10,
+                Value = 3,
                 Font = new Font("Segoe UI", 9F)
             };
             pnlSidebar.Controls.Add(nudCopies);

@@ -140,7 +140,7 @@ namespace ERP.Reporting.Documents
                                     col.Item().AlignCenter().Text(comp)
                                         .FontSize(5.5f)
                                         .Bold()
-                                        .FontColor(QuestPDF.Helpers.Colors.Grey.Darken3);
+                                        .FontColor(QuestPDF.Helpers.Colors.Black);
 
                                     col.Item().AlignCenter().Text(title)
                                         .FontSize(6.5f)
@@ -148,9 +148,9 @@ namespace ERP.Reporting.Documents
                                         .FontColor(QuestPDF.Helpers.Colors.Black);
 
                                     col.Item()
-                                        .PaddingVertical(0.3f, Unit.Millimetre)
+                                        .PaddingVertical(0.2f, Unit.Millimetre)
                                         .AlignCenter()
-                                        .Height(item.IsVariableWeight ? 8.5f : 9.5f, Unit.Millimetre)
+                                        .Height(item.IsVariableWeight ? 8.0f : 8.8f, Unit.Millimetre)
                                         .Row(bRow =>
                                         {
                                             foreach (var slice in slices)
@@ -163,8 +163,9 @@ namespace ERP.Reporting.Documents
                                         });
 
                                     col.Item().AlignCenter().Text(item.Barcode)
-                                        .FontSize(item.Barcode.Length > 18 ? 3.8f : (item.Barcode.Length > 13 ? 4.5f : 5.5f))
-                                        .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
+                                        .FontSize(item.Barcode.Length > 18 ? 4.8f : (item.Barcode.Length > 13 ? 5.8f : 6.8f))
+                                        .Bold()
+                                        .FontColor(QuestPDF.Helpers.Colors.Black);
 
                                     if (item.IsVariableWeight && item.Qty.HasValue)
                                     {
@@ -172,18 +173,19 @@ namespace ERP.Reporting.Documents
                                         decimal rate = Math.Round(item.Rate);
                                         string u = !string.IsNullOrWhiteSpace(item.Unit) && !decimal.TryParse(item.Unit, out _) ? item.Unit : "kg";
                                         col.Item().AlignCenter().Text(string.Format("Qty: {0:0.###} {1} • Rs. {2:#,##0}", item.Qty.Value, u, tot))
-                                            .FontSize(6.5f)
+                                            .FontSize(7.2f)
                                             .Bold()
                                             .FontColor(QuestPDF.Helpers.Colors.Black);
 
                                         col.Item().AlignCenter().Text(string.Format("Rate: Rs. {0:#,##0}/{1}", rate, u))
-                                            .FontSize(5f)
-                                            .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
+                                            .FontSize(6.0f)
+                                            .Bold()
+                                            .FontColor(QuestPDF.Helpers.Colors.Black);
                                     }
                                     else
                                     {
                                         col.Item().AlignCenter().Text(item.FormattedRate)
-                                            .FontSize(7.5f)
+                                            .FontSize(8.8f)
                                             .Bold()
                                             .FontColor(QuestPDF.Helpers.Colors.Black);
                                     }
@@ -236,10 +238,10 @@ namespace ERP.Reporting.Documents
                         col.Item().AlignCenter().Text(_companyName)
                             .FontSize(6.5f)
                             .Bold()
-                            .FontColor(QuestPDF.Helpers.Colors.Grey.Darken3);
+                            .FontColor(QuestPDF.Helpers.Colors.Black);
 
                         col.Item().AlignCenter().Text(item.Title ?? string.Empty)
-                            .FontSize(7.5f)
+                            .FontSize(8f)
                             .Bold()
                             .FontColor(QuestPDF.Helpers.Colors.Black);
 
@@ -251,18 +253,19 @@ namespace ERP.Reporting.Documents
                             decimal rate = Math.Round(item.Rate);
                             string u = !string.IsNullOrWhiteSpace(item.Unit) && !decimal.TryParse(item.Unit, out _) ? item.Unit : "kg";
                             col.Item().AlignCenter().Text(string.Format("Qty: {0:0.###} {1} • Rs. {2:#,##0}", item.Qty.Value, u, tot))
-                                .FontSize(8f)
+                                .FontSize(8.5f)
                                 .Bold()
                                 .FontColor(QuestPDF.Helpers.Colors.Black);
 
                             col.Item().AlignCenter().Text(string.Format("Rate: Rs. {0:#,##0}/{1}", rate, u))
-                                .FontSize(6.5f)
-                                .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
+                                .FontSize(7.2f)
+                                .Bold()
+                                .FontColor(QuestPDF.Helpers.Colors.Black);
                         }
                         else
                         {
                             col.Item().AlignCenter().Text(item.FormattedRate)
-                                .FontSize(9f)
+                                .FontSize(10f)
                                 .Bold()
                                 .FontColor(QuestPDF.Helpers.Colors.Black);
                         }
@@ -310,12 +313,12 @@ namespace ERP.Reporting.Documents
                                     sticker.Item().AlignCenter().Text(_companyName)
                                         .FontSize(6.5f)
                                         .Bold()
-                                        .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
+                                        .FontColor(QuestPDF.Helpers.Colors.Black);
 
                                     sticker.Item().AlignCenter().Text(item.Title ?? string.Empty)
                                         .FontSize(8f)
                                         .Bold()
-                                        .FontColor(QuestPDF.Helpers.Colors.Grey.Darken4);
+                                        .FontColor(QuestPDF.Helpers.Colors.Black);
 
                                     sticker.Item().PaddingVertical(2).AlignCenter().Height(item.IsVariableWeight ? 13 : 16, Unit.Millimetre).Image(barcodeBytes);
 
@@ -327,18 +330,19 @@ namespace ERP.Reporting.Documents
                                         sticker.Item().AlignCenter().Text(string.Format("Qty: {0:0.###} {1} • Rs. {2:#,##0}", item.Qty.Value, u, tot))
                                             .FontSize(8.5f)
                                             .Bold()
-                                            .FontColor(QuestPDF.Helpers.Colors.Blue.Darken3);
+                                            .FontColor(QuestPDF.Helpers.Colors.Black);
 
                                         sticker.Item().AlignCenter().Text(string.Format("Rate: Rs. {0:#,##0}/{1}", rate, u))
-                                            .FontSize(7f)
-                                            .FontColor(QuestPDF.Helpers.Colors.Grey.Darken2);
+                                            .FontSize(7.5f)
+                                            .Bold()
+                                            .FontColor(QuestPDF.Helpers.Colors.Black);
                                     }
                                     else
                                     {
                                         sticker.Item().AlignCenter().Text(item.FormattedRate)
                                             .FontSize(9.5f)
                                             .Bold()
-                                            .FontColor(QuestPDF.Helpers.Colors.Blue.Darken3);
+                                            .FontColor(QuestPDF.Helpers.Colors.Black);
                                     }
                                 });
                         }
