@@ -12,9 +12,11 @@ namespace ERP.Services.Legacy
     {
         private const string ReceiptEndpoint = "/api/receipts";
 
-        public async Task<List<ReceiptDto>> GetListAsync(
+        /// <summary>Returns a single server-side page of receipt vouchers.</summary>
+        public async Task<ReceiptPageResult> GetPagedListAsync(
             string fromDate = "", string toDate = "",
-            string cashBank = "", string account = "", string narration = "")
+            string cashBank = "", string account = "", string narration = "",
+            int pageNumber = 1, int pageSize = 20)
         {
             var qs = new List<string>();
             if (!string.IsNullOrWhiteSpace(fromDate)) qs.Add("fromDate=" + Uri.EscapeDataString(fromDate));
@@ -22,19 +24,29 @@ namespace ERP.Services.Legacy
             if (!string.IsNullOrWhiteSpace(cashBank)) qs.Add("cashBankAccount=" + Uri.EscapeDataString(cashBank));
             if (!string.IsNullOrWhiteSpace(account)) qs.Add("account=" + Uri.EscapeDataString(account));
             if (!string.IsNullOrWhiteSpace(narration)) qs.Add("narration=" + Uri.EscapeDataString(narration));
+            qs.Add("pageNumber=" + pageNumber);
+            qs.Add("pageSize=" + pageSize);
 
-            var url = ReceiptEndpoint + (qs.Count > 0 ? "?" + string.Join("&", qs) : "");
+            var url = ReceiptEndpoint + "/paged?" + string.Join("&", qs);
 
             using (var client = CreateClient())
             {
                 var response = await client.GetAsync(url);
                 await EnsureSuccessWithServerMessageAsync(response);
                 var json = await response.Content.ReadAsStringAsync();
-                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<ReceiptDto>>>(json);
-                return payload?.Body ?? new List<ReceiptDto>();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<ReceiptPagedBody>>(json);
+                var body = payload?.Body;
+                var meta = body?.Metadata;
+                return new ReceiptPageResult
+                {
+                    Data = body?.Data ?? new List<ReceiptDto>(),
+                    CurrentPage = meta?.CurrentPage ?? pageNumber,
+                    TotalPages = meta?.TotalPages ?? 1,
+                    TotalCount = meta?.TotalCount ?? 0,
+                    PageSize = meta?.PageSize ?? pageSize
+                };
             }
         }
-
         public async Task<List<ReceiptLineDto>> GetDetailAsync(string voucherNo, string cashBankAccount = "")
         {
             var url = ReceiptEndpoint + "/" + Uri.EscapeDataString(voucherNo);
@@ -249,4 +261,36 @@ namespace ERP.Services.Legacy
         [JsonProperty("remarks")]
         public string Remarks { get; set; }
     }
-}
+
+    internal class ReceiptPagedBody
+    {
+        [JsonProperty("data")]
+        public List<ReceiptDto> Data { get; set; }
+
+        [JsonProperty("metadata")]
+        public ReceiptPageMetadata Metadata { get; set; }
+    }
+
+    internal class ReceiptPageMetadata
+    {
+        [JsonProperty("currentPage")]
+        public int CurrentPage { get; set; }
+
+        [JsonProperty("totalPages")]
+        public int TotalPages { get; set; }
+
+        [JsonProperty("totalCount")]
+        public int TotalCount { get; set; }
+
+        [JsonProperty("pageSize")]
+        public int PageSize { get; set; }
+    }
+
+    internal class ReceiptPageResult
+    {
+        public List<ReceiptDto> Data { get; set; } = new List<ReceiptDto>();
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 20;
+    }}
