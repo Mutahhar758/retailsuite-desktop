@@ -190,6 +190,15 @@ namespace ERP.Services.Legacy
         [JsonProperty("customerCategoryTitle")]
         public string CustomerCategoryTitle { get; set; }
 
+        [JsonProperty("parentCustomerAccountId")]
+        public string ParentCustomerAccountId { get; set; }
+
+        [JsonProperty("parentCustomerTitle")]
+        public string ParentCustomerTitle { get; set; }
+
+        [JsonProperty("isSubAccount")]
+        public bool IsSubAccount { get; set; }
+
         [JsonProperty("supplyItems")]
         public List<CustomerSupplyItemDto> SupplyItems { get; set; } = new List<CustomerSupplyItemDto>();
     }
@@ -240,6 +249,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("customerCategoryId")]
         public string CustomerCategoryId { get; set; }
+
+        [JsonProperty("parentCustomerAccountId")]
+        public string ParentCustomerAccountId { get; set; }
 
         [JsonProperty("supplyItems")]
         public List<CustomerSupplyItemDto> SupplyItems { get; set; } = new List<CustomerSupplyItemDto>();

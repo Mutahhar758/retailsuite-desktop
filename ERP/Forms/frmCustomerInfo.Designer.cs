@@ -78,6 +78,8 @@ namespace ERP
             this.groupBox1 = new System.Windows.Forms.GroupBox();
             this.lblCustomerCategory = new System.Windows.Forms.Label();
             this.cmbCustomerCategory = new System.Windows.Forms.ComboBox();
+            this.chkIsSubAccount = new System.Windows.Forms.CheckBox();
+            this.cmbParentCustomer = new System.Windows.Forms.ComboBox();
             this.chkSMSAlert = new System.Windows.Forms.CheckBox();
             this.chkEmailAlert = new System.Windows.Forms.CheckBox();
             this.label4 = new System.Windows.Forms.Label();
@@ -313,6 +315,8 @@ namespace ERP
             this.tpDetails.Controls.Add(this.txtIBAN);
             this.tpDetails.Controls.Add(this.lblCustomerCategory);
             this.tpDetails.Controls.Add(this.cmbCustomerCategory);
+            this.tpDetails.Controls.Add(this.chkIsSubAccount);
+            this.tpDetails.Controls.Add(this.cmbParentCustomer);
             this.tpDetails.Controls.Add(this.groupBox1);
             this.tpDetails.Controls.Add(this.label4);
             this.tpDetails.Controls.Add(this.lblCreatedBy);
@@ -612,6 +616,29 @@ namespace ERP
             this.cmbCustomerCategory.Name = "cmbCustomerCategory";
             this.cmbCustomerCategory.Size = new System.Drawing.Size(236, 23);
             this.cmbCustomerCategory.TabIndex = 13;
+            // 
+            // chkIsSubAccount
+            // 
+            this.chkIsSubAccount.AutoSize = true;
+            this.chkIsSubAccount.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
+            this.chkIsSubAccount.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
+            this.chkIsSubAccount.Location = new System.Drawing.Point(220, 346);
+            this.chkIsSubAccount.Name = "chkIsSubAccount";
+            this.chkIsSubAccount.Size = new System.Drawing.Size(130, 19);
+            this.chkIsSubAccount.TabIndex = 14;
+            this.chkIsSubAccount.Text = "Is Sub-Account of:";
+            this.chkIsSubAccount.UseVisualStyleBackColor = true;
+            // 
+            // cmbParentCustomer
+            // 
+            this.cmbParentCustomer.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
+            this.cmbParentCustomer.Enabled = false;
+            this.cmbParentCustomer.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
+            this.cmbParentCustomer.FormattingEnabled = true;
+            this.cmbParentCustomer.Location = new System.Drawing.Point(355, 344);
+            this.cmbParentCustomer.Name = "cmbParentCustomer";
+            this.cmbParentCustomer.Size = new System.Drawing.Size(195, 23);
+            this.cmbParentCustomer.TabIndex = 15;
             // 
             // groupBox1
             // 
@@ -1037,6 +1064,8 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn4;
         private System.Windows.Forms.Label lblCustomerCategory;
         private System.Windows.Forms.ComboBox cmbCustomerCategory;
+        private System.Windows.Forms.CheckBox chkIsSubAccount;
+        private System.Windows.Forms.ComboBox cmbParentCustomer;
         private System.Windows.Forms.DataGridViewTextBoxColumn clnCustomerCategory;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn5;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn6;

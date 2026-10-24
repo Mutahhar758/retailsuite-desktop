@@ -258,6 +258,12 @@ namespace ERP.Services.Legacy
         [JsonProperty("customerTitle")]
         public string CustomerTitle { get; set; }
 
+        [JsonProperty("subAccountId")]
+        public string SubAccountId { get; set; }
+
+        [JsonProperty("subAccountTitle")]
+        public string SubAccountTitle { get; set; }
+
         [JsonProperty("qtyInPack")]
         public decimal? QtyInPack { get; set; }
 

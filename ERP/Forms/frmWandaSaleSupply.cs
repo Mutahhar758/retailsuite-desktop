@@ -116,7 +116,12 @@ namespace ERP
 
             dtCustomers.Rows.Clear();
             foreach (var c in customersTask.Result)
-                dtCustomers.Rows.Add(c.Account, c.Title, c.CustomerCategoryId);
+            {
+                string displayTitle = !string.IsNullOrWhiteSpace(c.ParentCustomerTitle)
+                    ? $"{c.Title} (Sub of: {c.ParentCustomerTitle})"
+                    : c.Title;
+                dtCustomers.Rows.Add(c.Account, displayTitle, c.CustomerCategoryId);
+            }
 
             dtNarration.Rows.Clear();
             foreach (var n in narrationsTask.Result)

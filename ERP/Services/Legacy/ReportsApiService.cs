@@ -373,7 +373,7 @@ namespace ERP.Services.Legacy
                     lines.Rows.Add(
                         row.Date,
                         row.VNo ?? string.Empty,
-                        row.Item ?? string.Empty,
+                        !string.IsNullOrWhiteSpace(row.SubAccountTitle) ? $"{row.Item} [{row.SubAccountTitle}]" : (row.Item ?? string.Empty),
                         row.Unit ?? string.Empty,
                         row.Qty,
                         row.Rate,
@@ -462,7 +462,7 @@ namespace ERP.Services.Legacy
                     lines.Rows.Add(
                         row.Date,
                         row.VNo ?? string.Empty,
-                        row.Item ?? string.Empty,
+                        !string.IsNullOrWhiteSpace(row.SubAccountTitle) ? $"{row.Item} [{row.SubAccountTitle}]" : (row.Item ?? string.Empty),
                         row.Unit ?? string.Empty,
                         row.Qty,
                         row.Rate,
@@ -1103,6 +1103,12 @@ namespace ERP.Services.Legacy
         [JsonProperty("item")]
         public string Item { get; set; }
 
+        [JsonProperty("subAccountId")]
+        public string SubAccountId { get; set; }
+
+        [JsonProperty("subAccountTitle")]
+        public string SubAccountTitle { get; set; }
+
         [JsonProperty("unit")]
         public string Unit { get; set; }
 
@@ -1205,6 +1211,12 @@ namespace ERP.Services.Legacy
         [JsonProperty("item")]
         public string Item { get; set; }
 
+        [JsonProperty("subAccountId")]
+        public string SubAccountId { get; set; }
+
+        [JsonProperty("subAccountTitle")]
+        public string SubAccountTitle { get; set; }
+
         [JsonProperty("unitTitle")]
         public string Unit { get; set; }
 
@@ -1264,6 +1276,18 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("summary")]
         public WandaCustomerBillSummaryDto Summary { get; set; } = new WandaCustomerBillSummaryDto();
+
+        [JsonProperty("linkedMainAccountId")]
+        public string LinkedMainAccountId { get; set; }
+
+        [JsonProperty("linkedMainAccountTitle")]
+        public string LinkedMainAccountTitle { get; set; }
+
+        [JsonProperty("linkedMainAccountBalance")]
+        public decimal? LinkedMainAccountBalance { get; set; }
+
+        [JsonProperty("isSubAccount")]
+        public bool IsSubAccount { get; set; }
     }
 
     internal class WandaCustomerBillLineDto
@@ -1276,6 +1300,12 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("item")]
         public string Item { get; set; }
+
+        [JsonProperty("subAccountId")]
+        public string SubAccountId { get; set; }
+
+        [JsonProperty("subAccountTitle")]
+        public string SubAccountTitle { get; set; }
 
         [JsonProperty("unitTitle")]
         public string Unit { get; set; }

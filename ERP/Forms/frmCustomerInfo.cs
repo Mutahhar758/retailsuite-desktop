@@ -23,6 +23,12 @@ namespace ERP
         {
             InitializeComponent();
             _customerApiService = new CustomerApiService();
+            chkIsSubAccount.CheckedChanged += (s, e) =>
+            {
+                cmbParentCustomer.Enabled = chkIsSubAccount.Checked;
+                if (!chkIsSubAccount.Checked)
+                    cmbParentCustomer.SelectedIndex = -1;
+            };
             _inventoryApiService = new InventoryApiService();
             _customerCategoryApiService = new CustomerCategoryApiService();
             _customers = new List<CustomerDto>();
@@ -64,6 +70,10 @@ namespace ERP
             chkSMSAlert.Checked = chkEmailAlert.Checked = false;
             if (cmbCustomerCategory != null && cmbCustomerCategory.DataSource != null)
                 cmbCustomerCategory.SelectedValue = string.Empty;
+            chkIsSubAccount.Checked = false;
+            cmbParentCustomer.Enabled = false;
+            PopulateParentCustomersCombo(string.Empty);
+            cmbParentCustomer.SelectedIndex = -1;
             profileImage1?.ClearImage();
             dgvSupplyItems?.Rows.Clear();
             if (lblSupplyCustomerInfo != null)
@@ -91,8 +101,13 @@ namespace ERP
             dgvCustomers.Rows.Clear();
             if (list == null) return;
             foreach (var c in list)
-                dgvCustomers.Rows.Add(c.Account, c.Title, c.Phone1,
+            {
+                string titleDisplay = c.IsSubAccount && !string.IsNullOrWhiteSpace(c.ParentCustomerTitle)
+                    ? $"{c.Title} (Sub of: {c.ParentCustomerTitle})"
+                    : c.Title;
+                dgvCustomers.Rows.Add(c.Account, titleDisplay, c.Phone1,
                                       c.Email, c.Address, c.CustomerCategoryTitle ?? "-", c.Active ? "Yes" : "No");
+            }
         }
 
         private async void FillDetail(string code)
@@ -120,6 +135,13 @@ namespace ERP
             chkActive.Checked     = c.Active;
             if (cmbCustomerCategory != null && cmbCustomerCategory.DataSource != null)
                 cmbCustomerCategory.SelectedValue = c.CustomerCategoryId ?? string.Empty;
+            PopulateParentCustomersCombo(code);
+            chkIsSubAccount.Checked = c.IsSubAccount;
+            cmbParentCustomer.Enabled = c.IsSubAccount;
+            if (!string.IsNullOrEmpty(c.ParentCustomerAccountId))
+                cmbParentCustomer.SelectedValue = c.ParentCustomerAccountId;
+            else
+                cmbParentCustomer.SelectedIndex = -1;
 
             lblCreatedBy.Text = FormatAudit(c.CreatedBy,       c.CreatedOn);
             lblEditBy.Text    = FormatAudit(c.LastModifiedBy,  c.LastModifiedOn);
@@ -223,6 +245,9 @@ namespace ERP
                 MediaId       = profileImage1?.MediaId,
                 CustomerCategoryId = cmbCustomerCategory != null && cmbCustomerCategory.SelectedValue != null && !string.IsNullOrWhiteSpace(cmbCustomerCategory.SelectedValue.ToString())
                     ? cmbCustomerCategory.SelectedValue.ToString()
+                    : null,
+                ParentCustomerAccountId = chkIsSubAccount.Checked && cmbParentCustomer.SelectedValue != null && !string.IsNullOrWhiteSpace(cmbParentCustomer.SelectedValue.ToString())
+                    ? cmbParentCustomer.SelectedValue.ToString()
                     : null,
                 SupplyItems   = supplyItems
             };
@@ -473,6 +498,21 @@ namespace ERP
         private void btnCustomerCancel_Click(object sender, EventArgs e)
         {
             profileImage1.ClearImage();
+        }
+
+        private void PopulateParentCustomersCombo(string currentAccount)
+        {
+            var validParents = _customers?
+                .Where(x => !string.Equals(x.Account, currentAccount, StringComparison.OrdinalIgnoreCase) && !x.IsSubAccount)
+                .ToList() ?? new List<CustomerDto>();
+
+            var list = new List<CustomerDto> { new CustomerDto { Account = string.Empty, Title = "-- Select Main Customer --" } };
+            list.AddRange(validParents);
+
+            cmbParentCustomer.DataSource = null;
+            cmbParentCustomer.DisplayMember = "Title";
+            cmbParentCustomer.ValueMember = "Account";
+            cmbParentCustomer.DataSource = list;
         }
 
         // ── Helper ────────────────────────────────────────────────────────

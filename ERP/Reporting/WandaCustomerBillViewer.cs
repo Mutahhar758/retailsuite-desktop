@@ -771,8 +771,16 @@ namespace ERP.Reporting
                 }
 
                 // Populate Customers
-                var customers = await _chartOfAccountApiService.GetCustomerAccountsAsync();
-                _allCustomers = customers ?? new List<ChartOfAccountHeadDto>();
+                var rawCustomers = await _chartOfAccountApiService.GetCustomerAccountsAsync();
+                _allCustomers = rawCustomers?.Select(c => new ChartOfAccountHeadDto
+                {
+                    Account = c.Account,
+                    Title = !string.IsNullOrWhiteSpace(c.ParentCustomerTitle) ? $"{c.Title} (Sub of: {c.ParentCustomerTitle})" : c.Title,
+                    CustomerCategoryId = c.CustomerCategoryId,
+                    ParentCustomerAccountId = c.ParentCustomerAccountId,
+                    ParentCustomerTitle = c.ParentCustomerTitle,
+                    IsSubAccount = c.IsSubAccount
+                }).ToList() ?? new List<ChartOfAccountHeadDto>();
                 _filteredCustomers = new List<ChartOfAccountHeadDto>(_allCustomers);
 
                 // Populate Single Mode ComboBox

@@ -136,9 +136,19 @@ namespace ERP
                 _items = await itemTask;
                 _units = await unitTask;
 
+                var displayCustomers = _customers.Select(c => new ChartOfAccountHeadDto
+                {
+                    Account = c.Account,
+                    Title = !string.IsNullOrWhiteSpace(c.ParentCustomerTitle) ? $"{c.Title} (Sub of: {c.ParentCustomerTitle})" : c.Title,
+                    CustomerCategoryId = c.CustomerCategoryId,
+                    ParentCustomerAccountId = c.ParentCustomerAccountId,
+                    ParentCustomerTitle = c.ParentCustomerTitle,
+                    IsSubAccount = c.IsSubAccount
+                }).ToList();
+
                 cmbCustomer.DisplayMember = "Title";
                 cmbCustomer.ValueMember = "Account";
-                cmbCustomer.DataSource = new List<ChartOfAccountHeadDto>(_customers);
+                cmbCustomer.DataSource = displayCustomers;
 
                 var filterItems = new List<InventoryItemDto>
                 {

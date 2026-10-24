@@ -158,6 +158,15 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("customerCategoryId")]
         public string CustomerCategoryId { get; set; }
+
+        [JsonProperty("parentCustomerAccountId")]
+        public string ParentCustomerAccountId { get; set; }
+
+        [JsonProperty("parentCustomerTitle")]
+        public string ParentCustomerTitle { get; set; }
+
+        [JsonProperty("isSubAccount")]
+        public bool IsSubAccount { get; set; }
     }
 
     internal class ChartOfAccountDto
