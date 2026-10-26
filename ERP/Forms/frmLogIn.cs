@@ -26,6 +26,14 @@ namespace ERP
             
             // Ensure icon is set
             pictureBox1.Image = global::ERP.Properties.Resources.if_lock_318582;
+
+            // Interactive hover styling
+            btnLogIn.MouseEnter += (s, e) => btnLogIn.BackColor = System.Drawing.Color.FromArgb(29, 78, 216);
+            btnLogIn.MouseLeave += (s, e) => btnLogIn.BackColor = System.Drawing.Color.FromArgb(37, 99, 235);
+            btnClose.MouseEnter += (s, e) => btnClose.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            btnClose.MouseLeave += (s, e) => btnClose.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            btnAddOrganization.MouseEnter += (s, e) => btnAddOrganization.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            btnAddOrganization.MouseLeave += (s, e) => btnAddOrganization.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
         }
 
         void INISetting()

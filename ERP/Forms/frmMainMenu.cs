@@ -46,8 +46,117 @@ namespace ERP
             lblUrCompanyName.Location = new Point((this.Size.Width - lblUrCompanyName.Size.Width) / 2, lblUrCompanyName.Location.Y);
             picLogo.Location = new Point((this.Size.Width - picLogo.Size.Width) / 2, picLogo.Location.Y);
         }
+
+        private MdiClient _mdiClient;
+
+        private void SetupModernTheme()
+        {
+            menuStrip1.Renderer = new ModernMenuRenderer();
+            statusStrip1.Renderer = new ModernMenuRenderer();
+
+            menuStrip1.BackColor = Color.FromArgb(15, 23, 42); // Slate-900
+            menuStrip1.ForeColor = Color.White;
+            menuStrip1.Font = new Font("Segoe UI", 9.75F, FontStyle.Regular);
+
+            statusStrip1.BackColor = Color.FromArgb(15, 23, 42);
+            statusStrip1.Font = new Font("Segoe UI", 9F, FontStyle.Regular);
+            toolStripStatusLabel1.ForeColor = Color.FromArgb(148, 163, 184); // Slate-400
+            toolStripStatusLabel1.Text = "Operator: ";
+            StlblUserId.ForeColor = Color.FromArgb(56, 189, 248); // Sky-400
+            StlblUserId.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            StlblUserId.BorderSides = ToolStripStatusLabelBorderSides.None;
+
+            toolStripStatusLabel2.ForeColor = Color.FromArgb(148, 163, 184);
+            toolStripStatusLabel2.Text = "  |  Version: ";
+            StConStatus.ForeColor = Color.FromArgb(52, 211, 153); // Emerald-400
+            StConStatus.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            StConStatus.BorderSides = ToolStripStatusLabelBorderSides.None;
+
+            // Setup modern MDI client background
+            foreach (Control c in this.Controls)
+            {
+                if (c is MdiClient mdi)
+                {
+                    _mdiClient = mdi;
+                    _mdiClient.BackColor = Color.FromArgb(248, 250, 252);
+                    _mdiClient.Paint += MdiClient_Paint;
+                    _mdiClient.Resize += (s, ev) => _mdiClient.Invalidate();
+                    break;
+                }
+            }
+        }
+
+        private void MdiClient_Paint(object sender, PaintEventArgs e)
+        {
+            if (_mdiClient == null) return;
+
+            e.Graphics.SmoothingMode = System.Drawing.Drawing2D.SmoothingMode.HighQuality;
+            e.Graphics.TextRenderingHint = System.Drawing.Text.TextRenderingHint.ClearTypeGridFit;
+            e.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
+
+            int clientWidth = _mdiClient.ClientSize.Width;
+            int clientHeight = _mdiClient.ClientSize.Height;
+
+            // Clean Slate-50 background
+            using (SolidBrush bgBrush = new SolidBrush(Color.FromArgb(248, 250, 252)))
+            {
+                e.Graphics.FillRectangle(bgBrush, 0, 0, clientWidth, clientHeight);
+            }
+
+            int centerY = Math.Max(60, (clientHeight - 240) / 2);
+
+            // Draw Logo
+            Image logo = picLogo.Image;
+            if (logo != null)
+            {
+                int maxLogoWidth = Math.Min(400, clientWidth - 40);
+                int maxLogoHeight = 180;
+                float ratio = Math.Min((float)maxLogoWidth / logo.Width, (float)maxLogoHeight / logo.Height);
+                int destWidth = Math.Max(1, (int)(logo.Width * ratio));
+                int destHeight = Math.Max(1, (int)(logo.Height * ratio));
+                int destX = (clientWidth - destWidth) / 2;
+                int destY = centerY;
+
+                e.Graphics.DrawImage(logo, new Rectangle(destX, destY, destWidth, destHeight));
+            }
+
+            // Draw Company Name above logo
+            string company = CompanyInfo.CompanyName ?? "";
+            if (!string.IsNullOrEmpty(company))
+            {
+                using (Font compFont = new Font("Segoe UI", 24F, FontStyle.Bold))
+                using (SolidBrush compBrush = new SolidBrush(Color.FromArgb(15, 23, 42))) // Slate-900
+                using (StringFormat sf = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                {
+                    e.Graphics.DrawString(company, compFont, compBrush, new RectangleF(0, Math.Max(10, centerY - 65), clientWidth, 40), sf);
+                }
+            }
+
+            // Draw Urdu Company Name if present
+            string urCompany = CompanyInfo.UrCompanyName ?? "";
+            if (!string.IsNullOrEmpty(urCompany))
+            {
+                using (Font urFont = new Font("Segoe UI", 20F, FontStyle.Bold))
+                using (SolidBrush urBrush = new SolidBrush(Color.FromArgb(51, 65, 85))) // Slate-700
+                using (StringFormat sf = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+                {
+                    e.Graphics.DrawString(urCompany, urFont, urBrush, new RectangleF(0, Math.Max(0, centerY - 110), clientWidth, 40), sf);
+                }
+            }
+
+            // Modern Footer Branding
+            string footerText = "RetailSuite POS & ERP • BizGrip Solutions (0322-8258734)";
+            using (Font footFont = new Font("Segoe UI", 9F, FontStyle.Regular))
+            using (SolidBrush footBrush = new SolidBrush(Color.FromArgb(148, 163, 184))) // Slate-400
+            using (StringFormat sf = new StringFormat() { Alignment = StringAlignment.Center, LineAlignment = StringAlignment.Center })
+            {
+                e.Graphics.DrawString(footerText, footFont, footBrush, new RectangleF(0, clientHeight - 36, clientWidth, 26), sf);
+            }
+        }
+
         private void frmMain_Load(object sender, EventArgs e)
         {
+            SetupModernTheme();
             INISetting();
             StlblUserId.Text = UserInfo.UserName;
             this.Text = CompanyInfo.CompanyName;
@@ -416,13 +525,6 @@ namespace ERP
                     frm.Show();
                 }
             }
-            //////////Calculator/////////////////////// 
-            else if (e.KeyCode == Keys.F1)
-            {
-                System.Diagnostics.Process calcprc = System.Diagnostics.Process.Start("calc.exe");
-                calcprc.WaitForInputIdle();
-
-            }
         }
 
         private void itemLedgerToolStripMenuItem_Click(object sender, EventArgs e)
@@ -693,20 +795,19 @@ namespace ERP
 
         private void frmMainMenu_Shown(object sender, EventArgs e)
         {
-
             MainPait();
-
         }
-        Bitmap Mainbmp;
+
         private void MainPait()
         {
-            Mainbmp = new Bitmap(panel1.Width, panel1.Height);
-            Graphics g = Graphics.FromImage(Mainbmp);
-            g.CopyFromScreen(PointToScreen(panel1.Location), new Point(0, 0), panel1.Size);
-            panel1.DrawToBitmap(Mainbmp, new Rectangle(Point.Empty, Mainbmp.Size));
-            this.Controls.Remove(panel1);
-            this.BackgroundImage = Mainbmp;
-
+            if (this.Controls.Contains(panel1))
+            {
+                this.Controls.Remove(panel1);
+            }
+            if (_mdiClient != null)
+            {
+                _mdiClient.Invalidate();
+            }
         }
 
         private void toolStripMenuItem1_Click(object sender, EventArgs e)

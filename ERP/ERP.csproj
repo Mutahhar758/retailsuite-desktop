@@ -219,6 +219,7 @@
     <Compile Include="Classes\ScannerToneHelper.cs" />
     <Compile Include="Classes\SoftwareInfo.cs" />
     <Compile Include="Classes\stringValidation.cs" />
+    <Compile Include="Classes\ModernMenuRenderer.cs" />
     <Compile Include="Classes\UserInfo.cs" />
     <Compile Include="Classes\Validation.cs" />
     <Compile Include="Classes\UnitConversionHelper.cs" />
