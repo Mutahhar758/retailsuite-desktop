@@ -671,43 +671,28 @@ namespace ERP
 
             if (e.ColumnIndex == clnQtyIn.Index)
             {
-                if (secQtyIn > 0)
-                    packQty = Math.Round(qtyIn / secQtyIn, 2);
-                else if (packQty > 0)
-                    secQtyIn = Math.Round(qtyIn / packQty, 2);
+                decimal effectivePack = packQty > 0 ? packQty : (packing > 0 ? packing : 0);
+                secQtyIn = effectivePack > 0 ? Math.Round(qtyIn / effectivePack, 2) : 0;
             }
             else if (e.ColumnIndex == clnQtyOut.Index)
             {
-                if (secQtyOut > 0)
-                    packQty = Math.Round(qtyOut / secQtyOut, 2);
-                else if (packQty > 0)
-                    secQtyOut = Math.Round(qtyOut / packQty, 2);
+                decimal effectivePack = packQty > 0 ? packQty : (packing > 0 ? packing : 0);
+                secQtyOut = effectivePack > 0 ? Math.Round(qtyOut / effectivePack, 2) : 0;
             }
             else if (colName == "clnSecQtyIn")
             {
-                if (packQty > 0)
-                    qtyIn = Math.Round(secQtyIn * packQty, 2);
-                else if (qtyIn > 0)
-                    packQty = Math.Round(qtyIn / secQtyIn, 2);
+                decimal effectivePack = packQty > 0 ? packQty : (packing > 0 ? packing : 0);
+                qtyIn = Math.Round(secQtyIn * effectivePack, 2);
             }
             else if (colName == "clnSecQtyOut")
             {
-                if (packQty > 0)
-                    qtyOut = Math.Round(secQtyOut * packQty, 2);
-                else if (qtyOut > 0)
-                    packQty = Math.Round(qtyOut / secQtyOut, 2);
+                decimal effectivePack = packQty > 0 ? packQty : (packing > 0 ? packing : 0);
+                qtyOut = Math.Round(secQtyOut * effectivePack, 2);
             }
             else if (colName == "clnPackQty")
             {
-                if (secQtyIn > 0)
-                    qtyIn = Math.Round(secQtyIn * packQty, 2);
-                else if (qtyIn > 0)
-                    secQtyIn = Math.Round(qtyIn / packQty, 2);
-
-                if (secQtyOut > 0)
-                    qtyOut = Math.Round(secQtyOut * packQty, 2);
-                else if (qtyOut > 0)
-                    secQtyOut = Math.Round(qtyOut / packQty, 2);
+                secQtyIn = packQty > 0 ? Math.Round(qtyIn / packQty, 2) : 0;
+                secQtyOut = packQty > 0 ? Math.Round(qtyOut / packQty, 2) : 0;
             }
             else if (colName == "clnPacking")
             {

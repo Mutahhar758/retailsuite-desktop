@@ -1175,24 +1175,17 @@ namespace ERP
             // 1. Quantity relationships
             if (editedColumnIndex == clnQty.Index)
             {
-                if (bagQty > 0)
-                    packQty = Math.Round(kgQty / bagQty, 2);
-                else if (packQty > 0)
-                    bagQty = Math.Round(kgQty / packQty, 2);
+                decimal effectivePack = packQty > 0 ? packQty : (packing > 0 ? packing : 0);
+                bagQty = effectivePack > 0 ? Math.Round(kgQty / effectivePack, 2) : 0;
             }
             else if (colName == "clnSecQty")
             {
-                if (packQty > 0)
-                    kgQty = Math.Round(bagQty * packQty, 2);
-                else if (kgQty > 0)
-                    packQty = Math.Round(kgQty / bagQty, 2);
+                decimal effectivePack = packQty > 0 ? packQty : (packing > 0 ? packing : 0);
+                kgQty = Math.Round(bagQty * effectivePack, 2);
             }
             else if (colName == "clnPackQty")
             {
-                if (bagQty > 0)
-                    kgQty = Math.Round(bagQty * packQty, 2);
-                else if (kgQty > 0)
-                    bagQty = Math.Round(kgQty / packQty, 2);
+                bagQty = packQty > 0 ? Math.Round(kgQty / packQty, 2) : 0;
             }
 
             // 2. Rate relationships
@@ -1206,10 +1199,7 @@ namespace ERP
                         bagRate = Math.Round(kgRate * packing, 2);
 
                     packQty = packing;
-                    if (bagQty > 0)
-                        kgQty = Math.Round(bagQty * packQty, 2);
-                    else if (kgQty > 0)
-                        bagQty = Math.Round(kgQty / packQty, 2);
+                    bagQty = packQty > 0 ? Math.Round(kgQty / packQty, 2) : 0;
                 }
             }
             else if (editedColumnIndex == clnRate.Index)
