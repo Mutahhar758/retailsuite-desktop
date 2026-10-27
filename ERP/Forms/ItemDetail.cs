@@ -13,14 +13,22 @@ namespace ERP
 {
     public partial class frmItemDetail : Form
     {
-        DataTable dtUnits = new DataTable();
-        DataTable dtCatagory = new DataTable();
-        DataTable dtItemDetail = new DataTable();
+        private DataTable dtUnits = new DataTable();
+        private DataTable dtCatagory = new DataTable();
+        private DataTable dtItemDetail = new DataTable();
         private readonly InventoryApiService _inventoryApiService;
         private readonly ItemCategoryApiService _itemCategoryApiService;
         private readonly UnitApiService _unitApiService;
         private readonly BrandApiService _brandApiService;
-        bool FLogin = true;
+
+        private string _currentEditingItemId = null;
+        private string _currentMediaId = string.Empty;
+        private string _currentMediaUrl = string.Empty;
+        private string _currentAdditionalUnits = null;
+        private List<ItemCustomerCategoryPriceUpsertRequest> _pendingCategoryRates = null;
+
+        private bool FLogin = true;
+        private bool _isPopulating = false;
 
         public frmItemDetail()
         {
@@ -31,17 +39,114 @@ namespace ERP
             _brandApiService = new BrandApiService();
             UserInfo.ApplyFormPermissions(this, AppResource.InventoryItems);
         }
-        void AllowNewRow()
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
         {
-            if (dgvItemDetail.CurrentRow.Index == dgvItemDetail.Rows[dgvItemDetail.Rows.Count - 1].Index)
+            if (keyData == Keys.F3)
             {
-                if (dgvItemDetail.CurrentRow.Cells[clnItem.Index].Value != null &&
-                    dgvItemDetail.CurrentRow.Cells[clnPriRate.Index].Value != null &&
-                    dgvItemDetail.CurrentRow.Cells[clnSecRate.Index].Value != null)
-                    dgvItemDetail.Rows.Add();
+                btnNew.PerformClick();
+                return true;
+            }
+            if (keyData == Keys.F5)
+            {
+                btnSave.PerformClick();
+                return true;
+            }
+            if (keyData == Keys.Escape)
+            {
+                btnClose.PerformClick();
+                return true;
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void SetupButtonFocusHighlights()
+        {
+            var buttons = new Button[] { btnSave, btnNew, btnDelete, btnClose, btnQueryFind, btnQueryReset, btnAddNewFromSearch, btnCategoryRates, btnSubUnits };
+            foreach (var btn in buttons)
+            {
+                if (btn == null) continue;
+                btn.Enter += (s, e) => btn.Invalidate();
+                btn.Leave += (s, e) => btn.Invalidate();
+                btn.Paint += (s, e) =>
+                {
+                    if (btn.Focused)
+                    {
+                        var rect = btn.ClientRectangle;
+                        using (var pen = new Pen(Color.FromArgb(37, 99, 235), 2))
+                        {
+                            e.Graphics.DrawRectangle(pen, 1, 1, rect.Width - 2, rect.Height - 2);
+                        }
+                        if (btn == btnSave)
+                        {
+                            using (var penInner = new Pen(Color.FromArgb(180, 255, 255, 255), 1))
+                            {
+                                e.Graphics.DrawRectangle(penInner, 2, 2, rect.Width - 4, rect.Height - 4);
+                            }
+                        }
+                    }
+                };
             }
         }
-        async System.Threading.Tasks.Task fillItemCatagory()
+
+        private void ApplyModernStyling()
+        {
+            SetupButtonFocusHighlights();
+            this.DoubleBuffered = true;
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
+
+            // Query Grid styling
+            dgvQuery.EnableHeadersVisualStyles = false;
+            dgvQuery.BackgroundColor = Color.White;
+            dgvQuery.BorderStyle = BorderStyle.FixedSingle;
+            dgvQuery.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvQuery.GridColor = Color.FromArgb(226, 232, 240);
+            dgvQuery.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(241, 245, 249);
+            dgvQuery.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(30, 41, 59);
+            dgvQuery.ColumnHeadersDefaultCellStyle.SelectionBackColor = Color.FromArgb(241, 245, 249);
+            dgvQuery.ColumnHeadersDefaultCellStyle.SelectionForeColor = Color.FromArgb(30, 41, 59);
+            dgvQuery.ColumnHeadersDefaultCellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            dgvQuery.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvQuery.ColumnHeadersHeight = 32;
+
+            dgvQuery.DefaultCellStyle.Font = new Font("Segoe UI", 9F);
+            dgvQuery.DefaultCellStyle.BackColor = Color.White;
+            dgvQuery.DefaultCellStyle.ForeColor = Color.FromArgb(15, 23, 42);
+            dgvQuery.DefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
+            dgvQuery.DefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
+            dgvQuery.AlternatingRowsDefaultCellStyle.BackColor = Color.FromArgb(248, 250, 252);
+            dgvQuery.AlternatingRowsDefaultCellStyle.ForeColor = Color.FromArgb(15, 23, 42);
+            dgvQuery.AlternatingRowsDefaultCellStyle.SelectionBackColor = Color.FromArgb(219, 234, 254);
+            dgvQuery.AlternatingRowsDefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
+            dgvQuery.RowTemplate.Height = 28;
+
+            // 1px bottom border on header
+            pnlHeader.Paint += (s, e) =>
+            {
+                using (var pen = new Pen(Color.FromArgb(226, 232, 240), 1))
+                {
+                    e.Graphics.DrawLine(pen, 0, pnlHeader.Height - 1, pnlHeader.Width, pnlHeader.Height - 1);
+                }
+            };
+
+            // Button hover animations
+            btnSave.MouseEnter += (s, e) => { if (btnSave.Text.Contains("*")) btnSave.BackColor = Color.FromArgb(194, 65, 12); else btnSave.BackColor = Color.FromArgb(21, 128, 61); };
+            btnSave.MouseLeave += (s, e) => { if (btnSave.Text.Contains("*")) btnSave.BackColor = Color.FromArgb(234, 88, 12); else btnSave.BackColor = Color.FromArgb(22, 163, 74); };
+            btnNew.MouseEnter += (s, e) => btnNew.BackColor = Color.FromArgb(226, 232, 240);
+            btnNew.MouseLeave += (s, e) => btnNew.BackColor = Color.FromArgb(241, 245, 249);
+            btnDelete.MouseEnter += (s, e) => btnDelete.BackColor = Color.FromArgb(254, 202, 202);
+            btnDelete.MouseLeave += (s, e) => btnDelete.BackColor = Color.FromArgb(254, 242, 242);
+            btnClose.MouseEnter += (s, e) => btnClose.BackColor = Color.FromArgb(226, 232, 240);
+            btnClose.MouseLeave += (s, e) => btnClose.BackColor = Color.FromArgb(241, 245, 249);
+            btnQueryFind.MouseEnter += (s, e) => btnQueryFind.BackColor = Color.FromArgb(29, 78, 216);
+            btnQueryFind.MouseLeave += (s, e) => btnQueryFind.BackColor = Color.FromArgb(37, 99, 235);
+            btnQueryReset.MouseEnter += (s, e) => btnQueryReset.BackColor = Color.FromArgb(226, 232, 240);
+            btnQueryReset.MouseLeave += (s, e) => btnQueryReset.BackColor = Color.FromArgb(241, 245, 249);
+            btnAddNewFromSearch.MouseEnter += (s, e) => btnAddNewFromSearch.BackColor = Color.FromArgb(21, 128, 61);
+            btnAddNewFromSearch.MouseLeave += (s, e) => btnAddNewFromSearch.BackColor = Color.FromArgb(22, 163, 74);
+        }
+
+        private async System.Threading.Tasks.Task fillItemCatagory()
         {
             var categories = await _itemCategoryApiService.GetLookupAsync();
 
@@ -54,29 +159,33 @@ namespace ERP
                 dtCatagory.Rows.Add(categories[i].Code, categories[i].Title);
             }
 
-            cmbItemCatagory.DataSource = dtCatagory;
+            cmbItemCatagory.DataSource = dtCatagory.Copy();
             cmbItemCatagory.DisplayMember = "Title";
             cmbItemCatagory.ValueMember = "Code";
-
-            clnCatagory.DataSource = dtCatagory.Copy();
-            clnCatagory.DisplayMember = "Title";
-            clnCatagory.ValueMember = "Code";
         }
-        async System.Threading.Tasks.Task LoadUnitsAsync()
+
+        private async System.Threading.Tasks.Task LoadUnitsAsync()
         {
             var units = await _unitApiService.GetLookupAsync();
             dtUnits = UnitConversionHelper.CreateUnitsTable(units);
         }
-        void FillUnits()
+
+        private void FillUnits()
         {
-            clnPriUnit.DataSource = dtUnits.Copy();
-            clnPriUnit.DisplayMember = "Title";
-            clnPriUnit.ValueMember = "Code";
-            clnSecUnit.DataSource = dtUnits.Copy();
-            clnSecUnit.DisplayMember = "Title";
-            clnSecUnit.ValueMember = "Code";
+            cmbPriUnit.DataSource = dtUnits.Copy();
+            cmbPriUnit.DisplayMember = "Title";
+            cmbPriUnit.ValueMember = "Code";
+
+            cmbSecUnit.DataSource = dtUnits.Copy();
+            cmbSecUnit.DisplayMember = "Title";
+            cmbSecUnit.ValueMember = "Code";
+
+            cmbDefUnit.DataSource = dtUnits.Copy();
+            cmbDefUnit.DisplayMember = "Title";
+            cmbDefUnit.ValueMember = "Code";
         }
-        async System.Threading.Tasks.Task LoadItemDetailAsync()
+
+        private async System.Threading.Tasks.Task LoadItemDetailAsync()
         {
             var items = await _inventoryApiService.GetItemsAsync(null);
 
@@ -143,58 +252,11 @@ namespace ERP
                     items[i].AdditionalUnits);
             }
         }
-        async System.Threading.Tasks.Task FillformAsync(string catagory)
-        {
-            DataTable dtfilter = dtItemDetail.Copy();
-            dtfilter.Rows.Clear();
-            dtfilter = dtItemDetail.Select("fkitemcatagory = '" + catagory + "'").Count() > 0 ? dtItemDetail.Select("fkitemcatagory = '" + catagory + "'").CopyToDataTable() : dtfilter;
-            dgvItemDetail.Rows.Clear();
-            for (int i = 0; i < dtfilter.Rows.Count; i++)
-            {
-                int rIdx = dgvItemDetail.Rows.Add(dtfilter.Rows[i]["Id"].ToString(),
-                    dtfilter.Rows[i]["Barcode"].ToString(),
-                    dtfilter.Rows[i]["fkitemcatagory"].ToString(),
-                    dtfilter.Rows[i]["Title"].ToString(),
-                    dtfilter.Rows[i]["ItemKey"].ToString(),
-                    dtfilter.Rows[i]["ItemType"] != DBNull.Value ? (int)dtfilter.Rows[i]["ItemType"] : 0,
-                    dtfilter.Rows[i]["PriRate"].ToString(),
-                    dtfilter.Rows[i]["SecRate"].ToString(),
-                    dtfilter.Rows[i]["PrimaryUnit"].ToString().EmptyToNull(),
-                    dtfilter.Rows[i]["SecondaryUnit"].ToString().EmptyToNull(),
-                    dtfilter.Rows[i]["DefaultUnit"].ToString().EmptyToNull(),
-                    dtfilter.Rows[i]["QtyInPack"].ToString().EmptyToNull(),
-                    Validation.ToBool(dtfilter.Rows[i]["Alert"].ToString()),
-                    Validation.ToBool(dtfilter.Rows[i]["LowStockAlert"].ToString()),
-                    dtfilter.Rows[i]["LowStockQty"] != DBNull.Value ? dtfilter.Rows[i]["LowStockQty"].ToString() : string.Empty,
-                    dtfilter.Rows[i]["OpnStock"].ToString().EmptyToNull(),
-                    dtfilter.Rows[i]["OpnRate"].ToString().EmptyToNull(),
-                    dtfilter.Rows[i]["status"].ToString(),
-                    "0");
-                dgvItemDetail.Rows[rIdx].Cells["clnMinSalePrice"].Value = dtfilter.Rows[i]["MinSalePrice"] != DBNull.Value ? dtfilter.Rows[i]["MinSalePrice"].ToString() : string.Empty;
-                dgvItemDetail.Rows[rIdx].Cells["clnMediaId"].Value = dtfilter.Rows[i]["MediaId"]?.ToString() ?? string.Empty;
-                dgvItemDetail.Rows[rIdx].Cells["clnMediaUrl"].Value = dtfilter.Rows[i]["MediaUrl"]?.ToString() ?? string.Empty;
-                if (dgvItemDetail.Columns.Contains("clnAdditionalUnits"))
-                {
-                    dgvItemDetail.Rows[rIdx].Cells["clnAdditionalUnits"].Value = dtfilter.Rows[i]["AdditionalUnits"]?.ToString() ?? string.Empty;
-                }
 
-                if (ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnRequireImei"))
-                {
-                    dgvItemDetail.Rows[rIdx].Cells["clnRequireImei"].Value = dtfilter.Rows[i]["RequireImei"] != DBNull.Value && Convert.ToBoolean(dtfilter.Rows[i]["RequireImei"]);
-                    dgvItemDetail.Rows[rIdx].Cells["clnBrand"].Value = dtfilter.Rows[i]["BrandId"]?.ToString();
-                    dgvItemDetail.Rows[rIdx].Cells["clnModel"].Value = dtfilter.Rows[i]["ModelName"]?.ToString();
-                    dgvItemDetail.Rows[rIdx].Cells["clnStorage"].Value = dtfilter.Rows[i]["Storage"]?.ToString();
-                    dgvItemDetail.Rows[rIdx].Cells["clnRam"].Value = dtfilter.Rows[i]["Ram"]?.ToString();
-                    dgvItemDetail.Rows[rIdx].Cells["clnColor"].Value = dtfilter.Rows[i]["Color"]?.ToString();
-                }
-            }
-            dgvItemDetail.Rows.Add();
-            CalcTotals();
-            await UpdateProductPictureAsync();
-            UpdateSaveButtonState(false);
-        }
         private async void frmItemDetail_Load(object sender, EventArgs e)
         {
+            ApplyModernStyling();
+
             profileImage1.Title = "Product Image";
             profileImage1.SizeMode = PictureBoxSizeMode.Zoom;
             profileImage1.PictureBox.BackColor = Color.White;
@@ -204,457 +266,578 @@ namespace ERP
             profileImage1.SearchButton.Click += btnProductSearch_Click;
             profileImage1.CancelButton.Click += btnProductCancel_Click;
 
-            var clnMediaId = new DataGridViewTextBoxColumn { Name = "clnMediaId", Visible = false };
-            var clnMediaUrl = new DataGridViewTextBoxColumn { Name = "clnMediaUrl", Visible = false };
-            var clnAdditionalUnits = new DataGridViewTextBoxColumn { Name = "clnAdditionalUnits", Visible = false };
-            var clnSubUnits = new DataGridViewButtonColumn
-            {
-                Name = "clnSubUnits",
-                HeaderText = "Sub-Units",
-                Text = "Sub-Units",
-                UseColumnTextForButtonValue = true,
-                Width = 75,
-                FlatStyle = FlatStyle.Flat
-            };
-            dgvItemDetail.Columns.Add(clnMediaId);
-            dgvItemDetail.Columns.Add(clnMediaUrl);
-            dgvItemDetail.Columns.Add(clnAdditionalUnits);
-            dgvItemDetail.Columns.Add(clnSubUnits);
-
-            await LoadUnitsAsync();
-            await fillItemCatagory();
-            await LoadItemDetailAsync();
-            FillUnits();
-
-            try
-            {
-                clnCategoryRates.DisplayIndex = clnSecRate.DisplayIndex + 1;
-                clnSubUnits.DisplayIndex = clnPriUnit.DisplayIndex + 1;
-            }
-            catch { }
-
             DataTable dtItemTypes = new DataTable();
             dtItemTypes.Columns.Add("Value", typeof(int));
             dtItemTypes.Columns.Add("Name", typeof(string));
             dtItemTypes.Rows.Add(0, "Product");
             dtItemTypes.Rows.Add(1, "Service");
 
-            clnItemType.DataSource = dtItemTypes;
-            clnItemType.DisplayMember = "Name";
-            clnItemType.ValueMember = "Value";
+            cmbItemType.DataSource = dtItemTypes;
+            cmbItemType.DisplayMember = "Name";
+            cmbItemType.ValueMember = "Value";
+
+            await LoadUnitsAsync();
+            await fillItemCatagory();
+            await LoadItemDetailAsync();
+            FillUnits();
 
             if (ApiSession.HasMobileShopFeature)
             {
+                pnlMobileShop.Visible = true;
                 var brands = await _brandApiService.GetLookupAsync();
                 var dtBrand = new DataTable();
                 dtBrand.Columns.Add("Id", typeof(string));
                 dtBrand.Columns.Add("Title", typeof(string));
-                dtBrand.Rows.Add("", "-- None --");
                 foreach (var b in brands)
-                {
-                    if (!string.IsNullOrWhiteSpace(b.Id))
-                        dtBrand.Rows.Add(b.Id, b.Title);
-                }
+                    dtBrand.Rows.Add(b.Id, b.Title);
 
-                var clnRequireImei = new DataGridViewCheckBoxColumn
-                {
-                    Name = "clnRequireImei",
-                    HeaderText = "Req IMEI",
-                    Width = 65
-                };
-                var clnBrand = new DataGridViewComboBoxColumn
-                {
-                    Name = "clnBrand",
-                    HeaderText = "Brand",
-                    Width = 100,
-                    DataSource = dtBrand,
-                    DisplayMember = "Title",
-                    ValueMember = "Id",
-                    DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox
-                };
-                var clnModel = new DataGridViewTextBoxColumn
-                {
-                    Name = "clnModel",
-                    HeaderText = "Model",
-                    Width = 110
-                };
-                var clnStorage = new DataGridViewTextBoxColumn
-                {
-                    Name = "clnStorage",
-                    HeaderText = "Storage",
-                    Width = 75
-                };
-                var clnRam = new DataGridViewTextBoxColumn
-                {
-                    Name = "clnRam",
-                    HeaderText = "RAM",
-                    Width = 65
-                };
-                var clnColor = new DataGridViewTextBoxColumn
-                {
-                    Name = "clnColor",
-                    HeaderText = "Color",
-                    Width = 85
-                };
-
-                dgvItemDetail.Columns.Add(clnRequireImei);
-                dgvItemDetail.Columns.Add(clnBrand);
-                dgvItemDetail.Columns.Add(clnModel);
-                dgvItemDetail.Columns.Add(clnStorage);
-                dgvItemDetail.Columns.Add(clnRam);
-                dgvItemDetail.Columns.Add(clnColor);
+                cmbBrand.DataSource = dtBrand;
+                cmbBrand.DisplayMember = "Title";
+                cmbBrand.ValueMember = "Id";
+            }
+            else
+            {
+                pnlMobileShop.Visible = false;
             }
 
-            dgvItemDetail.Rows.Add();
-            await FillformAsync((string)cmbItemCatagory.SelectedValue);
+            InitQueryFilterControls();
+            FillQueryGrid();
+
+            if (dtItemDetail.Rows.Count > 0)
+            {
+                await LoadProductIntoDetailAsync(dtItemDetail.Rows[0]["Id"]?.ToString());
+            }
+            else
+            {
+                ClearDetailFields();
+            }
+
             FLogin = false;
             if (!UserInfo.HasPermission(AppAction.Update, AppResource.OpeningBalances))
             {
-                clnOpnStock.ReadOnly = true;
+                txtOpnStock.ReadOnly = true;
+                txtOpnRate.ReadOnly = true;
             }
         }
-      
-        #region dgvItemDetail Events
-        private int currentRow;
-        private bool resetRow = false;
-        private void dgvItemDetail_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        {
-            AllowNewRow();
-            resetRow = true;
-            currentRow = e.RowIndex;
-            
-        }
-        private async void dgvItemDetail_SelectionChanged(object sender, EventArgs e)
-        {
-            if (resetRow)
-            {
-                resetRow = false;     
-                dgvItemDetail.CurrentCell = dgvItemDetail.Rows[currentRow].Cells[dgvItemDetail.CurrentCell.ColumnIndex];
-            }
-            await UpdateProductPictureAsync();
-        }
-        private void dgvItemDetail_KeyDown(object sender, KeyEventArgs e)
-        {
-            if (e.KeyCode == Keys.Enter)
-            {
-                e.SuppressKeyPress = true;
-                SendKeys.Send("{tab}");
-            }
-        }
-        private void dgvItemDetail_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
-        {
-            if (dgvItemDetail.CurrentCell.ColumnIndex == clnPriRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnSecRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnLowStockQty.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnMinSalePrice.Index)
-            {
-                TextBox tb = e.Control as TextBox;
-                if (tb != null && e.Control.Text != null)
-                {
-                    tb.KeyPress += new KeyPressEventHandler(tb_KeyPress);
-                }
-            }
-        }
-        void tb_KeyPress(object sender, KeyPressEventArgs e)
-        {
-            if (dgvItemDetail.CurrentCell.ColumnIndex == clnPriRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnSecRate.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnLowStockQty.Index || dgvItemDetail.CurrentCell.ColumnIndex == clnMinSalePrice.Index)
-            {
-                if ((sender as TextBox).SelectedText.Length > 0)
-                {
-                    int selind = (sender as TextBox).SelectionStart;
-                    (sender as TextBox).Text = (sender as TextBox).Text.Replace((sender as TextBox).SelectedText, "");
-                    (sender as TextBox).SelectionStart = selind;
-                    (sender as TextBox).SelectionLength = 0;
-                }
-                if (!char.IsControl(e.KeyChar)
-           && !char.IsDigit(e.KeyChar)
-           && !((sender as TextBox).Text.Count(a => a == '.') == 0 && e.KeyChar == '.'))
-                {
-                    e.Handled = true;
-                }
-            }
-        }
-        private void dgvItemDetail_CellValueChanged(object sender, DataGridViewCellEventArgs e)
-        {
-            if (e.RowIndex != -1)
-            {
-                if (!FLogin && dgvItemDetail.CurrentRow != null)
-                {
-                    dgvItemDetail.CurrentRow.Cells[clnIsEdit.Index].Value = "1";
-                    UpdateSaveButtonState(true);
-                }
-                DataGridViewComboBoxCell cmb = (dgvItemDetail[clnDefUnif.Index, e.RowIndex] as DataGridViewComboBoxCell);
-                string Filter = " Code in (";
-                Filter += "'" + Validation.IsNull((string)dgvItemDetail[clnPriUnit.Index, e.RowIndex].Value, "") + "'";
-                Filter += ",'" + Validation.IsNull((string)dgvItemDetail[clnSecUnit.Index, e.RowIndex].Value, "") + "')";
-                DataTable dt = dtUnits.Copy();
-                dt.Rows.Clear(); 
-                dt = dtUnits.Select(Filter).Count() == 0 ? null : dtUnits.Select(Filter).CopyToDataTable();
-                cmb.DataSource = dt;
-                clnDefUnif.DisplayMember = "Title";
-                clnDefUnif.ValueMember = "Code";
-                if (dgvItemDetail[clnPriUnit.Index, e.RowIndex].Value == null)
-                    dgvItemDetail[clnPriUnit.Index, e.RowIndex].Value = dgvItemDetail[clnSecUnit.Index, e.RowIndex].Value;
-                if (dgvItemDetail[clnSecUnit.Index, e.RowIndex].Value == null)
-                    dgvItemDetail[clnSecUnit.Index, e.RowIndex].Value = dgvItemDetail[clnPriUnit.Index, e.RowIndex].Value;              
-                if(cmb.Value == null)
-                cmb.Value = dgvItemDetail[clnSecUnit.Index, e.RowIndex].Value;
 
+        public async System.Threading.Tasks.Task LoadProductIntoDetailAsync(string itemId)
+        {
+            if (string.IsNullOrEmpty(itemId) || dtItemDetail == null) return;
+
+            DataRow row = dtItemDetail.Select($"Id = '{itemId.Replace("'", "''")}'").FirstOrDefault();
+            if (row == null) return;
+
+            _isPopulating = true;
+            try
+            {
+                _currentEditingItemId = itemId;
+                txtBarcode.Text = row["Barcode"]?.ToString() ?? "";
+                txtItemKey.Text = row["ItemKey"]?.ToString() ?? "";
+                txtTitle.Text = row["Title"]?.ToString() ?? "";
+
+                if (row["fkitemcatagory"] != DBNull.Value)
+                    cmbItemCatagory.SelectedValue = row["fkitemcatagory"].ToString();
+
+                int itemType = row["ItemType"] != DBNull.Value ? Convert.ToInt32(row["ItemType"]) : 0;
+                cmbItemType.SelectedValue = itemType;
+
+                txtPriRate.Text = row["PriRate"] != DBNull.Value ? Convert.ToDecimal(row["PriRate"]).ToString("0.##") : "0";
+                txtSecRate.Text = row["SecRate"] != DBNull.Value ? Convert.ToDecimal(row["SecRate"]).ToString("0.##") : "0";
+                txtMinSalePrice.Text = row["MinSalePrice"] != DBNull.Value ? Convert.ToDecimal(row["MinSalePrice"]).ToString("0.##") : "";
+
+                if (row["PrimaryUnit"] != DBNull.Value)
+                    cmbPriUnit.SelectedValue = row["PrimaryUnit"].ToString();
+                if (row["SecondaryUnit"] != DBNull.Value)
+                    cmbSecUnit.SelectedValue = row["SecondaryUnit"].ToString();
+                if (row["DefaultUnit"] != DBNull.Value)
+                    cmbDefUnit.SelectedValue = row["DefaultUnit"].ToString();
+
+                txtQtyInPack.Text = row["QtyInPack"] != DBNull.Value ? Convert.ToDecimal(row["QtyInPack"]).ToString("0.##") : "1";
+
+                txtOpnStock.Text = row["OpnStock"] != DBNull.Value ? Convert.ToDecimal(row["OpnStock"]).ToString("0.##") : "0";
+                txtOpnRate.Text = row["OpnRate"] != DBNull.Value ? Convert.ToDecimal(row["OpnRate"]).ToString("0.##") : "0";
+
+                chkLowStockAlert.Checked = row["LowStockAlert"] != DBNull.Value && Convert.ToBoolean(row["LowStockAlert"]);
+                txtLowStockQty.Text = row["LowStockQty"] != DBNull.Value ? Convert.ToDecimal(row["LowStockQty"]).ToString("0.##") : "";
+                chkAlert.Checked = row["Alert"]?.ToString() == "1" || string.Equals(row["Alert"]?.ToString(), "true", StringComparison.OrdinalIgnoreCase);
+
+                if (ApiSession.HasMobileShopFeature)
+                {
+                    if (row.Table.Columns.Contains("RequireImei") && row["RequireImei"] != DBNull.Value)
+                        chkRequireImei.Checked = Convert.ToBoolean(row["RequireImei"]);
+                    if (row.Table.Columns.Contains("BrandId") && row["BrandId"] != DBNull.Value)
+                        cmbBrand.SelectedValue = row["BrandId"].ToString();
+                    if (row.Table.Columns.Contains("ModelName"))
+                        txtModel.Text = row["ModelName"]?.ToString() ?? "";
+                    if (row.Table.Columns.Contains("Storage"))
+                        txtStorage.Text = row["Storage"]?.ToString() ?? "";
+                    if (row.Table.Columns.Contains("Ram"))
+                        txtRam.Text = row["Ram"]?.ToString() ?? "";
+                    if (row.Table.Columns.Contains("Color"))
+                        txtColor.Text = row["Color"]?.ToString() ?? "";
+                }
+
+                _currentMediaId = row["MediaId"]?.ToString() ?? string.Empty;
+                _currentMediaUrl = row["MediaUrl"]?.ToString() ?? string.Empty;
+                _currentAdditionalUnits = row["AdditionalUnits"]?.ToString();
+                _pendingCategoryRates = null;
+
+                profileImage1.MediaId = _currentMediaId;
+                profileImage1.MediaUrl = _currentMediaUrl;
+                if (!string.IsNullOrEmpty(_currentMediaUrl))
+                    await profileImage1.LoadImageAsync(_currentMediaUrl);
+                else
+                    profileImage1.ClearImage();
+
+                lblDetailStatus.Text = $"Editing: {txtTitle.Text} (ID: {itemId})";
+                lblDetailStatus.ForeColor = Color.FromArgb(37, 99, 235);
+                btnDelete.Enabled = true;
+                UpdateSaveButtonState(false);
+            }
+            finally
+            {
+                _isPopulating = false;
             }
         }
-        private void dgvItemDetail_RowsAdded(object sender, DataGridViewRowsAddedEventArgs e)
+
+        private void ClearDetailFields()
         {
-            dgvItemDetail.Rows[e.RowIndex].Cells[clnCatagory.Index].Value = cmbItemCatagory.SelectedValue;
-            dgvItemDetail.Rows[e.RowIndex].Cells[clnIsEdit.Index].Value = "1";
-            dgvItemDetail.Rows[e.RowIndex].Cells[clnstatus.Index].Value = "0";
-            if (dgvItemDetail.Rows[e.RowIndex].Cells[clnId.Index].Value == null)
-             dgvItemDetail.Rows[e.RowIndex].Cells[clnId.Index].Value = "0";           
-            if (dgvItemDetail.Rows[e.RowIndex].Cells[clnItemType.Index].Value == null)
-                dgvItemDetail.Rows[e.RowIndex].Cells[clnItemType.Index].Value = 0;
-            if (!FLogin)
-                UpdateSaveButtonState(true);
+            _isPopulating = true;
+            try
+            {
+                _currentEditingItemId = null;
+                _currentMediaId = string.Empty;
+                _currentMediaUrl = string.Empty;
+                _currentAdditionalUnits = null;
+                _pendingCategoryRates = null;
+
+                txtBarcode.Text = "";
+                txtItemKey.Text = "";
+                txtTitle.Text = "";
+
+                if (cmbItemCatagory.Items.Count > 0 && cmbItemCatagory.SelectedIndex < 0)
+                    cmbItemCatagory.SelectedIndex = 0;
+
+                cmbItemType.SelectedIndex = 0;
+
+                txtPriRate.Text = "0";
+                txtSecRate.Text = "0";
+                txtMinSalePrice.Text = "";
+
+                if (cmbPriUnit.Items.Count > 0 && cmbPriUnit.SelectedIndex < 0)
+                    cmbPriUnit.SelectedIndex = 0;
+                if (cmbSecUnit.Items.Count > 0 && cmbSecUnit.SelectedIndex < 0)
+                    cmbSecUnit.SelectedIndex = 0;
+                if (cmbDefUnit.Items.Count > 0 && cmbDefUnit.SelectedIndex < 0)
+                    cmbDefUnit.SelectedIndex = 0;
+
+                txtQtyInPack.Text = "1";
+                txtOpnStock.Text = "0";
+                txtOpnRate.Text = "0";
+
+                chkLowStockAlert.Checked = false;
+                txtLowStockQty.Text = "";
+                chkAlert.Checked = false;
+
+                if (ApiSession.HasMobileShopFeature)
+                {
+                    chkRequireImei.Checked = false;
+                    if (cmbBrand.Items.Count > 0) cmbBrand.SelectedIndex = -1;
+                    txtModel.Text = "";
+                    txtStorage.Text = "";
+                    txtRam.Text = "";
+                    txtColor.Text = "";
+                }
+
+                profileImage1.ClearImage();
+                lblDetailStatus.Text = "New Product Mode";
+                lblDetailStatus.ForeColor = Color.FromArgb(22, 163, 74);
+                btnDelete.Enabled = false;
+                UpdateSaveButtonState(false);
+                txtBarcode.Focus();
+            }
+            finally
+            {
+                _isPopulating = false;
+            }
         }
-        #endregion
-        
 
         private async void btnSave_Click(object sender, EventArgs e)
         {
-            if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to Save this...!", "Question", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            if (cmbItemCatagory.SelectedValue == null || string.IsNullOrWhiteSpace(cmbItemCatagory.SelectedValue.ToString()))
             {
-                foreach (DataGridViewRow row in dgvItemDetail.Rows)
+                MessageBox.Show("Please select a Category!", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                cmbItemCatagory.Focus();
+                return;
+            }
+
+            if (string.IsNullOrWhiteSpace(txtTitle.Text))
+            {
+                MessageBox.Show("Please enter Product Name / Title!", "Validation", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                txtTitle.Focus();
+                return;
+            }
+
+            bool isService = cmbItemType.SelectedIndex == 1;
+
+            var request = new InventoryItemUpsertApiRequest
+            {
+                Id = _currentEditingItemId,
+                ItemCategoryCode = Convert.ToString(cmbItemCatagory.SelectedValue),
+                Barcode = txtBarcode.Text?.Trim() ?? "",
+                Title = txtTitle.Text?.Trim(),
+                ItemKey = txtItemKey.Text?.Trim(),
+                PriRate = ParseDecimal(txtPriRate.Text),
+                SecRate = ParseDecimal(txtSecRate.Text),
+                PrimaryUnit = isService ? string.Empty : Convert.ToString(cmbPriUnit.SelectedValue),
+                SecondaryUnit = isService ? string.Empty : Convert.ToString(cmbSecUnit.SelectedValue),
+                DefaultUnit = isService ? string.Empty : Convert.ToString(cmbDefUnit.SelectedValue),
+                QtyInPack = isService ? null : ParseNullableDecimal(txtQtyInPack.Text),
+                Alert = chkAlert.Checked,
+                LowStockAlert = isService ? (bool?)null : chkLowStockAlert.Checked,
+                LowStockQty = isService ? (decimal?)null : ParseNullableDecimal(txtLowStockQty.Text),
+                MinSalePrice = ParseNullableDecimal(txtMinSalePrice.Text),
+                OpnStock = isService ? 0 : ParseNullableDecimal(txtOpnStock.Text),
+                OpnRate = isService ? 0 : ParseNullableDecimal(txtOpnRate.Text),
+                ItemType = isService ? "Service" : "Product",
+                MediaId = _currentMediaId ?? string.Empty,
+                RequireImei = ApiSession.HasMobileShopFeature && chkRequireImei.Checked,
+                BrandId = ApiSession.HasMobileShopFeature && cmbBrand.SelectedValue != null ? cmbBrand.SelectedValue.ToString() : null,
+                ModelName = ApiSession.HasMobileShopFeature ? txtModel.Text : null,
+                Storage = ApiSession.HasMobileShopFeature ? txtStorage.Text : null,
+                Ram = ApiSession.HasMobileShopFeature ? txtRam.Text : null,
+                Color = ApiSession.HasMobileShopFeature ? txtColor.Text : null,
+                AdditionalUnits = isService ? null : _currentAdditionalUnits
+            };
+
+            try
+            {
+                if (string.IsNullOrEmpty(_currentEditingItemId) || _currentEditingItemId == "0")
                 {
-                    var rowItemTypeVal = row.Cells[clnItemType.Index].Value;
-                    int rowItemType = rowItemTypeVal != null ? Convert.ToInt32(rowItemTypeVal) : 0;
-                    bool isService = rowItemType == 1;
-
-                    if (row.Cells[clnCatagory.Index].Value != null &&
-                        row.Cells[clnItem.Index].Value != null &&
-                        row.Cells[clnPriRate.Index].Value != null &&
-                        row.Cells[clnSecRate.Index].Value != null &&
-                        (isService || row.Cells[clnPriUnit.Index].Value != null) && 
-                        row.Cells[clnIsEdit.Index].Value.ToString()   == "1")
-                                                {
-                            var request = new InventoryItemUpsertApiRequest
-                            {
-                                Id = Convert.ToString(row.Cells[clnId.Index].Value),
-                                ItemCategoryCode = Convert.ToString(row.Cells[clnCatagory.Index].Value),
-                                Barcode = Convert.ToString(row.Cells[clnBarcode.Index].Value),
-                                Title = Convert.ToString(row.Cells[clnItem.Index].Value),
-                                ItemKey = Convert.ToString(row.Cells[clnKey.Index].Value),
-                                PriRate = ParseDecimal(row.Cells[clnPriRate.Index].Value),
-                                SecRate = ParseDecimal(row.Cells[clnSecRate.Index].Value),
-                                PrimaryUnit = isService ? string.Empty : Convert.ToString(row.Cells[clnPriUnit.Index].Value),
-                                SecondaryUnit = isService ? string.Empty : Convert.ToString(row.Cells[clnSecUnit.Index].Value),
-                                DefaultUnit = isService ? string.Empty : Convert.ToString(row.Cells[clnDefUnif.Index].Value),
-                                QtyInPack = isService ? null : ParseNullableDecimal(row.Cells[ClnQtyInPack.Index].Value),
-                                Alert = Validation.ToBool(row.Cells[clnAlert.Index].Value),
-                                LowStockAlert = isService ? (bool?)null : ParseNullableBool(row.Cells[clnLowStockAlert.Index].Value),
-                                LowStockQty = isService || !dgvItemDetail.Columns.Contains("clnLowStockQty") ? (decimal?)null : ParseNullableDecimal(row.Cells["clnLowStockQty"].Value),
-                                MinSalePrice = ParseNullableDecimal(row.Cells[clnMinSalePrice.Index].Value),
-                                OpnStock = isService ? 0 : ParseNullableDecimal(row.Cells[clnOpnStock.Index].Value),
-                                OpnRate = isService ? 0 : ParseNullableDecimal(row.Cells[clnOpnRate.Index].Value),
-                                ItemType = isService ? "Service" : "Product",
-                                MediaId = row.Cells["clnMediaId"] != null ? Convert.ToString(row.Cells["clnMediaId"].Value) : string.Empty,
-                                RequireImei = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnRequireImei") && row.Cells["clnRequireImei"].Value != null ? Convert.ToBoolean(row.Cells["clnRequireImei"].Value) : (bool?)null,
-                                BrandId = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnBrand") ? Convert.ToString(row.Cells["clnBrand"].Value) : null,
-                                ModelName = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnModel") ? Convert.ToString(row.Cells["clnModel"].Value) : null,
-                                Storage = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnStorage") ? Convert.ToString(row.Cells["clnStorage"].Value) : null,
-                                Ram = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnRam") ? Convert.ToString(row.Cells["clnRam"].Value) : null,
-                                Color = ApiSession.HasMobileShopFeature && dgvItemDetail.Columns.Contains("clnColor") ? Convert.ToString(row.Cells["clnColor"].Value) : null,
-                                AdditionalUnits = isService || !dgvItemDetail.Columns.Contains("clnAdditionalUnits") || string.IsNullOrWhiteSpace(Convert.ToString(row.Cells["clnAdditionalUnits"].Value))
-                                    ? null
-                                    : Convert.ToString(row.Cells["clnAdditionalUnits"].Value)
-                            };
-
-                            var id = request.Id ?? string.Empty;
-                            if (id == string.Empty || id == "0")
-                            {
-                                var newId = await _inventoryApiService.CreateItemAsync(request);
-                                if (!string.IsNullOrWhiteSpace(newId) && row.Tag is List<ItemCustomerCategoryPriceUpsertRequest> pendingRates && pendingRates.Count > 0)
-                                {
-                                    try
-                                    {
-                                        await _inventoryApiService.SaveItemCategoryPricesAsync(newId, pendingRates);
-                                    }
-                                    catch { }
-                                }
-                            }
-                            else
-                            {
-                                await _inventoryApiService.UpdateItemAsync(id, request);
-                            }
+                    var newId = await _inventoryApiService.CreateItemAsync(request);
+                    if (!string.IsNullOrWhiteSpace(newId))
+                    {
+                        _currentEditingItemId = newId;
+                        if (_pendingCategoryRates != null && _pendingCategoryRates.Count > 0)
+                        {
+                            try { await _inventoryApiService.SaveItemCategoryPricesAsync(newId, _pendingCategoryRates); } catch { }
                         }
+                    }
                 }
-                MessageBox.Show("Record Successfully Saved..!");
-                UpdateSaveButtonState(false);
+                else
+                {
+                    await _inventoryApiService.UpdateItemAsync(_currentEditingItemId, request);
+                }
+
+                MessageBox.Show("Record Successfully Saved..!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 await LoadItemDetailAsync();
-                await FillformAsync((string)cmbItemCatagory.SelectedValue);
-                this.DialogResult = System.Windows.Forms.DialogResult.OK;
+                FillQueryGrid();
+                lblDetailStatus.Text = $"Saved: {txtTitle.Text} (ID: {_currentEditingItemId})";
+                lblDetailStatus.ForeColor = Color.FromArgb(22, 163, 74);
+                btnDelete.Enabled = true;
+                UpdateSaveButtonState(false);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to save product: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
 
-        private async void cmbItemCatagory_SelectedIndexChanged(object sender, EventArgs e)
+        private async void btnDelete_Click(object sender, EventArgs e)
         {
-            if ( !FLogin && cmbItemCatagory.SelectedValue != null)
-                await FillformAsync((string)cmbItemCatagory.SelectedValue);
+            if (string.IsNullOrEmpty(_currentEditingItemId) || _currentEditingItemId == "0") return;
+
+            if (MessageBox.Show($"Are you sure you want to delete '{txtTitle.Text}'?", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            {
+                try
+                {
+                    await _inventoryApiService.DeleteItemAsync(_currentEditingItemId);
+                    MessageBox.Show("Record Deleted Successfully!", "Deleted", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    await LoadItemDetailAsync();
+                    FillQueryGrid();
+                    ClearDetailFields();
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Failed to delete product: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private void btnNew_Click(object sender, EventArgs e)
+        {
+            tbItemMain.SelectedTab = tbDetail;
+            ClearDetailFields();
         }
 
         private void btnClose_Click(object sender, EventArgs e)
         {
-            this.Close(); 
+            this.Close();
         }
 
-      
-
-        private void dgvItemDetail_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        private void InitQueryFilterControls()
         {
-            e.ThrowException = false;
-        }
-
-        private void txtBarcode_TextChanged(object sender, EventArgs e)
-        {
-            if (txtBarcode.Text != "" && txtBarcode.Text.Substring(txtBarcode.Text.Length - 1) == "\n")
-            { 
-                bool IsFind = false;
-                for (int i = 0; i < dgvItemDetail.Rows .Count; i++)
-                {
-                    if ((string )dgvItemDetail[clnBarcode.Index,i].Value == txtBarcode.Text)
-                    {
-                        dgvItemDetail.CurrentCell = dgvItemDetail[clnBarcode.Index, i];
-                        IsFind = true;   
-                        break;                        
-                    }
-                }
-                if (!IsFind)
-                {
-                    DataRow dr = dtItemDetail.Select("Barcode = '" + txtBarcode.Text + "'").FirstOrDefault(); 
-                    if (dr != null)
-                    {
-                        dr = dtCatagory.Select("Code = '" + dr["fkitemcatagory"].ToString() + "'").FirstOrDefault();
-                        MessageBox.Show("Barcode is exist in '" + dr["Title"].ToString() + "' catagory");
-                        IsFind = true;
-                    }
-                }
-                if (!IsFind)
-                {
-                    object[] Param = new object[]{"0",txtBarcode.Text,cmbItemCatagory.SelectedValue,
-                        "",null,0,"0","0","003","003","003","1",true,"0","0","0"};  
-                    dgvItemDetail.Rows.Insert (0,Param);
-                    dgvItemDetail.CurrentCell = dgvItemDetail[clnBarcode.Index, 0];
-                }
-                txtBarcode.Text = "";
-                
-                txtBarcode.Focus();
-               
-            }
-            
-        }
-
-        private async void deleteRecordToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to Delete this...!", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
+            DataTable dtQCat = new DataTable();
+            dtQCat.Columns.Add("Code", typeof(string));
+            dtQCat.Columns.Add("Title", typeof(string));
+            dtQCat.Rows.Add("ALL", "[All Categories]");
+            if (dtCatagory != null)
             {
-                var id = Convert.ToString(dgvItemDetail[clnId.Index, dgvItemDetail.CurrentRow.Index].Value);
-                if (id != "0")
+                foreach (DataRow r in dtCatagory.Rows)
                 {
-                    await _inventoryApiService.DeleteItemAsync(id);
-                    await LoadItemDetailAsync();
-                    await FillformAsync((string)cmbItemCatagory.SelectedValue);
+                    dtQCat.Rows.Add(r["Code"], r["Title"]);
+                }
+            }
+            cmbQueryCategory.DataSource = dtQCat;
+            cmbQueryCategory.DisplayMember = "Title";
+            cmbQueryCategory.ValueMember = "Code";
+            cmbQueryCategory.SelectedIndex = 0;
+
+            cmbQueryType.Items.Clear();
+            cmbQueryType.Items.Add("[All Types]");
+            cmbQueryType.Items.Add("Product");
+            cmbQueryType.Items.Add("Service");
+            cmbQueryType.SelectedIndex = 0;
+        }
+
+        private void FillQueryGrid()
+        {
+            if (dtItemDetail == null) return;
+
+            string searchText = txtQuerySearch?.Text?.Trim()?.ToLower() ?? "";
+            string catFilter = cmbQueryCategory?.SelectedValue?.ToString() ?? "";
+            int typeFilter = cmbQueryType?.SelectedIndex ?? 0;
+
+            dgvQuery.Rows.Clear();
+
+            var catMap = new Dictionary<string, string>();
+            if (dtCatagory != null)
+            {
+                foreach (DataRow dr in dtCatagory.Rows)
+                {
+                    string code = dr["Code"]?.ToString();
+                    string title = dr["Title"]?.ToString();
+                    if (!string.IsNullOrEmpty(code))
+                        catMap[code] = title;
+                }
+            }
+
+            var unitMap = new Dictionary<string, string>();
+            if (dtUnits != null)
+            {
+                foreach (DataRow dr in dtUnits.Rows)
+                {
+                    string code = dr["Code"]?.ToString();
+                    string title = dr["Title"]?.ToString();
+                    if (!string.IsNullOrEmpty(code))
+                        unitMap[code] = title;
+                }
+            }
+
+            int count = 0;
+            foreach (DataRow row in dtItemDetail.Rows)
+            {
+                string id = row["Id"]?.ToString();
+                string barcode = row["Barcode"]?.ToString() ?? "";
+                string catCode = row["fkitemcatagory"]?.ToString() ?? "";
+                string title = row["Title"]?.ToString() ?? "";
+                string key = row["ItemKey"]?.ToString() ?? "";
+                int itemType = row["ItemType"] != DBNull.Value ? Convert.ToInt32(row["ItemType"]) : 0;
+                decimal priRate = row["PriRate"] != DBNull.Value ? Convert.ToDecimal(row["PriRate"]) : 0;
+                decimal secRate = row["SecRate"] != DBNull.Value ? Convert.ToDecimal(row["SecRate"]) : 0;
+                string priUnit = row["PrimaryUnit"]?.ToString() ?? "";
+                string secUnit = row["SecondaryUnit"]?.ToString() ?? "";
+                decimal? minPrice = row["MinSalePrice"] != DBNull.Value ? (decimal?)Convert.ToDecimal(row["MinSalePrice"]) : null;
+                decimal? opnStock = row["OpnStock"] != DBNull.Value ? (decimal?)Convert.ToDecimal(row["OpnStock"]) : null;
+
+                if (!string.IsNullOrEmpty(catFilter) && catFilter != "ALL" && catCode != catFilter)
+                    continue;
+
+                if (typeFilter == 1 && itemType != 0)
+                    continue;
+                if (typeFilter == 2 && itemType != 1)
+                    continue;
+
+                if (!string.IsNullOrEmpty(searchText))
+                {
+                    bool match = title.ToLower().Contains(searchText) ||
+                                 barcode.ToLower().Contains(searchText) ||
+                                 key.ToLower().Contains(searchText);
+                    if (!match) continue;
+                }
+
+                string catName = catMap.TryGetValue(catCode, out var cName) ? cName : catCode;
+                string priUnitName = unitMap.TryGetValue(priUnit, out var puName) ? puName : priUnit;
+                string secUnitName = unitMap.TryGetValue(secUnit, out var suName) ? suName : secUnit;
+                string typeName = itemType == 1 ? "Service" : "Product";
+
+                int r = dgvQuery.Rows.Add(
+                    id,
+                    barcode,
+                    catName,
+                    title,
+                    key,
+                    typeName,
+                    priRate.ToString("N2"),
+                    secRate.ToString("N2"),
+                    priUnitName,
+                    secUnitName,
+                    minPrice.HasValue ? minPrice.Value.ToString("N2") : "",
+                    opnStock.HasValue ? opnStock.Value.ToString("N2") : ""
+                );
+                dgvQuery.Rows[r].Tag = id;
+                count++;
+            }
+
+            if (lblQueryCount != null)
+                lblQueryCount.Text = $"Found: {count} products";
+            if (lblTotalProductsBadge != null)
+                lblTotalProductsBadge.Text = $"Total Products: {dtItemDetail.Rows.Count}";
+        }
+
+        private async void dgvQuery_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.RowIndex >= dgvQuery.Rows.Count) return;
+
+            string id = dgvQuery.Rows[e.RowIndex].Cells[clnQId.Index].Value?.ToString();
+            if (string.IsNullOrEmpty(id)) return;
+
+            await LoadProductIntoDetailAsync(id);
+            tbItemMain.SelectedTab = tbDetail;
+            txtTitle.Focus();
+            txtTitle.SelectAll();
+        }
+
+        private void dgvQuery_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter && dgvQuery.CurrentRow != null)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                dgvQuery_CellDoubleClick(sender, new DataGridViewCellEventArgs(0, dgvQuery.CurrentRow.Index));
+            }
+        }
+
+        private void txtQuerySearch_TextChanged(object sender, EventArgs e)
+        {
+            FillQueryGrid();
+        }
+
+        private void txtQuerySearch_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                if (dgvQuery.Rows.Count > 0)
+                {
+                    dgvQuery.Focus();
+                }
+            }
+        }
+
+        private void cmbQueryCategory_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!FLogin) FillQueryGrid();
+        }
+
+        private void cmbQueryType_SelectedIndexChanged(object sender, EventArgs e)
+        {
+            if (!FLogin) FillQueryGrid();
+        }
+
+        private void btnQueryFind_Click(object sender, EventArgs e)
+        {
+            FillQueryGrid();
+        }
+
+        private void btnQueryReset_Click(object sender, EventArgs e)
+        {
+            txtQuerySearch.Text = "";
+            if (cmbQueryCategory.Items.Count > 0) cmbQueryCategory.SelectedIndex = 0;
+            if (cmbQueryType.Items.Count > 0) cmbQueryType.SelectedIndex = 0;
+            FillQueryGrid();
+        }
+
+        private async void txtBarcode_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter && !string.IsNullOrWhiteSpace(txtBarcode.Text))
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                string scanned = txtBarcode.Text.Trim();
+
+                var matchedRow = dtItemDetail.AsEnumerable().FirstOrDefault(r => string.Equals(r["Barcode"]?.ToString(), scanned, StringComparison.OrdinalIgnoreCase));
+                if (matchedRow != null)
+                {
+                    string id = matchedRow["Id"]?.ToString();
+                    await LoadProductIntoDetailAsync(id);
                 }
                 else
                 {
-                    dgvItemDetail.Rows.RemoveAt(dgvItemDetail.CurrentRow.Index);
-                    CalcTotals();
+                    txtTitle.Focus();
+                    txtTitle.SelectAll();
                 }
-
-                MessageBox.Show("Record Successfully Deleted..!");
             }
         }
 
-        private decimal ParseDecimal(object value)
+        private void cmbItemCatagory_SelectedIndexChanged(object sender, EventArgs e)
         {
-            decimal ret;
-            return decimal.TryParse(Convert.ToString(value), out ret) ? ret : 0m;
+            if (!_isPopulating)
+                Field_TextChanged(sender, e);
         }
 
-        private decimal? ParseNullableDecimal(object value)
+        private void cmbItemType_SelectedIndexChanged(object sender, EventArgs e)
         {
-            var text = Convert.ToString(value);
-            if (string.IsNullOrWhiteSpace(text))
-                return null;
+            bool isService = cmbItemType.SelectedIndex == 1;
+            cmbPriUnit.Enabled = !isService;
+            cmbSecUnit.Enabled = !isService;
+            cmbDefUnit.Enabled = !isService;
+            txtQtyInPack.Enabled = !isService;
+            txtOpnStock.Enabled = !isService;
+            txtOpnRate.Enabled = !isService;
+            chkLowStockAlert.Enabled = !isService;
+            txtLowStockQty.Enabled = !isService;
 
-            decimal ret;
-            return decimal.TryParse(text, out ret) ? (decimal?)ret : null;
+            if (!_isPopulating)
+                Field_TextChanged(sender, e);
         }
 
-        private bool? ParseNullableBool(object value)
+        private void btnCategoryRates_Click(object sender, EventArgs e)
         {
-            var text = Convert.ToString(value);
-            if (string.IsNullOrWhiteSpace(text))
-                return null;
-
-            bool parsed;
-            if (bool.TryParse(text, out parsed))
-                return parsed;
-
-            if (text == "1") return true;
-            if (text == "0") return false;
-
-            return null;
-        }
-        void CalcTotals()
-        {
-            int TotItems = 0;
-            try
+            var initialRates = _pendingCategoryRates;
+            using (var frm = new ERP.Forms.frmItemCategoryRates(_currentEditingItemId, txtTitle.Text, ParseDecimal(txtPriRate.Text), ParseDecimal(txtSecRate.Text), initialRates))
             {
-                TotItems = (from DataGridViewRow row in dgvItemDetail.Rows
-                            where (string)row.Cells[clnId.Index].Value != "0"
-                            select row).Count();
-
-            }
-            catch
-            {
-
-            }
-            lblTotalItems.Text = "Total Items : " + (TotItems).ToString("N0");           
-        }
-
-        private void dgvItemDetail_CellMouseUp(object sender, DataGridViewCellMouseEventArgs e)
-        {
-            if (e.Button == MouseButtons.Right && e.RowIndex >= 0 && e.ColumnIndex >= 0)
-            {
-                dgvItemDetail.Rows[e.RowIndex].Selected = true;
-                dgvItemDetail.CurrentCell = this.dgvItemDetail.Rows[e.RowIndex].Cells[e.ColumnIndex];
-                contextMenuStrip1.Show(Cursor.Position);
+                if (frm.ShowDialog(this) == DialogResult.OK)
+                {
+                    if (string.IsNullOrEmpty(_currentEditingItemId) || _currentEditingItemId == "0")
+                    {
+                        _pendingCategoryRates = frm.ConfiguredRates;
+                    }
+                    UpdateSaveButtonState(true);
+                }
             }
         }
 
-        private async System.Threading.Tasks.Task UpdateProductPictureAsync()
+        private void btnSubUnits_Click(object sender, EventArgs e)
         {
-            if (profileImage1 == null || dgvItemDetail.CurrentRow == null)
+            if (cmbPriUnit.SelectedValue == null)
+            {
+                MessageBox.Show("Please select a Primary Unit first.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
                 return;
-
-            var row = dgvItemDetail.CurrentRow;
-            if (row.Cells["clnMediaId"] != null && !string.IsNullOrWhiteSpace(Convert.ToString(row.Cells["clnMediaUrl"].Value)))
-            {
-                var mediaId = Convert.ToString(row.Cells["clnMediaId"].Value);
-                var mediaUrl = Convert.ToString(row.Cells["clnMediaUrl"].Value);
-
-                profileImage1.MediaId = mediaId;
-                profileImage1.MediaUrl = mediaUrl;
-                await profileImage1.LoadImageAsync(mediaUrl);
             }
-            else
+            using (var frm = new frmItemSubUnits(txtTitle.Text?.Trim(), Convert.ToString(cmbPriUnit.SelectedValue), dtUnits, _currentAdditionalUnits))
             {
-                profileImage1.ClearImage();
+                if (frm.ShowDialog(this) == DialogResult.OK)
+                {
+                    _currentAdditionalUnits = frm.ResultAdditionalUnitsJson;
+                    UpdateSaveButtonState(true);
+                }
             }
         }
 
         private async void btnProductSearch_Click(object sender, EventArgs e)
         {
-            if (dgvItemDetail.CurrentRow == null)
-            {
-                MessageBox.Show("Please select a product row first.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                return;
-            }
-
             using (var openFileDialog = new OpenFileDialog())
             {
                 openFileDialog.Filter = "Image Files (*.jpg;*.jpeg;*.png;*.gif;*.bmp)|*.jpg;*.jpeg;*.png;*.gif;*.bmp";
@@ -667,17 +850,12 @@ namespace ERP
                         if (presigned != null)
                         {
                             await _inventoryApiService.UploadFileAsync(presigned.UploadUrl, openFileDialog.FileName);
-                            
-                            var row = dgvItemDetail.CurrentRow;
-                            row.Cells["clnMediaId"].Value = presigned.FileId;
-                            row.Cells["clnMediaUrl"].Value = openFileDialog.FileName;
-                            row.Cells["clnIsEdit"].Value = "1";
-                            
+                            _currentMediaId = presigned.FileId;
+                            _currentMediaUrl = openFileDialog.FileName;
                             profileImage1.MediaId = presigned.FileId;
                             profileImage1.MediaUrl = openFileDialog.FileName;
                             profileImage1.PictureBox.Image = Image.FromFile(openFileDialog.FileName);
                             UpdateSaveButtonState(true);
-                            
                             MessageBox.Show("Image uploaded successfully.", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
                         }
                     }
@@ -691,74 +869,29 @@ namespace ERP
 
         private void btnProductCancel_Click(object sender, EventArgs e)
         {
-            if (dgvItemDetail.CurrentRow != null)
-            {
-                var row = dgvItemDetail.CurrentRow;
-                row.Cells["clnMediaId"].Value = string.Empty;
-                row.Cells["clnMediaUrl"].Value = string.Empty;
-                row.Cells["clnIsEdit"].Value = "1";
-                UpdateSaveButtonState(true);
-            }
+            _currentMediaId = string.Empty;
+            _currentMediaUrl = string.Empty;
             profileImage1.ClearImage();
+            UpdateSaveButtonState(true);
         }
 
-        private void dgvItemDetail_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        private void Field_TextChanged(object sender, EventArgs e)
         {
-            if (e.RowIndex >= 0 && dgvItemDetail.Columns.Contains("clnSubUnits") && e.ColumnIndex == dgvItemDetail.Columns["clnSubUnits"].Index)
+            if (!_isPopulating && !FLogin)
             {
-                var row = dgvItemDetail.Rows[e.RowIndex];
-                var itemTitle = row.Cells[clnItem.Index].Value?.ToString() ?? string.Empty;
-                var priUnitId = row.Cells[clnPriUnit.Index].Value?.ToString() ?? string.Empty;
-                if (string.IsNullOrWhiteSpace(priUnitId))
-                {
-                    MessageBox.Show("Please select a Primary Unit first.", "Info", MessageBoxButtons.OK, MessageBoxIcon.Information);
-                    return;
-                }
-
-                var currentAdditionalUnits = dgvItemDetail.Columns.Contains("clnAdditionalUnits")
-                    ? row.Cells["clnAdditionalUnits"].Value?.ToString()
-                    : null;
-
-                using (var frm = new frmItemSubUnits(itemTitle, priUnitId, dtUnits, currentAdditionalUnits))
-                {
-                    if (frm.ShowDialog(this) == DialogResult.OK)
-                    {
-                        if (dgvItemDetail.Columns.Contains("clnAdditionalUnits"))
-                        {
-                            row.Cells["clnAdditionalUnits"].Value = frm.ResultAdditionalUnitsJson ?? string.Empty;
-                        }
-                        row.Cells[clnIsEdit.Index].Value = "1";
-                        UpdateSaveButtonState(true);
-                    }
-                }
-                return;
+                UpdateSaveButtonState(true);
             }
+        }
 
-            if (e.RowIndex >= 0 && e.ColumnIndex == clnCategoryRates.Index)
+        private void Numeric_KeyPress(object sender, KeyPressEventArgs e)
+        {
+            if (!char.IsControl(e.KeyChar) && !char.IsDigit(e.KeyChar) && e.KeyChar != '.')
             {
-                var row = dgvItemDetail.Rows[e.RowIndex];
-                var itemId = row.Cells[clnId.Index].Value?.ToString();
-                var itemTitle = row.Cells[clnItem.Index].Value?.ToString() ?? string.Empty;
-
-                decimal.TryParse(row.Cells[clnPriRate.Index].Value?.ToString(), out decimal priRate);
-                decimal? secRate = null;
-                if (decimal.TryParse(row.Cells[clnSecRate.Index].Value?.ToString(), out decimal sVal))
-                    secRate = sVal;
-
-                var initialRates = row.Tag as List<ItemCustomerCategoryPriceUpsertRequest>;
-
-                using (var frm = new ERP.Forms.frmItemCategoryRates(itemId, itemTitle, priRate, secRate, initialRates))
-                {
-                    if (frm.ShowDialog(this) == DialogResult.OK)
-                    {
-                        if (string.IsNullOrWhiteSpace(itemId) || itemId == "0")
-                        {
-                            row.Tag = frm.ConfiguredRates;
-                            row.Cells[clnIsEdit.Index].Value = "1";
-                            UpdateSaveButtonState(true);
-                        }
-                    }
-                }
+                e.Handled = true;
+            }
+            if (e.KeyChar == '.' && (sender as TextBox).Text.IndexOf('.') > -1)
+            {
+                e.Handled = true;
             }
         }
 
@@ -766,18 +899,30 @@ namespace ERP
         {
             if (hasPendingChanges)
             {
-                btnSave.Text = "* Save";
-                btnSave.BackColor = Color.FromArgb(254, 215, 170); // Amber-200 accent
-                btnSave.ForeColor = Color.FromArgb(154, 52, 18);   // Amber-800 text
+                btnSave.Text = "* Save [F5]";
+                btnSave.BackColor = Color.FromArgb(234, 88, 12);
+                btnSave.ForeColor = Color.White;
                 btnSave.Font = new Font(btnSave.Font, FontStyle.Bold);
             }
             else
             {
-                btnSave.Text = "&Save";
-                btnSave.BackColor = SystemColors.ControlLight;
-                btnSave.ForeColor = SystemColors.ControlText;
-                btnSave.Font = new Font(btnSave.Font, FontStyle.Regular);
+                btnSave.Text = "&Save [F5]";
+                btnSave.BackColor = Color.FromArgb(22, 163, 74);
+                btnSave.ForeColor = Color.White;
+                btnSave.Font = new Font(btnSave.Font, FontStyle.Bold);
             }
+        }
+
+        private static decimal ParseDecimal(object value)
+        {
+            decimal parsed;
+            return decimal.TryParse(Convert.ToString(value), out parsed) ? parsed : 0;
+        }
+
+        private static decimal? ParseNullableDecimal(object value)
+        {
+            decimal parsed;
+            return decimal.TryParse(Convert.ToString(value), out parsed) ? (decimal?)parsed : null;
         }
     }
 }
