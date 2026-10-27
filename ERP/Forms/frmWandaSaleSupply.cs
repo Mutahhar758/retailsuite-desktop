@@ -1,3 +1,4 @@
+using System.Drawing;
 using System;
 using System.Collections.Generic;
 using System.Data;
@@ -48,6 +49,7 @@ namespace ERP
         public frmWandaSaleSupply()
         {
             InitializeComponent();
+            ApplyModernStyling();
             _apiService = new SaleSupplyApiService();
             _supplyOrderApiService = new SupplyOrderApiService();
             _customerApiService = new CustomerApiService();
@@ -56,9 +58,246 @@ namespace ERP
             _unitApiService = new UnitApiService();
             _inventoryApiService = new InventoryApiService();
             InitializeLookupTables();
-            dgvSale.Rows.Add();
+            int initialRow = dgvSale.Rows.Add();
+            ClearRowValues(initialRow);
             dgvSale.RowsRemoved += (s, e) => CalcTotals();
+            dgvSale.Enter += dgvSale_Enter;
             UserInfo.ApplyFormPermissions(this, AppResource.SaleSupplies);
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.F3)
+            {
+                btnNew.PerformClick();
+                return true;
+            }
+            if (keyData == Keys.F5)
+            {
+                btnSave.PerformClick();
+                return true;
+            }
+            if (keyData == Keys.Escape)
+            {
+                btnClose.PerformClick();
+                return true;
+            }
+            if ((keyData == Keys.Enter || keyData == Keys.Tab) && dgvSale.ContainsFocus)
+            {
+                if (HandleGridEnterNavigation())
+                    return true;
+            }
+
+            if (keyData == Keys.Enter && !dgvSale.ContainsFocus)
+            {
+                if (dtpDate.Focused)
+                {
+                    cmbItem.Focus();
+                    return true;
+                }
+                if (cmbItem.Focused || cmbItem.ContainsFocus)
+                {
+                    cmbSupplyOrder.Focus();
+                    return true;
+                }
+                if (cmbSupplyOrder.Focused || cmbSupplyOrder.ContainsFocus)
+                {
+                    FocusGridFirstRow();
+                    return true;
+                }
+                if (cmbNarration.Focused || cmbNarration.ContainsFocus || txtDescription.Focused)
+                {
+                    FocusGridFirstRow();
+                    return true;
+                }
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void SetupButtonFocusHighlights()
+        {
+            var buttons = new Button[] { btnSave, btnNew, btnCopyAsNew, btnScanSheet, btnDelete, btnClose, btnScanSheetTop };
+            foreach (var btn in buttons)
+            {
+                if (btn == null) continue;
+                btn.Enter += (s, e) => btn.Invalidate();
+                btn.Leave += (s, e) => btn.Invalidate();
+                btn.Paint += (s, e) =>
+                {
+                    if (btn.Focused)
+                    {
+                        var rect = btn.ClientRectangle;
+                        rect.Width -= 1;
+                        rect.Height -= 1;
+                        using (var pen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(37, 99, 235), 2))
+                        {
+                            e.Graphics.DrawRectangle(pen, rect);
+                        }
+                        if (btn == btnSave)
+                        {
+                            using (var whitePen = new System.Drawing.Pen(System.Drawing.Color.White, 1))
+                            {
+                                e.Graphics.DrawRectangle(whitePen, rect.X + 2, rect.Y + 2, rect.Width - 4, rect.Height - 4);
+                            }
+                        }
+                    }
+                };
+            }
+        }
+
+        private void FocusGridFirstRow()
+        {
+            try
+            {
+                if (dgvSale.Rows.Count == 0)
+                {
+                    int r = dgvSale.Rows.Add();
+                    ClearRowValues(r);
+                }
+                dgvSale.Focus();
+                int row = dgvSale.CurrentCell != null ? dgvSale.CurrentCell.RowIndex : 0;
+                if (row < 0 || row >= dgvSale.Rows.Count) row = 0;
+                dgvSale.CurrentCell = dgvSale[clnCustomer.Index, row];
+                dgvSale.BeginEdit(true);
+            }
+            catch { }
+        }
+
+        private void dgvSale_Enter(object sender, EventArgs e)
+        {
+            if (IsHandleCreated && dgvSale.Rows.Count > 0 && clnCustomer != null)
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        if (dgvSale.Rows.Count > 0 && clnCustomer != null)
+                        {
+                            int row = dgvSale.CurrentCell != null ? dgvSale.CurrentCell.RowIndex : 0;
+                            if (row >= 0 && row < dgvSale.Rows.Count)
+                            {
+                                if (dgvSale.CurrentCell == null || dgvSale.CurrentCell.ColumnIndex == clnSeq.Index)
+                                {
+                                    dgvSale.CurrentCell = dgvSale[clnCustomer.Index, row];
+                                }
+                            }
+                        }
+                    }
+                    catch { }
+                }));
+            }
+        }
+
+        private void ClearRowValues(int rowIdx)
+        {
+            if (rowIdx < 0 || rowIdx >= dgvSale.Rows.Count) return;
+            var row = dgvSale.Rows[rowIdx];
+            row.Cells[clnCustomer.Index].Value = null;
+            if (clnUnit != null) row.Cells[clnUnit.Index].Value = null;
+            row.Cells[clnQty.Index].Value = null;
+            row.Cells[clnRate.Index].Value = null;
+            row.Cells[clnDiscount.Index].Value = null;
+            row.Cells[clnDiscPercent.Index].Value = null;
+            if (clnCarriage != null) row.Cells[clnCarriage.Index].Value = null;
+            if (clnAddLess != null) row.Cells[clnAddLess.Index].Value = null;
+            row.Cells[clnAmount.Index].Value = null;
+            if (dgvSale.Columns.Contains("clnSecQty")) row.Cells["clnSecQty"].Value = null;
+            if (dgvSale.Columns.Contains("clnPackQty")) row.Cells["clnPackQty"].Value = null;
+            if (dgvSale.Columns.Contains("clnPacking")) row.Cells["clnPacking"].Value = null;
+            if (dgvSale.Columns.Contains("clnSecRate")) row.Cells["clnSecRate"].Value = null;
+            row.Tag = null;
+        }
+
+        private void ApplyModernStyling()
+        {
+            SetupButtonFocusHighlights();
+            this.DoubleBuffered = true;
+            this.SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint | ControlStyles.UserPaint, true);
+
+            // Sale Grid
+            dgvSale.EnableHeadersVisualStyles = false;
+            clnQty.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            clnRate.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            clnDiscount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            clnDiscPercent.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            if (clnCarriage != null) clnCarriage.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            clnAddLess.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            clnAmount.DefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleRight;
+            dgvSale.BackgroundColor = System.Drawing.Color.White;
+            dgvSale.BorderStyle = BorderStyle.FixedSingle;
+            dgvSale.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvSale.GridColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            dgvSale.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            dgvSale.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+            dgvSale.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            dgvSale.ColumnHeadersDefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+            dgvSale.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            dgvSale.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvSale.ColumnHeadersHeight = 32;
+
+            dgvSale.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
+            dgvSale.DefaultCellStyle.BackColor = System.Drawing.Color.White;
+            dgvSale.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            dgvSale.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(219, 234, 254);
+            dgvSale.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            dgvSale.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            dgvSale.AlternatingRowsDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            dgvSale.AlternatingRowsDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(219, 234, 254);
+            dgvSale.AlternatingRowsDefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            dgvSale.RowTemplate.Height = 28;
+
+            // Query Grid
+            dgvQuery.EnableHeadersVisualStyles = false;
+            dgvQuery.BackgroundColor = System.Drawing.Color.White;
+            dgvQuery.BorderStyle = BorderStyle.FixedSingle;
+            dgvQuery.CellBorderStyle = DataGridViewCellBorderStyle.SingleHorizontal;
+            dgvQuery.GridColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            dgvQuery.ColumnHeadersDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            dgvQuery.ColumnHeadersDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+            dgvQuery.ColumnHeadersDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            dgvQuery.ColumnHeadersDefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(30, 41, 59);
+            dgvQuery.ColumnHeadersDefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold);
+            dgvQuery.ColumnHeadersDefaultCellStyle.Alignment = DataGridViewContentAlignment.MiddleCenter;
+            dgvQuery.ColumnHeadersHeight = 32;
+
+            dgvQuery.DefaultCellStyle.Font = new System.Drawing.Font("Segoe UI", 9F);
+            dgvQuery.DefaultCellStyle.BackColor = System.Drawing.Color.White;
+            dgvQuery.DefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            dgvQuery.DefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(219, 234, 254);
+            dgvQuery.DefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            dgvQuery.AlternatingRowsDefaultCellStyle.BackColor = System.Drawing.Color.FromArgb(248, 250, 252);
+            dgvQuery.AlternatingRowsDefaultCellStyle.ForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            dgvQuery.AlternatingRowsDefaultCellStyle.SelectionBackColor = System.Drawing.Color.FromArgb(219, 234, 254);
+            dgvQuery.AlternatingRowsDefaultCellStyle.SelectionForeColor = System.Drawing.Color.FromArgb(15, 23, 42);
+            dgvQuery.RowTemplate.Height = 28;
+
+            // 1px border at bottom of header
+            pnlHeader.Paint += (s, e) =>
+            {
+                using (var pen = new System.Drawing.Pen(System.Drawing.Color.FromArgb(226, 232, 240), 1))
+                {
+                    e.Graphics.DrawLine(pen, 0, pnlHeader.Height - 1, pnlHeader.Width, pnlHeader.Height - 1);
+                }
+            };
+
+            // Button hover animations
+            btnSave.MouseEnter += (s, e) => btnSave.BackColor = System.Drawing.Color.FromArgb(21, 128, 61);
+            btnSave.MouseLeave += (s, e) => btnSave.BackColor = System.Drawing.Color.FromArgb(22, 163, 74);
+            btnNew.MouseEnter += (s, e) => btnNew.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            btnNew.MouseLeave += (s, e) => btnNew.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            btnCopyAsNew.MouseEnter += (s, e) => btnCopyAsNew.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            btnCopyAsNew.MouseLeave += (s, e) => btnCopyAsNew.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            btnScanSheet.MouseEnter += (s, e) => btnScanSheet.BackColor = System.Drawing.Color.FromArgb(219, 234, 254);
+            btnScanSheet.MouseLeave += (s, e) => btnScanSheet.BackColor = System.Drawing.Color.FromArgb(239, 246, 255);
+            btnScanSheetTop.MouseEnter += (s, e) => btnScanSheetTop.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            btnScanSheetTop.MouseLeave += (s, e) => btnScanSheetTop.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            btnDelete.MouseEnter += (s, e) => btnDelete.BackColor = System.Drawing.Color.FromArgb(254, 202, 202);
+            btnDelete.MouseLeave += (s, e) => btnDelete.BackColor = System.Drawing.Color.FromArgb(254, 242, 242);
+            btnClose.MouseEnter += (s, e) => btnClose.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
+            btnClose.MouseLeave += (s, e) => btnClose.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+            btnFind.MouseEnter += (s, e) => btnFind.BackColor = System.Drawing.Color.FromArgb(29, 78, 216);
+            btnFind.MouseLeave += (s, e) => btnFind.BackColor = System.Drawing.Color.FromArgb(37, 99, 235);
         }
 
 
@@ -582,8 +821,6 @@ namespace ERP
             if (dgvSale.Columns.Contains("clnPacking")) dgvSale.Columns["clnPacking"].DisplayIndex = dIdx++;
             clnRate.DisplayIndex = dIdx++;
             if (dgvSale.Columns.Contains("clnSecRate")) dgvSale.Columns["clnSecRate"].DisplayIndex = dIdx++;
-            clnDiscount.DisplayIndex = dIdx++;
-            clnDiscPercent.DisplayIndex = dIdx++;
             if (clnCarriage != null && ApiSession.EnableCarriage)
             {
                 clnCarriage.Visible = true;
@@ -593,6 +830,8 @@ namespace ERP
             {
                 clnCarriage.Visible = false;
             }
+            clnDiscount.DisplayIndex = dIdx++;
+            clnDiscPercent.DisplayIndex = dIdx++;
             clnAddLess.DisplayIndex = dIdx++;
             clnAmount.DisplayIndex = dIdx++;
             if (clnStatus != null) clnStatus.DisplayIndex = dIdx++;
@@ -619,6 +858,7 @@ namespace ERP
                 await FillQueryAsync();
                 FLogIn = false;
                 CalcTotals();
+                BeginInvoke(new Action(() => dtpDate.Focus()));
             }
             catch (Exception ex)
             {
@@ -642,6 +882,7 @@ namespace ERP
             {
                 dgvSale.Rows[e.RowIndex].Cells[clnSeq.Index].Value = (seq + 1).ToString();
                 dgvSale.Rows[e.RowIndex].Cells[clnStatus.Index].Value = "0";
+                ClearRowValues(e.RowIndex);
 
                 if (cmbItem.SelectedValue != null)
                 {
@@ -677,19 +918,59 @@ namespace ERP
             {
                 await SaveAsync();
             }
+            else if (e.KeyCode == Keys.F3)
+            {
+                btnNew.PerformClick();
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                btnClose.PerformClick();
+            }
         }
 
         private void dgvPurchase_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
-            if (dgvSale.CurrentCellAddress.X == clnCustomer.DisplayIndex)
+            if (e.Control is ComboBox cmb)
             {
-                ComboBox cmbCustomer = e.Control as ComboBox;
-                if (cmbCustomer != null)
+                cmb.SelectedIndexChanged -= CmbCustomer_SelectedIndexChanged;
+                cmb.SelectionChangeCommitted -= CmbCustomer_SelectionChangeCommitted;
+
+                if (dgvSale.CurrentCell != null && dgvSale.CurrentCell.ColumnIndex == clnCustomer.Index)
                 {
-                    cmbCustomer.DropDownStyle = ComboBoxStyle.DropDown;
-                    cmbCustomer.AutoCompleteSource = AutoCompleteSource.ListItems;
-                    cmbCustomer.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
-                    cmbCustomer.SelectedIndexChanged += CmbCustomer_SelectedIndexChanged;
+                    cmb.DropDownStyle = ComboBoxStyle.DropDown;
+                    cmb.AutoCompleteSource = AutoCompleteSource.ListItems;
+                    cmb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+
+                    var cellVal = dgvSale.CurrentCell.Value;
+                    if (cellVal == null || string.IsNullOrWhiteSpace(cellVal.ToString()))
+                    {
+                        try
+                        {
+                            cmb.SelectedIndex = -1;
+                            cmb.Text = "";
+                        }
+                        catch { }
+                    }
+                    else
+                    {
+                        try
+                        {
+                            cmb.SelectedValue = cellVal.ToString();
+                        }
+                        catch { }
+                    }
+
+                    cmb.SelectedIndexChanged += CmbCustomer_SelectedIndexChanged;
+                    cmb.SelectionChangeCommitted += CmbCustomer_SelectionChangeCommitted;
+                }
+                else if (clnUnit != null && dgvSale.CurrentCell != null && dgvSale.CurrentCell.ColumnIndex == clnUnit.Index)
+                {
+                    cmb.DropDownStyle = ComboBoxStyle.DropDownList;
+                    var cellVal = dgvSale.CurrentCell.Value;
+                    if (cellVal != null && !string.IsNullOrWhiteSpace(cellVal.ToString()))
+                    {
+                        try { cmb.SelectedValue = cellVal.ToString(); } catch { }
+                    }
                 }
             }
             else if (dgvSale.CurrentCell.ColumnIndex == clnRate.Index ||
@@ -706,14 +987,20 @@ namespace ERP
                 TextBox tbRate = e.Control as TextBox;
                 if (tbRate != null && e.Control.Text != null)
                 {
+                    tbRate.KeyPress -= new KeyPressEventHandler(tbRate_KeyPress);
                     tbRate.KeyPress += new KeyPressEventHandler(tbRate_KeyPress);
                 }
             }
         }
 
+        private void CmbCustomer_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            CmbCustomer_SelectedIndexChanged(sender, e);
+        }
+
         private async void CmbCustomer_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (dgvSale.CurrentCellAddress.X == clnCustomer.DisplayIndex && dgvSale.CurrentCellAddress.Y >= 0)
+            if (dgvSale.CurrentCell != null && dgvSale.CurrentCell.ColumnIndex == clnCustomer.Index && dgvSale.CurrentCell.RowIndex >= 0)
             {
                 var cb = sender as ComboBox;
                 if (cb != null && cb.SelectedValue != null)
@@ -1023,55 +1310,280 @@ namespace ERP
 
         private void dgvPurchase_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter)
+            if (e.KeyCode == Keys.Enter || e.KeyCode == Keys.Tab)
             {
                 e.SuppressKeyPress = true;
-
-                if (dgvSale.CurrentCell != null && dgvSale.CurrentCell.ColumnIndex == clnCustomer.Index)
-                {
-                    int rowIndex = dgvSale.CurrentCell.RowIndex;
-                    dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[clnQty.Index];
-                }
-                else if (dgvSale.CurrentCell != null && dgvSale.CurrentCell.ColumnIndex == clnQty.Index)
-                {
-                    int rowIndex = dgvSale.CurrentCell.RowIndex;
-                    if (dgvSale.Columns.Contains("clnSecQty"))
-                    {
-                        dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[dgvSale.Columns["clnSecQty"].Index];
-                    }
-                    else
-                    {
-                        bool rateFilled = dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value != null &&
-                                         !string.IsNullOrEmpty(dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value.ToString());
-                        if (rateFilled && dgvSale.Rows.Count > (rowIndex + 1))
-                        {
-                            dgvSale.CurrentCell = dgvSale.Rows[rowIndex + 1].Cells[clnCustomer.Index];
-                        }
-                        else
-                        {
-                            SendKeys.Send("{tab}");
-                        }
-                    }
-                }
-                else if (dgvSale.CurrentCell != null && dgvSale.Columns.Contains("clnSecQty") && dgvSale.CurrentCell.ColumnIndex == dgvSale.Columns["clnSecQty"].Index)
-                {
-                    int rowIndex = dgvSale.CurrentCell.RowIndex;
-                    bool rateFilled = dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value != null &&
-                                     !string.IsNullOrEmpty(dgvSale.Rows[rowIndex].Cells[clnRate.Index].Value.ToString());
-                    if (rateFilled && dgvSale.Rows.Count > (rowIndex + 1))
-                    {
-                        dgvSale.CurrentCell = dgvSale.Rows[rowIndex + 1].Cells[clnCustomer.Index];
-                    }
-                    else
-                    {
-                        SendKeys.Send("{tab}");
-                    }
-                }
-                else
-                {
-                    SendKeys.Send("{tab}");
-                }
+                e.Handled = true;
+                HandleGridEnterNavigation();
             }
+        }
+
+        private bool NavigateToColumn(int rowIndex, string colName)
+        {
+            if (dgvSale.Columns.Contains(colName) && dgvSale.Columns[colName].Visible)
+            {
+                dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[colName];
+                dgvSale.BeginEdit(true);
+                return true;
+            }
+            return false;
+        }
+
+        private bool NavigateToColumn(int rowIndex, DataGridViewColumn col)
+        {
+            if (col != null && col.Visible)
+            {
+                dgvSale.CurrentCell = dgvSale.Rows[rowIndex].Cells[col.Index];
+                dgvSale.BeginEdit(true);
+                return true;
+            }
+            return false;
+        }
+
+        private void MoveToNextRow(int rowIndex)
+        {
+            dgvSale.EndEdit();
+            CalcTotals();
+            int nextRowIdx;
+            if (rowIndex >= dgvSale.Rows.Count - 1)
+            {
+                nextRowIdx = dgvSale.Rows.Add();
+                ClearRowValues(nextRowIdx);
+            }
+            else
+            {
+                nextRowIdx = rowIndex + 1;
+            }
+            dgvSale.CurrentCell = dgvSale[clnCustomer.Index, nextRowIdx];
+            dgvSale.BeginEdit(true);
+        }
+
+        private bool HandleGridEnterNavigation()
+        {
+            if (dgvSale.CurrentCell == null) return false;
+
+            int rowIndex = dgvSale.CurrentCell.RowIndex;
+            int colIndex = dgvSale.CurrentCell.ColumnIndex;
+
+            // 1. Customer column
+            if (colIndex == clnCustomer.Index)
+            {
+                if (dgvSale.EditingControl is ComboBox cmb)
+                {
+                    if (cmb.SelectedItem is DataRowView drv && drv.Row.Table.Columns.Contains("Account"))
+                    {
+                        string id = drv["Account"].ToString();
+                        dgvSale[clnCustomer.Index, rowIndex].Value = id;
+                    }
+                    else if (!string.IsNullOrWhiteSpace(cmb.Text))
+                    {
+                        string text = cmb.Text.Trim();
+                        var match = dtCustomers.AsEnumerable().FirstOrDefault(r =>
+                            string.Equals(r["Title"]?.ToString(), text, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(r["Account"]?.ToString(), text, StringComparison.OrdinalIgnoreCase));
+                        if (match == null)
+                        {
+                            match = dtCustomers.AsEnumerable().FirstOrDefault(r =>
+                                r["Title"]?.ToString().StartsWith(text, StringComparison.OrdinalIgnoreCase) == true);
+                        }
+                        if (match != null)
+                        {
+                            string id = match["Account"].ToString();
+                            dgvSale[clnCustomer.Index, rowIndex].Value = id;
+                        }
+                    }
+                }
+
+                dgvSale.EndEdit();
+
+                var custVal = dgvSale[clnCustomer.Index, rowIndex].Value;
+                bool isCustEmpty = custVal == null || string.IsNullOrWhiteSpace(custVal.ToString());
+                bool isLastRow = (rowIndex == dgvSale.Rows.Count - 1);
+
+                // If customer is empty and last row -> Exit grid to btnSave!
+                if (isCustEmpty)
+                {
+                    if (isLastRow)
+                    {
+                        dgvSale.EndEdit();
+                        CalcTotals();
+                        btnSave.Focus();
+                        return true;
+                    }
+                    return true;
+                }
+
+                // If customer is selected
+                SetRateForRow(rowIndex);
+
+                if (dgvSale[clnQty.Index, rowIndex].Value == null ||
+                    string.IsNullOrWhiteSpace(dgvSale[clnQty.Index, rowIndex].Value.ToString()) ||
+                    dgvSale[clnQty.Index, rowIndex].Value.ToString() == "0")
+                {
+                    dgvSale[clnQty.Index, rowIndex].Value = "1";
+                }
+                RecalculateRow(rowIndex, clnQty.Index);
+                CalcTotals();
+
+                // Check if unit is visible and has multiple choices
+                bool hasMultipleUnits = false;
+                if (clnUnit != null && clnUnit.Visible && rowIndex >= 0 && rowIndex < dgvSale.Rows.Count)
+                {
+                    var unitCell = dgvSale.Rows[rowIndex].Cells[clnUnit.Index] as DataGridViewComboBoxCell;
+                    if (unitCell != null && !unitCell.ReadOnly)
+                    {
+                        if (unitCell.DataSource is DataTable dtUnitChoices)
+                            hasMultipleUnits = dtUnitChoices.Rows.Count > 1;
+                        else if (unitCell.Items != null)
+                            hasMultipleUnits = unitCell.Items.Count > 1;
+                    }
+                }
+
+                if (hasMultipleUnits && NavigateToColumn(rowIndex, clnUnit))
+                    return true;
+
+                // Advance to Qty Kg
+                if (NavigateToColumn(rowIndex, clnQty)) return true;
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // 2. Unit column
+            if (clnUnit != null && colIndex == clnUnit.Index)
+            {
+                if (dgvSale.EditingControl is ComboBox cmbUnit)
+                {
+                    string unitCode = cmbUnit.SelectedValue?.ToString();
+                    if (string.IsNullOrEmpty(unitCode) && cmbUnit.SelectedItem is DataRowView drv && drv.Row.Table.Columns.Contains("Code"))
+                    {
+                        unitCode = drv["Code"]?.ToString();
+                    }
+                    if (!string.IsNullOrEmpty(unitCode))
+                    {
+                        dgvSale[clnUnit.Index, rowIndex].Value = unitCode;
+                    }
+                }
+
+                dgvSale.EndEdit();
+                CalcTotals();
+                if (NavigateToColumn(rowIndex, clnQty)) return true;
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // 3. Qty Kg (clnQty) -> Advance to Qty Bag (clnSecQty)
+            if (colIndex == clnQty.Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRow(rowIndex, clnQty.Index);
+                CalcTotals();
+
+                if (NavigateToColumn(rowIndex, "clnSecQty")) return true;
+                if (NavigateToColumn(rowIndex, "clnPackQty")) return true;
+                if (NavigateToColumn(rowIndex, "clnPacking")) return true;
+                if (NavigateToColumn(rowIndex, clnRate)) return true;
+                if (NavigateToColumn(rowIndex, "clnSecRate")) return true;
+                if (NavigateToColumn(rowIndex, clnCarriage)) return true;
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // 4. Qty Bag (clnSecQty) -> Advance to Pack Qty (clnPackQty)
+            if (dgvSale.Columns.Contains("clnSecQty") && colIndex == dgvSale.Columns["clnSecQty"].Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRow(rowIndex, colIndex);
+                CalcTotals();
+
+                if (NavigateToColumn(rowIndex, "clnPackQty")) return true;
+                if (NavigateToColumn(rowIndex, "clnPacking")) return true;
+                if (NavigateToColumn(rowIndex, clnRate)) return true;
+                if (NavigateToColumn(rowIndex, "clnSecRate")) return true;
+                if (NavigateToColumn(rowIndex, clnCarriage)) return true;
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // 5. Pack Qty (clnPackQty) -> Advance to Packing (clnPacking)
+            if (dgvSale.Columns.Contains("clnPackQty") && colIndex == dgvSale.Columns["clnPackQty"].Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRow(rowIndex, colIndex);
+                CalcTotals();
+
+                if (NavigateToColumn(rowIndex, "clnPacking")) return true;
+                if (NavigateToColumn(rowIndex, clnRate)) return true;
+                if (NavigateToColumn(rowIndex, "clnSecRate")) return true;
+                if (NavigateToColumn(rowIndex, clnCarriage)) return true;
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // 6. Packing (clnPacking) -> Advance to Rate Kg (clnRate)
+            if (dgvSale.Columns.Contains("clnPacking") && colIndex == dgvSale.Columns["clnPacking"].Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRow(rowIndex, colIndex);
+                CalcTotals();
+
+                if (NavigateToColumn(rowIndex, clnRate)) return true;
+                if (NavigateToColumn(rowIndex, "clnSecRate")) return true;
+                if (NavigateToColumn(rowIndex, clnCarriage)) return true;
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // 7. Rate Kg (clnRate) -> Advance to Rate Bag (clnSecRate)
+            if (colIndex == clnRate.Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRow(rowIndex, clnRate.Index);
+                CalcTotals();
+
+                if (NavigateToColumn(rowIndex, "clnSecRate")) return true;
+                if (NavigateToColumn(rowIndex, clnCarriage)) return true;
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // 8. Rate Bag (clnSecRate) -> Advance to Carriage (clnCarriage)
+            if (dgvSale.Columns.Contains("clnSecRate") && colIndex == dgvSale.Columns["clnSecRate"].Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRow(rowIndex, colIndex);
+                CalcTotals();
+
+                if (NavigateToColumn(rowIndex, clnCarriage)) return true;
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // 9. Carriage (clnCarriage) -> Advance to next row
+            if (clnCarriage != null && colIndex == clnCarriage.Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRow(rowIndex, clnCarriage.Index);
+                CalcTotals();
+
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // 10. Discount / DiscPercent / AddLess columns (fallback)
+            if (colIndex == clnDiscPercent.Index || colIndex == clnDiscount.Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRow(rowIndex, colIndex);
+                CalcTotals();
+
+                if (NavigateToColumn(rowIndex, clnCarriage)) return true;
+                MoveToNextRow(rowIndex);
+                return true;
+            }
+
+            // General Fallback
+            MoveToNextRow(rowIndex);
+            return true;
         }
 
         private void dgvPurchase_CellEndEdit(object sender, DataGridViewCellEventArgs e)
@@ -1204,7 +1716,8 @@ namespace ERP
             txtEditBy.Text = "";
             txtDescription.Text = "";
             dgvSale.Rows.Clear();
-            dgvSale.Rows.Add();
+            int newRow = dgvSale.Rows.Add();
+            ClearRowValues(newRow);
             dtpDate.Focus();
             cmbItem.SelectedIndex = -1;
             cmbNarration.SelectedIndex = dtNarration.Rows.Count > 0 ? 0 : -1;
