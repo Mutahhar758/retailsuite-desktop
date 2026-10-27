@@ -149,7 +149,6 @@ namespace ERP
             // pnlHeader
             // 
             this.pnlHeader.BackColor = System.Drawing.Color.White;
-            this.pnlHeader.Controls.Add(this.lblHeaderShortcuts);
             this.pnlHeader.Controls.Add(this.lblHeaderSubtitle);
             this.pnlHeader.Controls.Add(this.label17);
             this.pnlHeader.Controls.Add(this.pictureBox1);
