@@ -618,7 +618,7 @@ namespace ERP
             this.clnAmount.HeaderText = "Amount";
             this.clnAmount.MinimumWidth = 100;
             this.clnAmount.Name = "clnAmount";
-            this.clnAmount.ReadOnly = true;
+            this.clnAmount.ReadOnly = false;
             this.clnAmount.Width = 110;
             // 
             // clnStatus

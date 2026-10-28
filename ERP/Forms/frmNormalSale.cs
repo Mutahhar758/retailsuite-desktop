@@ -67,6 +67,7 @@ namespace ERP
             txtCashReceipt.Enter += txtCashReceipt_Enter;
             txtCashReceipt.KeyDown += txtCashReceipt_KeyDown;
             dgvSale.Rows.Add();
+            clnAmount.ReadOnly = false;
             SetupGridContextMenu();
             UserInfo.ApplyFormPermissions(this, AppResource.Sales);
         }
@@ -1002,6 +1003,7 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
+                dgvSale.CurrentCell.ColumnIndex == clnAmount.Index ||
                 (clnCarriage != null && dgvSale.CurrentCell.ColumnIndex == clnCarriage.Index) ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate"))
@@ -1139,6 +1141,7 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnQty.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscount.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
+                dgvSale.CurrentCell.ColumnIndex == clnAmount.Index ||
                 (clnCarriage != null && dgvSale.CurrentCell.ColumnIndex == clnCarriage.Index) ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
@@ -1467,6 +1470,28 @@ namespace ERP
                 return true;
             }
 
+            // 5. If on Amount column
+            if (colIndex == clnAmount.Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRowFromAmount(rowIndex);
+
+                // Move to next row's Item No
+                int nextRowIdx;
+                if (rowIndex == dgvSale.Rows.Count - 1)
+                {
+                    nextRowIdx = dgvSale.Rows.Add();
+                    ClearRowValues(nextRowIdx);
+                }
+                else
+                {
+                    nextRowIdx = rowIndex + 1;
+                }
+                dgvSale.CurrentCell = dgvSale[clnItemNo.Index, nextRowIdx];
+                dgvSale.BeginEdit(true);
+                return true;
+            }
+
             // Fallback
             dgvSale.EndEdit();
             RecalculateRow(rowIndex);
@@ -1535,6 +1560,70 @@ namespace ERP
             }
 
             dgvSale[clnAmount.Index, rowIndex].Value = decimal.Round(lineGross - discount + carriage, 2).ToString();
+            CalcTotAmount();
+        }
+
+        private void RecalculateRowFromAmount(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= dgvSale.Rows.Count) return;
+
+            decimal amount = ParseDecimal(dgvSale[clnAmount.Index, rowIndex].Value);
+            decimal rate = ParseDecimal(dgvSale[clnRate.Index, rowIndex].Value);
+            decimal discount = ParseDecimal(dgvSale[clnDiscount.Index, rowIndex].Value);
+            decimal discountPercent = ParseDecimal(dgvSale[clnDiscPercent.Index, rowIndex].Value);
+            decimal carriage = clnCarriage != null ? ParseDecimal(dgvSale[clnCarriage.Index, rowIndex].Value) : 0;
+
+            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+            {
+                dgvSale["clnSecQty", rowIndex].Value = "0";
+            }
+
+            decimal lineGross = 0m;
+            if (!clnDiscount.Visible && discountPercent > 0m && discountPercent < 100m)
+            {
+                decimal factor = 1m - (discountPercent / 100m);
+                lineGross = factor > 0m ? (amount - carriage) / factor : 0m;
+                discount = lineGross * (discountPercent / 100m);
+                dgvSale[clnDiscount.Index, rowIndex].Value = discount.ToString();
+            }
+            else
+            {
+                lineGross = amount - carriage + discount;
+                if (lineGross != 0m)
+                {
+                    discountPercent = (discount / lineGross) * 100m;
+                    dgvSale[clnDiscPercent.Index, rowIndex].Value = discountPercent.ToString();
+                }
+            }
+
+            decimal primaryGross = lineGross;
+            if (rate > 0m)
+            {
+                decimal baseQty = Math.Max(0m, primaryGross / rate);
+
+                string rowItemId = Convert.ToString(dgvSale[clnItemNo.Index, rowIndex].Value);
+                DataRow rowItem = !string.IsNullOrWhiteSpace(rowItemId)
+                    ? dtItems.Select("Id = '" + rowItemId.Replace("'", "''") + "'").FirstOrDefault()
+                    : null;
+                string selectedUnitId = Convert.ToString(dgvSale[clnUnit.Index, rowIndex].Value);
+
+                decimal unitFactor = 1m;
+                if (rowItem != null && !string.IsNullOrWhiteSpace(selectedUnitId))
+                {
+                    var selectableUnits = UnitConversionHelper.GetSelectableUnitsTable(rowItem, dtUnits);
+                    var matchedUnit = selectableUnits.Select("Code = '" + selectedUnitId.Replace("'", "''") + "'").FirstOrDefault();
+                    if (matchedUnit != null && matchedUnit.Table.Columns.Contains("Factor"))
+                    {
+                        decimal.TryParse(Convert.ToString(matchedUnit["Factor"]), out unitFactor);
+                        if (unitFactor <= 0m) unitFactor = 1m;
+                    }
+                }
+
+                decimal displayQty = Math.Round(baseQty * unitFactor, 4, MidpointRounding.AwayFromZero);
+                dgvSale[clnQty.Index, rowIndex].Value = displayQty.ToString("0.####");
+            }
+
+            dgvSale[clnAmount.Index, rowIndex].Value = decimal.Round(amount, 2).ToString();
             CalcTotAmount();
         }
 
@@ -1611,7 +1700,14 @@ namespace ERP
 
             AllowNewRow();
             currentRow = e.RowIndex;
-            RecalculateRow(e.RowIndex);
+            if (e.ColumnIndex == clnAmount.Index)
+            {
+                RecalculateRowFromAmount(e.RowIndex);
+            }
+            else
+            {
+                RecalculateRow(e.RowIndex);
+            }
 
             decimal rate = ParseDecimal(dgvSale[clnRate.Index, e.RowIndex].Value);
             decimal secRate = (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecRate"))
