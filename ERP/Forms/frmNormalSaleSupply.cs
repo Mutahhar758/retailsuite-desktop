@@ -618,7 +618,7 @@ namespace ERP
                     MessageBox.Show("Error loading sale supplies: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };
-            tbQuery.Controls.Add(_pager);
+            _pager.Attach(tbQuery, dgvQuery);
         }
 
         private async System.Threading.Tasks.Task FillQueryAsync(

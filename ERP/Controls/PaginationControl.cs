@@ -18,6 +18,8 @@ namespace ERP.Controls
         private readonly Label _lblSize = new Label();
         private readonly ComboBox _cmbPageSize = new ComboBox();
 
+        private Control _attachedParent;
+        private DataGridView _attachedGrid;
         private bool _suppressEvents;
 
         public event EventHandler<PageChangedEventArgs> PageChanged;
@@ -29,15 +31,17 @@ namespace ERP.Controls
 
         public PaginationControl()
         {
-            Height = 28;
+            Height = 32;
             Dock = DockStyle.Bottom;
+            BackColor = Color.FromArgb(248, 250, 252);
+            Font = new Font("Segoe UI", 9F, FontStyle.Regular);
 
             var panel = new FlowLayoutPanel
             {
                 Dock = DockStyle.Fill,
                 FlowDirection = FlowDirection.LeftToRight,
                 WrapContents = false,
-                Padding = new Padding(0, 1, 0, 0)
+                Padding = new Padding(6, 3, 6, 3)
             };
 
             ConfigureButton(_btnFirst, "|<", "First page");
@@ -48,16 +52,20 @@ namespace ERP.Controls
             _lblInfo.AutoSize = false;
             _lblInfo.Width = 260;
             _lblInfo.Height = 24;
+            _lblInfo.Margin = new Padding(4, 3, 4, 2);
             _lblInfo.TextAlign = ContentAlignment.MiddleCenter;
 
             _lblSize.Text = "Rows:";
             _lblSize.AutoSize = false;
-            _lblSize.Width = 40;
+            _lblSize.Width = 42;
             _lblSize.Height = 24;
+            _lblSize.Margin = new Padding(8, 3, 2, 2);
             _lblSize.TextAlign = ContentAlignment.MiddleRight;
 
             _cmbPageSize.DropDownStyle = ComboBoxStyle.DropDownList;
             _cmbPageSize.Width = 60;
+            _cmbPageSize.Height = 24;
+            _cmbPageSize.Margin = new Padding(2, 2, 2, 2);
             _cmbPageSize.Items.AddRange(new object[] { 10, 20, 50, 100, 200 });
             _cmbPageSize.SelectedItem = PageSize;
             _cmbPageSize.SelectedIndexChanged += (s, e) =>
@@ -75,6 +83,73 @@ namespace ERP.Controls
             panel.Controls.AddRange(new Control[] { _btnFirst, _btnPrev, _lblInfo, _btnNext, _btnLast, _lblSize, _cmbPageSize });
             Controls.Add(panel);
             UpdateUi();
+        }
+
+        protected override void OnParentChanged(EventArgs e)
+        {
+            base.OnParentChanged(e);
+            BringToFront();
+        }
+
+        /// <summary>
+        /// Attaches this pagination control cleanly to the parent container and
+        /// adjusts the grid bottom anchor/size so the grid never overlaps this bar.
+        /// </summary>
+        public void Attach(Control parent, DataGridView grid = null)
+        {
+            if (parent == null) return;
+            _attachedParent = parent;
+            _attachedGrid = grid;
+
+            Dock = DockStyle.Bottom;
+            if (!parent.Controls.Contains(this))
+            {
+                parent.Controls.Add(this);
+            }
+            BringToFront();
+
+            if (grid != null)
+            {
+                AdjustGrid(parent, grid);
+                parent.SizeChanged -= Parent_SizeChanged;
+                parent.SizeChanged += Parent_SizeChanged;
+            }
+        }
+
+        private void Parent_SizeChanged(object sender, EventArgs e)
+        {
+            if (_attachedParent != null && _attachedGrid != null)
+            {
+                AdjustGrid(_attachedParent, _attachedGrid);
+            }
+        }
+
+        private void AdjustGrid(Control parent, DataGridView grid)
+        {
+            if (parent == null || grid == null || grid.IsDisposed) return;
+
+            BringToFront();
+
+            // If grid is anchored to bottom (e.g., frmNormalSale), adjust height so it leaves space for the pager
+            if ((grid.Anchor & AnchorStyles.Bottom) == AnchorStyles.Bottom)
+            {
+                int availableBottom = parent.ClientSize.Height - Height - 6;
+                int targetHeight = availableBottom - grid.Top;
+                if (targetHeight > 60 && grid.Height != targetHeight)
+                {
+                    var origAnchor = grid.Anchor;
+                    grid.Anchor = origAnchor & ~AnchorStyles.Bottom;
+                    grid.Height = targetHeight;
+                    grid.Anchor = origAnchor;
+                }
+            }
+            else if (grid.Dock == DockStyle.None || grid.Dock == DockStyle.Top)
+            {
+                if (grid.Bottom > this.Top && this.Top > grid.Top)
+                {
+                    grid.Height = Math.Max(50, this.Top - grid.Top - 6);
+                }
+            }
         }
 
         /// <summary>Updates the bar from a server response without raising PageChanged.</summary>
@@ -119,7 +194,11 @@ namespace ERP.Controls
             b.Text = text;
             b.Width = 34;
             b.Height = 24;
+            b.Margin = new Padding(2, 1, 2, 1);
             b.FlatStyle = FlatStyle.Flat;
+            b.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            b.BackColor = Color.White;
+            b.Cursor = Cursors.Hand;
             b.TabStop = false;
             new ToolTip().SetToolTip(b, tip);
         }

@@ -106,7 +106,7 @@ namespace ERP
                     MessageBox.Show("Error loading receipts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };
-            tabPage4.Controls.Add(_pager);
+            _pager.Attach(tabPage4, dgvQuery);
         }
 
         async System.Threading.Tasks.Task FillQueryAsync(
