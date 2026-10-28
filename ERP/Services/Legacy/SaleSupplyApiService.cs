@@ -12,6 +12,40 @@ namespace ERP.Services.Legacy
     {
         private const string Endpoint = "/api/salesupplies";
 
+        /// <summary>Returns a single server-side page of sale supply vouchers.</summary>
+        public async Task<SaleSupplyPageResult> GetPagedListAsync(
+            string fromDate = "", string toDate = "",
+            string itemId = "", string voucherNo = "",
+            int pageNumber = 1, int pageSize = 20)
+        {
+            var qs = new List<string>();
+            if (!string.IsNullOrWhiteSpace(fromDate)) qs.Add("fromDate=" + Uri.EscapeDataString(fromDate));
+            if (!string.IsNullOrWhiteSpace(toDate)) qs.Add("toDate=" + Uri.EscapeDataString(toDate));
+            if (!string.IsNullOrWhiteSpace(itemId)) qs.Add("itemId=" + Uri.EscapeDataString(itemId));
+            if (!string.IsNullOrWhiteSpace(voucherNo)) qs.Add("voucherNo=" + Uri.EscapeDataString(voucherNo));
+            qs.Add("pageNumber=" + pageNumber);
+            qs.Add("pageSize=" + pageSize);
+
+            var url = Endpoint + "/paged?" + string.Join("&", qs);
+
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<SaleSupplyPagedBody>>(json);
+                var body = payload?.Body;
+                var meta = body?.Metadata;
+                return new SaleSupplyPageResult
+                {
+                    Data = body?.Data ?? new List<SaleSupplyDto>(),
+                    CurrentPage = meta?.CurrentPage ?? pageNumber,
+                    TotalPages = meta?.TotalPages ?? 1,
+                    TotalCount = meta?.TotalCount ?? 0,
+                    PageSize = meta?.PageSize ?? pageSize
+                };
+            }
+        }
         public async Task<List<SaleSupplyDto>> GetListAsync(
             string fromDate = "", string toDate = "",
             string itemId = "", string voucherNo = "")
@@ -510,4 +544,36 @@ namespace ERP.Services.Legacy
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
     }
-}
+
+    internal class SaleSupplyPagedBody
+    {
+        [JsonProperty("data")]
+        public List<SaleSupplyDto> Data { get; set; }
+
+        [JsonProperty("metadata")]
+        public SaleSupplyPageMetadata Metadata { get; set; }
+    }
+
+    internal class SaleSupplyPageMetadata
+    {
+        [JsonProperty("currentPage")]
+        public int CurrentPage { get; set; }
+
+        [JsonProperty("totalPages")]
+        public int TotalPages { get; set; }
+
+        [JsonProperty("totalCount")]
+        public int TotalCount { get; set; }
+
+        [JsonProperty("pageSize")]
+        public int PageSize { get; set; }
+    }
+
+    internal class SaleSupplyPageResult
+    {
+        public List<SaleSupplyDto> Data { get; set; } = new List<SaleSupplyDto>();
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 20;
+    }}

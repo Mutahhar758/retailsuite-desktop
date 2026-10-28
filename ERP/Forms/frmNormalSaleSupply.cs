@@ -588,7 +588,7 @@ namespace ERP
                 }
 
                 await FillSaleAsync(voucher);
-                await FillQueryAsync();
+                await FillQueryAsync(_qFrom, _qTo, _qItemId, _qVoucherNo, 1);
 
                 MessageBox.Show("Record Successfully Saved...!");
                 btnNew.Focus();
@@ -599,10 +599,42 @@ namespace ERP
             }
         }
 
-        private async System.Threading.Tasks.Task FillQueryAsync(string fromDate = "", string toDate = "", string itemId = "", string voucherNo = "")
+        private ERP.Controls.PaginationControl _pager;
+        private string _qFrom = "", _qTo = "", _qItemId = "", _qVoucherNo = "";
+        private int _qPageSize = 20;
+
+        private void EnsurePager()
         {
+            if (_pager != null) return;
+            _pager = new ERP.Controls.PaginationControl();
+            _pager.PageChanged += async (s, e) =>
+            {
+                try
+                {
+                    await FillQueryAsync(_qFrom, _qTo, _qItemId, _qVoucherNo, e.PageNumber, e.PageSize);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error loading sale supplies: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+            tbQuery.Controls.Add(_pager);
+        }
+
+        private async System.Threading.Tasks.Task FillQueryAsync(
+            string fromDate = "", string toDate = "",
+            string itemId = "", string voucherNo = "",
+            int pageNumber = 1, int pageSize = 0)
+        {
+            EnsurePager();
+            _qFrom = fromDate; _qTo = toDate; _qItemId = itemId; _qVoucherNo = voucherNo;
+            if (pageSize > 0) _qPageSize = pageSize;
+
             dgvQuery.Rows.Clear();
-            _queryList = await _apiService.GetListAsync(fromDate, toDate, itemId, voucherNo);
+            var page = await _apiService.GetPagedListAsync(fromDate, toDate, itemId, voucherNo, pageNumber, _qPageSize);
+            _queryList = page.Data;
+            _pager.SetPagination(page.CurrentPage, page.TotalPages, page.TotalCount, page.PageSize);
+            _qPageSize = page.PageSize;
 
             for (int i = 0; i < _queryList.Count; i++)
             {
