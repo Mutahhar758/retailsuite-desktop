@@ -59,6 +59,7 @@ namespace ERP
             _inventoryApiService = new InventoryApiService();
             InitializeLookupTables();
             int initialRow = dgvSale.Rows.Add();
+            clnAmount.ReadOnly = false;
             ClearRowValues(initialRow);
             dgvSale.RowsRemoved += (s, e) => CalcTotals();
             dgvSale.Enter += dgvSale_Enter;
@@ -908,6 +909,7 @@ namespace ERP
                 dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnCarriage.Index ||
                 dgvSale.CurrentCell.ColumnIndex == clnAddLess.Index ||
+                dgvSale.CurrentCell.ColumnIndex == clnAmount.Index ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
                 dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
@@ -1040,6 +1042,11 @@ namespace ERP
                 return;
 
             DataGridViewRow row = dgvSale.Rows[rowIndex];
+            if (editedColumnIndex == clnAmount.Index)
+            {
+                RecalculateRowFromAmount(rowIndex);
+                return;
+            }
             if (row.IsNewRow)
                 return;
 
@@ -1090,6 +1097,72 @@ namespace ERP
             row.Cells[clnAmount.Index].Value = decimal.Round(lineAmount, 2).ToString();
         }
 
+        private void RecalculateRowFromAmount(int rowIndex)
+        {
+            if (rowIndex < 0 || rowIndex >= dgvSale.Rows.Count)
+                return;
+
+            DataGridViewRow row = dgvSale.Rows[rowIndex];
+            if (row.IsNewRow)
+                return;
+
+            decimal amount = ParseDecimal(row.Cells[clnAmount.Index].Value);
+            decimal Rate = ParseDecimal(row.Cells[clnRate.Index].Value);
+            decimal Discount = ParseDecimal(row.Cells[clnDiscount.Index].Value);
+            decimal DiscountPercent = ParseDecimal(row.Cells[clnDiscPercent.Index].Value);
+            decimal Carriage = ParseDecimal(row.Cells[clnCarriage.Index].Value);
+            decimal AddLess = ParseDecimal(row.Cells[clnAddLess.Index].Value);
+
+            // Reset secondary qty to zero on manual amount change
+            if (ApiSession.HasSecondaryQty && dgvSale.Columns.Contains("clnSecQty"))
+            {
+                row.Cells["clnSecQty"].Value = "0";
+            }
+
+            decimal netGross = amount - Carriage - AddLess;
+            decimal lineGross = 0m;
+            if (!clnDiscount.Visible && clnDiscPercent.Visible && DiscountPercent > 0m && DiscountPercent < 100m)
+            {
+                decimal factor = 1m - (DiscountPercent / 100m);
+                lineGross = factor > 0m ? netGross / factor : 0m;
+                Discount = decimal.Round(lineGross * (DiscountPercent / 100m), 2);
+                row.Cells[clnDiscount.Index].Value = Discount.ToString("0.##");
+            }
+            else
+            {
+                lineGross = netGross + Discount;
+                if (lineGross != 0m)
+                {
+                    DiscountPercent = decimal.Round((Discount / lineGross) * 100m, 2);
+                    row.Cells[clnDiscPercent.Index].Value = DiscountPercent.ToString("0.##");
+                }
+            }
+
+            if (Rate > 0m)
+            {
+                decimal baseQty = Math.Max(0m, lineGross / Rate);
+
+                DataRow headerItemRow = GetSelectedHeaderItemRow();
+                string selectedUnitId = Convert.ToString(row.Cells[clnUnit.Index].Value);
+                decimal unitFactor = 1m;
+                if (headerItemRow != null && !string.IsNullOrWhiteSpace(selectedUnitId))
+                {
+                    var selectableUnits = UnitConversionHelper.GetSelectableUnitsTable(headerItemRow, dtUnits);
+                    var matchedUnit = selectableUnits.Select("Code = '" + selectedUnitId.Replace("'", "''") + "'").FirstOrDefault();
+                    if (matchedUnit != null && matchedUnit.Table.Columns.Contains("Factor"))
+                    {
+                        decimal.TryParse(Convert.ToString(matchedUnit["Factor"]), out unitFactor);
+                        if (unitFactor <= 0m) unitFactor = 1m;
+                    }
+                }
+
+                decimal displayQty = Math.Round(baseQty * unitFactor, 4, MidpointRounding.AwayFromZero);
+                row.Cells[clnQty.Index].Value = displayQty.ToString("0.####");
+            }
+
+            row.Cells[clnAmount.Index].Value = decimal.Round(amount, 2).ToString();
+        }
+
 
         void tbRate_KeyPress(object sender, KeyPressEventArgs e)
         {
@@ -1099,6 +1172,7 @@ namespace ERP
                  dgvSale.CurrentCell.ColumnIndex == clnDiscPercent.Index ||
                  dgvSale.CurrentCell.ColumnIndex == clnCarriage.Index ||
                  dgvSale.CurrentCell.ColumnIndex == clnAddLess.Index ||
+                dgvSale.CurrentCell.ColumnIndex == clnAmount.Index ||
                  dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecQty" ||
                  dgvSale.Columns[dgvSale.CurrentCell.ColumnIndex].Name == "clnSecRate")
             {
@@ -1321,6 +1395,29 @@ namespace ERP
             if (isSecQtyCol || colIndex == clnRate.Index || colIndex == clnDiscPercent.Index || colIndex == clnDiscount.Index)
             {
                 dgvSale.EndEdit();
+                CalcTotals();
+
+                // Move to next row's Customer
+                int nextRowIdx;
+                if (rowIndex == dgvSale.Rows.Count - 1)
+                {
+                    nextRowIdx = dgvSale.Rows.Add();
+                    ClearRowValues(nextRowIdx);
+                }
+                else
+                {
+                    nextRowIdx = rowIndex + 1;
+                }
+                dgvSale.CurrentCell = dgvSale[clnCustomer.Index, nextRowIdx];
+                dgvSale.BeginEdit(true);
+                return true;
+            }
+
+            // 5. If on Amount column
+            if (colIndex == clnAmount.Index)
+            {
+                dgvSale.EndEdit();
+                RecalculateRowFromAmount(rowIndex);
                 CalcTotals();
 
                 // Move to next row's Customer
