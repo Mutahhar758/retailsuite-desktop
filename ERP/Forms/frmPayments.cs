@@ -103,12 +103,43 @@ namespace ERP
             FillFilterNarration();
         }
 
+        private ERP.Controls.PaginationControl _pager;
+        private string _qFrom = "", _qTo = "", _qCashBank = "", _qAccount = "", _qNarration = "";
+        private int _qPageSize = 20;
+
+        private void EnsurePager()
+        {
+            if (_pager != null) return;
+            _pager = new ERP.Controls.PaginationControl();
+            _pager.PageChanged += async (s, e) =>
+            {
+                try
+                {
+                    await FillQueryAsync(_qFrom, _qTo, _qCashBank, _qAccount, _qNarration, e.PageNumber, e.PageSize);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error loading payments: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+            _pager.Attach(tabPage4, dgvQuery);
+        }
+
         async System.Threading.Tasks.Task FillQueryAsync(
             string fromDate = "", string toDate = "",
-            string cashBank = "", string account = "", string narration = "")
+            string cashBank = "", string account = "", string narration = "",
+            int pageNumber = 1, int pageSize = 0)
         {
+            EnsurePager();
+            _qFrom = fromDate; _qTo = toDate; _qCashBank = cashBank; _qAccount = account; _qNarration = narration;
+            if (pageSize > 0) _qPageSize = pageSize;
+
             dgvQuery.Rows.Clear();
-            _queryList = await _apiService.GetListAsync(fromDate, toDate, cashBank, account, narration);
+            var page = await _apiService.GetPagedListAsync(fromDate, toDate, cashBank, account, narration, "", pageNumber, _qPageSize);
+            _queryList = page.Data;
+            _pager.SetPagination(page.CurrentPage, page.TotalPages, page.TotalCount, page.PageSize);
+            _qPageSize = page.PageSize;
+            VoucherIndex = 0;
             for (int i = 0; i < _queryList.Count; i++)
             {
                 var r = _queryList[i];
@@ -389,7 +420,7 @@ namespace ERP
 
         private async void btnFind_Click(object sender, EventArgs e)
         {
-            try { await FillQueryAsync(txtFdate.Text, txtTdate.Text, cmbFilterCashBanks.SelectedValue != null ? cmbFilterCashBanks.SelectedValue.ToString() : "", cmbFilterAccounts.SelectedValue != null ? cmbFilterAccounts.SelectedValue.ToString() : "", cmbFilterNarration.SelectedValue != null ? cmbFilterNarration.SelectedValue.ToString() : ""); }
+            try { await FillQueryAsync(txtFdate.Text, txtTdate.Text, cmbFilterCashBanks.SelectedValue != null ? cmbFilterCashBanks.SelectedValue.ToString() : "", cmbFilterAccounts.SelectedValue != null ? cmbFilterAccounts.SelectedValue.ToString() : "", cmbFilterNarration.SelectedValue != null ? cmbFilterNarration.SelectedValue.ToString() : "", 1, _qPageSize); }
             catch (Exception ex) { MessageBox.Show("Error loading payments: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 

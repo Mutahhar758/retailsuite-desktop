@@ -34,6 +34,42 @@ namespace ERP.Services.Legacy
             }
         }
 
+        /// <summary>Returns a single server-side page of journal vouchers.</summary>
+        public async Task<JournalVoucherPageResult> GetPagedListAsync(
+            string fromDate = "", string toDate = "",
+            string account = "", string narration = "", string voucherNo = "",
+            int pageNumber = 1, int pageSize = 20)
+        {
+            var qs = new List<string>();
+            if (!string.IsNullOrWhiteSpace(fromDate)) qs.Add("fromDate=" + Uri.EscapeDataString(fromDate));
+            if (!string.IsNullOrWhiteSpace(toDate)) qs.Add("toDate=" + Uri.EscapeDataString(toDate));
+            if (!string.IsNullOrWhiteSpace(account)) qs.Add("account=" + Uri.EscapeDataString(account));
+            if (!string.IsNullOrWhiteSpace(narration)) qs.Add("narration=" + Uri.EscapeDataString(narration));
+            if (!string.IsNullOrWhiteSpace(voucherNo)) qs.Add("voucherNo=" + Uri.EscapeDataString(voucherNo));
+            qs.Add("pageNumber=" + pageNumber);
+            qs.Add("pageSize=" + pageSize);
+
+            var url = JournalVoucherEndpoint + "/paged?" + string.Join("&", qs);
+
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<JournalVoucherPagedBody>>(json);
+                var body = payload?.Body;
+                var meta = body?.Metadata;
+                return new JournalVoucherPageResult
+                {
+                    Data = body?.Data ?? new List<JournalVoucherDto>(),
+                    CurrentPage = meta?.CurrentPage ?? pageNumber,
+                    TotalPages = meta?.TotalPages ?? 1,
+                    TotalCount = meta?.TotalCount ?? 0,
+                    PageSize = meta?.PageSize ?? pageSize
+                };
+            }
+        }
+
         public async Task<List<JournalVoucherLineDto>> GetDetailAsync(string voucherNo, string account = "")
         {
             var url = JournalVoucherEndpoint + "/" + Uri.EscapeDataString(voucherNo);
@@ -220,5 +256,38 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("remarks")]
         public string Remarks { get; set; }
+    }
+
+    internal class JournalVoucherPagedBody
+    {
+        [JsonProperty("data")]
+        public List<JournalVoucherDto> Data { get; set; }
+
+        [JsonProperty("metadata")]
+        public JournalVoucherPageMetadata Metadata { get; set; }
+    }
+
+    internal class JournalVoucherPageMetadata
+    {
+        [JsonProperty("currentPage")]
+        public int CurrentPage { get; set; }
+
+        [JsonProperty("totalPages")]
+        public int TotalPages { get; set; }
+
+        [JsonProperty("totalCount")]
+        public int TotalCount { get; set; }
+
+        [JsonProperty("pageSize")]
+        public int PageSize { get; set; }
+    }
+
+    internal class JournalVoucherPageResult
+    {
+        public List<JournalVoucherDto> Data { get; set; } = new List<JournalVoucherDto>();
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 20;
     }
 }

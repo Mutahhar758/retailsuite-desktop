@@ -35,6 +35,43 @@ namespace ERP.Services.Legacy
             }
         }
 
+        /// <summary>Returns a single server-side page of payment vouchers.</summary>
+        public async Task<PaymentPageResult> GetPagedListAsync(
+            string fromDate = "", string toDate = "",
+            string cashBank = "", string account = "", string narration = "", string voucherNo = "",
+            int pageNumber = 1, int pageSize = 20)
+        {
+            var qs = new List<string>();
+            if (!string.IsNullOrWhiteSpace(fromDate)) qs.Add("fromDate=" + Uri.EscapeDataString(fromDate));
+            if (!string.IsNullOrWhiteSpace(toDate)) qs.Add("toDate=" + Uri.EscapeDataString(toDate));
+            if (!string.IsNullOrWhiteSpace(cashBank)) qs.Add("cashBankAccount=" + Uri.EscapeDataString(cashBank));
+            if (!string.IsNullOrWhiteSpace(account)) qs.Add("account=" + Uri.EscapeDataString(account));
+            if (!string.IsNullOrWhiteSpace(narration)) qs.Add("narration=" + Uri.EscapeDataString(narration));
+            if (!string.IsNullOrWhiteSpace(voucherNo)) qs.Add("voucherNo=" + Uri.EscapeDataString(voucherNo));
+            qs.Add("pageNumber=" + pageNumber);
+            qs.Add("pageSize=" + pageSize);
+
+            var url = PaymentEndpoint + "/paged?" + string.Join("&", qs);
+
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<PaymentPagedBody>>(json);
+                var body = payload?.Body;
+                var meta = body?.Metadata;
+                return new PaymentPageResult
+                {
+                    Data = body?.Data ?? new List<PaymentDto>(),
+                    CurrentPage = meta?.CurrentPage ?? pageNumber,
+                    TotalPages = meta?.TotalPages ?? 1,
+                    TotalCount = meta?.TotalCount ?? 0,
+                    PageSize = meta?.PageSize ?? pageSize
+                };
+            }
+        }
+
         public async Task<List<PaymentLineDto>> GetDetailAsync(string voucherNo, string cashBankAccount = "")
         {
             var url = PaymentEndpoint + "/" + Uri.EscapeDataString(voucherNo);
@@ -248,5 +285,38 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("remarks")]
         public string Remarks { get; set; }
+    }
+
+    internal class PaymentPagedBody
+    {
+        [JsonProperty("data")]
+        public List<PaymentDto> Data { get; set; }
+
+        [JsonProperty("metadata")]
+        public PaymentPageMetadata Metadata { get; set; }
+    }
+
+    internal class PaymentPageMetadata
+    {
+        [JsonProperty("currentPage")]
+        public int CurrentPage { get; set; }
+
+        [JsonProperty("totalPages")]
+        public int TotalPages { get; set; }
+
+        [JsonProperty("totalCount")]
+        public int TotalCount { get; set; }
+
+        [JsonProperty("pageSize")]
+        public int PageSize { get; set; }
+    }
+
+    internal class PaymentPageResult
+    {
+        public List<PaymentDto> Data { get; set; } = new List<PaymentDto>();
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 20;
     }
 }
