@@ -15,9 +15,25 @@ namespace ERP
     {
         enum GL
         {
-            VDate, Vtime, VoucherNo, Vtype, Vseq, DRAccount, Amount,
-            CRAccount, Narration, Remarks, CheckNum, CheckDate, CheckStatus,
-            Clear, status, CreatedBy, CreatedTime, EditBy, EditTime
+            VDate,
+            Vtime,
+            VoucherNo,
+            Vtype,
+            Vseq,
+            DRAccount,
+            Amount,
+            CRAccount,
+            Narration,
+            Remarks,
+            CheckNum,
+            CheckDate,
+            CheckStatus,
+            Clear,
+            status,
+            CreatedBy,
+            CreatedTime,
+            EditBy,
+            EditTime
         };
 
         private readonly ReceiptApiService _apiService;
@@ -42,8 +58,97 @@ namespace ERP
             _apiService = new ReceiptApiService();
             _chartOfAccountApiService = new ChartOfAccountApiService();
             _narrationApiService = new NarrationApiService();
-            dgvExpenses.Rows.Add();
             UserInfo.ApplyFormPermissions(this, AppResource.ReceiptVouchers);
+            dgvExpenses.Rows.Add();
+            EnableDoubleBuffering(dgvExpenses);
+            EnableDoubleBuffering(dgvQuery);
+            dgvExpenses.Enter += dgvExpenses_Enter;
+            this.Shown += frmReceipt_Shown;
+            dtpDate.KeyDown += dtpDate_KeyDown;
+            cmbCashBanks.KeyDown += cmbCashBanks_KeyDown;
+        }
+
+        private void frmReceipt_Shown(object sender, EventArgs e)
+        {
+            try
+            {
+                dtpDate.Focus();
+            }
+            catch { }
+        }
+
+        private void dtpDate_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                e.Handled = true;
+                cmbCashBanks.Focus();
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if ((keyData == Keys.Enter || keyData == Keys.Tab) && dgvExpenses.ContainsFocus)
+            {
+                if (HandleGridEnterNavigation())
+                    return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private static void EnableDoubleBuffering(Control control)
+        {
+            try
+            {
+                typeof(Control).InvokeMember(
+                    "DoubleBuffered",
+                    System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                    null,
+                    control,
+                    new object[] { true });
+            }
+            catch { }
+        }
+
+        private void dgvExpenses_Enter(object sender, EventArgs e)
+        {
+            if (IsHandleCreated && dgvExpenses.Rows.Count > 0 && clnAccount != null)
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        if (dgvExpenses.Rows.Count > 0 && clnAccount != null)
+                        {
+                            int row = dgvExpenses.CurrentCell != null ? dgvExpenses.CurrentCell.RowIndex : 0;
+                            if (row >= 0 && row < dgvExpenses.Rows.Count)
+                            {
+                                dgvExpenses.CurrentCell = dgvExpenses[clnAccount.Index, row];
+                            }
+                        }
+                    }
+                    catch { }
+                }));
+            }
+        }
+
+        private void cmbCashBanks_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                e.Handled = true;
+                dgvExpenses.Focus();
+                if (dgvExpenses.Rows.Count > 0 && clnAccount != null)
+                {
+                    int targetRow = dgvExpenses.CurrentCell != null ? dgvExpenses.CurrentCell.RowIndex : 0;
+                    if (targetRow < 0 || targetRow >= dgvExpenses.Rows.Count) targetRow = 0;
+                    dgvExpenses.CurrentCell = dgvExpenses[clnAccount.Index, targetRow];
+                    dgvExpenses.BeginEdit(true);
+                }
+            }
         }
 
         async System.Threading.Tasks.Task ShowBalAsync(string title, string account)
@@ -138,6 +243,7 @@ namespace ERP
                         : null);
             }
         }
+
         internal async System.Threading.Tasks.Task FillReceiptAsync(string vno)
         {
             string cashBankFilter = cmbFilterAccounts.SelectedValue != null
@@ -171,10 +277,12 @@ namespace ERP
                 {
                     var l = lines[i];
                     dgvExpenses.Rows.Add(
-                        l.Seq.ToString(), l.AccountId,
+                        l.Seq.ToString(),
+                        l.AccountId,
+                        l.Amount.ToString("N0"),
+                        l.Remarks,
                         Validation.NullIfEmpty(l.CheckNum),
                         l.CheckDate.HasValue ? (object)l.CheckDate.Value : null,
-                        l.Amount.ToString("N0"), l.Remarks,
                         l.CreatedBy + " | " + l.CreatedOn.ToString("dd-MMM-yyyy hh:mm:ss tt"),
                         !string.IsNullOrWhiteSpace(l.LastModifiedBy)
                             ? l.LastModifiedBy + " | " + l.LastModifiedOn.Value.ToString("dd-MMM-yyyy hh:mm:ss tt") : null);
@@ -182,6 +290,11 @@ namespace ERP
                 dgvExpenses.Rows.Add();
                 CalcTotAmount();
             }
+        }
+
+        internal void FillReceipt(string vno)
+        {
+            _ = FillReceiptAsync(vno);
         }
 
         void FillAccount() { clnAccount.DataSource = dtAccount.Copy(); clnAccount.DisplayMember = "Title"; clnAccount.ValueMember = "Account"; }
@@ -217,9 +330,29 @@ namespace ERP
 
         void AllowNewRow()
         {
-            if (dgvExpenses.CurrentRow.Index == dgvExpenses.Rows[dgvExpenses.Rows.Count - 1].Index)
+            if (dgvExpenses.CurrentRow != null && dgvExpenses.CurrentRow.Index == dgvExpenses.Rows[dgvExpenses.Rows.Count - 1].Index)
+            {
                 if (dgvExpenses.CurrentRow.Cells[clnAccount.Index].Value != null && dgvExpenses.CurrentRow.Cells[clnAmount.Index].Value != null)
-                    dgvExpenses.Rows.Add();
+                {
+                    int newIdx = dgvExpenses.Rows.Add();
+                    ClearRowValues(newIdx);
+                }
+            }
+        }
+
+        private void ClearRowValues(int rowIdx)
+        {
+            if (rowIdx < 0 || rowIdx >= dgvExpenses.Rows.Count) return;
+            var row = dgvExpenses.Rows[rowIdx];
+            row.Cells[clnAccount.Index].Value = null;
+            row.Cells[clnAmount.Index].Value = null;
+            row.Cells[clnRemarks.Index].Value = null;
+            row.Cells[clnCheque.Index].Value = null;
+            row.Cells[clnChequeDate.Index].Value = null;
+            checkValidation(rowIdx, clnCheque.Index);
+            int seq = 0;
+            try { seq = (int)(from DataGridViewRow r in dgvExpenses.Rows where r.Cells[clnSeq.Index].Value != null && r.Cells[clnSeq.Index].Value.ToString() != "" select int.Parse(r.Cells[clnSeq.Index].Value.ToString())).Max(); } catch { }
+            row.Cells[clnSeq.Index].Value = (seq + 1).ToString();
         }
 
         private async void frmReceipt_Load(object sender, EventArgs e)
@@ -231,6 +364,10 @@ namespace ERP
                 if (_queryList.Count > 0 && txtVoucherNo.Text == "")
                     await FillReceiptAsync(_queryList[VoucherIndex].VoucherNo);
                 FLogIn = false;
+                BeginInvoke(new Action(() =>
+                {
+                    try { dtpDate.Focus(); } catch { }
+                }));
             }
             catch (Exception ex)
             {
@@ -239,41 +376,249 @@ namespace ERP
         }
 
         private void dataGridView1_KeyDown(object sender, KeyEventArgs e)
-        { if (e.KeyCode == Keys.Enter) { e.SuppressKeyPress = true; SendKeys.Send("{tab}"); } }
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                e.Handled = true;
+                HandleGridEnterNavigation();
+            }
+        }
 
         private void dataGridView1_CellEndEdit(object sender, DataGridViewCellEventArgs e)
-        { AllowNewRow(); resetRow = true; currentRow = e.RowIndex; }
+        {
+            AllowNewRow();
+            currentRow = e.RowIndex;
+            CalcTotAmount();
+        }
 
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
-        { if (resetRow) { resetRow = false; dgvExpenses.CurrentCell = dgvExpenses.Rows[currentRow].Cells[dgvExpenses.CurrentCell.ColumnIndex]; } }
+        {
+            if (resetRow)
+            {
+                resetRow = false;
+                dgvExpenses.CurrentCell = dgvExpenses.Rows[currentRow].Cells[dgvExpenses.CurrentCell.ColumnIndex];
+            }
+        }
 
         void CalcTotAmount()
         {
             decimal Tot = 0;
-            try { Tot = (from DataGridViewRow row in dgvExpenses.Rows where row.Cells[clnAmount.Index].Value != null select decimal.Parse(row.Cells[clnAmount.Index].Value.ToString())).Sum(); } catch { }
-            lblTotAmount.Text = Tot.ToString();
+            try
+            {
+                Tot = (from DataGridViewRow row in dgvExpenses.Rows
+                       where row.Cells[clnAmount.Index].Value != null && !string.IsNullOrWhiteSpace(row.Cells[clnAmount.Index].Value.ToString())
+                       select decimal.Parse(row.Cells[clnAmount.Index].Value.ToString())).Sum();
+            }
+            catch { }
+            lblTotAmount.Text = Tot.ToString("N2");
         }
 
         private void dataGridView1_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
-            if (dgvExpenses.CurrentCellAddress.X == clnAccount.DisplayIndex)
+            if (dgvExpenses.CurrentCell != null && (dgvExpenses.CurrentCellAddress.X == clnAccount.DisplayIndex || dgvExpenses.CurrentCell.ColumnIndex == clnAccount.Index))
             {
                 ComboBox cb = e.Control as ComboBox;
-                if (cb != null) { cb.DropDownStyle = ComboBoxStyle.DropDown; cb.AutoCompleteSource = AutoCompleteSource.ListItems; cb.AutoCompleteMode = AutoCompleteMode.SuggestAppend; cb.SelectedIndexChanged += new EventHandler(cb_SelectedIndexChanged); }
+                if (cb != null)
+                {
+                    cb.DropDownStyle = ComboBoxStyle.DropDown;
+                    cb.AutoCompleteSource = AutoCompleteSource.ListItems;
+                    cb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    cb.SelectedIndexChanged -= new EventHandler(cb_SelectedIndexChanged);
+                    cb.SelectionChangeCommitted -= new EventHandler(cb_SelectionChangeCommitted);
+
+                    var cellVal = dgvExpenses.CurrentCell.Value;
+                    if (cellVal == null || string.IsNullOrWhiteSpace(cellVal.ToString()))
+                    {
+                        try { cb.SelectedIndex = -1; cb.Text = ""; } catch { }
+                    }
+                    else
+                    {
+                        try { cb.SelectedValue = cellVal.ToString(); } catch { }
+                    }
+
+                    cb.SelectedIndexChanged += new EventHandler(cb_SelectedIndexChanged);
+                    cb.SelectionChangeCommitted += new EventHandler(cb_SelectionChangeCommitted);
+                }
             }
-            if (dgvExpenses.CurrentCell.ColumnIndex == clnAmount.Index)
-            { TextBox tb = e.Control as TextBox; if (tb != null && e.Control.Text != null) tb.KeyPress += new KeyPressEventHandler(tb_KeyPress); }
+            else if (dgvExpenses.CurrentCell != null && dgvExpenses.CurrentCell.ColumnIndex == clnAmount.Index)
+            {
+                TextBox tb = e.Control as TextBox;
+                if (tb != null && e.Control.Text != null)
+                {
+                    tb.KeyPress -= new KeyPressEventHandler(tb_KeyPress);
+                    tb.KeyPress += new KeyPressEventHandler(tb_KeyPress);
+                }
+            }
         }
 
         void cb_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (dgvExpenses.CurrentCell.ColumnIndex == clnAccount.Index)
-                if ((sender as ComboBox).SelectedIndex != -1)
+            if (dgvExpenses.CurrentCell != null && dgvExpenses.CurrentCell.ColumnIndex == clnAccount.Index)
+            {
+                if (sender is ComboBox cb && cb.SelectedIndex != -1)
                 {
-                    DataRowView dr = (DataRowView)(sender as ComboBox).SelectedItem;
-                    _ = ShowBalAsync(dr[1].ToString(), dr[0].ToString());
-                    if ((sender as ComboBox).SelectedValue == null) (sender as ComboBox).SelectedValue = dr[0].ToString();
+                    DataRowView dr = cb.SelectedItem as DataRowView;
+                    if (dr != null)
+                    {
+                        if (cb.SelectedValue == null) cb.SelectedValue = dr["Account"].ToString();
+                        int rowInd = dgvExpenses.CurrentCellAddress.Y;
+                        if (rowInd >= 0 && rowInd < dgvExpenses.Rows.Count)
+                        {
+                            dgvExpenses[clnAccount.Index, rowInd].Value = dr["Account"].ToString();
+                        }
+                        _ = ShowBalAsync(dr["Title"].ToString(), dr["Account"].ToString());
+                    }
                 }
+            }
+        }
+
+        void cb_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (dgvExpenses.CurrentCell != null && dgvExpenses.CurrentCell.ColumnIndex == clnAccount.Index)
+            {
+                if (sender is ComboBox cb && cb.SelectedItem is DataRowView drv)
+                {
+                    int rowInd = dgvExpenses.CurrentCellAddress.Y;
+                    if (rowInd >= 0 && rowInd < dgvExpenses.Rows.Count)
+                    {
+                        string acct = drv["Account"].ToString();
+                        dgvExpenses[clnAccount.Index, rowInd].Value = acct;
+                        _ = ShowBalAsync(drv["Title"].ToString(), acct);
+                    }
+                }
+            }
+        }
+
+        private bool HandleGridEnterNavigation()
+        {
+            if (dgvExpenses.CurrentCell == null) return false;
+
+            int rowIndex = dgvExpenses.CurrentCell.RowIndex;
+            int colIndex = dgvExpenses.CurrentCell.ColumnIndex;
+
+            // 1. If on Account column (clnAccount)
+            if (colIndex == clnAccount.Index)
+            {
+                if (dgvExpenses.EditingControl is ComboBox cb)
+                {
+                    if (cb.SelectedItem is DataRowView drv)
+                    {
+                        string acct = drv["Account"].ToString();
+                        dgvExpenses[clnAccount.Index, rowIndex].Value = acct;
+                        _ = ShowBalAsync(drv["Title"].ToString(), acct);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(cb.Text))
+                    {
+                        string text = cb.Text.Trim();
+                        var match = dtAccount.AsEnumerable().FirstOrDefault(r =>
+                            string.Equals(r["Title"]?.ToString(), text, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(r["Account"]?.ToString(), text, StringComparison.OrdinalIgnoreCase));
+                        if (match == null)
+                        {
+                            match = dtAccount.AsEnumerable().FirstOrDefault(r =>
+                                r["Title"]?.ToString().StartsWith(text, StringComparison.OrdinalIgnoreCase) == true);
+                        }
+                        if (match != null)
+                        {
+                            string acct = match["Account"].ToString();
+                            dgvExpenses[clnAccount.Index, rowIndex].Value = acct;
+                            _ = ShowBalAsync(match["Title"].ToString(), acct);
+                        }
+                    }
+                }
+
+                dgvExpenses.EndEdit();
+
+                var acctVal = dgvExpenses[clnAccount.Index, rowIndex].Value;
+                bool isAcctEmpty = acctVal == null || string.IsNullOrWhiteSpace(acctVal.ToString());
+                bool isLastRow = (rowIndex == dgvExpenses.Rows.Count - 1);
+
+                // If on last row without selecting account -> Exit grid to Save button!
+                if (isLastRow && isAcctEmpty)
+                {
+                    dgvExpenses.EndEdit();
+                    CalcTotAmount();
+                    btnSave.Focus();
+                    return true;
+                }
+
+                // If account selected -> move to Amount directly!
+                if (!isAcctEmpty)
+                {
+                    dgvExpenses.CurrentCell = dgvExpenses[clnAmount.Index, rowIndex];
+                    dgvExpenses.BeginEdit(true);
+                    return true;
+                }
+
+                return true;
+            }
+
+            // 2. If on Cheque column
+            if (colIndex == clnCheque.Index)
+            {
+                dgvExpenses.EndEdit();
+                checkValidation(rowIndex, clnCheque.Index);
+                if (!dgvExpenses[clnChequeDate.Index, rowIndex].ReadOnly)
+                {
+                    dgvExpenses.CurrentCell = dgvExpenses[clnChequeDate.Index, rowIndex];
+                }
+                else
+                {
+                    dgvExpenses.CurrentCell = dgvExpenses[clnAmount.Index, rowIndex];
+                }
+                dgvExpenses.BeginEdit(true);
+                return true;
+            }
+
+            // 3. If on Cheque Date column
+            if (colIndex == clnChequeDate.Index)
+            {
+                dgvExpenses.EndEdit();
+                dgvExpenses.CurrentCell = dgvExpenses[clnAmount.Index, rowIndex];
+                dgvExpenses.BeginEdit(true);
+                return true;
+            }
+
+            // 4. If on Amount column
+            if (colIndex == clnAmount.Index)
+            {
+                dgvExpenses.EndEdit();
+                CalcTotAmount();
+                dgvExpenses.CurrentCell = dgvExpenses[clnRemarks.Index, rowIndex];
+                dgvExpenses.BeginEdit(true);
+                return true;
+            }
+
+            // 5. If on Remarks column
+            if (colIndex == clnRemarks.Index)
+            {
+                dgvExpenses.EndEdit();
+                CalcTotAmount();
+
+                int nextRowIdx;
+                if (rowIndex == dgvExpenses.Rows.Count - 1)
+                {
+                    nextRowIdx = dgvExpenses.Rows.Add();
+                    ClearRowValues(nextRowIdx);
+                }
+                else
+                {
+                    nextRowIdx = rowIndex + 1;
+                }
+                dgvExpenses.CurrentCell = dgvExpenses[clnAccount.Index, nextRowIdx];
+                dgvExpenses.BeginEdit(true);
+                return true;
+            }
+
+            // Fallback
+            dgvExpenses.EndEdit();
+            CalcTotAmount();
+            int targetIdx = rowIndex < dgvExpenses.Rows.Count - 1 ? rowIndex + 1 : dgvExpenses.Rows.Add();
+            if (targetIdx == dgvExpenses.Rows.Count - 1) ClearRowValues(targetIdx);
+            dgvExpenses.CurrentCell = dgvExpenses[clnAccount.Index, targetIdx];
+            dgvExpenses.BeginEdit(true);
+            return true;
         }
 
         void tb_KeyPress(object sender, KeyPressEventArgs e)
@@ -307,11 +652,15 @@ namespace ERP
             if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to save this...!", "Confirmation",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
-                string voucher = txtVoucherNo.Text == "" ? null : txtVoucherNo.Text.Split('-')[1];
+                string voucher = string.IsNullOrWhiteSpace(txtVoucherNo.Text)
+                    ? null
+                    : (txtVoucherNo.Text.StartsWith("RV-", StringComparison.OrdinalIgnoreCase)
+                        ? txtVoucherNo.Text.Substring(3)
+                        : txtVoucherNo.Text);
 
                 if (cmbCashBanks.SelectedValue != null)
                 {
-                    var lines = new System.Collections.Generic.List<ReceiptLineRequest>();
+                    var lines = new List<ReceiptLineRequest>();
                     foreach (DataGridViewRow row in dgvExpenses.Rows)
                     {
                         if (row.Cells[clnAccount.Index].Value == null || row.Cells[clnAmount.Index].Value == null)
@@ -319,12 +668,12 @@ namespace ERP
                         var checkDateVal = row.Cells[clnChequeDate.Index].Value;
                         lines.Add(new ReceiptLineRequest
                         {
-                            Seq       = int.Parse(row.Cells[clnSeq.Index].Value.ToString()),
-                            Account   = row.Cells[clnAccount.Index].Value.ToString(),
-                            Amount    = decimal.Parse(row.Cells[clnAmount.Index].Value.ToString()),
-                            CheckNum  = (string)row.Cells[clnCheque.Index].Value,
+                            Seq = int.Parse(row.Cells[clnSeq.Index].Value.ToString()),
+                            Account = row.Cells[clnAccount.Index].Value.ToString(),
+                            Amount = decimal.Parse(row.Cells[clnAmount.Index].Value.ToString()),
+                            CheckNum = (string)row.Cells[clnCheque.Index].Value,
                             CheckDate = checkDateVal != null ? ((DateTime)checkDateVal).ToString("yyyy-MM-dd") : null,
-                            Remarks   = (string)row.Cells[clnRemarks.Index].Value
+                            Remarks = (string)row.Cells[clnRemarks.Index].Value
                         });
                     }
 
@@ -337,11 +686,11 @@ namespace ERP
                         {
                             var createRequest = new ReceiptCreateRequest
                             {
-                                Date            = dtpDate.Value.ToString("yyyy-MM-dd"),
-                                ClearingDate    = dtpClearingDate.Checked ? dtpClearingDate.Value.ToString("yyyy-MM-dd") : null,
+                                Date = dtpDate.Value.ToString("yyyy-MM-dd"),
+                                ClearingDate = dtpClearingDate.Checked ? dtpClearingDate.Value.ToString("yyyy-MM-dd") : null,
                                 CashBankAccount = cmbCashBanks.SelectedValue.ToString(),
-                                Narration       = cmbNarration.SelectedValue?.ToString(),
-                                Lines           = lines
+                                Narration = cmbNarration.SelectedValue?.ToString(),
+                                Lines = lines
                             };
                             voucher = await _apiService.CreateAsync(createRequest);
                         }
@@ -349,11 +698,11 @@ namespace ERP
                         {
                             var updateRequest = new ReceiptUpdateRequest
                             {
-                                Date            = dtpDate.Value.ToString("yyyy-MM-dd"),
-                                ClearingDate    = dtpClearingDate.Checked ? dtpClearingDate.Value.ToString("yyyy-MM-dd") : null,
+                                Date = dtpDate.Value.ToString("yyyy-MM-dd"),
+                                ClearingDate = dtpClearingDate.Checked ? dtpClearingDate.Value.ToString("yyyy-MM-dd") : null,
                                 CashBankAccount = cmbCashBanks.SelectedValue.ToString(),
-                                Narration       = cmbNarration.SelectedValue?.ToString(),
-                                Lines           = lines
+                                Narration = cmbNarration.SelectedValue?.ToString(),
+                                Lines = lines
                             };
                             await _apiService.UpdateAsync(voucher, updateRequest);
                         }
@@ -387,7 +736,7 @@ namespace ERP
 
         private async void btnFind_Click(object sender, EventArgs e)
         {
-            try { await FillQueryAsync(txtFdate.Text, txtTdate.Text, cmbFilterCashBanks.SelectedValue != null ? cmbFilterCashBanks.SelectedValue.ToString() : "", cmbFilterAccounts.SelectedValue != null ? cmbFilterAccounts.SelectedValue.ToString() : "", cmbFilterNarration.SelectedValue != null ? cmbFilterNarration.SelectedValue.ToString() : ""); }
+            try { await FillQueryAsync(txtFdate.Text, txtTdate.Text, cmbFilterCashBanks.SelectedValue != null ? cmbFilterCashBanks.SelectedValue.ToString() : "", cmbFilterAccounts.SelectedValue != null ? cmbFilterAccounts.SelectedValue.ToString() : "", cmbFilterNarration.SelectedValue != null ? cmbFilterNarration.SelectedValue.ToString() : "", 1, _qPageSize); }
             catch (Exception ex) { MessageBox.Show("Error loading receipts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
         }
 
@@ -422,13 +771,33 @@ namespace ERP
         private void btnClose_Click(object sender, EventArgs e) { this.Close(); }
 
         private void btnNew_Click(object sender, EventArgs e)
-        { dgvExpenses.Rows.Clear(); Validation.Clear(grpInvoiceDetail); dtpClearingDate.Checked = false; dgvExpenses.Rows.Add(); dtpDate.Focus(); }
+        {
+            dgvExpenses.Rows.Clear();
+            Validation.Clear(grpInvoiceDetail);
+            dtpClearingDate.Checked = false;
+            lblTotAmount.Text = "0";
+            lblBalance.Text = "0.00";
+            txtVoucherNo.Text = "";
+            VoucherNum = null;
+            dgvExpenses.Rows.Add();
+            if (dgvExpenses.Rows.Count > 0 && clnAccount != null)
+            {
+                try
+                {
+                    dgvExpenses.CurrentCell = dgvExpenses[clnAccount.Index, 0];
+                }
+                catch { }
+            }
+            cmbCashBanks.SelectedIndex = -1;
+            cmbNarration.SelectedIndex = -1;
+            dtpDate.Focus();
+        }
 
         #region Navigation
         private void btnHome_Click(object sender, EventArgs e) => Navigate(Navigators.Home);
-        private void btnPri_Click(object sender, EventArgs e)  => Navigate(Navigators.Down);
+        private void btnPri_Click(object sender, EventArgs e) => Navigate(Navigators.Down);
         private void btnNext_Click(object sender, EventArgs e) => Navigate(Navigators.Up);
-        private void btnEnd_Click(object sender, EventArgs e)  => Navigate(Navigators.End);
+        private void btnEnd_Click(object sender, EventArgs e) => Navigate(Navigators.End);
         #endregion
 
         private async void btnDelete_Click(object sender, EventArgs e)
@@ -476,7 +845,25 @@ namespace ERP
         }
 
         private void frmReceipt_KeyDown(object sender, KeyEventArgs e)
-        { if (e.KeyCode == Keys.Enter && !dgvExpenses.Focused) SendKeys.Send("{tab}"); }
+        {
+            if (e.KeyCode == Keys.F3)
+            {
+                btnNew.PerformClick();
+            }
+            else if (e.KeyCode == Keys.F5)
+            {
+                btnSave.PerformClick();
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                btnClose.PerformClick();
+            }
+            else if (e.KeyCode == Keys.Enter && !dgvExpenses.Focused && !cmbCashBanks.Focused && !dtpDate.Focused)
+            {
+                e.SuppressKeyPress = true;
+                SendKeys.Send("{tab}");
+            }
+        }
 
         private void dgvExpenses_RowEnter(object sender, DataGridViewCellEventArgs e)
         {
