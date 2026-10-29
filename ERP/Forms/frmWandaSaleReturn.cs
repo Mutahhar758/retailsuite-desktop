@@ -146,10 +146,42 @@ namespace ERP
             clnItemNo.ValueMember = "Id";
         }
 
-        private async System.Threading.Tasks.Task FillQueryAsync(string fromDate = "", string toDate = "", string account = "", string voucherNo = "")
+        private ERP.Controls.PaginationControl _pager;
+        private string _qFrom = "", _qTo = "", _qAccount = "", _qVoucherNo = "";
+        private int _qPageSize = 20;
+
+        private void EnsurePager()
         {
+            if (_pager != null) return;
+            _pager = new ERP.Controls.PaginationControl();
+            _pager.PageChanged += async (s, e) =>
+            {
+                try
+                {
+                    await FillQueryAsync(_qFrom, _qTo, _qAccount, _qVoucherNo, e.PageNumber, e.PageSize);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error loading sale returns: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+            _pager.Attach(tbQuery, dgvQuery);
+        }
+
+        private async System.Threading.Tasks.Task FillQueryAsync(
+            string fromDate = "", string toDate = "",
+            string account = "", string voucherNo = "",
+            int pageNumber = 1, int pageSize = 0)
+        {
+            EnsurePager();
+            _qFrom = fromDate; _qTo = toDate; _qAccount = account; _qVoucherNo = voucherNo;
+            if (pageSize > 0) _qPageSize = pageSize;
+
             dgvQuery.Rows.Clear();
-            _queryList = await _apiService.GetListAsync(fromDate, toDate, account, voucherNo);
+            var page = await _apiService.GetPagedListAsync(fromDate, toDate, account, voucherNo, pageNumber, _qPageSize);
+            _queryList = page.Data;
+            _pager.SetPagination(page.CurrentPage, page.TotalPages, page.TotalCount, page.PageSize);
+            _qPageSize = page.PageSize;
 
             for (int i = 0; i < _queryList.Count; i++)
             {
@@ -788,7 +820,9 @@ namespace ERP
                     txtFdate.Text,
                     txtTdate.Text,
                     cmbFilterAccounts.SelectedValue != null ? cmbFilterAccounts.SelectedValue.ToString() : "",
-                    voucher);
+                    voucher,
+                    1,
+                    _qPageSize);
             }
             catch (Exception ex)
             {

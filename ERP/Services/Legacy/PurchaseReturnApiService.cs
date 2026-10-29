@@ -12,6 +12,40 @@ namespace ERP.Services.Legacy
     {
         private const string PurchaseReturnEndpoint = "/api/purchasereturns";
 
+        public async Task<PurchaseReturnPageResult> GetPagedListAsync(
+            string fromDate = "", string toDate = "",
+            string account = "", string voucherNo = "",
+            int pageNumber = 1, int pageSize = 20)
+        {
+            var qs = new List<string>();
+            if (!string.IsNullOrWhiteSpace(fromDate)) qs.Add("fromDate=" + Uri.EscapeDataString(fromDate));
+            if (!string.IsNullOrWhiteSpace(toDate)) qs.Add("toDate=" + Uri.EscapeDataString(toDate));
+            if (!string.IsNullOrWhiteSpace(account)) qs.Add("account=" + Uri.EscapeDataString(account));
+            if (!string.IsNullOrWhiteSpace(voucherNo)) qs.Add("voucherNo=" + Uri.EscapeDataString(voucherNo));
+            if (pageNumber > 0) qs.Add("pageNumber=" + pageNumber);
+            if (pageSize > 0) qs.Add("pageSize=" + pageSize);
+
+            var url = PurchaseReturnEndpoint + "/paged" + (qs.Count > 0 ? "?" + string.Join("&", qs) : "");
+
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<PurchaseReturnPagedBody>>(json);
+                var body = payload?.Body;
+                var meta = body?.Metadata;
+                return new PurchaseReturnPageResult
+                {
+                    Data = body?.Data ?? new List<PurchaseReturnDto>(),
+                    CurrentPage = meta?.CurrentPage ?? pageNumber,
+                    TotalPages = meta?.TotalPages ?? 1,
+                    TotalCount = meta?.TotalCount ?? 0,
+                    PageSize = meta?.PageSize ?? pageSize
+                };
+            }
+        }
+
         public async Task<List<PurchaseReturnDto>> GetListAsync(
             string fromDate = "", string toDate = "",
             string account = "", string voucherNo = "")
@@ -88,6 +122,39 @@ namespace ERP.Services.Legacy
         }
     }
 
+    internal class PurchaseReturnPagedBody
+    {
+        [JsonProperty("data")]
+        public List<PurchaseReturnDto> Data { get; set; }
+
+        [JsonProperty("metadata")]
+        public PurchaseReturnPageMetadata Metadata { get; set; }
+    }
+
+    internal class PurchaseReturnPageMetadata
+    {
+        [JsonProperty("currentPage")]
+        public int CurrentPage { get; set; }
+
+        [JsonProperty("totalPages")]
+        public int TotalPages { get; set; }
+
+        [JsonProperty("totalCount")]
+        public int TotalCount { get; set; }
+
+        [JsonProperty("pageSize")]
+        public int PageSize { get; set; }
+    }
+
+    internal class PurchaseReturnPageResult
+    {
+        public List<PurchaseReturnDto> Data { get; set; } = new List<PurchaseReturnDto>();
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 20;
+    }
+
     internal class PurchaseReturnDto
     {
         [JsonProperty("date")]
@@ -129,6 +196,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("narration")]
         public string Narration { get; set; }
 
+        [JsonProperty("narrationId")]
+        public string NarrationId { get; set; }
+
         [JsonProperty("description")]
         public string Description { get; set; }
 
@@ -149,6 +219,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("rate")]
         public decimal Rate { get; set; }
+
+        [JsonProperty("addLess")]
+        public decimal AddLess { get; set; }
 
         [JsonProperty("amount")]
         public decimal Amount { get; set; }
