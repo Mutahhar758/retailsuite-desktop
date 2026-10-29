@@ -84,6 +84,37 @@ namespace ERP
         //  Data helpers
         // ══════════════════════════════════════════════════════════════════
 
+        private ERP.Controls.PaginationControl _pager;
+        private List<CustomerDto> _pagedCustomers;
+        private System.Windows.Forms.Timer _searchTimer;
+
+        private void EnsurePager()
+        {
+            if (_pager != null) return;
+            _pager = new ERP.Controls.PaginationControl();
+            _pager.PageChanged += async (s, e) =>
+            {
+                await LoadCustomerPageAsync(e.PageNumber, e.PageSize);
+            };
+            _pager.Attach(tpList, dgvCustomers);
+        }
+
+        private async System.Threading.Tasks.Task LoadCustomerPageAsync(int pageNumber, int pageSize)
+        {
+            try
+            {
+                string search = txtSearch?.Text?.Trim();
+                var result = await _customerApiService.GetPagedListAsync(pageNumber, pageSize, search: search);
+                _pagedCustomers = result.Data;
+                PopulateGrid(_pagedCustomers);
+                _pager?.SetPagination(result.CurrentPage, result.TotalPages, result.TotalCount, result.PageSize);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to load customers: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private async System.Threading.Tasks.Task FillCustomersAsync()
         {
             _customers = await _customerApiService.GetAsync();
@@ -93,7 +124,8 @@ namespace ERP
             cmbCustomerCode.DisplayMember = "Title";
             cmbCustomerCode.ValueMember   = "Account";
 
-            PopulateGrid(_customers);
+            EnsurePager();
+            await LoadCustomerPageAsync(1, _pager?.PageSize ?? 20);
         }
 
         private void PopulateGrid(List<CustomerDto> list)
@@ -115,6 +147,8 @@ namespace ERP
             if (Flogin || string.IsNullOrWhiteSpace(code)) return;
 
             var c = _customers?.FirstOrDefault(x =>
+                string.Equals(x.Account, code, StringComparison.OrdinalIgnoreCase))
+                ?? _pagedCustomers?.FirstOrDefault(x =>
                 string.Equals(x.Account, code, StringComparison.OrdinalIgnoreCase));
 
             if (c == null) { ClearDetail(); txtAccountCode.Text = string.Empty; return; }
@@ -259,14 +293,17 @@ namespace ERP
 
         private void TxtSearch_TextChanged(object sender, EventArgs e)
         {
-            string q = txtSearch.Text.Trim().ToLower();
-            var list = string.IsNullOrWhiteSpace(q)
-                ? _customers
-                : _customers?.Where(c =>
-                    Contains(c.Title,   q) || Contains(c.Account, q) ||
-                    Contains(c.Phone1,  q) || Contains(c.Email,   q) ||
-                    Contains(c.Address, q)).ToList();
-            PopulateGrid(list);
+            if (_searchTimer == null)
+            {
+                _searchTimer = new System.Windows.Forms.Timer { Interval = 350 };
+                _searchTimer.Tick += async (s, ev) =>
+                {
+                    _searchTimer.Stop();
+                    await LoadCustomerPageAsync(1, _pager?.PageSize ?? 20);
+                };
+            }
+            _searchTimer.Stop();
+            _searchTimer.Start();
         }
 
         private static bool Contains(string s, string q) =>
@@ -520,3 +557,4 @@ namespace ERP
             MessageBox.Show(ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
     }
 }
+

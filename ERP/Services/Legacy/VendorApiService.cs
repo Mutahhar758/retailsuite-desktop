@@ -25,6 +25,46 @@ namespace ERP.Services.Legacy
             }
         }
 
+                public async Task<VendorPageResult> GetPagedListAsync(int pageNumber = 1, int pageSize = 20, string search = null, bool? active = null, bool? showInSales = null)
+        {
+            using (var client = CreateClient())
+            {
+                var queryParams = new List<string>
+                {
+                    $"pageNumber={pageNumber}",
+                    $"pageSize={pageSize}"
+                };
+
+                if (!string.IsNullOrWhiteSpace(search))
+                    queryParams.Add($"search={Uri.EscapeDataString(search.Trim())}");
+
+                if (active.HasValue)
+                    queryParams.Add($"active={active.Value}");
+
+                if (showInSales.HasValue)
+                    queryParams.Add($"showInSales={showInSales.Value}");
+
+                string url = Endpoint + "/paged?" + string.Join("&", queryParams);
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<VendorPagedBody>>(json);
+                if (payload?.Body?.Data != null)
+                {
+                    return new VendorPageResult
+                    {
+                        Data = payload.Body.Data,
+                        CurrentPage = payload.Body.Metadata?.CurrentPage ?? pageNumber,
+                        TotalPages = payload.Body.Metadata?.TotalPages ?? 1,
+                        TotalCount = payload.Body.Metadata?.TotalCount ?? payload.Body.Data.Count,
+                        PageSize = payload.Body.Metadata?.PageSize ?? pageSize
+                    };
+                }
+                return new VendorPageResult { CurrentPage = pageNumber, PageSize = pageSize };
+            }
+        }
+
         public async Task UpsertAsync(string account, VendorUpsertApiRequest request)
         {
             using (var client = CreateClient())
@@ -184,5 +224,38 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("mediaId")]
         public string MediaId { get; set; }
+    }
+
+    internal class VendorPagedBody
+    {
+        [JsonProperty("data")]
+        public List<VendorDto> Data { get; set; }
+
+        [JsonProperty("metadata")]
+        public VendorPageMetadata Metadata { get; set; }
+    }
+
+    internal class VendorPageMetadata
+    {
+        [JsonProperty("currentPage")]
+        public int CurrentPage { get; set; }
+
+        [JsonProperty("totalPages")]
+        public int TotalPages { get; set; }
+
+        [JsonProperty("totalCount")]
+        public int TotalCount { get; set; }
+
+        [JsonProperty("pageSize")]
+        public int PageSize { get; set; }
+    }
+
+    internal class VendorPageResult
+    {
+        public List<VendorDto> Data { get; set; } = new List<VendorDto>();
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 20;
     }
 }

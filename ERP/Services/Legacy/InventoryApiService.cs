@@ -29,6 +29,62 @@ namespace ERP.Services.Legacy
             }
         }
 
+                public async Task<InventoryItemPageResult> GetPagedItemsAsync(int pageNumber = 1, int pageSize = 20, string search = null, string itemCategoryCode = null, string brandId = null, string itemType = null)
+        {
+            using (var client = CreateClient())
+            {
+                var qs = new List<string>
+                {
+                    $"pageNumber={pageNumber}",
+                    $"pageSize={pageSize}"
+                };
+
+                if (!string.IsNullOrWhiteSpace(search))
+                    qs.Add($"search={Uri.EscapeDataString(search.Trim())}");
+
+                if (!string.IsNullOrWhiteSpace(itemCategoryCode) && itemCategoryCode != "ALL")
+                    qs.Add($"itemCategoryCode={Uri.EscapeDataString(itemCategoryCode.Trim())}");
+
+                if (!string.IsNullOrWhiteSpace(brandId))
+                    qs.Add($"brandId={Uri.EscapeDataString(brandId.Trim())}");
+
+                if (!string.IsNullOrWhiteSpace(itemType))
+                    qs.Add($"itemType={Uri.EscapeDataString(itemType.Trim())}");
+
+                var url = Endpoint + "/items/paged?" + string.Join("&", qs);
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<InventoryItemPagedBody>>(json);
+                if (payload?.Body?.Data != null)
+                {
+                    return new InventoryItemPageResult
+                    {
+                        Data = payload.Body.Data,
+                        CurrentPage = payload.Body.Metadata?.CurrentPage ?? pageNumber,
+                        TotalPages = payload.Body.Metadata?.TotalPages ?? 1,
+                        TotalCount = payload.Body.Metadata?.TotalCount ?? payload.Body.Data.Count,
+                        PageSize = payload.Body.Metadata?.PageSize ?? pageSize
+                    };
+                }
+                return new InventoryItemPageResult { CurrentPage = pageNumber, PageSize = pageSize };
+            }
+        }
+
+                public async Task<InventoryItemDto> GetItemAsync(string id)
+        {
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(Endpoint + "/items/" + Uri.EscapeDataString(id));
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<InventoryItemDto>>(json);
+                return payload?.Body;
+            }
+        }
+
         public async Task<List<InventoryItemDto>> GetLookupAsync(string itemCategoryCode, bool includeLastPurchaseRate = false)
         {
             using (var client = CreateClient())
@@ -354,4 +410,38 @@ namespace ERP.Services.Legacy
         [JsonProperty("additionalUnits")]
         public string AdditionalUnits { get; set; }
     }
+
+    internal class InventoryItemPagedBody
+    {
+        [JsonProperty("data")]
+        public List<InventoryItemDto> Data { get; set; }
+
+        [JsonProperty("metadata")]
+        public InventoryItemPageMetadata Metadata { get; set; }
+    }
+
+    internal class InventoryItemPageMetadata
+    {
+        [JsonProperty("currentPage")]
+        public int CurrentPage { get; set; }
+
+        [JsonProperty("totalPages")]
+        public int TotalPages { get; set; }
+
+        [JsonProperty("totalCount")]
+        public int TotalCount { get; set; }
+
+        [JsonProperty("pageSize")]
+        public int PageSize { get; set; }
+    }
+
+    internal class InventoryItemPageResult
+    {
+        public List<InventoryItemDto> Data { get; set; } = new List<InventoryItemDto>();
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 20;
+    }
 }
+

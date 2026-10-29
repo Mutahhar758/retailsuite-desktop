@@ -325,7 +325,40 @@ namespace ERP
             if (string.IsNullOrEmpty(itemId) || dtItemDetail == null) return;
 
             DataRow row = dtItemDetail.Select($"Id = '{itemId.Replace("'", "''")}'").FirstOrDefault();
-            if (row == null) return;
+            if (row == null)
+            {
+                var fetched = await _inventoryApiService.GetItemAsync(itemId);
+                if (fetched == null) return;
+                row = dtItemDetail.Rows.Add(
+                    fetched.Id,
+                    fetched.Barcode,
+                    fetched.ItemCategoryCode,
+                    fetched.Title,
+                    fetched.ItemKey,
+                    fetched.PriRate,
+                    fetched.SecRate,
+                    fetched.PrimaryUnit,
+                    fetched.SecondaryUnit,
+                    fetched.DefaultUnit,
+                    fetched.QtyInPack.HasValue ? (object)fetched.QtyInPack.Value : DBNull.Value,
+                    fetched.Alert ? "1" : "0",
+                    fetched.LowStockAlert.HasValue ? (object)fetched.LowStockAlert.Value : DBNull.Value,
+                    fetched.LowStockQty.HasValue ? (object)fetched.LowStockQty.Value : DBNull.Value,
+                    fetched.MinSalePrice.HasValue ? (object)fetched.MinSalePrice.Value : DBNull.Value,
+                    fetched.OpnStock.HasValue ? (object)fetched.OpnStock.Value : DBNull.Value,
+                    fetched.OpnRate.HasValue ? (object)fetched.OpnRate.Value : DBNull.Value,
+                    "0",
+                    fetched.MediaId,
+                    fetched.MediaUrl,
+                    fetched.ItemType == "Service" ? 1 : 0,
+                    fetched.RequireImei == true,
+                    fetched.BrandId,
+                    fetched.ModelName,
+                    fetched.Storage,
+                    fetched.Ram,
+                    fetched.Color,
+                    fetched.AdditionalUnits);
+            }
 
             _isPopulating = true;
             try
@@ -600,99 +633,98 @@ namespace ERP
             cmbQueryType.SelectedIndex = 0;
         }
 
+                private ERP.Controls.PaginationControl _pager;
+        private System.Windows.Forms.Timer _querySearchTimer;
+
+        private void EnsurePager()
+        {
+            if (_pager != null) return;
+            _pager = new ERP.Controls.PaginationControl();
+            _pager.PageChanged += async (s, e) =>
+            {
+                await LoadPagedQueryAsync(e.PageNumber, e.PageSize);
+            };
+            _pager.Attach(tbQuery, dgvQuery);
+        }
+
+        private async System.Threading.Tasks.Task LoadPagedQueryAsync(int pageNumber, int pageSize)
+        {
+            try
+            {
+                EnsurePager();
+                string search = txtQuerySearch?.Text?.Trim();
+                string catCode = cmbQueryCategory?.SelectedValue?.ToString();
+                if (catCode == "ALL") catCode = null;
+
+                int typeIdx = cmbQueryType?.SelectedIndex ?? 0;
+                string itemType = typeIdx == 1 ? "Product" : (typeIdx == 2 ? "Service" : null);
+
+                var result = await _inventoryApiService.GetPagedItemsAsync(pageNumber, pageSize, search: search, itemCategoryCode: catCode, itemType: itemType);
+
+                dgvQuery.Rows.Clear();
+
+                var catMap = new Dictionary<string, string>();
+                if (dtCatagory != null)
+                {
+                    foreach (DataRow dr in dtCatagory.Rows)
+                    {
+                        string c = dr["Code"]?.ToString();
+                        string t = dr["Title"]?.ToString();
+                        if (!string.IsNullOrEmpty(c)) catMap[c] = t;
+                    }
+                }
+
+                var unitMap = new Dictionary<string, string>();
+                if (dtUnits != null)
+                {
+                    foreach (DataRow dr in dtUnits.Rows)
+                    {
+                        string c = dr["Code"]?.ToString();
+                        string t = dr["Title"]?.ToString();
+                        if (!string.IsNullOrEmpty(c)) unitMap[c] = t;
+                    }
+                }
+
+                foreach (var item in result.Data)
+                {
+                    string catName = !string.IsNullOrEmpty(item.ItemCategoryCode) && catMap.TryGetValue(item.ItemCategoryCode, out var cn) ? cn : (item.ItemCategoryCode ?? "");
+                    string priUnitName = !string.IsNullOrEmpty(item.PrimaryUnit) && unitMap.TryGetValue(item.PrimaryUnit, out var pun) ? pun : (item.PrimaryUnit ?? "");
+                    string secUnitName = !string.IsNullOrEmpty(item.SecondaryUnit) && unitMap.TryGetValue(item.SecondaryUnit, out var sun) ? sun : (item.SecondaryUnit ?? "");
+                    string typeName = item.ItemType == "Service" ? "Service" : "Product";
+
+                    int r = dgvQuery.Rows.Add(
+                        item.Id,
+                        item.Barcode ?? "",
+                        catName,
+                        item.Title ?? "",
+                        item.ItemKey ?? "",
+                        typeName,
+                        item.PriRate.ToString("N2"),
+                        item.SecRate.ToString("N2"),
+                        priUnitName,
+                        secUnitName,
+                        item.MinSalePrice.HasValue ? item.MinSalePrice.Value.ToString("N2") : "",
+                        item.OpnStock.HasValue ? item.OpnStock.Value.ToString("N2") : ""
+                    );
+                    dgvQuery.Rows[r].Tag = item.Id;
+                }
+
+                _pager.SetPagination(result.CurrentPage, result.TotalPages, result.TotalCount, result.PageSize);
+
+                if (lblQueryCount != null)
+                    lblQueryCount.Text = $"Found: {result.TotalCount} products";
+                if (lblTotalProductsBadge != null)
+                    lblTotalProductsBadge.Text = $"Total Products: {result.TotalCount}";
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to load products: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+        }
+
         private void FillQueryGrid()
         {
-            if (dtItemDetail == null) return;
-
-            string searchText = txtQuerySearch?.Text?.Trim()?.ToLower() ?? "";
-            string catFilter = cmbQueryCategory?.SelectedValue?.ToString() ?? "";
-            int typeFilter = cmbQueryType?.SelectedIndex ?? 0;
-
-            dgvQuery.Rows.Clear();
-
-            var catMap = new Dictionary<string, string>();
-            if (dtCatagory != null)
-            {
-                foreach (DataRow dr in dtCatagory.Rows)
-                {
-                    string code = dr["Code"]?.ToString();
-                    string title = dr["Title"]?.ToString();
-                    if (!string.IsNullOrEmpty(code))
-                        catMap[code] = title;
-                }
-            }
-
-            var unitMap = new Dictionary<string, string>();
-            if (dtUnits != null)
-            {
-                foreach (DataRow dr in dtUnits.Rows)
-                {
-                    string code = dr["Code"]?.ToString();
-                    string title = dr["Title"]?.ToString();
-                    if (!string.IsNullOrEmpty(code))
-                        unitMap[code] = title;
-                }
-            }
-
-            int count = 0;
-            foreach (DataRow row in dtItemDetail.Rows)
-            {
-                string id = row["Id"]?.ToString();
-                string barcode = row["Barcode"]?.ToString() ?? "";
-                string catCode = row["fkitemcatagory"]?.ToString() ?? "";
-                string title = row["Title"]?.ToString() ?? "";
-                string key = row["ItemKey"]?.ToString() ?? "";
-                int itemType = row["ItemType"] != DBNull.Value ? Convert.ToInt32(row["ItemType"]) : 0;
-                decimal priRate = row["PriRate"] != DBNull.Value ? Convert.ToDecimal(row["PriRate"]) : 0;
-                decimal secRate = row["SecRate"] != DBNull.Value ? Convert.ToDecimal(row["SecRate"]) : 0;
-                string priUnit = row["PrimaryUnit"]?.ToString() ?? "";
-                string secUnit = row["SecondaryUnit"]?.ToString() ?? "";
-                decimal? minPrice = row["MinSalePrice"] != DBNull.Value ? (decimal?)Convert.ToDecimal(row["MinSalePrice"]) : null;
-                decimal? opnStock = row["OpnStock"] != DBNull.Value ? (decimal?)Convert.ToDecimal(row["OpnStock"]) : null;
-
-                if (!string.IsNullOrEmpty(catFilter) && catFilter != "ALL" && catCode != catFilter)
-                    continue;
-
-                if (typeFilter == 1 && itemType != 0)
-                    continue;
-                if (typeFilter == 2 && itemType != 1)
-                    continue;
-
-                if (!string.IsNullOrEmpty(searchText))
-                {
-                    bool match = title.ToLower().Contains(searchText) ||
-                                 barcode.ToLower().Contains(searchText) ||
-                                 key.ToLower().Contains(searchText);
-                    if (!match) continue;
-                }
-
-                string catName = catMap.TryGetValue(catCode, out var cName) ? cName : catCode;
-                string priUnitName = unitMap.TryGetValue(priUnit, out var puName) ? puName : priUnit;
-                string secUnitName = unitMap.TryGetValue(secUnit, out var suName) ? suName : secUnit;
-                string typeName = itemType == 1 ? "Service" : "Product";
-
-                int r = dgvQuery.Rows.Add(
-                    id,
-                    barcode,
-                    catName,
-                    title,
-                    key,
-                    typeName,
-                    priRate.ToString("N2"),
-                    secRate.ToString("N2"),
-                    priUnitName,
-                    secUnitName,
-                    minPrice.HasValue ? minPrice.Value.ToString("N2") : "",
-                    opnStock.HasValue ? opnStock.Value.ToString("N2") : ""
-                );
-                dgvQuery.Rows[r].Tag = id;
-                count++;
-            }
-
-            if (lblQueryCount != null)
-                lblQueryCount.Text = $"Found: {count} products";
-            if (lblTotalProductsBadge != null)
-                lblTotalProductsBadge.Text = $"Total Products: {dtItemDetail.Rows.Count}";
+            _ = LoadPagedQueryAsync(1, _pager?.PageSize ?? 20);
         }
 
         private async void dgvQuery_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
@@ -720,7 +752,17 @@ namespace ERP
 
         private void txtQuerySearch_TextChanged(object sender, EventArgs e)
         {
-            FillQueryGrid();
+            if (_querySearchTimer == null)
+            {
+                _querySearchTimer = new System.Windows.Forms.Timer { Interval = 350 };
+                _querySearchTimer.Tick += async (s, ev) =>
+                {
+                    _querySearchTimer.Stop();
+                    await LoadPagedQueryAsync(1, _pager?.PageSize ?? 20);
+                };
+            }
+            _querySearchTimer.Stop();
+            _querySearchTimer.Start();
         }
 
         private void txtQuerySearch_KeyDown(object sender, KeyEventArgs e)
@@ -926,3 +968,4 @@ namespace ERP
         }
     }
 }
+

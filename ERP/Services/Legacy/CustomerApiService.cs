@@ -25,6 +25,46 @@ namespace ERP.Services.Legacy
             }
         }
 
+        public async Task<CustomerPageResult> GetPagedListAsync(int pageNumber = 1, int pageSize = 20, string search = null, string customerCategoryId = null, bool? active = null)
+        {
+            using (var client = CreateClient())
+            {
+                var queryParams = new List<string>
+                {
+                    $"pageNumber={pageNumber}",
+                    $"pageSize={pageSize}"
+                };
+
+                if (!string.IsNullOrWhiteSpace(search))
+                    queryParams.Add($"search={Uri.EscapeDataString(search.Trim())}");
+
+                if (!string.IsNullOrWhiteSpace(customerCategoryId))
+                    queryParams.Add($"customerCategoryId={Uri.EscapeDataString(customerCategoryId.Trim())}");
+
+                if (active.HasValue)
+                    queryParams.Add($"active={active.Value}");
+
+                string url = Endpoint + "/paged?" + string.Join("&", queryParams);
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<CustomerPagedBody>>(json);
+                if (payload?.Body?.Data != null)
+                {
+                    return new CustomerPageResult
+                    {
+                        Data = payload.Body.Data,
+                        CurrentPage = payload.Body.Metadata?.CurrentPage ?? pageNumber,
+                        TotalPages = payload.Body.Metadata?.TotalPages ?? 1,
+                        TotalCount = payload.Body.Metadata?.TotalCount ?? payload.Body.Data.Count,
+                        PageSize = payload.Body.Metadata?.PageSize ?? pageSize
+                    };
+                }
+                return new CustomerPageResult { CurrentPage = pageNumber, PageSize = pageSize };
+            }
+        }
+
         public async Task UpsertAsync(string account, CustomerUpsertApiRequest request)
         {
             using (var client = CreateClient())
@@ -256,5 +296,37 @@ namespace ERP.Services.Legacy
         [JsonProperty("supplyItems")]
         public List<CustomerSupplyItemDto> SupplyItems { get; set; } = new List<CustomerSupplyItemDto>();
     }
-}
 
+    internal class CustomerPagedBody
+    {
+        [JsonProperty("data")]
+        public List<CustomerDto> Data { get; set; }
+
+        [JsonProperty("metadata")]
+        public CustomerPageMetadata Metadata { get; set; }
+    }
+
+    internal class CustomerPageMetadata
+    {
+        [JsonProperty("currentPage")]
+        public int CurrentPage { get; set; }
+
+        [JsonProperty("totalPages")]
+        public int TotalPages { get; set; }
+
+        [JsonProperty("totalCount")]
+        public int TotalCount { get; set; }
+
+        [JsonProperty("pageSize")]
+        public int PageSize { get; set; }
+    }
+
+    internal class CustomerPageResult
+    {
+        public List<CustomerDto> Data { get; set; } = new List<CustomerDto>();
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 20;
+    }
+}
