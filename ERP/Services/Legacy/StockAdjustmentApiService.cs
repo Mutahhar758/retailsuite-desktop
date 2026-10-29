@@ -12,6 +12,40 @@ namespace ERP.Services.Legacy
     {
         private const string Endpoint = "/api/stockadjustments";
 
+        public async Task<StockAdjustmentPageResult> GetPagedListAsync(
+            string fromDate = "", string toDate = "",
+            string itemCategoryCode = "", string voucherNo = "",
+            int pageNumber = 1, int pageSize = 20)
+        {
+            var qs = new List<string>();
+            if (!string.IsNullOrWhiteSpace(fromDate)) qs.Add("fromDate=" + Uri.EscapeDataString(fromDate));
+            if (!string.IsNullOrWhiteSpace(toDate)) qs.Add("toDate=" + Uri.EscapeDataString(toDate));
+            if (!string.IsNullOrWhiteSpace(itemCategoryCode)) qs.Add("itemCategoryCode=" + Uri.EscapeDataString(itemCategoryCode));
+            if (!string.IsNullOrWhiteSpace(voucherNo)) qs.Add("voucherNo=" + Uri.EscapeDataString(voucherNo));
+            if (pageNumber > 0) qs.Add("pageNumber=" + pageNumber);
+            if (pageSize > 0) qs.Add("pageSize=" + pageSize);
+
+            var url = Endpoint + "/paged" + (qs.Count > 0 ? "?" + string.Join("&", qs) : "");
+
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<StockAdjustmentPagedBody>>(json);
+                var body = payload?.Body;
+                var meta = body?.Metadata;
+                return new StockAdjustmentPageResult
+                {
+                    Data = body?.Data ?? new List<StockAdjustmentDto>(),
+                    CurrentPage = meta?.CurrentPage ?? pageNumber,
+                    TotalPages = meta?.TotalPages ?? 1,
+                    TotalCount = meta?.TotalCount ?? 0,
+                    PageSize = meta?.PageSize ?? pageSize
+                };
+            }
+        }
+
         public async Task<List<StockAdjustmentDto>> GetListAsync(
             string fromDate = "", string toDate = "",
             string itemCategoryCode = "", string voucherNo = "")
@@ -86,6 +120,39 @@ namespace ERP.Services.Legacy
                 await EnsureSuccessWithServerMessageAsync(response);
             }
         }
+    }
+
+    internal class StockAdjustmentPagedBody
+    {
+        [JsonProperty("data")]
+        public List<StockAdjustmentDto> Data { get; set; }
+
+        [JsonProperty("metadata")]
+        public StockAdjustmentPageMetadata Metadata { get; set; }
+    }
+
+    internal class StockAdjustmentPageMetadata
+    {
+        [JsonProperty("currentPage")]
+        public int CurrentPage { get; set; }
+
+        [JsonProperty("totalPages")]
+        public int TotalPages { get; set; }
+
+        [JsonProperty("totalCount")]
+        public int TotalCount { get; set; }
+
+        [JsonProperty("pageSize")]
+        public int PageSize { get; set; }
+    }
+
+    internal class StockAdjustmentPageResult
+    {
+        public List<StockAdjustmentDto> Data { get; set; } = new List<StockAdjustmentDto>();
+        public int CurrentPage { get; set; } = 1;
+        public int TotalPages { get; set; } = 1;
+        public int TotalCount { get; set; }
+        public int PageSize { get; set; } = 20;
     }
 
     internal class StockAdjustmentDto

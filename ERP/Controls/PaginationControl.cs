@@ -5,8 +5,8 @@ using System.Windows.Forms;
 namespace ERP.Controls
 {
     /// <summary>
-    /// Compact server-side pagination bar (first / previous / next / last, page-size selector).
-    /// Code-only control (no designer) so it can be dropped under any DataGridView.
+    /// Compact, responsive server-side pagination bar.
+    /// Code-only control (no designer) that auto-adapts cleanly to wide tabs and narrow split panels.
     /// </summary>
     public class PaginationControl : UserControl
     {
@@ -17,6 +17,7 @@ namespace ERP.Controls
         private readonly Label _lblInfo = new Label();
         private readonly Label _lblSize = new Label();
         private readonly ComboBox _cmbPageSize = new ComboBox();
+        private readonly ToolTip _toolTip = new ToolTip();
 
         private Control _attachedParent;
         private DataGridView _attachedGrid;
@@ -31,41 +32,29 @@ namespace ERP.Controls
 
         public PaginationControl()
         {
-            Height = 32;
+            Height = 30;
             Dock = DockStyle.Bottom;
             BackColor = Color.FromArgb(248, 250, 252);
             Font = new Font("Segoe UI", 9F, FontStyle.Regular);
 
-            var panel = new FlowLayoutPanel
-            {
-                Dock = DockStyle.Fill,
-                FlowDirection = FlowDirection.LeftToRight,
-                WrapContents = false,
-                Padding = new Padding(6, 3, 6, 3)
-            };
-
-            ConfigureButton(_btnFirst, "|<", "First page");
+            ConfigureButton(_btnFirst, "«", "First page");
             ConfigureButton(_btnPrev, "<", "Previous page");
             ConfigureButton(_btnNext, ">", "Next page");
-            ConfigureButton(_btnLast, ">|", "Last page");
+            ConfigureButton(_btnLast, "»", "Last page");
 
             _lblInfo.AutoSize = false;
-            _lblInfo.Width = 260;
-            _lblInfo.Height = 24;
-            _lblInfo.Margin = new Padding(4, 3, 4, 2);
             _lblInfo.TextAlign = ContentAlignment.MiddleCenter;
+            _lblInfo.ForeColor = Color.FromArgb(51, 65, 85);
+            _lblInfo.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
 
             _lblSize.Text = "Rows:";
             _lblSize.AutoSize = false;
-            _lblSize.Width = 42;
-            _lblSize.Height = 24;
-            _lblSize.Margin = new Padding(8, 3, 2, 2);
             _lblSize.TextAlign = ContentAlignment.MiddleRight;
+            _lblSize.ForeColor = Color.FromArgb(100, 116, 139);
+            _lblSize.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
 
             _cmbPageSize.DropDownStyle = ComboBoxStyle.DropDownList;
-            _cmbPageSize.Width = 60;
-            _cmbPageSize.Height = 24;
-            _cmbPageSize.Margin = new Padding(2, 2, 2, 2);
+            _cmbPageSize.Font = new Font("Segoe UI", 8.5F, FontStyle.Regular);
             _cmbPageSize.Items.AddRange(new object[] { 10, 20, 50, 100, 200 });
             _cmbPageSize.SelectedItem = PageSize;
             _cmbPageSize.SelectedIndexChanged += (s, e) =>
@@ -80,9 +69,92 @@ namespace ERP.Controls
             _btnNext.Click += (s, e) => Raise(CurrentPage + 1);
             _btnLast.Click += (s, e) => Raise(TotalPages);
 
-            panel.Controls.AddRange(new Control[] { _btnFirst, _btnPrev, _lblInfo, _btnNext, _btnLast, _lblSize, _cmbPageSize });
-            Controls.Add(panel);
+            Controls.AddRange(new Control[] { _btnFirst, _btnPrev, _btnNext, _btnLast, _lblInfo, _lblSize, _cmbPageSize });
             UpdateUi();
+        }
+
+        protected override void OnPaint(PaintEventArgs e)
+        {
+            base.OnPaint(e);
+            using (var pen = new Pen(Color.FromArgb(226, 232, 240)))
+            {
+                e.Graphics.DrawLine(pen, 0, 0, Width, 0);
+            }
+        }
+
+        protected override void OnLayout(LayoutEventArgs levent)
+        {
+            base.OnLayout(levent);
+            LayoutControls();
+        }
+
+        protected override void OnResize(EventArgs e)
+        {
+            base.OnResize(e);
+            LayoutControls();
+        }
+
+        private void LayoutControls()
+        {
+            if (_btnFirst == null || _lblInfo == null || _cmbPageSize == null) return;
+
+            int totalWidth = ClientSize.Width;
+            int totalHeight = ClientSize.Height;
+            if (totalWidth <= 0 || totalHeight <= 0) return;
+
+            int btnHeight = 22;
+            int btnWidth = 32;
+            int y = Math.Max(0, (totalHeight - btnHeight) / 2);
+
+            // Left cluster: [|<] [<] [>] [>|]
+            int x = 4;
+            _btnFirst.SetBounds(x, y, btnWidth, btnHeight);
+            x += btnWidth + 2;
+
+            _btnPrev.SetBounds(x, y, btnWidth, btnHeight);
+            x += btnWidth + 2;
+
+            _btnNext.SetBounds(x, y, btnWidth, btnHeight);
+            x += btnWidth + 2;
+
+            _btnLast.SetBounds(x, y, btnWidth, btnHeight);
+            x += btnWidth + 4;
+
+            // Right cluster: [Rows:] [cmbPageSize]
+            int rightX = totalWidth - 4;
+            int comboWidth = 52;
+            int lblSizeWidth = 38;
+
+            if (rightX - comboWidth > x + 30)
+            {
+                _cmbPageSize.Visible = true;
+                rightX -= comboWidth;
+                _cmbPageSize.SetBounds(rightX, y, comboWidth, btnHeight);
+                rightX -= 3;
+
+                if (rightX - lblSizeWidth > x + 40)
+                {
+                    _lblSize.Visible = true;
+                    rightX -= lblSizeWidth;
+                    _lblSize.SetBounds(rightX, y, lblSizeWidth, btnHeight);
+                    rightX -= 3;
+                }
+                else
+                {
+                    _lblSize.Visible = false;
+                }
+            }
+            else
+            {
+                _cmbPageSize.Visible = false;
+                _lblSize.Visible = false;
+            }
+
+            // Middle: info label
+            int infoWidth = Math.Max(0, rightX - x);
+            _lblInfo.SetBounds(x, y, infoWidth, btnHeight);
+
+            UpdateUiText();
         }
 
         protected override void OnParentChanged(EventArgs e)
@@ -180,27 +252,49 @@ namespace ERP.Controls
             PageChanged?.Invoke(this, new PageChangedEventArgs(page, PageSize));
         }
 
+        private void UpdateUiText()
+        {
+            bool compact = ClientSize.Width < 460;
+            if (TotalCount == 0)
+            {
+                _lblInfo.Text = compact ? "No records" : "No records found";
+            }
+            else
+            {
+                _lblInfo.Text = compact
+                    ? $"{CurrentPage}/{TotalPages} ({TotalCount})"
+                    : $"Page {CurrentPage} of {TotalPages}  ({TotalCount} records)";
+            }
+
+            string fullTip = TotalCount == 0
+                ? "No records"
+                : $"Page {CurrentPage} of {TotalPages} ({TotalCount} records)";
+            _toolTip.SetToolTip(_lblInfo, fullTip);
+        }
+
         private void UpdateUi()
         {
-            _lblInfo.Text = TotalCount == 0
-                ? "No records"
-                : $"Page {CurrentPage} of {TotalPages}  ({TotalCount} records)";
+            UpdateUiText();
             _btnFirst.Enabled = _btnPrev.Enabled = CurrentPage > 1;
             _btnNext.Enabled = _btnLast.Enabled = CurrentPage < TotalPages;
         }
 
-        private static void ConfigureButton(Button b, string text, string tip)
+        private void ConfigureButton(Button b, string text, string tip)
         {
             b.Text = text;
-            b.Width = 34;
-            b.Height = 24;
-            b.Margin = new Padding(2, 1, 2, 1);
+            b.Width = 32;
+            b.Height = 22;
+            b.Margin = new Padding(0);
+            b.Padding = Padding.Empty;
             b.FlatStyle = FlatStyle.Flat;
+            b.FlatAppearance.BorderSize = 1;
             b.FlatAppearance.BorderColor = Color.FromArgb(203, 213, 225);
+            b.FlatAppearance.MouseOverBackColor = Color.FromArgb(241, 245, 249);
             b.BackColor = Color.White;
             b.Cursor = Cursors.Hand;
             b.TabStop = false;
-            new ToolTip().SetToolTip(b, tip);
+            b.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+            _toolTip.SetToolTip(b, tip);
         }
     }
 

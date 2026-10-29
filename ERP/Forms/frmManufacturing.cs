@@ -71,21 +71,57 @@ namespace ERP.Forms
             }
         }
 
-        private async Task LoadVouchersAsync()
+        private ERP.Controls.PaginationControl _pager;
+        private string _qFrom = "", _qTo = "", _qStatus = "", _qSearch = "";
+        private int _qPageSize = 20;
+
+        private void EnsurePager()
+        {
+            if (_pager != null) return;
+            _pager = new ERP.Controls.PaginationControl();
+            _pager.PageChanged += async (s, e) =>
+            {
+                try
+                {
+                    await LoadVouchersAsync(e.PageNumber, e.PageSize);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Error loading vouchers: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            };
+            _pager.Attach(splitContainer1.Panel1, dgvProductionList);
+        }
+
+        private async Task LoadVouchersAsync(int pageNumber = 1, int pageSize = 0)
         {
             try
             {
+                EnsurePager();
                 Cursor = Cursors.WaitCursor;
                 string status = cmbStatusFilter.SelectedItem?.ToString() ?? "All";
                 if (status == "All") status = "";
 
-                _allVouchers = await _manufacturingApiService.GetListAsync(
-                    fromDate: dtpFrom.Value.ToString("yyyy-MM-dd"),
-                    toDate: dtpTo.Value.ToString("yyyy-MM-dd"),
-                    status: status
-                ) ?? new List<ProductionMasterDto>();
+                _qFrom = dtpFrom.Value.ToString("yyyy-MM-dd");
+                _qTo = dtpTo.Value.ToString("yyyy-MM-dd");
+                _qStatus = status;
+                _qSearch = (txtSearch.Text ?? "").Trim();
+                if (pageSize > 0) _qPageSize = pageSize;
 
-                ApplyFilter();
+                var page = await _manufacturingApiService.GetPagedListAsync(
+                    fromDate: _qFrom,
+                    toDate: _qTo,
+                    status: _qStatus,
+                    voucherNo: _qSearch,
+                    pageNumber: pageNumber,
+                    pageSize: _qPageSize
+                );
+
+                _allVouchers = page.Data;
+                _pager.SetPagination(page.CurrentPage, page.TotalPages, page.TotalCount, page.PageSize);
+                _qPageSize = page.PageSize;
+
+                dgvProductionList.DataSource = _allVouchers;
             }
             catch (Exception ex)
             {
@@ -112,7 +148,7 @@ namespace ERP.Forms
 
         private async void btnFilter_Click(object sender, EventArgs e)
         {
-            await LoadVouchersAsync();
+            await LoadVouchersAsync(1, _qPageSize);
         }
 
         private void txtSearch_TextChanged(object sender, EventArgs e)
