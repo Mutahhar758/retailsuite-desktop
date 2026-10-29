@@ -32,8 +32,175 @@ namespace ERP
             _apiService = new JournalVoucherApiService();
             _chartOfAccountApiService = new ChartOfAccountApiService();
             _narrationApiService = new NarrationApiService();
-            dgvJournal.Rows.Add();
             UserInfo.ApplyFormPermissions(this, AppResource.JournalVouchers);
+            dgvJournal.Rows.Add();
+            EnableDoubleBuffering(dgvJournal);
+            EnableDoubleBuffering(dgvQuery);
+            dgvJournal.Enter += dgvJournal_Enter;
+            this.Shown += frmJournalVoucher_Shown;
+            SetupButtonFocusHighlights();
+        }
+
+        private void SetupButtonFocusHighlights()
+        {
+            var buttons = new Button[] { btnSave, btnNew, btnCopyAsNew, btnDelete, btnClose };
+            foreach (var btn in buttons)
+            {
+                if (btn == null) continue;
+                btn.Enter += (s, e) => btn.Invalidate();
+                btn.Leave += (s, e) => btn.Invalidate();
+                btn.Paint += (s, e) =>
+                {
+                    if (btn.Focused)
+                    {
+                        var rect = btn.ClientRectangle;
+                        using (var pen = new Pen(Color.FromArgb(59, 130, 246), 2))
+                        {
+                            e.Graphics.DrawRectangle(pen, rect.X + 1, rect.Y + 1, rect.Width - 3, rect.Height - 3);
+                        }
+                    }
+                };
+            }
+        }
+
+        private void frmJournalVoucher_Shown(object sender, EventArgs e)
+        {
+            try
+            {
+                dtpDate.Focus();
+            }
+            catch { }
+        }
+
+        private void FocusGridFirstRow()
+        {
+            try
+            {
+                if (tabDetailQuery.SelectedTab != tabpgDetail)
+                    tabDetailQuery.SelectedTab = tabpgDetail;
+
+                if (dgvJournal.Rows.Count == 0)
+                {
+                    int r = dgvJournal.Rows.Add();
+                    ClearRowValues(r);
+                }
+
+                int targetRow = dgvJournal.CurrentCell != null ? dgvJournal.CurrentCell.RowIndex : 0;
+                if (targetRow < 0 || targetRow >= dgvJournal.Rows.Count) targetRow = 0;
+
+                dgvJournal.Focus();
+                dgvJournal.CurrentCell = dgvJournal[clnDrAccount.Index, targetRow];
+
+                BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        if (dgvJournal.Rows.Count > 0 && clnDrAccount != null)
+                        {
+                            int r = dgvJournal.CurrentCell != null ? dgvJournal.CurrentCell.RowIndex : 0;
+                            if (r < 0 || r >= dgvJournal.Rows.Count) r = 0;
+                            dgvJournal.CurrentCell = dgvJournal[clnDrAccount.Index, r];
+                            dgvJournal.BeginEdit(true);
+                            if (dgvJournal.EditingControl is ComboBox cb)
+                            {
+                                cb.Focus();
+                            }
+                        }
+                    }
+                    catch { }
+                }));
+            }
+            catch { }
+        }
+
+        private void dtpDate_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                e.Handled = true;
+                FocusGridFirstRow();
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                btnClose.PerformClick();
+                return true;
+            }
+
+            if ((keyData == Keys.Enter || keyData == Keys.Tab) && !dgvJournal.ContainsFocus)
+            {
+                if (dtpDate.Focused || dtpDate.ContainsFocus || (ActiveControl != null && (ActiveControl == dtpDate || ActiveControl.Parent == dtpDate)))
+                {
+                    FocusGridFirstRow();
+                    return true;
+                }
+
+                if (cmbNarration.Focused || cmbNarration.ContainsFocus || ActiveControl == cmbNarration)
+                {
+                    FocusGridFirstRow();
+                    return true;
+                }
+            }
+
+            if ((keyData == Keys.Enter || keyData == Keys.Tab) && dgvJournal.ContainsFocus)
+            {
+                if (HandleGridEnterNavigation())
+                    return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private static void EnableDoubleBuffering(Control control)
+        {
+            try
+            {
+                typeof(Control).InvokeMember(
+                    "DoubleBuffered",
+                    System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                    null,
+                    control,
+                    new object[] { true });
+            }
+            catch { }
+        }
+
+        private void dgvJournal_Enter(object sender, EventArgs e)
+        {
+            if (IsHandleCreated && dgvJournal.Rows.Count > 0 && clnDrAccount != null)
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        if (dgvJournal.Rows.Count > 0 && clnDrAccount != null)
+                        {
+                            int row = dgvJournal.CurrentCell != null ? dgvJournal.CurrentCell.RowIndex : 0;
+                            if (row < 0 || row >= dgvJournal.Rows.Count) row = 0;
+
+                            if (dgvJournal.CurrentCell == null || dgvJournal.CurrentCell.ColumnIndex == clnSeq.Index)
+                            {
+                                dgvJournal.CurrentCell = dgvJournal[clnDrAccount.Index, row];
+                            }
+
+                            if (!dgvJournal.IsCurrentCellInEditMode)
+                            {
+                                dgvJournal.BeginEdit(true);
+                            }
+
+                            if (dgvJournal.EditingControl is ComboBox cb)
+                            {
+                                cb.Focus();
+                            }
+                        }
+                    }
+                    catch { }
+                }));
+            }
         }
 
         async System.Threading.Tasks.Task ShowDrBalAsync(string title, string account)
@@ -190,13 +357,29 @@ namespace ERP
 
         void AllowNewRow()
         {
-            if (dgvJournal.CurrentRow.Index == dgvJournal.Rows[dgvJournal.Rows.Count - 1].Index)
+            if (dgvJournal.CurrentRow != null && dgvJournal.CurrentRow.Index == dgvJournal.Rows[dgvJournal.Rows.Count - 1].Index)
             {
                 if (dgvJournal.CurrentRow.Cells[clnDrAccount.Index].Value != null &&
                     dgvJournal.CurrentRow.Cells[clnCrAccount.Index].Value != null &&
                     dgvJournal.CurrentRow.Cells[clnAmount.Index].Value != null)
-                    dgvJournal.Rows.Add();
+                {
+                    int next = dgvJournal.Rows.Add();
+                    ClearRowValues(next);
+                }
             }
+        }
+
+        private void ClearRowValues(int rowIdx)
+        {
+            if (rowIdx < 0 || rowIdx >= dgvJournal.Rows.Count) return;
+            var row = dgvJournal.Rows[rowIdx];
+            row.Cells[clnDrAccount.Index].Value = null;
+            row.Cells[clnCrAccount.Index].Value = null;
+            row.Cells[clnAmount.Index].Value = null;
+            row.Cells[clnRemarks.Index].Value = null;
+            int seq = 0;
+            try { seq = (int)(from DataGridViewRow r in dgvJournal.Rows where r.Cells[clnSeq.Index].Value != null && r.Cells[clnSeq.Index].Value.ToString() != "" select int.Parse(r.Cells[clnSeq.Index].Value.ToString())).Max(); } catch { }
+            row.Cells[clnSeq.Index].Value = (seq + 1).ToString();
         }
 
         private async void frmReceipt_Load(object sender, EventArgs e)
@@ -208,6 +391,10 @@ namespace ERP
                 if (_queryList.Count > 0 && txtVoucherNo.Text == "")
                     await FillJournalAsync(_queryList[VoucherIndex].VoucherNo);
                 FLogIn = false;
+                BeginInvoke(new Action(() =>
+                {
+                    try { dtpDate.Focus(); } catch { }
+                }));
             }
             catch (Exception ex)
             {
@@ -220,15 +407,16 @@ namespace ERP
             if (e.KeyCode == Keys.Enter)
             {
                 e.SuppressKeyPress = true;
-                SendKeys.Send("{tab}");
+                e.Handled = true;
+                HandleGridEnterNavigation();
             }
         }
 
         private void dataGridView1_CellEndEdit(object sender, DataGridViewCellEventArgs e)
         {
             AllowNewRow();
-            resetRow = true;
             currentRow = e.RowIndex;
+            CalcTotAmount();
         }
 
         private void dataGridView1_SelectionChanged(object sender, EventArgs e)
@@ -246,16 +434,16 @@ namespace ERP
             try
             {
                 Tot = (from DataGridViewRow row in dgvJournal.Rows
-                       where row.Cells[clnAmount.Index].Value != null
+                       where row.Cells[clnAmount.Index].Value != null && !string.IsNullOrWhiteSpace(row.Cells[clnAmount.Index].Value.ToString())
                        select decimal.Parse(row.Cells[clnAmount.Index].Value.ToString())).Sum();
             }
             catch { }
-            lblTotAmount.Text = Tot.ToString();
+            lblTotAmount.Text = Tot.ToString("N2");
         }
 
         private void dataGridView1_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
         {
-            if (dgvJournal.CurrentCellAddress.X == clnDrAccount.DisplayIndex)
+            if (dgvJournal.CurrentCell != null && (dgvJournal.CurrentCellAddress.X == clnDrAccount.DisplayIndex || dgvJournal.CurrentCell.ColumnIndex == clnDrAccount.Index))
             {
                 ComboBox cb = e.Control as ComboBox;
                 if (cb != null)
@@ -263,10 +451,24 @@ namespace ERP
                     cb.DropDownStyle = ComboBoxStyle.DropDown;
                     cb.AutoCompleteSource = AutoCompleteSource.ListItems;
                     cb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    cb.SelectedIndexChanged -= new EventHandler(cbDr_SelectedIndexChanged);
+                    cb.SelectionChangeCommitted -= new EventHandler(cbDr_SelectionChangeCommitted);
+
+                    var cellVal = dgvJournal.CurrentCell.Value;
+                    if (cellVal == null || string.IsNullOrWhiteSpace(cellVal.ToString()))
+                    {
+                        try { cb.SelectedIndex = -1; cb.Text = ""; } catch { }
+                    }
+                    else
+                    {
+                        try { cb.SelectedValue = cellVal.ToString(); } catch { }
+                    }
+
                     cb.SelectedIndexChanged += new EventHandler(cbDr_SelectedIndexChanged);
+                    cb.SelectionChangeCommitted += new EventHandler(cbDr_SelectionChangeCommitted);
                 }
             }
-            if (dgvJournal.CurrentCellAddress.X == clnCrAccount.DisplayIndex)
+            else if (dgvJournal.CurrentCell != null && (dgvJournal.CurrentCellAddress.X == clnCrAccount.DisplayIndex || dgvJournal.CurrentCell.ColumnIndex == clnCrAccount.Index))
             {
                 ComboBox cb = e.Control as ComboBox;
                 if (cb != null)
@@ -274,14 +476,29 @@ namespace ERP
                     cb.DropDownStyle = ComboBoxStyle.DropDown;
                     cb.AutoCompleteSource = AutoCompleteSource.ListItems;
                     cb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                    cb.SelectedIndexChanged -= new EventHandler(cbCr_SelectedIndexChanged);
+                    cb.SelectionChangeCommitted -= new EventHandler(cbCr_SelectionChangeCommitted);
+
+                    var cellVal = dgvJournal.CurrentCell.Value;
+                    if (cellVal == null || string.IsNullOrWhiteSpace(cellVal.ToString()))
+                    {
+                        try { cb.SelectedIndex = -1; cb.Text = ""; } catch { }
+                    }
+                    else
+                    {
+                        try { cb.SelectedValue = cellVal.ToString(); } catch { }
+                    }
+
                     cb.SelectedIndexChanged += new EventHandler(cbCr_SelectedIndexChanged);
+                    cb.SelectionChangeCommitted += new EventHandler(cbCr_SelectionChangeCommitted);
                 }
             }
-            if (dgvJournal.CurrentCell.ColumnIndex == clnAmount.Index)
+            else if (dgvJournal.CurrentCell != null && dgvJournal.CurrentCell.ColumnIndex == clnAmount.Index)
             {
                 TextBox tb = e.Control as TextBox;
                 if (tb != null && e.Control.Text != null)
                 {
+                    tb.KeyPress -= new KeyPressEventHandler(tb_KeyPress);
                     tb.KeyPress += new KeyPressEventHandler(tb_KeyPress);
                 }
             }
@@ -289,26 +506,232 @@ namespace ERP
 
         void cbDr_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (dgvJournal.CurrentCell.ColumnIndex == clnDrAccount.Index)
-                if ((sender as ComboBox).SelectedIndex != -1)
+            if (dgvJournal.CurrentCell != null && dgvJournal.CurrentCell.ColumnIndex == clnDrAccount.Index)
+            {
+                if (sender is ComboBox cb && cb.SelectedIndex != -1)
                 {
-                    DataRowView dr = (DataRowView)(sender as ComboBox).SelectedItem;
-                    _ = ShowDrBalAsync(dr[1].ToString(), dr[0].ToString());
-                    if ((sender as ComboBox).SelectedValue == null)
-                        (sender as ComboBox).SelectedValue = dr[0].ToString();
+                    DataRowView dr = cb.SelectedItem as DataRowView;
+                    if (dr != null)
+                    {
+                        if (cb.SelectedValue == null) cb.SelectedValue = dr["Account"].ToString();
+                        int rowInd = dgvJournal.CurrentCellAddress.Y;
+                        if (rowInd >= 0 && rowInd < dgvJournal.Rows.Count)
+                        {
+                            dgvJournal[clnDrAccount.Index, rowInd].Value = dr["Account"].ToString();
+                        }
+                        _ = ShowDrBalAsync(dr["Title"].ToString(), dr["Account"].ToString());
+                    }
                 }
+            }
+        }
+
+        void cbDr_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (dgvJournal.CurrentCell != null && dgvJournal.CurrentCell.ColumnIndex == clnDrAccount.Index)
+            {
+                if (sender is ComboBox cb && cb.SelectedItem is DataRowView drv)
+                {
+                    int rowInd = dgvJournal.CurrentCellAddress.Y;
+                    if (rowInd >= 0 && rowInd < dgvJournal.Rows.Count)
+                    {
+                        string acct = drv["Account"].ToString();
+                        dgvJournal[clnDrAccount.Index, rowInd].Value = acct;
+                        _ = ShowDrBalAsync(drv["Title"].ToString(), acct);
+                    }
+                }
+            }
         }
 
         void cbCr_SelectedIndexChanged(object sender, EventArgs e)
         {
-            if (dgvJournal.CurrentCell.ColumnIndex == clnCrAccount.Index)
-                if ((sender as ComboBox).SelectedIndex != -1)
+            if (dgvJournal.CurrentCell != null && dgvJournal.CurrentCell.ColumnIndex == clnCrAccount.Index)
+            {
+                if (sender is ComboBox cb && cb.SelectedIndex != -1)
                 {
-                    DataRowView dr = (DataRowView)(sender as ComboBox).SelectedItem;
-                    _ = ShowCrBalAsync(dr[1].ToString(), dr[0].ToString());
-                    if ((sender as ComboBox).SelectedValue == null)
-                        (sender as ComboBox).SelectedValue = dr[0].ToString();
+                    DataRowView dr = cb.SelectedItem as DataRowView;
+                    if (dr != null)
+                    {
+                        if (cb.SelectedValue == null) cb.SelectedValue = dr["Account"].ToString();
+                        int rowInd = dgvJournal.CurrentCellAddress.Y;
+                        if (rowInd >= 0 && rowInd < dgvJournal.Rows.Count)
+                        {
+                            dgvJournal[clnCrAccount.Index, rowInd].Value = dr["Account"].ToString();
+                        }
+                        _ = ShowCrBalAsync(dr["Title"].ToString(), dr["Account"].ToString());
+                    }
                 }
+            }
+        }
+
+        void cbCr_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (dgvJournal.CurrentCell != null && dgvJournal.CurrentCell.ColumnIndex == clnCrAccount.Index)
+            {
+                if (sender is ComboBox cb && cb.SelectedItem is DataRowView drv)
+                {
+                    int rowInd = dgvJournal.CurrentCellAddress.Y;
+                    if (rowInd >= 0 && rowInd < dgvJournal.Rows.Count)
+                    {
+                        string acct = drv["Account"].ToString();
+                        dgvJournal[clnCrAccount.Index, rowInd].Value = acct;
+                        _ = ShowCrBalAsync(drv["Title"].ToString(), acct);
+                    }
+                }
+            }
+        }
+
+        private bool HandleGridEnterNavigation()
+        {
+            if (dgvJournal.CurrentCell == null) return false;
+
+            int rowIndex = dgvJournal.CurrentCell.RowIndex;
+            int colIndex = dgvJournal.CurrentCell.ColumnIndex;
+
+            // 1. Debit Account (clnDrAccount)
+            if (colIndex == clnDrAccount.Index)
+            {
+                if (dgvJournal.EditingControl is ComboBox cb)
+                {
+                    if (cb.SelectedItem is DataRowView drv)
+                    {
+                        string acct = drv["Account"].ToString();
+                        dgvJournal[clnDrAccount.Index, rowIndex].Value = acct;
+                        _ = ShowDrBalAsync(drv["Title"].ToString(), acct);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(cb.Text))
+                    {
+                        string text = cb.Text.Trim();
+                        var match = dtAccount.AsEnumerable().FirstOrDefault(r =>
+                            string.Equals(r["Title"]?.ToString(), text, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(r["Account"]?.ToString(), text, StringComparison.OrdinalIgnoreCase));
+                        if (match == null)
+                        {
+                            match = dtAccount.AsEnumerable().FirstOrDefault(r =>
+                                r["Title"]?.ToString().StartsWith(text, StringComparison.OrdinalIgnoreCase) == true);
+                        }
+                        if (match != null)
+                        {
+                            string acct = match["Account"].ToString();
+                            dgvJournal[clnDrAccount.Index, rowIndex].Value = acct;
+                            _ = ShowDrBalAsync(match["Title"].ToString(), acct);
+                        }
+                    }
+                }
+
+                dgvJournal.EndEdit();
+
+                var acctVal = dgvJournal[clnDrAccount.Index, rowIndex].Value;
+                bool isAcctEmpty = acctVal == null || string.IsNullOrWhiteSpace(acctVal.ToString());
+                bool isLastRow = (rowIndex == dgvJournal.Rows.Count - 1);
+
+                // If on last row without selecting debit account -> Exit grid to Save button!
+                if (isLastRow && isAcctEmpty)
+                {
+                    dgvJournal.EndEdit();
+                    CalcTotAmount();
+                    btnSave.Focus();
+                    return true;
+                }
+
+                // If debit account selected -> move to Amount
+                if (!isAcctEmpty)
+                {
+                    dgvJournal.CurrentCell = dgvJournal[clnAmount.Index, rowIndex];
+                    dgvJournal.BeginEdit(true);
+                    return true;
+                }
+
+                return true;
+            }
+
+            // 2. Amount (clnAmount)
+            if (colIndex == clnAmount.Index)
+            {
+                dgvJournal.EndEdit();
+                CalcTotAmount();
+                dgvJournal.CurrentCell = dgvJournal[clnCrAccount.Index, rowIndex];
+                dgvJournal.BeginEdit(true);
+                if (dgvJournal.EditingControl is ComboBox cb)
+                {
+                    cb.Focus();
+                }
+                return true;
+            }
+
+            // 3. Credit Account (clnCrAccount)
+            if (colIndex == clnCrAccount.Index)
+            {
+                if (dgvJournal.EditingControl is ComboBox cb)
+                {
+                    if (cb.SelectedItem is DataRowView drv)
+                    {
+                        string acct = drv["Account"].ToString();
+                        dgvJournal[clnCrAccount.Index, rowIndex].Value = acct;
+                        _ = ShowCrBalAsync(drv["Title"].ToString(), acct);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(cb.Text))
+                    {
+                        string text = cb.Text.Trim();
+                        var match = dtAccount.AsEnumerable().FirstOrDefault(r =>
+                            string.Equals(r["Title"]?.ToString(), text, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(r["Account"]?.ToString(), text, StringComparison.OrdinalIgnoreCase));
+                        if (match == null)
+                        {
+                            match = dtAccount.AsEnumerable().FirstOrDefault(r =>
+                                r["Title"]?.ToString().StartsWith(text, StringComparison.OrdinalIgnoreCase) == true);
+                        }
+                        if (match != null)
+                        {
+                            string acct = match["Account"].ToString();
+                            dgvJournal[clnCrAccount.Index, rowIndex].Value = acct;
+                            _ = ShowCrBalAsync(match["Title"].ToString(), acct);
+                        }
+                    }
+                }
+
+                dgvJournal.EndEdit();
+                dgvJournal.CurrentCell = dgvJournal[clnRemarks.Index, rowIndex];
+                dgvJournal.BeginEdit(true);
+                return true;
+            }
+
+            // 4. Remarks (clnRemarks)
+            if (colIndex == clnRemarks.Index)
+            {
+                dgvJournal.EndEdit();
+                CalcTotAmount();
+
+                int nextRowIdx;
+                if (rowIndex == dgvJournal.Rows.Count - 1)
+                {
+                    nextRowIdx = dgvJournal.Rows.Add();
+                    ClearRowValues(nextRowIdx);
+                }
+                else
+                {
+                    nextRowIdx = rowIndex + 1;
+                }
+                dgvJournal.CurrentCell = dgvJournal[clnDrAccount.Index, nextRowIdx];
+                dgvJournal.BeginEdit(true);
+                if (dgvJournal.EditingControl is ComboBox cb)
+                {
+                    cb.Focus();
+                }
+                return true;
+            }
+
+            // Fallback
+            dgvJournal.EndEdit();
+            CalcTotAmount();
+            int targetIdx = rowIndex < dgvJournal.Rows.Count - 1 ? rowIndex + 1 : dgvJournal.Rows.Add();
+            if (targetIdx == dgvJournal.Rows.Count - 1) ClearRowValues(targetIdx);
+            dgvJournal.CurrentCell = dgvJournal[clnDrAccount.Index, targetIdx];
+            dgvJournal.BeginEdit(true);
+            if (dgvJournal.EditingControl is ComboBox cbFallback)
+            {
+                cbFallback.Focus();
+            }
+            return true;
         }
 
         void tb_KeyPress(object sender, KeyPressEventArgs e)
@@ -365,7 +788,11 @@ namespace ERP
                 btnSave.Enabled = false;
                 try
                 {
-                    string voucher = txtVoucherNo.Text == "" ? null : txtVoucherNo.Text.Split('-')[1];
+                    string voucher = string.IsNullOrWhiteSpace(txtVoucherNo.Text)
+                        ? null
+                        : (txtVoucherNo.Text.StartsWith("JV-", StringComparison.OrdinalIgnoreCase)
+                            ? txtVoucherNo.Text.Substring(3)
+                            : txtVoucherNo.Text);
 
                     var lines = new List<JournalVoucherLineRequest>();
                     foreach (DataGridViewRow row in dgvJournal.Rows)
@@ -411,19 +838,7 @@ namespace ERP
 
                     if (isNew)
                     {
-                        var refreshed = await _apiService.GetListAsync();
-                        var entry = refreshed.Find(r => r.VoucherNo == voucher);
-                        if (entry != null)
-                        {
-                            _queryList.Insert(0, entry);
-                            dgvQuery.Rows.Insert(0,
-                                entry.Date,
-                                "JV-" + entry.VoucherNo,
-                                entry.Amount.ToString(),
-                                entry.Narration,
-                                entry.CreatedBy + " | " + entry.CreatedOn.ToString("dd-MMM-yyyy hh:mm:ss tt"),
-                                null);
-                        }
+                        await FillQueryAsync(_qFrom, _qTo, _qAccount, _qNarration, 1);
                     }
 
                     MessageBox.Show("Record Successfully Saved..!");
@@ -538,7 +953,15 @@ namespace ERP
         {
             dgvJournal.Rows.Clear();
             Validation.Clear(grpInvoiceDetail);
-            dgvJournal.Rows.Add();
+            lblTotAmount.Text = "0.00";
+            lblDrBalance.Text = "0.00";
+            lblCrBalance.Text = "0.00";
+            txtVoucherNo.Text = "";
+            VoucherNum = null;
+            int r = dgvJournal.Rows.Add();
+            ClearRowValues(r);
+            cmbNarration.SelectedIndex = -1;
+            dtpDate.Value = DateTime.Now;
             dtpDate.Focus();
         }
 
@@ -614,9 +1037,17 @@ namespace ERP
 
         private void frmJournalVoucher_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter && !dgvJournal.Focused)
+            if (e.KeyCode == Keys.F3)
             {
-                SendKeys.Send("{tab}");
+                btnNew.PerformClick();
+            }
+            else if (e.KeyCode == Keys.F5)
+            {
+                btnSave.PerformClick();
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                btnClose.PerformClick();
             }
         }
 
