@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Net.Http;
@@ -193,6 +193,9 @@ namespace ERP.Services.Legacy
                 dt.Columns.Add("qtyout", typeof(decimal));
                 dt.Columns.Add("rate", typeof(decimal));
                 dt.Columns.Add("costprice", typeof(decimal));
+                dt.Columns.Add("secqtyin", typeof(decimal));
+                dt.Columns.Add("secqtyout", typeof(decimal));
+                dt.Columns.Add("primaryunit", typeof(string));
 
                 for (int i = 0; i < rows.Count; i++)
                 {
@@ -203,7 +206,10 @@ namespace ERP.Services.Legacy
                         rows[i].QtyIn,
                         rows[i].QtyOut,
                         rows[i].Rate.HasValue ? (object)rows[i].Rate.Value : DBNull.Value,
-                        rows[i].CostPrice.HasValue ? (object)rows[i].CostPrice.Value : DBNull.Value);
+                        rows[i].CostPrice.HasValue ? (object)rows[i].CostPrice.Value : DBNull.Value,
+                        rows[i].SecQtyIn,
+                        rows[i].SecQtyOut,
+                        string.IsNullOrWhiteSpace(rows[i].PrimaryUnit) ? (object)DBNull.Value : rows[i].PrimaryUnit);
                 }
 
                 return dt;
@@ -244,10 +250,28 @@ namespace ERP.Services.Legacy
                 dt.Columns.Add("rate", typeof(decimal));
                 dt.Columns.Add("status", typeof(string));
                 dt.Columns.Add("lowstockqty", typeof(decimal));
+                dt.Columns.Add("secpriqty", typeof(decimal));
+                dt.Columns.Add("secqtyin", typeof(decimal));
+                dt.Columns.Add("secqtyout", typeof(decimal));
+                dt.Columns.Add("secqtybal", typeof(decimal));
 
                 for (int i = 0; i < rows.Count; i++)
                 {
-                    dt.Rows.Add(rows[i].Item ?? string.Empty, rows[i].Unit ?? string.Empty, rows[i].PriQty, rows[i].Qty, rows[i].QtyIn, rows[i].QtyOut, rows[i].QtyBal, rows[i].Rate, rows[i].Status ?? "In Stock", (object)rows[i].LowStockQty ?? DBNull.Value);
+                    dt.Rows.Add(
+                        rows[i].Item ?? string.Empty,
+                        rows[i].Unit ?? string.Empty,
+                        rows[i].PriQty,
+                        rows[i].Qty,
+                        rows[i].QtyIn,
+                        rows[i].QtyOut,
+                        rows[i].QtyBal,
+                        rows[i].Rate,
+                        rows[i].Status ?? "In Stock",
+                        (object)rows[i].LowStockQty ?? DBNull.Value,
+                        rows[i].SecPriQty,
+                        rows[i].SecQtyIn,
+                        rows[i].SecQtyOut,
+                        rows[i].SecQtyBal);
                 }
 
                 return dt;
@@ -1073,6 +1097,15 @@ namespace ERP.Services.Legacy
 
     internal class StockLedgerLineDto
     {
+        [JsonProperty("secQtyIn")]
+        public decimal SecQtyIn { get; set; }
+
+        [JsonProperty("secQtyOut")]
+        public decimal SecQtyOut { get; set; }
+
+        [JsonProperty("primaryUnit")]
+        public string PrimaryUnit { get; set; }
+
         [JsonProperty("vdate")]
         public DateTime Vdate { get; set; }
 
@@ -1135,6 +1168,18 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lowStockQty")]
         public decimal? LowStockQty { get; set; }
+
+        [JsonProperty("secPriQty")]
+        public decimal SecPriQty { get; set; }
+
+        [JsonProperty("secQtyIn")]
+        public decimal SecQtyIn { get; set; }
+
+        [JsonProperty("secQtyOut")]
+        public decimal SecQtyOut { get; set; }
+
+        [JsonProperty("secQtyBal")]
+        public decimal SecQtyBal { get; set; }
     }
 
     internal class BalanceSheetLineDto

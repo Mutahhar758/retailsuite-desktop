@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -478,6 +478,8 @@ namespace ERP.Reporting
                 decimal totalIn = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.QtyIn);
                 decimal totalOut = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.QtyOut);
                 decimal closingBal = _currentHeader != null ? _currentHeader.ClosingBalance : 0m;
+                decimal totalInSec = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.SecQtyIn);
+                decimal totalOutSec = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.SecQtyOut);
 
                 var header = new ItemLedgerHeader
                 {
@@ -490,6 +492,11 @@ namespace ERP.Reporting
                     TotalIn = totalIn,
                     TotalOut = totalOut,
                     ClosingBalance = closingBal,
+                    OpeningSec = _currentHeader != null ? _currentHeader.OpeningSec : 0m,
+                    TotalInSec = totalInSec,
+                    TotalOutSec = totalOutSec,
+                    ClosingSec = _currentHeader != null ? _currentHeader.ClosingSec : 0m,
+                    UnitLabel = _currentHeader != null ? _currentHeader.UnitLabel : null,
                     ShowCostPrice = _currentHeader != null && _currentHeader.ShowCostPrice,
                     GeneratedAt = DateTime.Now
                 };
@@ -515,11 +522,11 @@ namespace ERP.Reporting
         {
             if (_currentHeader != null)
             {
-                lblStatus.Text = string.Format("Open: {0:#,##0.00} | In: +{1:#,##0.00} | Out: -{2:#,##0.00} | Close: {3:#,##0.00}",
-                    _currentHeader.OpeningBalance,
-                    _currentHeader.TotalIn,
-                    _currentHeader.TotalOut,
-                    _currentHeader.ClosingBalance);
+                lblStatus.Text = string.Format("Open: {0} | In: +{1} | Out: -{2} | Close: {3}",
+                    _currentHeader.OpeningDisplay,
+                    _currentHeader.TotalInDisplay,
+                    _currentHeader.TotalOutDisplay,
+                    _currentHeader.ClosingDisplay);
                 lblStatus.ForeColor = Color.FromArgb(37, 99, 235);
             }
             else
@@ -658,6 +665,16 @@ namespace ERP.Reporting
                                 ws.Cell(row, balCol).Style.NumberFormat.Format = "#,##0.00";
                                 ws.Cell(row, balCol).Style.Font.Bold = true;
 
+                                if (ItemLedgerFormat.UseBags)
+                                {
+                                    ws.Cell(row, inwardCol).Value = item.FormattedQtyIn;
+                                    ws.Cell(row, inwardCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                                    ws.Cell(row, outwardCol).Value = item.FormattedQtyOut;
+                                    ws.Cell(row, outwardCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                                    ws.Cell(row, balCol).Value = item.FormattedBalance;
+                                    ws.Cell(row, balCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                                }
+
                                 if (row % 2 == 1)
                                 {
                                     ws.Range(row, 1, row, balCol).Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
@@ -692,6 +709,15 @@ namespace ERP.Reporting
                                 ws.Cell(row, 6).Style.NumberFormat.Format = "#,##0.00";
                                 ws.Cell(row, 7).Value = _currentHeader?.ClosingBalance ?? 0m;
                                 ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00";
+                            }
+
+                            if (ItemLedgerFormat.UseBags && _currentHeader != null)
+                            {
+                                int inTotCol = showCostPrice ? 6 : 5;
+                                ws.Cell(row, inTotCol).Value = _currentHeader.TotalInDisplay;
+                                ws.Cell(row, inTotCol + 1).Value = _currentHeader.TotalOutDisplay;
+                                ws.Cell(row, inTotCol + 2).Value = _currentHeader.ClosingDisplay;
+                                ws.Range(row, inTotCol, row, inTotCol + 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
                             }
 
                             ws.Columns().AdjustToContents();
@@ -739,9 +765,9 @@ namespace ERP.Reporting
                                     Particular = x.Particular,
                                     Rate = x.Rate,
                                     CostPrice = x.CostPrice,
-                                    Inward = x.QtyIn,
-                                    Outward = x.QtyOut,
-                                    Balance = x.Balance
+                                    Inward = ItemLedgerFormat.UseBags ? (object)x.FormattedQtyIn : x.QtyIn,
+                                    Outward = ItemLedgerFormat.UseBags ? (object)x.FormattedQtyOut : x.QtyOut,
+                                    Balance = ItemLedgerFormat.UseBags ? (object)x.FormattedBalance : x.Balance
                                 }).ToList();
                                 csv.WriteRecords(exportRows);
                             }
@@ -753,9 +779,9 @@ namespace ERP.Reporting
                                     VoucherNo = x.VoucherNo,
                                     Particular = x.Particular,
                                     Rate = x.Rate,
-                                    Inward = x.QtyIn,
-                                    Outward = x.QtyOut,
-                                    Balance = x.Balance
+                                    Inward = ItemLedgerFormat.UseBags ? (object)x.FormattedQtyIn : x.QtyIn,
+                                    Outward = ItemLedgerFormat.UseBags ? (object)x.FormattedQtyOut : x.QtyOut,
+                                    Balance = ItemLedgerFormat.UseBags ? (object)x.FormattedBalance : x.Balance
                                 }).ToList();
                                 csv.WriteRecords(exportRows);
                             }

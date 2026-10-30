@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 
@@ -16,7 +16,16 @@ namespace ERP.Reporting.Models
         public decimal QtyIn { get; set; }
         public decimal QtyOut { get; set; }
         public decimal ClosingQty { get; set; }
+        public decimal SecOpeningQty { get; set; }
+        public decimal SecQtyIn { get; set; }
+        public decimal SecQtyOut { get; set; }
+        public decimal SecClosingQty { get; set; }
         public decimal Rate { get; set; }
+
+        public string FormattedOpening => ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(SecOpeningQty, OpeningQty, Unit) : OpeningQty.ToString("#,##0.##");
+        public string FormattedQtyIn => QtyIn > 0 ? (ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(SecQtyIn, QtyIn, Unit) : QtyIn.ToString("#,##0.##")) : "-";
+        public string FormattedQtyOut => QtyOut > 0 ? (ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(SecQtyOut, QtyOut, Unit) : QtyOut.ToString("#,##0.##")) : "-";
+        public string FormattedClosing => ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(SecClosingQty, ClosingQty, Unit) : ClosingQty.ToString("#,##0.##");
 
         /// <summary>
         /// Total inventory valuation for this SKU (ClosingQty * Rate).
@@ -105,7 +114,19 @@ namespace ERP.Reporting.Models
                         : "In Stock",
                     LowStockQty = row.Table.Columns.Contains("lowstockqty") && row["lowstockqty"] != DBNull.Value
                         ? Convert.ToDecimal(row["lowstockqty"])
-                        : (decimal?)null
+                        : (decimal?)null,
+                    SecOpeningQty = row.Table.Columns.Contains("secpriqty") && row["secpriqty"] != DBNull.Value
+                        ? Convert.ToDecimal(row["secpriqty"])
+                        : 0m,
+                    SecQtyIn = row.Table.Columns.Contains("secqtyin") && row["secqtyin"] != DBNull.Value
+                        ? Convert.ToDecimal(row["secqtyin"])
+                        : 0m,
+                    SecQtyOut = row.Table.Columns.Contains("secqtyout") && row["secqtyout"] != DBNull.Value
+                        ? Convert.ToDecimal(row["secqtyout"])
+                        : 0m,
+                    SecClosingQty = row.Table.Columns.Contains("secqtybal") && row["secqtybal"] != DBNull.Value
+                        ? Convert.ToDecimal(row["secqtybal"])
+                        : 0m
                 };
 
                 items.Add(item);

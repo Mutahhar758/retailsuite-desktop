@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -533,6 +533,15 @@ namespace ERP.Reporting
                                 ws.Cell(rowIdx, 9).Value = itm.TotalValue;
                                 ws.Cell(rowIdx, 9).Style.NumberFormat.Format = "#,##0.00";
 
+                                if (ItemLedgerFormat.UseBags)
+                                {
+                                    ws.Cell(rowIdx, 4).Value = itm.FormattedOpening;
+                                    ws.Cell(rowIdx, 5).Value = itm.FormattedQtyIn;
+                                    ws.Cell(rowIdx, 6).Value = itm.FormattedQtyOut;
+                                    ws.Cell(rowIdx, 7).Value = itm.FormattedClosing;
+                                    ws.Range(rowIdx, 4, rowIdx, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                                }
+
                                 if (rowIdx % 2 == 1)
                                 {
                                     ws.Range(rowIdx, 1, rowIdx, 9).Style.Fill.BackgroundColor = XLColor.FromHtml("#F8FAFC");
@@ -561,6 +570,16 @@ namespace ERP.Reporting
                             ws.Cell(rowIdx, 7).Value = items.Sum(x => x.ClosingQty);
                             ws.Cell(rowIdx, 7).Style.Font.Bold = true;
                             ws.Cell(rowIdx, 7).Style.NumberFormat.Format = "#,##0.##";
+
+                            if (ItemLedgerFormat.UseBags)
+                            {
+                                string sumUnit = items.Select(x => x.Unit).FirstOrDefault(u => !string.IsNullOrWhiteSpace(u)) ?? "kg";
+                                ws.Cell(rowIdx, 4).Value = ItemLedgerFormat.BagsKg(items.Sum(x => x.SecOpeningQty), items.Sum(x => x.OpeningQty), sumUnit);
+                                ws.Cell(rowIdx, 5).Value = ItemLedgerFormat.BagsKg(items.Sum(x => x.SecQtyIn), items.Sum(x => x.QtyIn), sumUnit);
+                                ws.Cell(rowIdx, 6).Value = ItemLedgerFormat.BagsKg(items.Sum(x => x.SecQtyOut), items.Sum(x => x.QtyOut), sumUnit);
+                                ws.Cell(rowIdx, 7).Value = ItemLedgerFormat.BagsKg(items.Sum(x => x.SecClosingQty), items.Sum(x => x.ClosingQty), sumUnit);
+                                ws.Range(rowIdx, 4, rowIdx, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                            }
 
                             ws.Cell(rowIdx, 8).Value = "-";
                             ws.Cell(rowIdx, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -623,7 +642,27 @@ namespace ERP.Reporting
                         using (var writer = new StreamWriter(filePath))
                         using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                         {
-                            csv.WriteRecords(items);
+                            if (ItemLedgerFormat.UseBags)
+                            {
+                                var exportRows = items.Select(x => new
+                                {
+                                    x.Index,
+                                    x.ItemName,
+                                    x.Unit,
+                                    OpeningQty = x.FormattedOpening,
+                                    QtyIn = x.FormattedQtyIn,
+                                    QtyOut = x.FormattedQtyOut,
+                                    ClosingQty = x.FormattedClosing,
+                                    x.Rate,
+                                    x.TotalValue,
+                                    x.Status
+                                }).ToList();
+                                csv.WriteRecords(exportRows);
+                            }
+                            else
+                            {
+                                csv.WriteRecords(items);
+                            }
                         }
                     });
 

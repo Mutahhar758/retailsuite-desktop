@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -102,7 +102,7 @@ namespace ERP.Reporting.Documents
                     kpiRow.RelativeItem().Text(x =>
                     {
                         x.Span("Opening Stock: ").FontSize(8.5f).SemiBold().FontColor(Colors.Grey.Darken2);
-                        x.Span(_header.OpeningBalance.ToString("#,##0.00")).FontSize(9f).Bold().FontColor(Colors.Grey.Darken4);
+                        x.Span(_header.OpeningDisplay).FontSize(9f).Bold().FontColor(Colors.Grey.Darken4);
                     });
 
                     kpiRow.RelativeItem().Text(x =>
@@ -120,7 +120,7 @@ namespace ERP.Reporting.Documents
                     kpiRow.RelativeItem().AlignRight().Text(x =>
                     {
                         x.Span("Closing Balance: ").FontSize(8.5f).SemiBold().FontColor(Colors.Grey.Darken2);
-                        x.Span(_header.ClosingBalance.ToString("#,##0.00")).FontSize(9f).Bold().FontColor(Colors.Blue.Darken3);
+                        x.Span(_header.ClosingDisplay).FontSize(9f).Bold().FontColor(Colors.Blue.Darken3);
                     });
                 });
             });
@@ -177,11 +177,11 @@ namespace ERP.Reporting.Documents
                         // Qty In
                         if (item.QtyIn > 0 && !isOpeningRow)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyIn.ToString("#,##0.00")).FontColor(Colors.Green.Darken3);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyIn).FontColor(Colors.Green.Darken3);
                         }
                         else if (item.QtyIn > 0 && isOpeningRow)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyIn.ToString("#,##0.00")).FontColor(Colors.Grey.Darken4);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyIn).FontColor(Colors.Grey.Darken4);
                         }
                         else
                         {
@@ -191,7 +191,7 @@ namespace ERP.Reporting.Documents
                         // Qty Out
                         if (item.QtyOut > 0)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyOut.ToString("#,##0.00")).FontColor(Colors.Red.Darken2);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyOut).FontColor(Colors.Red.Darken2);
                         }
                         else
                         {
@@ -199,14 +199,14 @@ namespace ERP.Reporting.Documents
                         }
 
                         // Running Balance
-                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.Balance.ToString("#,##0.00")).Bold().FontColor(Colors.Grey.Darken4);
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedBalance).Bold().FontColor(Colors.Grey.Darken4);
                     }
 
                     // Summary Totals Row (Span 5 for Date, Voucher#, Particular, Rate, Cost Price)
                     table.Cell().ColumnSpan(5).Element(FooterTotalCell).Text("PERIOD MOVEMENT TOTALS").Bold().FontColor(Colors.Grey.Darken4);
                     table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.TotalIn.ToString("#,##0.00")).Bold().FontColor(Colors.Green.Darken3);
                     table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.TotalOut.ToString("#,##0.00")).Bold().FontColor(Colors.Red.Darken2);
-                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.ClosingBalance.ToString("#,##0.00")).Bold().FontColor(Colors.Blue.Darken3);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.ClosingDisplay).Bold().FontColor(Colors.Blue.Darken3);
                 }
                 else
                 {
@@ -250,11 +250,11 @@ namespace ERP.Reporting.Documents
                         // Qty In
                         if (item.QtyIn > 0 && !isOpeningRow)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyIn.ToString("#,##0.00")).FontColor(Colors.Green.Darken3);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyIn).FontColor(Colors.Green.Darken3);
                         }
                         else if (item.QtyIn > 0 && isOpeningRow)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyIn.ToString("#,##0.00")).FontColor(Colors.Grey.Darken4);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyIn).FontColor(Colors.Grey.Darken4);
                         }
                         else
                         {
@@ -264,7 +264,7 @@ namespace ERP.Reporting.Documents
                         // Qty Out
                         if (item.QtyOut > 0)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyOut.ToString("#,##0.00")).FontColor(Colors.Red.Darken2);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyOut).FontColor(Colors.Red.Darken2);
                         }
                         else
                         {
@@ -272,14 +272,14 @@ namespace ERP.Reporting.Documents
                         }
 
                         // Running Balance
-                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.Balance.ToString("#,##0.00")).Bold().FontColor(Colors.Grey.Darken4);
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedBalance).Bold().FontColor(Colors.Grey.Darken4);
                     }
 
                     // Summary Totals Row
                     table.Cell().ColumnSpan(4).Element(FooterTotalCell).Text("PERIOD MOVEMENT TOTALS").Bold().FontColor(Colors.Grey.Darken4);
                     table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.TotalIn.ToString("#,##0.00")).Bold().FontColor(Colors.Green.Darken3);
                     table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.TotalOut.ToString("#,##0.00")).Bold().FontColor(Colors.Red.Darken2);
-                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.ClosingBalance.ToString("#,##0.00")).Bold().FontColor(Colors.Blue.Darken3);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.ClosingDisplay).Bold().FontColor(Colors.Blue.Darken3);
                 }
             });
         }

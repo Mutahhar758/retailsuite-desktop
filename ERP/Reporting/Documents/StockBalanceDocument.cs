@@ -1,4 +1,4 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -91,6 +91,10 @@ namespace ERP.Reporting.Documents
                     decimal totalQty = _items.Sum(x => x.ClosingQty);
                     decimal totalIn = _items.Sum(x => x.QtyIn);
                     decimal totalOut = _items.Sum(x => x.QtyOut);
+                    string defUnit = _items.Select(x => x.Unit).FirstOrDefault(u => !string.IsNullOrWhiteSpace(u)) ?? "kg";
+                    string kpiIn = ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(_items.Sum(x => x.SecQtyIn), totalIn, defUnit) : totalIn.ToString("#,##0");
+                    string kpiOut = ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(_items.Sum(x => x.SecQtyOut), totalOut, defUnit) : totalOut.ToString("#,##0");
+                    string kpiClose = ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(_items.Sum(x => x.SecClosingQty), totalQty, defUnit) : totalQty.ToString("#,##0");
 
                     kpiRow.RelativeItem().Text(x =>
                     {
@@ -101,19 +105,19 @@ namespace ERP.Reporting.Documents
                     kpiRow.RelativeItem().Text(x =>
                     {
                         x.Span("Total Inward: ").FontSize(8.5f).Bold().FontColor(Colors.Grey.Darken2);
-                        x.Span(totalIn.ToString("#,##0")).FontSize(9.5f).Bold().FontColor(Colors.Blue.Darken2);
+                        x.Span(kpiIn).FontSize(9.5f).Bold().FontColor(Colors.Blue.Darken2);
                     });
 
                     kpiRow.RelativeItem().Text(x =>
                     {
                         x.Span("Total Outward: ").FontSize(8.5f).Bold().FontColor(Colors.Grey.Darken2);
-                        x.Span(totalOut.ToString("#,##0")).FontSize(9.5f).Bold().FontColor(Colors.Orange.Darken3);
+                        x.Span(kpiOut).FontSize(9.5f).Bold().FontColor(Colors.Orange.Darken3);
                     });
 
                     kpiRow.RelativeItem().Text(x =>
                     {
                         x.Span("Closing Units: ").FontSize(8.5f).Bold().FontColor(Colors.Grey.Darken2);
-                        x.Span(totalQty.ToString("#,##0")).FontSize(9.5f).Bold().FontColor(Colors.Grey.Darken4);
+                        x.Span(kpiClose).FontSize(9.5f).Bold().FontColor(Colors.Grey.Darken4);
                     });
 
                     if (_showStockValue)
@@ -179,24 +183,24 @@ namespace ERP.Reporting.Documents
                     table.Cell().Element(c => BodyCell(c, bg)).AlignCenter().Text(item.Unit ?? "Pcs");
 
                     // Opening
-                    table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.OpeningQty.ToString("#,##0.##"));
+                    table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedOpening);
 
                     // Inward
                     if (item.QtyIn > 0)
-                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyIn.ToString("#,##0.##")).FontColor(Colors.Blue.Darken2);
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyIn).FontColor(Colors.Blue.Darken2);
                     else
                         table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text("-").FontColor(Colors.Grey.Lighten1);
 
                     // Outward
                     if (item.QtyOut > 0)
-                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyOut.ToString("#,##0.##")).FontColor(Colors.Orange.Darken3);
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyOut).FontColor(Colors.Orange.Darken3);
                     else
                         table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text("-").FontColor(Colors.Grey.Lighten1);
 
                     // Closing Qty
                     table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(text =>
                     {
-                        text.Span(item.ClosingQty.ToString("#,##0.##")).SemiBold().FontColor(item.Status == "Low Stock" ? Colors.Orange.Darken3 : (item.Status == "Out of Stock" ? Colors.Red.Darken2 : Colors.Grey.Darken4));
+                        text.Span(item.FormattedClosing).SemiBold().FontColor(item.Status == "Low Stock" ? Colors.Orange.Darken3 : (item.Status == "Out of Stock" ? Colors.Red.Darken2 : Colors.Grey.Darken4));
                         if (item.Status == "Low Stock")
                         {
                             text.Span(" (Low)").FontSize(7f).Bold().FontColor(Colors.Orange.Darken3);
@@ -219,11 +223,17 @@ namespace ERP.Reporting.Documents
                 decimal sumBal = _items.Sum(x => x.ClosingQty);
                 decimal sumVal = _items.Sum(x => x.TotalValue);
 
+                string sumUnit = _items.Select(x => x.Unit).FirstOrDefault(u => !string.IsNullOrWhiteSpace(u)) ?? "kg";
+                string totOpen = ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(_items.Sum(x => x.SecOpeningQty), sumOpening, sumUnit) : sumOpening.ToString("#,##0.##");
+                string totIn = ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(_items.Sum(x => x.SecQtyIn), sumIn, sumUnit) : sumIn.ToString("#,##0.##");
+                string totOut = ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(_items.Sum(x => x.SecQtyOut), sumOut, sumUnit) : sumOut.ToString("#,##0.##");
+                string totBal = ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(_items.Sum(x => x.SecClosingQty), sumBal, sumUnit) : sumBal.ToString("#,##0.##");
+
                 table.Cell().ColumnSpan(3).Element(TotalCell).Text("TOTAL SUMMARY").Bold();
-                table.Cell().Element(TotalCell).AlignRight().Text(sumOpening.ToString("#,##0.##")).Bold();
-                table.Cell().Element(TotalCell).AlignRight().Text(sumIn.ToString("#,##0.##")).Bold();
-                table.Cell().Element(TotalCell).AlignRight().Text(sumOut.ToString("#,##0.##")).Bold();
-                table.Cell().Element(TotalCell).AlignRight().Text(sumBal.ToString("#,##0.##")).Bold();
+                table.Cell().Element(TotalCell).AlignRight().Text(totOpen).Bold();
+                table.Cell().Element(TotalCell).AlignRight().Text(totIn).Bold();
+                table.Cell().Element(TotalCell).AlignRight().Text(totOut).Bold();
+                table.Cell().Element(TotalCell).AlignRight().Text(totBal).Bold();
                 if (_showStockValue)
                 {
                     table.Cell().Element(TotalCell).AlignRight().Text("-").FontColor(Colors.Grey.Darken1);

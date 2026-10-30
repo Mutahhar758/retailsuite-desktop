@@ -1,10 +1,39 @@
-using System;
+﻿using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Linq;
+using ERP.Classes;
 
 namespace ERP.Reporting.Models
 {
+    /// <summary>
+    /// Wanda (variable pack) tenants view stock in bags with the kg equivalent, e.g. "5 bags (250 kg)".
+    /// Other tenants keep plain quantities.
+    /// </summary>
+    public static class ItemLedgerFormat
+    {
+        public static bool UseBags { get { return ApiSession.HasVariablePackFeature; } }
+
+        public static string BagsKg(decimal bags, decimal kg, string unit)
+        {
+            string u = string.IsNullOrWhiteSpace(unit) ? "kg" : unit.Trim();
+            string kgText = kg % 1m == 0m ? kg.ToString("N0") : kg.ToString("#,##0.###");
+            if (bags == 0m)
+            {
+                return kg == 0m ? "0" : kgText + " " + u;
+            }
+            string bagText = bags % 1m == 0m ? bags.ToString("N0") : bags.ToString("#,##0.###");
+            string label = Math.Abs(bags) == 1m ? "bag" : "bags";
+            decimal perBag = Math.Round(kg / bags, 2);
+            if (Math.Abs((perBag * bags) - kg) <= 0.01m)
+            {
+                string perBagText = perBag % 1m == 0m ? perBag.ToString("N0") : perBag.ToString("#,##0.##");
+                return bagText + " " + label + " @ " + perBagText + " " + u;
+            }
+            return bagText + " " + label + " (" + kgText + " " + u + ")";
+        }
+    }
+
     /// <summary>
     /// Represents an individual stock ledger movement transaction (Inward, Outward, Opening).
     /// </summary>
@@ -18,6 +47,10 @@ namespace ERP.Reporting.Models
         public decimal QtyIn { get; set; }
         public decimal QtyOut { get; set; }
         public decimal Balance { get; set; }
+        public decimal SecQtyIn { get; set; }
+        public decimal SecQtyOut { get; set; }
+        public decimal SecBalance { get; set; }
+        public string UnitLabel { get; set; }
 
         public string FormattedDate => Date.ToString("dd-MMM-yyyy");
         public string FormattedRate => Rate.HasValue && Rate.Value > 0 ? Rate.Value.ToString("N2") : "-";
@@ -26,9 +59,15 @@ namespace ERP.Reporting.Models
             : (QtyIn > 0 && Rate.HasValue && Rate.Value > 0
                 ? Rate.Value.ToString("N2")
                 : (CostPrice.HasValue ? "0.00" : "-"));
-        public string FormattedQtyIn => QtyIn > 0 ? QtyIn.ToString("N2") : "-";
-        public string FormattedQtyOut => QtyOut > 0 ? QtyOut.ToString("N2") : "-";
-        public string FormattedBalance => Balance.ToString("N2");
+        public string FormattedQtyIn => QtyIn > 0
+            ? (ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(SecQtyIn, QtyIn, UnitLabel) : QtyIn.ToString("N2"))
+            : "-";
+        public string FormattedQtyOut => QtyOut > 0
+            ? (ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(SecQtyOut, QtyOut, UnitLabel) : QtyOut.ToString("N2"))
+            : "-";
+        public string FormattedBalance => ItemLedgerFormat.UseBags
+            ? ItemLedgerFormat.BagsKg(SecBalance, Balance, UnitLabel)
+            : Balance.ToString("N2");
     }
 
     /// <summary>
@@ -45,6 +84,22 @@ namespace ERP.Reporting.Models
         public decimal TotalIn { get; set; }
         public decimal TotalOut { get; set; }
         public decimal ClosingBalance { get; set; }
+        public decimal OpeningSec { get; set; }
+        public decimal TotalInSec { get; set; }
+        public decimal TotalOutSec { get; set; }
+        public decimal ClosingSec { get; set; }
+        public string UnitLabel { get; set; }
+
+        public string OpeningDisplay { get { return Show(OpeningSec, OpeningBalance); } }
+        public string TotalInDisplay { get { return Show(TotalInSec, TotalIn); } }
+        public string TotalOutDisplay { get { return Show(TotalOutSec, TotalOut); } }
+        public string ClosingDisplay { get { return Show(ClosingSec, ClosingBalance); } }
+
+        private string Show(decimal bags, decimal qty)
+        {
+            return ItemLedgerFormat.UseBags ? ItemLedgerFormat.BagsKg(bags, qty, UnitLabel) : qty.ToString("#,##0.00");
+        }
+
         public bool ShowCostPrice { get; set; }
         public DateTime GeneratedAt { get; set; } = DateTime.Now;
     }
@@ -81,6 +136,9 @@ namespace ERP.Reporting.Models
             var rawItems = new List<ItemLedgerReportItem>();
             decimal openingBalance = 0m;
             decimal runningBalance = 0m;
+            decimal runningSec = 0m;
+            decimal openingSec = 0m;
+            string unitLabel = null;
 
             if (dt != null && dt.Rows.Count > 0)
             {
@@ -114,6 +172,23 @@ namespace ERP.Reporting.Models
                         decimal.TryParse(row["qtyout"].ToString(), out qtyOut);
                     }
 
+                    decimal secIn = 0m;
+                    if (row.Table.Columns.Contains("secqtyin") && row["secqtyin"] != DBNull.Value)
+                    {
+                        decimal.TryParse(row["secqtyin"].ToString(), out secIn);
+                    }
+
+                    decimal secOut = 0m;
+                    if (row.Table.Columns.Contains("secqtyout") && row["secqtyout"] != DBNull.Value)
+                    {
+                        decimal.TryParse(row["secqtyout"].ToString(), out secOut);
+                    }
+
+                    if (row.Table.Columns.Contains("primaryunit") && row["primaryunit"] != DBNull.Value && string.IsNullOrWhiteSpace(unitLabel))
+                    {
+                        unitLabel = row["primaryunit"].ToString();
+                    }
+
                     decimal? rate = null;
                     if (row.Table.Columns.Contains("rate") && row["rate"] != DBNull.Value)
                     {
@@ -141,6 +216,8 @@ namespace ERP.Reporting.Models
                     {
                         openingBalance = qtyIn - qtyOut;
                         runningBalance = openingBalance;
+                        openingSec = secIn - secOut;
+                        runningSec = openingSec;
 
                         rawItems.Add(new ItemLedgerReportItem
                         {
@@ -151,12 +228,16 @@ namespace ERP.Reporting.Models
                             CostPrice = null,
                             QtyIn = qtyIn,
                             QtyOut = qtyOut,
-                            Balance = runningBalance
+                            Balance = runningBalance,
+                            SecQtyIn = secIn,
+                            SecQtyOut = secOut,
+                            SecBalance = runningSec
                         });
                     }
                     else
                     {
                         runningBalance += (qtyIn - qtyOut);
+                        runningSec += (secIn - secOut);
 
                         rawItems.Add(new ItemLedgerReportItem
                         {
@@ -167,11 +248,16 @@ namespace ERP.Reporting.Models
                             CostPrice = costPrice,
                             QtyIn = qtyIn,
                             QtyOut = qtyOut,
-                            Balance = runningBalance
+                            Balance = runningBalance,
+                            SecQtyIn = secIn,
+                            SecQtyOut = secOut,
+                            SecBalance = runningSec
                         });
                     }
                 }
             }
+
+            foreach (var it in rawItems) it.UnitLabel = unitLabel;
 
             // Exclude opening from movement totals
             decimal totalIn = rawItems.Where(x => x.VoucherNo != "-").Sum(x => x.QtyIn);
@@ -188,6 +274,11 @@ namespace ERP.Reporting.Models
                 TotalIn = totalIn,
                 TotalOut = totalOut,
                 ClosingBalance = runningBalance,
+                OpeningSec = openingSec,
+                TotalInSec = rawItems.Where(x => x.VoucherNo != "-").Sum(x => x.SecQtyIn),
+                TotalOutSec = rawItems.Where(x => x.VoucherNo != "-").Sum(x => x.SecQtyOut),
+                ClosingSec = runningSec,
+                UnitLabel = unitLabel,
                 ShowCostPrice = showCostPrice,
                 GeneratedAt = DateTime.Now
             };
