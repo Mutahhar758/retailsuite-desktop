@@ -31,15 +31,556 @@ namespace ERP.Forms
             _bomApiService = new BomApiService();
             _inventoryApiService = new InventoryApiService();
             UserInfo.ApplyFormPermissions(this, AppResource.Manufacturing);
+
+            EnableDoubleBuffering(dgvRawMaterials);
+            EnableDoubleBuffering(dgvProductionList);
+            EnableDoubleBuffering(grpMaster);
+            EnableDoubleBuffering(grpSearchFilter);
+
+            dgvRawMaterials.Enter += dgvRawMaterials_Enter;
+            dgvRawMaterials.EditingControlShowing += dgvRawMaterials_EditingControlShowing;
+            dgvRawMaterials.KeyDown += dgvRawMaterials_KeyDown;
+            dgvRawMaterials.DataError += dgvRawMaterials_DataError;
+            dgvProductionList.CellDoubleClick += dgvProductionList_CellDoubleClick;
+            dgvProductionList.KeyDown += dgvProductionList_KeyDown;
+            this.Shown += frmManufacturing_Shown;
+            SetupButtonFocusHighlights();
+            SetupDropdownFocusHighlights();
+        }
+
+        private static void EnableDoubleBuffering(Control control)
+        {
+            try
+            {
+                typeof(Control).InvokeMember(
+                    "DoubleBuffered",
+                    System.Reflection.BindingFlags.SetProperty | System.Reflection.BindingFlags.Instance | System.Reflection.BindingFlags.NonPublic,
+                    null,
+                    control,
+                    new object[] { true });
+            }
+            catch { }
+        }
+
+        private void SetupButtonFocusHighlights()
+        {
+            var buttons = new Button[] { btnSave, btnNew, btnIssueMaterials, btnComplete, btnCancel, btnDelete, btnClose, btnFilter, btnAddRow, btnDeleteRow };
+            foreach (var btn in buttons)
+            {
+                if (btn == null) continue;
+                btn.Enter += (s, e) => btn.Invalidate();
+                btn.Leave += (s, e) => btn.Invalidate();
+                btn.Paint += (s, e) =>
+                {
+                    if (btn.Focused)
+                    {
+                        var rect = btn.ClientRectangle;
+                        using (var pen = new Pen(Color.FromArgb(59, 130, 246), 2))
+                        {
+                            e.Graphics.DrawRectangle(pen, rect.X + 1, rect.Y + 1, rect.Width - 3, rect.Height - 3);
+                        }
+                    }
+                };
+            }
+        }
+
+        private void SetupDropdownFocusHighlights()
+        {
+            var combos = new (ComboBox Combo, Control Parent)[]
+            {
+                (cmbBom, grpMaster),
+                (cmbFinishedItem, grpMaster),
+                (cmbStatusFilter, grpSearchFilter)
+            };
+
+            foreach (var item in combos)
+            {
+                var cmb = item.Combo;
+                var parent = item.Parent;
+                if (cmb == null) continue;
+
+                cmb.DrawMode = DrawMode.OwnerDrawFixed;
+                cmb.ItemHeight = 19;
+
+                cmb.Enter += (s, e) =>
+                {
+                    cmb.Invalidate();
+                    if (parent != null) parent.Invalidate();
+                };
+
+                cmb.Leave += (s, e) =>
+                {
+                    cmb.Invalidate();
+                    if (parent != null) parent.Invalidate();
+                };
+
+                cmb.DrawItem += (s, e) =>
+                {
+                    bool isDropDownOpen = cmb.DroppedDown;
+                    bool isHovered = isDropDownOpen && ((e.State & DrawItemState.Selected) == DrawItemState.Selected);
+                    bool isFocused = cmb.Focused;
+
+                    Color bg;
+                    Color fg;
+
+                    if (isHovered)
+                    {
+                        bg = Color.FromArgb(37, 99, 235); // Blue-600 in list
+                        fg = Color.White;
+                    }
+                    else if (isFocused && !isDropDownOpen)
+                    {
+                        bg = Color.FromArgb(254, 243, 199); // Warm Amber-100 highlight when focused
+                        fg = Color.FromArgb(15, 23, 42);    // Slate-900
+                    }
+                    else
+                    {
+                        bg = Color.White;
+                        fg = Color.FromArgb(15, 23, 42);
+                    }
+
+                    using (var brush = new SolidBrush(bg))
+                    {
+                        e.Graphics.FillRectangle(brush, e.Bounds);
+                    }
+
+                    if (e.Index >= 0 && e.Index < cmb.Items.Count)
+                    {
+                        string text = cmb.GetItemText(cmb.Items[e.Index]);
+                        using (var brush = new SolidBrush(fg))
+                        {
+                            using (var sf = new StringFormat
+                            {
+                                LineAlignment = StringAlignment.Center,
+                                Alignment = StringAlignment.Near,
+                                FormatFlags = StringFormatFlags.NoWrap,
+                                Trimming = StringTrimming.EllipsisCharacter
+                            })
+                            {
+                                var textRect = new Rectangle(e.Bounds.X + 4, e.Bounds.Y, Math.Max(0, e.Bounds.Width - 8), e.Bounds.Height);
+                                e.Graphics.DrawString(text, e.Font ?? cmb.Font, brush, textRect, sf);
+                            }
+                        }
+                    }
+
+                    if (isFocused && !isDropDownOpen)
+                    {
+                        using (var pen = new Pen(Color.FromArgb(217, 119, 6), 1.5f)) // Amber-600 border inside
+                        {
+                            var r = e.Bounds;
+                            r.Width -= 1;
+                            r.Height -= 1;
+                            e.Graphics.DrawRectangle(pen, r);
+                        }
+                    }
+                };
+            }
+
+            var headerControls = new Control[] { dtpDate, cmbBom, cmbFinishedItem, txtBatchNo, txtPlannedQty };
+            foreach (var ctrl in headerControls)
+            {
+                if (ctrl == null) continue;
+                ctrl.Enter += (s, e) => { if (grpMaster != null) grpMaster.Invalidate(); };
+                ctrl.Leave += (s, e) => { if (grpMaster != null) grpMaster.Invalidate(); };
+            }
+
+            if (grpMaster != null)
+            {
+                grpMaster.Paint += (s, e) =>
+                {
+                    DrawControlFocusHalo(e.Graphics, cmbBom);
+                    DrawControlFocusHalo(e.Graphics, cmbFinishedItem);
+                    DrawControlFocusHalo(e.Graphics, dtpDate);
+                    DrawControlFocusHalo(e.Graphics, txtPlannedQty);
+                    DrawControlFocusHalo(e.Graphics, txtBatchNo);
+                };
+            }
+
+            if (grpSearchFilter != null)
+            {
+                grpSearchFilter.Paint += (s, e) =>
+                {
+                    DrawControlFocusHalo(e.Graphics, cmbStatusFilter);
+                };
+            }
+        }
+
+        private void DrawControlFocusHalo(Graphics g, Control ctrl)
+        {
+            if (ctrl != null && (ctrl.Focused || ctrl.ContainsFocus))
+            {
+                var r = ctrl.Bounds;
+                r.Inflate(2, 2);
+                using (var pen = new Pen(Color.FromArgb(37, 99, 235), 2)) // Vibrant Blue-600 halo
+                {
+                    g.DrawRectangle(pen, r);
+                }
+            }
+        }
+
+        private void frmManufacturing_Shown(object sender, EventArgs e)
+        {
+            try
+            {
+                dtpDate.Focus();
+            }
+            catch { }
+        }
+
+        private void FocusGridFirstRow()
+        {
+            try
+            {
+                if (tabDetailQuery.SelectedTab != tabpgDetail)
+                    tabDetailQuery.SelectedTab = tabpgDetail;
+
+                if (dgvRawMaterials.Rows.Count == 0)
+                {
+                    btnAddRow_Click(null, null);
+                }
+
+                int targetRow = dgvRawMaterials.CurrentCell != null ? dgvRawMaterials.CurrentCell.RowIndex : 0;
+                if (targetRow < 0 || targetRow >= dgvRawMaterials.Rows.Count) targetRow = 0;
+
+                dgvRawMaterials.Focus();
+                dgvRawMaterials.CurrentCell = dgvRawMaterials[clnRawItem.Index, targetRow];
+
+                BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        if (dgvRawMaterials.Rows.Count > 0 && clnRawItem != null)
+                        {
+                            int r = dgvRawMaterials.CurrentCell != null ? dgvRawMaterials.CurrentCell.RowIndex : 0;
+                            if (r < 0 || r >= dgvRawMaterials.Rows.Count) r = 0;
+                            dgvRawMaterials.CurrentCell = dgvRawMaterials[clnRawItem.Index, r];
+                            dgvRawMaterials.BeginEdit(true);
+                            if (dgvRawMaterials.EditingControl is ComboBox cb)
+                            {
+                                cb.Focus();
+                            }
+                        }
+                    }
+                    catch { }
+                }));
+            }
+            catch { }
+        }
+
+        private void dgvRawMaterials_Enter(object sender, EventArgs e)
+        {
+            if (IsHandleCreated && dgvRawMaterials.Rows.Count > 0 && clnRawItem != null)
+            {
+                BeginInvoke(new Action(() =>
+                {
+                    try
+                    {
+                        if (dgvRawMaterials.Rows.Count > 0 && clnRawItem != null)
+                        {
+                            int row = dgvRawMaterials.CurrentCell != null ? dgvRawMaterials.CurrentCell.RowIndex : 0;
+                            if (row < 0 || row >= dgvRawMaterials.Rows.Count) row = 0;
+
+                            if (dgvRawMaterials.CurrentCell == null)
+                            {
+                                dgvRawMaterials.CurrentCell = dgvRawMaterials[clnRawItem.Index, row];
+                            }
+
+                            if (!dgvRawMaterials.IsCurrentCellInEditMode)
+                            {
+                                dgvRawMaterials.BeginEdit(true);
+                            }
+
+                            if (dgvRawMaterials.EditingControl is ComboBox cb)
+                            {
+                                cb.Focus();
+                            }
+                        }
+                    }
+                    catch { }
+                }));
+            }
+        }
+
+        private void dgvRawMaterials_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            if (dgvRawMaterials.CurrentCell != null && dgvRawMaterials.CurrentCell.ColumnIndex == clnRawItem.Index)
+            {
+                ComboBox cb = e.Control as ComboBox;
+                if (cb != null)
+                {
+                    cb.DropDownStyle = ComboBoxStyle.DropDown;
+                    cb.AutoCompleteSource = AutoCompleteSource.ListItems;
+                    cb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+
+                    var cellVal = dgvRawMaterials.CurrentCell.Value;
+                    if (cellVal == null || string.IsNullOrWhiteSpace(cellVal.ToString()))
+                    {
+                        try { cb.SelectedIndex = -1; cb.Text = ""; } catch { }
+                    }
+                    else
+                    {
+                        try { cb.SelectedValue = cellVal.ToString(); } catch { }
+                    }
+
+                    cb.SelectionChangeCommitted -= cb_SelectionChangeCommitted;
+                    cb.SelectionChangeCommitted += cb_SelectionChangeCommitted;
+                }
+            }
+        }
+
+        private void dgvRawMaterials_DataError(object sender, DataGridViewDataErrorEventArgs e)
+        {
+            e.ThrowException = false;
+        }
+
+        private void dgvRawMaterials_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.Handled = true;
+                e.SuppressKeyPress = true;
+                HandleGridEnterNavigation();
+            }
+        }
+
+        private void cb_SelectionChangeCommitted(object sender, EventArgs e)
+        {
+            if (dgvRawMaterials.CurrentCell != null && dgvRawMaterials.CurrentCell.ColumnIndex == clnRawItem.Index)
+            {
+                if (sender is ComboBox cb && cb.SelectedValue != null && cb.SelectedIndex != -1)
+                {
+                    string itemId = cb.SelectedValue.ToString();
+                    dgvRawMaterials.CurrentCell.Value = itemId;
+                    UpdateItemDefaults(dgvRawMaterials.CurrentCell.RowIndex, itemId);
+                }
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            if (keyData == Keys.Escape)
+            {
+                btnClose.PerformClick();
+                return true;
+            }
+
+            if (keyData == Keys.Enter && !dgvRawMaterials.ContainsFocus)
+            {
+                if (dtpDate.Focused || dtpDate.ContainsFocus || (ActiveControl != null && (ActiveControl == dtpDate || ActiveControl.Parent == dtpDate)))
+                {
+                    cmbBom.Focus();
+                    return true;
+                }
+                if (cmbBom.Focused || cmbBom.ContainsFocus || ActiveControl == cmbBom)
+                {
+                    cmbFinishedItem.Focus();
+                    return true;
+                }
+                if (cmbFinishedItem.Focused || cmbFinishedItem.ContainsFocus || ActiveControl == cmbFinishedItem)
+                {
+                    txtPlannedQty.Focus();
+                    txtPlannedQty.SelectAll();
+                    return true;
+                }
+                if (txtPlannedQty.Focused || ActiveControl == txtPlannedQty)
+                {
+                    txtBatchNo.Focus();
+                    txtBatchNo.SelectAll();
+                    return true;
+                }
+                if (txtBatchNo.Focused || ActiveControl == txtBatchNo)
+                {
+                    FocusGridFirstRow();
+                    return true;
+                }
+            }
+
+            Keys key = keyData & Keys.KeyCode;
+            Keys modifiers = keyData & Keys.Modifiers;
+            if ((key == Keys.Enter || (key == Keys.Tab && modifiers == Keys.None)) && dgvRawMaterials.ContainsFocus)
+            {
+                if (HandleGridEnterNavigation())
+                    return true;
+            }
+
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private bool HandleGridEnterNavigation()
+        {
+            if (dgvRawMaterials.CurrentCell == null) return false;
+
+            int rowIndex = dgvRawMaterials.CurrentCell.RowIndex;
+            int colIndex = dgvRawMaterials.CurrentCell.ColumnIndex;
+
+            // 1. Raw Item (clnRawItem)
+            if (colIndex == clnRawItem.Index)
+            {
+                if (dgvRawMaterials.EditingControl is ComboBox cb)
+                {
+                    if (cb.SelectedValue != null && cb.SelectedIndex != -1)
+                    {
+                        string selId = cb.SelectedValue.ToString();
+                        dgvRawMaterials[clnRawItem.Index, rowIndex].Value = selId;
+                        UpdateItemDefaults(rowIndex, selId);
+                    }
+                    else if (!string.IsNullOrWhiteSpace(cb.Text))
+                    {
+                        string text = cb.Text.Trim();
+                        var match = _items.FirstOrDefault(r =>
+                            string.Equals(r.Title, text, StringComparison.OrdinalIgnoreCase) ||
+                            string.Equals(r.Id, text, StringComparison.OrdinalIgnoreCase));
+                        if (match == null)
+                        {
+                            match = _items.FirstOrDefault(r =>
+                                r.Title != null && r.Title.StartsWith(text, StringComparison.OrdinalIgnoreCase));
+                        }
+                        if (match != null)
+                        {
+                            dgvRawMaterials[clnRawItem.Index, rowIndex].Value = match.Id;
+                            UpdateItemDefaults(rowIndex, match.Id);
+                        }
+                    }
+                }
+
+                dgvRawMaterials.EndEdit();
+
+                var itemVal = dgvRawMaterials[clnRawItem.Index, rowIndex].Value;
+                bool isItemEmpty = itemVal == null || string.IsNullOrWhiteSpace(itemVal.ToString());
+                bool isLastRow = (rowIndex == dgvRawMaterials.Rows.Count - 1);
+
+                if (isLastRow && isItemEmpty)
+                {
+                    dgvRawMaterials.EndEdit();
+                    RecalculateTotals();
+                    btnSave.Focus();
+                    return true;
+                }
+
+                if (!isItemEmpty)
+                {
+                    dgvRawMaterials.CurrentCell = dgvRawMaterials[clnPlannedQty.Index, rowIndex];
+                    dgvRawMaterials.BeginEdit(true);
+                    return true;
+                }
+
+                if (rowIndex < dgvRawMaterials.Rows.Count - 1)
+                {
+                    dgvRawMaterials.CurrentCell = dgvRawMaterials[clnRawItem.Index, rowIndex + 1];
+                    dgvRawMaterials.BeginEdit(true);
+                    return true;
+                }
+
+                btnSave.Focus();
+                return true;
+            }
+
+            // 2. Planned Qty (clnPlannedQty)
+            if (colIndex == clnPlannedQty.Index)
+            {
+                dgvRawMaterials.EndEdit();
+                dgvRawMaterials.CurrentCell = dgvRawMaterials[clnActualQty.Index, rowIndex];
+                dgvRawMaterials.BeginEdit(true);
+                return true;
+            }
+
+            // 3. Actual Qty (clnActualQty)
+            if (colIndex == clnActualQty.Index)
+            {
+                dgvRawMaterials.EndEdit();
+                RecalculateTotals();
+                dgvRawMaterials.CurrentCell = dgvRawMaterials[clnWastageQty.Index, rowIndex];
+                dgvRawMaterials.BeginEdit(true);
+                return true;
+            }
+
+            // 4. Wastage Qty (clnWastageQty)
+            if (colIndex == clnWastageQty.Index)
+            {
+                dgvRawMaterials.EndEdit();
+                dgvRawMaterials.CurrentCell = dgvRawMaterials[clnUnitCost.Index, rowIndex];
+                dgvRawMaterials.BeginEdit(true);
+                return true;
+            }
+
+            // 5. Unit Cost (clnUnitCost)
+            if (colIndex == clnUnitCost.Index)
+            {
+                dgvRawMaterials.EndEdit();
+                RecalculateTotals();
+                // Skip read-only clnTotalCost and go to clnDetailNotes
+                dgvRawMaterials.CurrentCell = dgvRawMaterials[clnDetailNotes.Index, rowIndex];
+                dgvRawMaterials.BeginEdit(true);
+                return true;
+            }
+
+            // 6. Notes / Batch Details (clnDetailNotes)
+            if (colIndex == clnDetailNotes.Index)
+            {
+                dgvRawMaterials.EndEdit();
+                RecalculateTotals();
+
+                // If on the last row and item is null/empty -> exit to Save button
+                var itemVal = dgvRawMaterials[clnRawItem.Index, rowIndex].Value;
+                bool isItemEmpty = itemVal == null || string.IsNullOrWhiteSpace(itemVal.ToString());
+                if (rowIndex == dgvRawMaterials.Rows.Count - 1 && isItemEmpty)
+                {
+                    RecalculateTotals();
+                    btnSave.Focus();
+                    return true;
+                }
+
+                int nextRowIdx;
+                if (rowIndex == dgvRawMaterials.Rows.Count - 1)
+                {
+                    btnAddRow_Click(null, null);
+                    nextRowIdx = dgvRawMaterials.Rows.Count - 1;
+                }
+                else
+                {
+                    nextRowIdx = rowIndex + 1;
+                }
+
+                dgvRawMaterials.CurrentCell = dgvRawMaterials[clnRawItem.Index, nextRowIdx];
+                dgvRawMaterials.BeginEdit(true);
+                if (dgvRawMaterials.EditingControl is ComboBox cb)
+                {
+                    cb.Focus();
+                }
+                return true;
+            }
+
+            // Fallback
+            dgvRawMaterials.EndEdit();
+            RecalculateTotals();
+            int targetIdx;
+            if (rowIndex < dgvRawMaterials.Rows.Count - 1)
+            {
+                targetIdx = rowIndex + 1;
+            }
+            else
+            {
+                btnAddRow_Click(null, null);
+                targetIdx = dgvRawMaterials.Rows.Count - 1;
+            }
+            dgvRawMaterials.CurrentCell = dgvRawMaterials[clnRawItem.Index, targetIdx];
+            dgvRawMaterials.BeginEdit(true);
+            if (dgvRawMaterials.EditingControl is ComboBox cbFallback)
+            {
+                cbFallback.Focus();
+            }
+            return true;
         }
 
         private async void frmManufacturing_Load(object sender, EventArgs e)
         {
+            _isLoading = true;
             dtpFrom.Value = DateTime.Today.AddDays(-30);
             dtpTo.Value = DateTime.Today;
 
             await LoadLookupsAsync();
             await LoadVouchersAsync();
+            _isLoading = false;
             btnNew_Click(sender, e);
         }
 
@@ -90,7 +631,7 @@ namespace ERP.Forms
                     MessageBox.Show("Error loading vouchers: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 }
             };
-            _pager.Attach(splitContainer1.Panel1, dgvProductionList);
+            _pager.Attach(tabpgQuery, dgvProductionList);
         }
 
         private async Task LoadVouchersAsync(int pageNumber = 1, int pageSize = 0)
@@ -156,11 +697,21 @@ namespace ERP.Forms
             ApplyFilter();
         }
 
-        private async void dgvProductionList_SelectionChanged(object sender, EventArgs e)
+        private async void dgvProductionList_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (_isLoading) return;
-            if (dgvProductionList.CurrentRow != null && dgvProductionList.CurrentRow.DataBoundItem is ProductionMasterDto item)
+            if (e.RowIndex >= 0 && dgvProductionList.Rows[e.RowIndex].DataBoundItem is ProductionMasterDto item)
             {
+                tabDetailQuery.SelectedTab = tabpgDetail;
+                await LoadVoucherDetailAsync(item.VoucherNo);
+            }
+        }
+
+        private async void dgvProductionList_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter && dgvProductionList.CurrentRow != null && dgvProductionList.CurrentRow.DataBoundItem is ProductionMasterDto item)
+            {
+                e.Handled = true;
+                tabDetailQuery.SelectedTab = tabpgDetail;
                 await LoadVoucherDetailAsync(item.VoucherNo);
             }
         }
@@ -241,23 +792,23 @@ namespace ERP.Forms
             switch (status)
             {
                 case "Completed":
-                    lblStatusDisplay.ForeColor = Color.DarkGreen;
+                    lblStatusDisplay.ForeColor = Color.FromArgb(21, 128, 61);
                     break;
                 case "InProgress":
-                    lblStatusDisplay.ForeColor = Color.DarkOrange;
+                    lblStatusDisplay.ForeColor = Color.FromArgb(217, 119, 6);
                     break;
                 case "Cancelled":
-                    lblStatusDisplay.ForeColor = Color.Crimson;
+                    lblStatusDisplay.ForeColor = Color.FromArgb(220, 38, 38);
                     break;
                 default:
-                    lblStatusDisplay.ForeColor = Color.DarkBlue;
+                    lblStatusDisplay.ForeColor = Color.FromArgb(30, 64, 175);
                     break;
             }
         }
 
         private void UpdateActionButtonsState()
         {
-            bool isCompletedOrCancelled = _currentStatus == "Completed" || _currentStatus == "Cancelled";
+            bool isCompletedOrCancelled = !string.IsNullOrEmpty(_selectedVoucherNo) && (_currentStatus == "Completed" || _currentStatus == "Cancelled");
             btnSave.Enabled = !isCompletedOrCancelled;
             btnIssueMaterials.Enabled = _currentStatus == "Planned" && !string.IsNullOrEmpty(_selectedVoucherNo);
             btnComplete.Enabled = !isCompletedOrCancelled && !string.IsNullOrEmpty(_selectedVoucherNo);
@@ -398,12 +949,39 @@ namespace ERP.Forms
             return 0;
         }
 
+        private void UpdateItemDefaults(int rowIndex, string itemId)
+        {
+            if (rowIndex < 0 || rowIndex >= dgvRawMaterials.Rows.Count) return;
+            var row = dgvRawMaterials.Rows[rowIndex];
+            var item = _items.FirstOrDefault(i => i.Id == itemId);
+            if (item != null)
+            {
+                var curCost = ParseDecimal(row.Cells[clnUnitCost.Index].Value);
+                if (curCost == 0)
+                    row.Cells[clnUnitCost.Index].Value = item.PriRate.ToString("0.##");
+
+                decimal actualQty = ParseDecimal(row.Cells[clnActualQty.Index].Value);
+                if (actualQty <= 0)
+                {
+                    actualQty = 1;
+                    row.Cells[clnActualQty.Index].Value = "1";
+                }
+                decimal plannedQty = ParseDecimal(row.Cells[clnPlannedQty.Index].Value);
+                if (plannedQty <= 0)
+                {
+                    row.Cells[clnPlannedQty.Index].Value = "1";
+                }
+                decimal cost = ParseDecimal(row.Cells[clnUnitCost.Index].Value);
+                row.Cells[clnTotalCost.Index].Value = (actualQty * cost).ToString("0.##");
+                RecalculateTotals();
+            }
+        }
+
         private void btnAddRow_Click(object sender, EventArgs e)
         {
             int rowIndex = dgvRawMaterials.Rows.Add();
             var row = dgvRawMaterials.Rows[rowIndex];
-            if (_items.Count > 0)
-                row.Cells[clnRawItem.Index].Value = _items[0].Id;
+            row.Cells[clnRawItem.Index].Value = null;
             row.Cells[clnPlannedQty.Index].Value = "1";
             row.Cells[clnActualQty.Index].Value = "1";
             row.Cells[clnWastageQty.Index].Value = "0";
@@ -441,10 +1019,13 @@ namespace ERP.Forms
             txtRemarks.Text = "";
             txtLaborCost.Text = "0";
             txtOverheadCost.Text = "0";
+            dgvRawMaterials.ReadOnly = false;
             dgvRawMaterials.Rows.Clear();
+            btnAddRow_Click(null, null);
             _isLoading = false;
             RecalculateTotals();
             UpdateActionButtonsState();
+            dtpDate.Focus();
         }
 
         private async void btnSave_Click(object sender, EventArgs e)
@@ -536,6 +1117,7 @@ namespace ERP.Forms
 
                 await LoadVouchersAsync();
                 UpdateActionButtonsState();
+                btnNew.Focus();
             }
             catch (Exception ex)
             {
@@ -699,6 +1281,22 @@ namespace ERP.Forms
         private void btnClose_Click(object sender, EventArgs e)
         {
             this.Close();
+        }
+
+        private void frmManufacturing_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.F3)
+            {
+                btnNew.PerformClick();
+            }
+            else if (e.KeyCode == Keys.F5)
+            {
+                btnSave.PerformClick();
+            }
+            else if (e.KeyCode == Keys.Escape)
+            {
+                btnClose.PerformClick();
+            }
         }
     }
 }

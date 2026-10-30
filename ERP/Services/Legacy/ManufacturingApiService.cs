@@ -305,8 +305,11 @@ namespace ERP.Services.Legacy
         [JsonProperty("voucherNo")]
         public string VoucherNo { get; set; }
 
-        [JsonProperty("date")]
+        [JsonIgnore]
         public DateTime Date { get; set; }
+
+        [JsonProperty("date")]
+        public string DateString => Date.ToString("yyyy-MM-dd", System.Globalization.CultureInfo.InvariantCulture);
 
         [JsonProperty("bomMasterId")]
         public int? BomId { get; set; }
