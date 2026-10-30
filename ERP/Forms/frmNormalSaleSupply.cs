@@ -636,6 +636,7 @@ namespace ERP
             _pager.SetPagination(page.CurrentPage, page.TotalPages, page.TotalCount, page.PageSize);
             _qPageSize = page.PageSize;
 
+            dgvQuery.Rows.Clear();
             for (int i = 0; i < _queryList.Count; i++)
             {
                 var row = _queryList[i];
@@ -1554,8 +1555,12 @@ namespace ERP
             }
         }
 
+        private bool _isQueryLoading = false;
         private async void btnFind_Click(object sender, EventArgs e)
         {
+            if (_isQueryLoading) return;
+            _isQueryLoading = true;
+            btnFind.Enabled = false;
             try
             {
                 string voucher = txtFilterVoucher.Text;
@@ -1572,8 +1577,12 @@ namespace ERP
             {
                 MessageBox.Show("Error loading sale supply data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+            finally
+            {
+                _isQueryLoading = false;
+                btnFind.Enabled = true;
+            }
         }
-
 
         private void txtFdate_Validated(object sender, EventArgs e)
         {

@@ -1032,11 +1032,6 @@ namespace ERP
             this.btnFind.Text = "&Find";
             this.btnFind.UseVisualStyleBackColor = false;
             this.btnFind.Click += new System.EventHandler(this.btnFind_Click);
-            this.btnFind.Size = new System.Drawing.Size(73, 29);
-            this.btnFind.TabIndex = 165;
-            this.btnFind.Text = "&Find";
-            this.btnFind.UseVisualStyleBackColor = false;
-            this.btnFind.Click += new System.EventHandler(this.btnFind_Click);
             // 
             // dgvQuery
             // 

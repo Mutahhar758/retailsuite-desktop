@@ -480,7 +480,7 @@ namespace ERP
                         secUnit = Convert.ToString(itemRow["SecondaryUnit"]);
                     }
                     if (string.IsNullOrWhiteSpace(secUnit))
-                        secUnit = "Bags";
+                        secUnit = null;
                 }
 
                 lines.Add(new SaleLineRequest

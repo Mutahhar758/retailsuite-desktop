@@ -481,7 +481,7 @@ namespace ERP
                     AddLess = model.AddLess,
                     SecQty = model.SecQty,
                     SecRate = model.SecRate,
-                    SecUnit = "Bags",
+                    SecUnit = null,
                     QtyInPack = model.PackQty,
                     Packing = model.Packing
                 });
@@ -532,7 +532,7 @@ namespace ERP
                         AddLess = m.AddLess,
                         SecQty = m.SecQty,
                         SecRate = m.SecRate,
-                        SecUnit = "Bags",
+                        SecUnit = null,
                         QtyInPack = m.PackQty,
                         Packing = m.Packing
                     }
@@ -897,7 +897,7 @@ namespace ERP
                             AddLess = d.AddLess,
                             SecQty = d.SecQty,
                             SecRate = d.SecRate,
-                            SecUnit = "Bags",
+                            SecUnit = null,
                             QtyInPack = d.QtyInPack,
                             Packing = d.Packing
                         }).ToList();
@@ -912,7 +912,7 @@ namespace ERP
                             AddLess = addLess,
                             SecQty = secQty,
                             SecRate = secRate,
-                            SecUnit = "Bags",
+                            SecUnit = null,
                             QtyInPack = defaultPack,
                             Packing = defaultPack
                         });
@@ -944,7 +944,7 @@ namespace ERP
                                     AddLess = addLess,
                                     SecQty = secQty,
                                     SecRate = secRate,
-                                    SecUnit = "Bags",
+                                    SecUnit = null,
                                     QtyInPack = defaultPack,
                                     Packing = defaultPack
                                 }
