@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -471,6 +471,7 @@ namespace ERP.Reporting
 
         private async Task RenderFilteredDocumentAsync()
         {
+            if (ApiSession.HasVariablePackFeature) { await RenderWandaFilteredDocumentAsync(); return; }
             if (!_isWebViewReady) return;
 
             try
@@ -478,8 +479,6 @@ namespace ERP.Reporting
                 decimal totalIn = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.QtyIn);
                 decimal totalOut = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.QtyOut);
                 decimal closingBal = _currentHeader != null ? _currentHeader.ClosingBalance : 0m;
-                decimal totalInSec = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.SecQtyIn);
-                decimal totalOutSec = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.SecQtyOut);
 
                 var header = new ItemLedgerHeader
                 {
@@ -492,11 +491,6 @@ namespace ERP.Reporting
                     TotalIn = totalIn,
                     TotalOut = totalOut,
                     ClosingBalance = closingBal,
-                    OpeningSec = _currentHeader != null ? _currentHeader.OpeningSec : 0m,
-                    TotalInSec = totalInSec,
-                    TotalOutSec = totalOutSec,
-                    ClosingSec = _currentHeader != null ? _currentHeader.ClosingSec : 0m,
-                    UnitLabel = _currentHeader != null ? _currentHeader.UnitLabel : null,
                     ShowCostPrice = _currentHeader != null && _currentHeader.ShowCostPrice,
                     GeneratedAt = DateTime.Now
                 };
@@ -520,13 +514,14 @@ namespace ERP.Reporting
 
         private void UpdateStatusBadge()
         {
+            if (ApiSession.HasVariablePackFeature) { UpdateWandaStatusBadge(); return; }
             if (_currentHeader != null)
             {
-                lblStatus.Text = string.Format("Open: {0} | In: +{1} | Out: -{2} | Close: {3}",
-                    _currentHeader.OpeningDisplay,
-                    _currentHeader.TotalInDisplay,
-                    _currentHeader.TotalOutDisplay,
-                    _currentHeader.ClosingDisplay);
+                lblStatus.Text = string.Format("Open: {0:#,##0.00} | In: +{1:#,##0.00} | Out: -{2:#,##0.00} | Close: {3:#,##0.00}",
+                    _currentHeader.OpeningBalance,
+                    _currentHeader.TotalIn,
+                    _currentHeader.TotalOut,
+                    _currentHeader.ClosingBalance);
                 lblStatus.ForeColor = Color.FromArgb(37, 99, 235);
             }
             else
@@ -547,6 +542,7 @@ namespace ERP.Reporting
 
         private void ExportToExcel()
         {
+            if (ApiSession.HasVariablePackFeature) { ExportWandaToExcel(); return; }
             if (_filteredItems == null || _filteredItems.Count == 0)
             {
                 MessageBox.Show("No item ledger records available to export.", "Export Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -665,16 +661,6 @@ namespace ERP.Reporting
                                 ws.Cell(row, balCol).Style.NumberFormat.Format = "#,##0.00";
                                 ws.Cell(row, balCol).Style.Font.Bold = true;
 
-                                if (ItemLedgerFormat.UseBags)
-                                {
-                                    ws.Cell(row, inwardCol).Value = item.FormattedQtyIn;
-                                    ws.Cell(row, inwardCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-                                    ws.Cell(row, outwardCol).Value = item.FormattedQtyOut;
-                                    ws.Cell(row, outwardCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-                                    ws.Cell(row, balCol).Value = item.FormattedBalance;
-                                    ws.Cell(row, balCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-                                }
-
                                 if (row % 2 == 1)
                                 {
                                     ws.Range(row, 1, row, balCol).Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
@@ -711,15 +697,6 @@ namespace ERP.Reporting
                                 ws.Cell(row, 7).Style.NumberFormat.Format = "#,##0.00";
                             }
 
-                            if (ItemLedgerFormat.UseBags && _currentHeader != null)
-                            {
-                                int inTotCol = showCostPrice ? 6 : 5;
-                                ws.Cell(row, inTotCol).Value = _currentHeader.TotalInDisplay;
-                                ws.Cell(row, inTotCol + 1).Value = _currentHeader.TotalOutDisplay;
-                                ws.Cell(row, inTotCol + 2).Value = _currentHeader.ClosingDisplay;
-                                ws.Range(row, inTotCol, row, inTotCol + 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-                            }
-
                             ws.Columns().AdjustToContents();
                             workbook.SaveAs(sfd.FileName);
                         }
@@ -736,6 +713,7 @@ namespace ERP.Reporting
 
         private void ExportToCsv()
         {
+            if (ApiSession.HasVariablePackFeature) { ExportWandaToCsv(); return; }
             if (_filteredItems == null || _filteredItems.Count == 0)
             {
                 MessageBox.Show("No item ledger records available to export.", "Export Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
@@ -765,9 +743,9 @@ namespace ERP.Reporting
                                     Particular = x.Particular,
                                     Rate = x.Rate,
                                     CostPrice = x.CostPrice,
-                                    Inward = ItemLedgerFormat.UseBags ? (object)x.FormattedQtyIn : x.QtyIn,
-                                    Outward = ItemLedgerFormat.UseBags ? (object)x.FormattedQtyOut : x.QtyOut,
-                                    Balance = ItemLedgerFormat.UseBags ? (object)x.FormattedBalance : x.Balance
+                                    Inward = x.QtyIn,
+                                    Outward = x.QtyOut,
+                                    Balance = x.Balance
                                 }).ToList();
                                 csv.WriteRecords(exportRows);
                             }
@@ -779,9 +757,9 @@ namespace ERP.Reporting
                                     VoucherNo = x.VoucherNo,
                                     Particular = x.Particular,
                                     Rate = x.Rate,
-                                    Inward = ItemLedgerFormat.UseBags ? (object)x.FormattedQtyIn : x.QtyIn,
-                                    Outward = ItemLedgerFormat.UseBags ? (object)x.FormattedQtyOut : x.QtyOut,
-                                    Balance = ItemLedgerFormat.UseBags ? (object)x.FormattedBalance : x.Balance
+                                    Inward = x.QtyIn,
+                                    Outward = x.QtyOut,
+                                    Balance = x.Balance
                                 }).ToList();
                                 csv.WriteRecords(exportRows);
                             }
@@ -826,6 +804,268 @@ namespace ERP.Reporting
                 catch
                 {
                     // Non-blocking cleanup
+                }
+            }
+        }
+
+        private async Task RenderWandaFilteredDocumentAsync()
+        {
+            if (!_isWebViewReady) return;
+
+            try
+            {
+                decimal totalIn = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.QtyIn);
+                decimal totalOut = _filteredItems.Where(x => x.VoucherNo != "-").Sum(x => x.QtyOut);
+                decimal closingBal = _currentHeader != null ? _currentHeader.ClosingBalance : 0m;
+
+                var header = new ItemLedgerHeader
+                {
+                    CompanyName = _currentHeader != null ? _currentHeader.CompanyName : "Retail Suite Enterprise",
+                    ItemId = _currentHeader != null ? _currentHeader.ItemId : string.Empty,
+                    ItemTitle = _currentHeader != null ? _currentHeader.ItemTitle : "Inventory Item",
+                    FromDate = dtpFrom.Value,
+                    ToDate = dtpTo.Value,
+                    OpeningBalance = _currentHeader != null ? _currentHeader.OpeningBalance : 0m,
+                    TotalIn = totalIn,
+                    TotalOut = totalOut,
+                    ClosingBalance = closingBal,
+                    UnitLabel = _currentHeader != null ? _currentHeader.UnitLabel : null,
+                    ShowCostPrice = _currentHeader != null && _currentHeader.ShowCostPrice,
+                    GeneratedAt = DateTime.Now
+                };
+
+                var doc = new WandaItemLedgerDocument(header, _filteredItems);
+                string newPdfPath = await doc.GeneratePdfToTempFileAsync();
+
+                CleanupTempFile();
+                _currentPdfPath = newPdfPath;
+
+                if (webView != null && webView.CoreWebView2 != null)
+                {
+                    webView.CoreWebView2.Navigate(new Uri(_currentPdfPath).AbsoluteUri);
+                }
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("PDF Render Error: " + ex.Message);
+            }
+        }
+
+        private void UpdateWandaStatusBadge()
+        {
+            if (_currentHeader != null)
+            {
+                lblStatus.Text = string.Format("Open: {0} | In: +{1} | Out: -{2} | Close: {3}",
+                    _currentHeader.WandaOpeningDisplay,
+                    _currentHeader.WandaTotalInDisplay,
+                    _currentHeader.WandaTotalOutDisplay,
+                    _currentHeader.WandaClosingDisplay);
+                lblStatus.ForeColor = Color.FromArgb(37, 99, 235);
+            }
+            else
+            {
+                lblStatus.Text = "No ledger records";
+                lblStatus.ForeColor = Color.FromArgb(239, 68, 68);
+            }
+        }
+
+        private void ExportWandaToExcel()
+        {
+            if (_filteredItems == null || _filteredItems.Count == 0)
+            {
+                MessageBox.Show("No item ledger records available to export.", "Export Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var sfd = new SaveFileDialog())
+            {
+                string safeItem = (_currentHeader?.ItemTitle ?? "ItemLedger").Replace(" ", "_").Replace("/", "-");
+                sfd.Filter = "Excel Workbook (*.xlsx)|*.xlsx";
+                sfd.FileName = string.Format("{0}_{1:yyyyMMdd}_{2:yyyyMMdd}.xlsx", safeItem, dtpFrom.Value, dtpTo.Value);
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        using (var workbook = new XLWorkbook())
+                        {
+                            var ws = workbook.Worksheets.Add("Item Ledger");
+
+                            ws.Cell(1, 1).Value = _currentHeader?.CompanyName ?? "Retail Suite Enterprise";
+                            ws.Cell(1, 1).Style.Font.Bold = true;
+                            ws.Cell(1, 1).Style.Font.FontSize = 14;
+
+                            ws.Cell(2, 1).Value = string.Format("Item Ledger: {0} ({1})", _currentHeader?.ItemTitle ?? "Item", _currentHeader?.ItemId ?? "");
+                            ws.Cell(2, 1).Style.Font.Bold = true;
+                            ws.Cell(2, 1).Style.Font.FontSize = 11;
+
+                            ws.Cell(3, 1).Value = string.Format("Period: {0:dd-MMM-yyyy} to {1:dd-MMM-yyyy} | Generated: {2:dd-MMM-yyyy HH:mm}", dtpFrom.Value, dtpTo.Value, DateTime.Now);
+                            ws.Cell(3, 1).Style.Font.Italic = true;
+                            ws.Cell(3, 1).Style.Font.FontColor = XLColor.FromArgb(100, 116, 139);
+
+                            bool showCostPrice = _currentHeader?.ShowCostPrice == true;
+
+                            int row = 5;
+                            string[] headers = showCostPrice
+                                ? new string[] { "Date", "Voucher #", "Particular / Narrative", "Rate", "Cost Price", "Inward (+)", "Outward (-)", "Balance Qty" }
+                                : new string[] { "Date", "Voucher #", "Particular / Narrative", "Rate", "Inward (+)", "Outward (-)", "Balance Qty" };
+
+                            for (int col = 1; col <= headers.Length; col++)
+                            {
+                                var cell = ws.Cell(row, col);
+                                cell.Value = headers[col - 1];
+                                cell.Style.Font.Bold = true;
+                                cell.Style.Fill.BackgroundColor = XLColor.FromArgb(241, 245, 249);
+                                cell.Style.Border.BottomBorder = XLBorderStyleValues.Medium;
+                                cell.Style.Border.BottomBorderColor = XLColor.FromArgb(51, 65, 85);
+                            }
+
+                            row = 6;
+                            foreach (var item in _filteredItems)
+                            {
+                                ws.Cell(row, 1).Value = item.Date.ToString("dd-MMM-yyyy");
+                                ws.Cell(row, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                ws.Cell(row, 2).Value = item.VoucherNo;
+                                ws.Cell(row, 2).Style.Font.Bold = true;
+
+                                ws.Cell(row, 3).Value = item.Particular;
+
+                                if (item.Rate.HasValue && item.Rate.Value > 0)
+                                {
+                                    ws.Cell(row, 4).Value = item.Rate.Value;
+                                    ws.Cell(row, 4).Style.NumberFormat.Format = "#,##0.00";
+                                }
+                                else
+                                {
+                                    ws.Cell(row, 4).Value = "-";
+                                    ws.Cell(row, 4).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                }
+
+                                int inwardCol = showCostPrice ? 6 : 5;
+                                int outwardCol = showCostPrice ? 7 : 6;
+                                int balCol = showCostPrice ? 8 : 7;
+
+                                if (showCostPrice)
+                                {
+                                    if (item.CostPrice.HasValue && item.CostPrice.Value > 0)
+                                    {
+                                        ws.Cell(row, 5).Value = item.CostPrice.Value;
+                                        ws.Cell(row, 5).Style.NumberFormat.Format = "#,##0.00";
+                                    }
+                                    else
+                                    {
+                                        ws.Cell(row, 5).Value = "-";
+                                        ws.Cell(row, 5).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                    }
+                                }
+
+                                ws.Cell(row, inwardCol).Value = item.WandaFormattedQtyIn;
+                                ws.Cell(row, inwardCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                                ws.Cell(row, outwardCol).Value = item.WandaFormattedQtyOut;
+                                ws.Cell(row, outwardCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                                ws.Cell(row, balCol).Value = item.WandaFormattedBalance;
+                                ws.Cell(row, balCol).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                                ws.Cell(row, balCol).Style.Font.Bold = true;
+
+                                if (row % 2 == 1)
+                                {
+                                    ws.Range(row, 1, row, balCol).Style.Fill.BackgroundColor = XLColor.FromArgb(248, 250, 252);
+                                }
+
+                                row++;
+                            }
+
+                            int lastCol = showCostPrice ? 8 : 7;
+                            var summaryRange = ws.Range(row, 1, row, lastCol);
+                            summaryRange.Style.Border.TopBorder = XLBorderStyleValues.Thin;
+                            summaryRange.Style.Border.BottomBorder = XLBorderStyleValues.Double;
+                            summaryRange.Style.Font.Bold = true;
+                            summaryRange.Style.Fill.BackgroundColor = XLColor.FromArgb(241, 245, 249);
+
+                            ws.Cell(row, 1).Value = "TOTALS";
+                            if (_currentHeader != null)
+                            {
+                                int inTotCol = showCostPrice ? 6 : 5;
+                                ws.Cell(row, inTotCol).Value = _currentHeader.WandaTotalInDisplay;
+                                ws.Cell(row, inTotCol + 1).Value = _currentHeader.WandaTotalOutDisplay;
+                                ws.Cell(row, inTotCol + 2).Value = _currentHeader.WandaClosingDisplay;
+                                ws.Range(row, inTotCol, row, inTotCol + 2).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                            }
+
+                            ws.Columns().AdjustToContents();
+                            workbook.SaveAs(sfd.FileName);
+                        }
+
+                        MessageBox.Show("Item Ledger exported successfully to Excel.", "Export Succeeded", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Failed to export Excel file: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
+                }
+            }
+        }
+
+        private void ExportWandaToCsv()
+        {
+            if (_filteredItems == null || _filteredItems.Count == 0)
+            {
+                MessageBox.Show("No item ledger records available to export.", "Export Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                return;
+            }
+
+            using (var sfd = new SaveFileDialog())
+            {
+                string safeItem = (_currentHeader?.ItemTitle ?? "ItemLedger").Replace(" ", "_").Replace("/", "-");
+                sfd.Filter = "CSV File (*.csv)|*.csv";
+                sfd.FileName = string.Format("{0}_{1:yyyyMMdd}_{2:yyyyMMdd}.csv", safeItem, dtpFrom.Value, dtpTo.Value);
+
+                if (sfd.ShowDialog() == DialogResult.OK)
+                {
+                    try
+                    {
+                        using (var writer = new StreamWriter(sfd.FileName))
+                        using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                        {
+                            bool showCostPrice = _currentHeader?.ShowCostPrice == true;
+                            if (showCostPrice)
+                            {
+                                var exportRows = _filteredItems.Select(x => new
+                                {
+                                    Date = x.FormattedDate,
+                                    VoucherNo = x.VoucherNo,
+                                    Particular = x.Particular,
+                                    Rate = x.Rate,
+                                    CostPrice = x.CostPrice,
+                                    Inward = x.WandaFormattedQtyIn,
+                                    Outward = x.WandaFormattedQtyOut,
+                                    Balance = x.WandaFormattedBalance
+                                }).ToList();
+                                csv.WriteRecords(exportRows);
+                            }
+                            else
+                            {
+                                var exportRows = _filteredItems.Select(x => new
+                                {
+                                    Date = x.FormattedDate,
+                                    VoucherNo = x.VoucherNo,
+                                    Particular = x.Particular,
+                                    Rate = x.Rate,
+                                    Inward = x.WandaFormattedQtyIn,
+                                    Outward = x.WandaFormattedQtyOut,
+                                    Balance = x.WandaFormattedBalance
+                                }).ToList();
+                                csv.WriteRecords(exportRows);
+                            }
+                        }
+
+                        MessageBox.Show("Item Ledger exported successfully to CSV.", "Export Succeeded", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    }
+                    catch (Exception ex)
+                    {
+                        MessageBox.Show("Failed to export CSV file: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    }
                 }
             }
         }

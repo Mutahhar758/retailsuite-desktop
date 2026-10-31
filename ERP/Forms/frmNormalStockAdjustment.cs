@@ -287,12 +287,12 @@ namespace ERP
             _qFrom = fromDate; _qTo = toDate; _qCategory = itemCategoryCode; _qVoucherNo = voucherNo;
             if (pageSize > 0) _qPageSize = pageSize;
 
-            dgvQuery.Rows.Clear();
             var page = await _apiService.GetPagedListAsync(fromDate, toDate, itemCategoryCode, voucherNo, pageNumber, _qPageSize);
             _queryList = page.Data;
             _pager.SetPagination(page.CurrentPage, page.TotalPages, page.TotalCount, page.PageSize);
             _qPageSize = page.PageSize;
 
+            dgvQuery.Rows.Clear();
             for (int i = 0; i < _queryList.Count; i++)
             {
                 var row = _queryList[i];
@@ -757,8 +757,12 @@ namespace ERP
             }
         }
 
+        private bool _isQueryLoading = false;
         private async void btnFind_Click(object sender, EventArgs e)
         {
+            if (_isQueryLoading) return;
+            _isQueryLoading = true;
+            btnFind.Enabled = false;
             try
             {
                 string voucher = txtFilterVoucher.Text;
@@ -776,6 +780,11 @@ namespace ERP
             catch (Exception ex)
             {
                 MessageBox.Show("Error loading stock adjustment data: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _isQueryLoading = false;
+                btnFind.Enabled = true;
             }
         }
 

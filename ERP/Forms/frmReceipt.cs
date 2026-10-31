@@ -223,12 +223,12 @@ namespace ERP
             _qFrom = fromDate; _qTo = toDate; _qCashBank = cashBank; _qAccount = account; _qNarration = narration;
             if (pageSize > 0) _qPageSize = pageSize;
 
-            dgvQuery.Rows.Clear();
             var page = await _apiService.GetPagedListAsync(fromDate, toDate, cashBank, account, narration, pageNumber, _qPageSize);
             _queryList = page.Data;
             _pager.SetPagination(page.CurrentPage, page.TotalPages, page.TotalCount, page.PageSize);
             _qPageSize = page.PageSize;
             VoucherIndex = 0;
+            dgvQuery.Rows.Clear();
             for (int i = 0; i < _queryList.Count; i++)
             {
                 var r = _queryList[i];
@@ -734,10 +734,25 @@ namespace ERP
         private async void dgvQuery_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         { if (!FLogIn && e.RowIndex != -1) { string voucherNo = dgvQuery.Rows[e.RowIndex].Cells[clnVoucherNum.Index].Value.ToString(); tabDetailQuery.SelectedTab = tabpgDetail; await FillReceiptAsync(voucherNo.Substring(3)); } }
 
+        private bool _isQueryLoading = false;
         private async void btnFind_Click(object sender, EventArgs e)
         {
-            try { await FillQueryAsync(txtFdate.Text, txtTdate.Text, cmbFilterCashBanks.SelectedValue != null ? cmbFilterCashBanks.SelectedValue.ToString() : "", cmbFilterAccounts.SelectedValue != null ? cmbFilterAccounts.SelectedValue.ToString() : "", cmbFilterNarration.SelectedValue != null ? cmbFilterNarration.SelectedValue.ToString() : "", 1, _qPageSize); }
-            catch (Exception ex) { MessageBox.Show("Error loading receipts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error); }
+            if (_isQueryLoading) return;
+            _isQueryLoading = true;
+            btnFind.Enabled = false;
+            try
+            {
+                await FillQueryAsync(txtFdate.Text, txtTdate.Text, cmbFilterCashBanks.SelectedValue != null ? cmbFilterCashBanks.SelectedValue.ToString() : "", cmbFilterAccounts.SelectedValue != null ? cmbFilterAccounts.SelectedValue.ToString() : "", cmbFilterNarration.SelectedValue != null ? cmbFilterNarration.SelectedValue.ToString() : "", 1, _qPageSize);
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error loading receipts: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                _isQueryLoading = false;
+                btnFind.Enabled = true;
+            }
         }
 
         private void txtFdate_Validated(object sender, EventArgs e)

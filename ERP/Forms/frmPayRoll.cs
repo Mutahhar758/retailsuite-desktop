@@ -95,9 +95,9 @@ namespace ERP
 
         async System.Threading.Tasks.Task FillQueryAsync(string fromDate = "", string toDate = "")
         {
-            dgvQuery.Rows.Clear();
             _queryList = await _payrollService.GetListAsync(fromDate, toDate);
 
+            dgvQuery.Rows.Clear();
             for (int i = 0; i < _queryList.Count; i++)
             {
                 var row = _queryList[i];
@@ -413,10 +413,22 @@ namespace ERP
             }
         }
 
+        private bool _isQueryLoading = false;
         private async void btnFind_Click(object sender, EventArgs e)
         {
-            string FDate = txtFdate.Text, TDate = txtTdate.Text;
-            await FillQueryAsync(FDate, TDate);
+            if (_isQueryLoading) return;
+            _isQueryLoading = true;
+            btnFind.Enabled = false;
+            try
+            {
+                string FDate = txtFdate.Text, TDate = txtTdate.Text;
+                await FillQueryAsync(FDate, TDate);
+            }
+            finally
+            {
+                _isQueryLoading = false;
+                btnFind.Enabled = true;
+            }
         }
 
         private void txtFdate_Validated(object sender, EventArgs e)

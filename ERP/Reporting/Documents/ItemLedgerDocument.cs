@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -102,7 +102,7 @@ namespace ERP.Reporting.Documents
                     kpiRow.RelativeItem().Text(x =>
                     {
                         x.Span("Opening Stock: ").FontSize(8.5f).SemiBold().FontColor(Colors.Grey.Darken2);
-                        x.Span(_header.OpeningDisplay).FontSize(9f).Bold().FontColor(Colors.Grey.Darken4);
+                        x.Span(_header.OpeningBalance.ToString("#,##0.00")).FontSize(9f).Bold().FontColor(Colors.Grey.Darken4);
                     });
 
                     kpiRow.RelativeItem().Text(x =>
@@ -120,7 +120,7 @@ namespace ERP.Reporting.Documents
                     kpiRow.RelativeItem().AlignRight().Text(x =>
                     {
                         x.Span("Closing Balance: ").FontSize(8.5f).SemiBold().FontColor(Colors.Grey.Darken2);
-                        x.Span(_header.ClosingDisplay).FontSize(9f).Bold().FontColor(Colors.Blue.Darken3);
+                        x.Span(_header.ClosingBalance.ToString("#,##0.00")).FontSize(9f).Bold().FontColor(Colors.Blue.Darken3);
                     });
                 });
             });
@@ -177,11 +177,11 @@ namespace ERP.Reporting.Documents
                         // Qty In
                         if (item.QtyIn > 0 && !isOpeningRow)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyIn).FontColor(Colors.Green.Darken3);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyIn.ToString("#,##0.00")).FontColor(Colors.Green.Darken3);
                         }
                         else if (item.QtyIn > 0 && isOpeningRow)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyIn).FontColor(Colors.Grey.Darken4);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyIn.ToString("#,##0.00")).FontColor(Colors.Grey.Darken4);
                         }
                         else
                         {
@@ -191,7 +191,7 @@ namespace ERP.Reporting.Documents
                         // Qty Out
                         if (item.QtyOut > 0)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyOut).FontColor(Colors.Red.Darken2);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyOut.ToString("#,##0.00")).FontColor(Colors.Red.Darken2);
                         }
                         else
                         {
@@ -199,14 +199,14 @@ namespace ERP.Reporting.Documents
                         }
 
                         // Running Balance
-                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedBalance).Bold().FontColor(Colors.Grey.Darken4);
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.Balance.ToString("#,##0.00")).Bold().FontColor(Colors.Grey.Darken4);
                     }
 
                     // Summary Totals Row (Span 5 for Date, Voucher#, Particular, Rate, Cost Price)
                     table.Cell().ColumnSpan(5).Element(FooterTotalCell).Text("PERIOD MOVEMENT TOTALS").Bold().FontColor(Colors.Grey.Darken4);
                     table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.TotalIn.ToString("#,##0.00")).Bold().FontColor(Colors.Green.Darken3);
                     table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.TotalOut.ToString("#,##0.00")).Bold().FontColor(Colors.Red.Darken2);
-                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.ClosingDisplay).Bold().FontColor(Colors.Blue.Darken3);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.ClosingBalance.ToString("#,##0.00")).Bold().FontColor(Colors.Blue.Darken3);
                 }
                 else
                 {
@@ -250,11 +250,11 @@ namespace ERP.Reporting.Documents
                         // Qty In
                         if (item.QtyIn > 0 && !isOpeningRow)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyIn).FontColor(Colors.Green.Darken3);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyIn.ToString("#,##0.00")).FontColor(Colors.Green.Darken3);
                         }
                         else if (item.QtyIn > 0 && isOpeningRow)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyIn).FontColor(Colors.Grey.Darken4);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyIn.ToString("#,##0.00")).FontColor(Colors.Grey.Darken4);
                         }
                         else
                         {
@@ -264,7 +264,7 @@ namespace ERP.Reporting.Documents
                         // Qty Out
                         if (item.QtyOut > 0)
                         {
-                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedQtyOut).FontColor(Colors.Red.Darken2);
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.QtyOut.ToString("#,##0.00")).FontColor(Colors.Red.Darken2);
                         }
                         else
                         {
@@ -272,14 +272,14 @@ namespace ERP.Reporting.Documents
                         }
 
                         // Running Balance
-                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedBalance).Bold().FontColor(Colors.Grey.Darken4);
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.Balance.ToString("#,##0.00")).Bold().FontColor(Colors.Grey.Darken4);
                     }
 
                     // Summary Totals Row
                     table.Cell().ColumnSpan(4).Element(FooterTotalCell).Text("PERIOD MOVEMENT TOTALS").Bold().FontColor(Colors.Grey.Darken4);
                     table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.TotalIn.ToString("#,##0.00")).Bold().FontColor(Colors.Green.Darken3);
                     table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.TotalOut.ToString("#,##0.00")).Bold().FontColor(Colors.Red.Darken2);
-                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.ClosingDisplay).Bold().FontColor(Colors.Blue.Darken3);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.ClosingBalance.ToString("#,##0.00")).Bold().FontColor(Colors.Blue.Darken3);
                 }
             });
         }
@@ -356,6 +356,318 @@ namespace ERP.Reporting.Documents
                 string filePath = Path.Combine(tempDir, string.Format("ItemLedger_{0:yyyyMMdd_HHmmss}_{1}.pdf", DateTime.Now, Guid.NewGuid().ToString().Substring(0, 6)));
                 this.GeneratePdf(filePath);
                 return filePath;
+            });
+        }
+    }
+
+    /// <summary>
+    /// Dedicated Wanda (variable pack) Item Ledger QuestPDF document.
+    /// Displays all movement quantities and balances in the item's configured default unit.
+    /// </summary>
+    public class WandaItemLedgerDocument : IDocument
+    {
+        private readonly ItemLedgerHeader _header;
+        private readonly List<ItemLedgerReportItem> _items;
+
+        public WandaItemLedgerDocument(ItemLedgerHeader header, List<ItemLedgerReportItem> items)
+        {
+            _header = header ?? new ItemLedgerHeader();
+            _items = items ?? new List<ItemLedgerReportItem>();
+        }
+
+        public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
+        public DocumentSettings GetSettings() => DocumentSettings.Default;
+
+        public void Compose(IDocumentContainer container)
+        {
+            container.Page(page =>
+            {
+                page.Size(PageSizes.A4);
+                page.Margin(30, Unit.Point);
+                page.PageColor(Colors.White);
+                page.DefaultTextStyle(x => x.FontSize(8.5f).FontFamily("Segoe UI").FontColor(Colors.Grey.Darken4));
+
+                page.Header().Element(ComposeHeader);
+                page.Content().Element(ComposeContent);
+                page.Footer().Element(ComposeFooter);
+            });
+        }
+
+        private void ComposeHeader(IContainer container)
+        {
+            container.Column(col =>
+            {
+                col.Item().Row(row =>
+                {
+                    row.RelativeItem().Column(brandCol =>
+                    {
+                        string compName = !string.IsNullOrWhiteSpace(_header?.CompanyName)
+                            ? _header.CompanyName
+                            : (!string.IsNullOrWhiteSpace(ERP.CompanyInfo.CompanyName) ? ERP.CompanyInfo.CompanyName : "Retail Suite Enterprise");
+
+                        brandCol.Item().Text(compName)
+                            .FontSize(18)
+                            .Bold()
+                            .FontColor(Colors.Grey.Darken3);
+
+                        brandCol.Item().PaddingTop(2).Text("ITEM LEDGER / STOCK MOVEMENT")
+                            .FontSize(11)
+                            .SemiBold()
+                            .FontColor(Colors.Grey.Darken1);
+
+                        brandCol.Item().PaddingTop(3).Row(tagRow =>
+                        {
+                            tagRow.AutoItem().Text("Item: ")
+                                .FontSize(9)
+                                .SemiBold()
+                                .FontColor(Colors.Grey.Darken2);
+
+                            tagRow.AutoItem().Text(_header.ItemTitle ?? "All Items")
+                                .FontSize(9.5f)
+                                .Bold()
+                                .FontColor(Colors.Blue.Darken3);
+                        });
+                    });
+
+                    row.ConstantItem(240).AlignRight().Column(metaCol =>
+                    {
+                        metaCol.Item().Text(string.Format("Period: {0:dd-MMM-yyyy} to {1:dd-MMM-yyyy}", _header.FromDate, _header.ToDate))
+                            .FontSize(8.5f)
+                            .SemiBold()
+                            .FontColor(Colors.Grey.Darken3);
+
+                        metaCol.Item().PaddingTop(2).Text(string.Format("Generated: {0:dd MMM yyyy, HH:mm}", _header.GeneratedAt))
+                            .FontSize(7.5f)
+                            .FontColor(Colors.Grey.Darken1);
+                    });
+                });
+
+                col.Item().PaddingTop(8).LineHorizontal(0.75f).LineColor(Colors.Grey.Lighten2);
+
+                col.Item().PaddingTop(6).PaddingBottom(4).Row(kpiRow =>
+                {
+                    kpiRow.RelativeItem().Text(x =>
+                    {
+                        x.Span("Opening Stock: ").FontSize(8.5f).SemiBold().FontColor(Colors.Grey.Darken2);
+                        x.Span(_header.WandaOpeningDisplay).FontSize(9f).Bold().FontColor(Colors.Grey.Darken4);
+                    });
+
+                    kpiRow.RelativeItem().Text(x =>
+                    {
+                        x.Span("Total Inward (+): ").FontSize(8.5f).SemiBold().FontColor(Colors.Grey.Darken2);
+                        x.Span(_header.WandaTotalInDisplay).FontSize(9f).Bold().FontColor(Colors.Green.Darken3);
+                    });
+
+                    kpiRow.RelativeItem().Text(x =>
+                    {
+                        x.Span("Total Outward (-): ").FontSize(8.5f).SemiBold().FontColor(Colors.Grey.Darken2);
+                        x.Span(_header.WandaTotalOutDisplay).FontSize(9f).Bold().FontColor(Colors.Red.Darken2);
+                    });
+
+                    kpiRow.RelativeItem().AlignRight().Text(x =>
+                    {
+                        x.Span("Closing Balance: ").FontSize(8.5f).SemiBold().FontColor(Colors.Grey.Darken2);
+                        x.Span(_header.WandaClosingDisplay).FontSize(9f).Bold().FontColor(Colors.Blue.Darken3);
+                    });
+                });
+            });
+        }
+
+        private void ComposeContent(IContainer container)
+        {
+            container.PaddingTop(6).Table(table =>
+            {
+                if (_header.ShowCostPrice)
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(62);
+                        columns.ConstantColumn(68);
+                        columns.RelativeColumn(3.5f);
+                        columns.ConstantColumn(52);
+                        columns.ConstantColumn(55);
+                        columns.ConstantColumn(60);
+                        columns.ConstantColumn(60);
+                        columns.ConstantColumn(68);
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Element(HeaderCell).AlignCenter().Text("Date");
+                        header.Cell().Element(HeaderCell).Text("Voucher #");
+                        header.Cell().Element(HeaderCell).Text("Particular / Narrative");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Rate");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Cost Price");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Inward (+)");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Outward (-)");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Balance");
+                    });
+
+                    for (int i = 0; i < _items.Count; i++)
+                    {
+                        var item = _items[i];
+                        var isEven = (i % 2 == 0);
+                        var bg = isEven ? Colors.White : Colors.Grey.Lighten5;
+                        bool isOpeningRow = item.VoucherNo == "-";
+
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignCenter().Text(item.FormattedDate).FontSize(7.5f).FontColor(Colors.Grey.Darken2);
+                        table.Cell().Element(c => BodyCell(c, bg)).Text(item.VoucherNo ?? string.Empty).Bold();
+                        table.Cell().Element(c => BodyCell(c, bg)).Text(item.Particular ?? string.Empty).SemiBold();
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedRate).FontColor(Colors.Grey.Darken3);
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(isOpeningRow ? "-" : item.FormattedCostPrice).FontColor(Colors.Indigo.Darken2);
+
+                        if (item.QtyIn > 0 && !isOpeningRow)
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.WandaFormattedQtyIn).FontColor(Colors.Green.Darken3);
+                        else if (item.QtyIn > 0 && isOpeningRow)
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.WandaFormattedQtyIn).FontColor(Colors.Grey.Darken4);
+                        else
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text("-").FontColor(Colors.Grey.Lighten1);
+
+                        if (item.QtyOut > 0)
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.WandaFormattedQtyOut).FontColor(Colors.Red.Darken2);
+                        else
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text("-").FontColor(Colors.Grey.Lighten1);
+
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.WandaFormattedBalance).Bold().FontColor(Colors.Grey.Darken4);
+                    }
+
+                    table.Cell().ColumnSpan(5).Element(FooterTotalCell).Text("PERIOD MOVEMENT TOTALS").Bold().FontColor(Colors.Grey.Darken4);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.WandaTotalInDisplay).Bold().FontColor(Colors.Green.Darken3);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.WandaTotalOutDisplay).Bold().FontColor(Colors.Red.Darken2);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.WandaClosingDisplay).Bold().FontColor(Colors.Blue.Darken3);
+                }
+                else
+                {
+                    table.ColumnsDefinition(columns =>
+                    {
+                        columns.ConstantColumn(68);
+                        columns.ConstantColumn(75);
+                        columns.RelativeColumn(3.5f);
+                        columns.ConstantColumn(60);
+                        columns.ConstantColumn(65);
+                        columns.ConstantColumn(65);
+                        columns.ConstantColumn(75);
+                    });
+
+                    table.Header(header =>
+                    {
+                        header.Cell().Element(HeaderCell).AlignCenter().Text("Date");
+                        header.Cell().Element(HeaderCell).Text("Voucher #");
+                        header.Cell().Element(HeaderCell).Text("Particular / Narrative");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Rate");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Inward (+)");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Outward (-)");
+                        header.Cell().Element(HeaderCell).AlignRight().Text("Balance");
+                    });
+
+                    for (int i = 0; i < _items.Count; i++)
+                    {
+                        var item = _items[i];
+                        var isEven = (i % 2 == 0);
+                        var bg = isEven ? Colors.White : Colors.Grey.Lighten5;
+                        bool isOpeningRow = item.VoucherNo == "-";
+
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignCenter().Text(item.FormattedDate).FontSize(7.5f).FontColor(Colors.Grey.Darken2);
+                        table.Cell().Element(c => BodyCell(c, bg)).Text(item.VoucherNo ?? string.Empty).Bold();
+                        table.Cell().Element(c => BodyCell(c, bg)).Text(item.Particular ?? string.Empty).SemiBold();
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.FormattedRate).FontColor(Colors.Grey.Darken3);
+
+                        if (item.QtyIn > 0 && !isOpeningRow)
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.WandaFormattedQtyIn).FontColor(Colors.Green.Darken3);
+                        else if (item.QtyIn > 0 && isOpeningRow)
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.WandaFormattedQtyIn).FontColor(Colors.Grey.Darken4);
+                        else
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text("-").FontColor(Colors.Grey.Lighten1);
+
+                        if (item.QtyOut > 0)
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.WandaFormattedQtyOut).FontColor(Colors.Red.Darken2);
+                        else
+                            table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text("-").FontColor(Colors.Grey.Lighten1);
+
+                        table.Cell().Element(c => BodyCell(c, bg)).AlignRight().Text(item.WandaFormattedBalance).Bold().FontColor(Colors.Grey.Darken4);
+                    }
+
+                    table.Cell().ColumnSpan(4).Element(FooterTotalCell).Text("PERIOD MOVEMENT TOTALS").Bold().FontColor(Colors.Grey.Darken4);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.WandaTotalInDisplay).Bold().FontColor(Colors.Green.Darken3);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.WandaTotalOutDisplay).Bold().FontColor(Colors.Red.Darken2);
+                    table.Cell().Element(FooterTotalCell).AlignRight().Text(_header.WandaClosingDisplay).Bold().FontColor(Colors.Blue.Darken3);
+                }
+            });
+        }
+
+        private void ComposeFooter(IContainer container)
+        {
+            container.Column(col =>
+            {
+                col.Item().LineHorizontal(0.5f).LineColor(Colors.Grey.Lighten2);
+                col.Item().PaddingTop(4).Row(row =>
+                {
+                    row.RelativeItem().Text("Software powered by Bizgrip Solutions (Contact: 03228258734)")
+                        .FontSize(7.5f)
+                        .FontColor(Colors.Grey.Darken1);
+
+                    row.RelativeItem().AlignRight().Text(x =>
+                    {
+                        x.Span("Page ").FontSize(7.5f).FontColor(Colors.Grey.Darken1);
+                        x.CurrentPageNumber().FontSize(7.5f).SemiBold().FontColor(Colors.Grey.Darken3);
+                        x.Span(" of ").FontSize(7.5f).FontColor(Colors.Grey.Darken1);
+                        x.TotalPages().FontSize(7.5f).SemiBold().FontColor(Colors.Grey.Darken3);
+                    });
+                });
+            });
+        }
+
+        private static IContainer HeaderCell(IContainer container)
+        {
+            return container
+                .BorderBottom(1)
+                .BorderColor(Colors.Grey.Darken2)
+                .Background(Colors.Grey.Lighten4)
+                .PaddingVertical(5)
+                .PaddingHorizontal(4)
+                .DefaultTextStyle(x => x.SemiBold().FontSize(8).FontColor(Colors.Grey.Darken3));
+        }
+
+        private static IContainer BodyCell(IContainer container, string backgroundColor)
+        {
+            return container
+                .Background(backgroundColor)
+                .BorderBottom(0.5f)
+                .BorderColor(Colors.Grey.Lighten3)
+                .PaddingVertical(3.5f)
+                .PaddingHorizontal(4);
+        }
+
+        private static IContainer FooterTotalCell(IContainer container)
+        {
+            return container
+                .BorderTop(1.5f)
+                .BorderColor(Colors.Grey.Darken3)
+                .BorderBottom(2.5f)
+                .BorderColor(Colors.Grey.Darken3)
+                .Background(Colors.Grey.Lighten4)
+                .PaddingVertical(5)
+                .PaddingHorizontal(4)
+                .DefaultTextStyle(x => x.FontSize(8.5f));
+        }
+
+        public async Task<string> GeneratePdfToTempFileAsync()
+        {
+            return await Task.Run(() =>
+            {
+                string tempDir = Path.Combine(Path.GetTempPath(), "RetailSuite", "Reports");
+                if (!Directory.Exists(tempDir))
+                {
+                    Directory.CreateDirectory(tempDir);
+                }
+
+                string fileName = string.Format("ItemLedger_{0}_{1:yyyyMMddHHmmss}.pdf",
+                    (_header.ItemId ?? "Item").Replace("/", "_").Replace("\\", "_"),
+                    DateTime.Now);
+
+                string fullPath = Path.Combine(tempDir, fileName);
+                this.GeneratePdf(fullPath);
+                return fullPath;
             });
         }
     }

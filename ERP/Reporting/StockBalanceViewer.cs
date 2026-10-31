@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.Data;
 using System.Drawing;
@@ -364,6 +364,7 @@ namespace ERP.Reporting
 
         public async Task LoadAndRenderReportAsync()
         {
+            if (ApiSession.HasVariablePackFeature) { await LoadAndRenderWandaReportAsync(); return; }
             if (!_isWebViewReady) return;
 
             SetLoadingState(true, "Calculating inventory valuation & generating PDF...");
@@ -438,6 +439,7 @@ namespace ERP.Reporting
 
         private async Task ExportToExcelAsync()
         {
+            if (ApiSession.HasVariablePackFeature) { await ExportWandaToExcelAsync(); return; }
             if (_currentItems == null || _currentItems.Count == 0)
             {
                 MessageBox.Show("There is no stock balance data available to export.", "Export Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -533,15 +535,6 @@ namespace ERP.Reporting
                                 ws.Cell(rowIdx, 9).Value = itm.TotalValue;
                                 ws.Cell(rowIdx, 9).Style.NumberFormat.Format = "#,##0.00";
 
-                                if (ItemLedgerFormat.UseBags)
-                                {
-                                    ws.Cell(rowIdx, 4).Value = itm.FormattedOpening;
-                                    ws.Cell(rowIdx, 5).Value = itm.FormattedQtyIn;
-                                    ws.Cell(rowIdx, 6).Value = itm.FormattedQtyOut;
-                                    ws.Cell(rowIdx, 7).Value = itm.FormattedClosing;
-                                    ws.Range(rowIdx, 4, rowIdx, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-                                }
-
                                 if (rowIdx % 2 == 1)
                                 {
                                     ws.Range(rowIdx, 1, rowIdx, 9).Style.Fill.BackgroundColor = XLColor.FromHtml("#F8FAFC");
@@ -570,16 +563,6 @@ namespace ERP.Reporting
                             ws.Cell(rowIdx, 7).Value = items.Sum(x => x.ClosingQty);
                             ws.Cell(rowIdx, 7).Style.Font.Bold = true;
                             ws.Cell(rowIdx, 7).Style.NumberFormat.Format = "#,##0.##";
-
-                            if (ItemLedgerFormat.UseBags)
-                            {
-                                string sumUnit = items.Select(x => x.Unit).FirstOrDefault(u => !string.IsNullOrWhiteSpace(u)) ?? "kg";
-                                ws.Cell(rowIdx, 4).Value = ItemLedgerFormat.BagsKg(items.Sum(x => x.SecOpeningQty), items.Sum(x => x.OpeningQty), sumUnit);
-                                ws.Cell(rowIdx, 5).Value = ItemLedgerFormat.BagsKg(items.Sum(x => x.SecQtyIn), items.Sum(x => x.QtyIn), sumUnit);
-                                ws.Cell(rowIdx, 6).Value = ItemLedgerFormat.BagsKg(items.Sum(x => x.SecQtyOut), items.Sum(x => x.QtyOut), sumUnit);
-                                ws.Cell(rowIdx, 7).Value = ItemLedgerFormat.BagsKg(items.Sum(x => x.SecClosingQty), items.Sum(x => x.ClosingQty), sumUnit);
-                                ws.Range(rowIdx, 4, rowIdx, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
-                            }
 
                             ws.Cell(rowIdx, 8).Value = "-";
                             ws.Cell(rowIdx, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
@@ -617,6 +600,7 @@ namespace ERP.Reporting
 
         private async Task ExportToCsvAsync()
         {
+            if (ApiSession.HasVariablePackFeature) { await ExportWandaToCsvAsync(); return; }
             if (_currentItems == null || _currentItems.Count == 0)
             {
                 MessageBox.Show("There is no stock balance data available to export.", "Export Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -642,27 +626,7 @@ namespace ERP.Reporting
                         using (var writer = new StreamWriter(filePath))
                         using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
                         {
-                            if (ItemLedgerFormat.UseBags)
-                            {
-                                var exportRows = items.Select(x => new
-                                {
-                                    x.Index,
-                                    x.ItemName,
-                                    x.Unit,
-                                    OpeningQty = x.FormattedOpening,
-                                    QtyIn = x.FormattedQtyIn,
-                                    QtyOut = x.FormattedQtyOut,
-                                    ClosingQty = x.FormattedClosing,
-                                    x.Rate,
-                                    x.TotalValue,
-                                    x.Status
-                                }).ToList();
-                                csv.WriteRecords(exportRows);
-                            }
-                            else
-                            {
-                                csv.WriteRecords(items);
-                            }
+                            csv.WriteRecords(items);
                         }
                     });
 
@@ -708,6 +672,287 @@ namespace ERP.Reporting
                 }
             }
             catch { }
+        }
+
+        private async Task LoadAndRenderWandaReportAsync()
+        {
+            if (!_isWebViewReady) return;
+
+            SetLoadingState(true, "Calculating inventory valuation & generating PDF...");
+
+            try
+            {
+                string categoryCode = cmbCategory.SelectedValue != null ? cmbCategory.SelectedValue.ToString() : string.Empty;
+                string categoryTitle = cmbCategory.Text ?? "All Categories";
+                DateTime from = dtpFrom.Value.Date;
+                DateTime to = dtpTo.Value.Date.AddDays(1).AddSeconds(-1);
+                string filterSelection = cmbFilter.SelectedItem?.ToString() ?? "All Items";
+                string queryFilter = "All";
+                if (filterSelection == "Closing Qty > 0" || filterSelection == "Positive (> 0)") queryFilter = "> 0";
+                else if (filterSelection == "Closing Qty < 0" || filterSelection == "Negative (< 0)") queryFilter = "< 0";
+                else if (filterSelection == "Closing Qty = 0" || filterSelection == "Zero (= 0)") queryFilter = "= 0";
+                else if (filterSelection == "Low Stock Only") queryFilter = "LowStock";
+
+                var reportData = await Task.Run(() =>
+                {
+                    DataTable dt = ReportQuery.StockBalance(from, to, queryFilter, 0m, categoryCode, null);
+                    var items = (dt != null && dt.Rows.Count > 0) ? WandaStockBalanceDataService.FromDataTable(dt) : new List<StockBalanceReportItem>();
+
+                    if (queryFilter == "> 0") items = items.Where(x => x.ClosingQty > 0).ToList();
+                    else if (queryFilter == "< 0") items = items.Where(x => x.ClosingQty < 0).ToList();
+                    else if (queryFilter == "= 0") items = items.Where(x => x.ClosingQty == 0).ToList();
+                    else if (queryFilter == "LowStock") items = items.Where(x => x.Status == "Low Stock").ToList();
+
+                    for (int i = 0; i < items.Count; i++) items[i].Index = i + 1;
+
+                    var header = new StockBalanceHeader
+                    {
+                        CompanyName = CompanyInfo.CompanyName,
+                        CategoryName = categoryTitle,
+                        Filter = filterSelection,
+                        FromDate = from,
+                        ToDate = to,
+                        TotalItems = items.Count,
+                        TotalOpeningQty = items.Sum(x => x.OpeningQty),
+                        TotalQtyIn = items.Sum(x => x.QtyIn),
+                        TotalQtyOut = items.Sum(x => x.QtyOut),
+                        TotalClosingQty = items.Sum(x => x.ClosingQty),
+                        TotalStockValue = items.Sum(x => x.TotalValue)
+                    };
+
+                    return new StockBalanceDataResult(header, items);
+                });
+
+                _currentHeader = reportData.Header;
+                _currentItems = reportData.Items;
+
+                _currentPdfPath = await WandaStockBalanceDocument.GeneratePdfToTempFileAsync(_currentHeader, _currentItems, chkShowStockValue.Checked);
+
+                if (File.Exists(_currentPdfPath) && webView.CoreWebView2 != null)
+                {
+                    webView.CoreWebView2.Navigate(new Uri(_currentPdfPath).AbsoluteUri);
+                }
+
+                SetLoadingState(false, string.Format("Report ready ({0} SKUs, Value: {1:C0})", _currentItems.Count, _currentHeader.TotalStockValue));
+            }
+            catch (Exception ex)
+            {
+                SetLoadingState(false, "Error loading report");
+                MessageBox.Show(
+                    "Failed to generate stock balance report: " + ex.Message,
+                    "Report Generation Error",
+                    MessageBoxButtons.OK,
+                    MessageBoxIcon.Error);
+            }
+        }
+
+        private async Task ExportWandaToExcelAsync()
+        {
+            if (_currentItems == null || _currentItems.Count == 0)
+            {
+                MessageBox.Show("There is no stock balance data available to export.", "Export Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (var sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "Excel Workbook (*.xlsx)|*.xlsx";
+                sfd.FileName = string.Format("StockBalance_{0:yyyyMMdd_HHmmss}.xlsx", DateTime.Now);
+
+                if (sfd.ShowDialog(this) != DialogResult.OK) return;
+
+                SetLoadingState(true, "Exporting to Excel...");
+
+                try
+                {
+                    string filePath = sfd.FileName;
+                    var header = _currentHeader;
+                    var items = _currentItems;
+
+                    await Task.Run(() =>
+                    {
+                        using (var workbook = new XLWorkbook())
+                        {
+                            var ws = workbook.Worksheets.Add("Stock Balance");
+
+                            ws.Cell("A1").Value = header?.CompanyName ?? "RetailSuite Enterprise";
+                            ws.Cell("A1").Style.Font.Bold = true;
+                            ws.Cell("A1").Style.Font.FontSize = 15;
+                            ws.Cell("A1").Style.Font.FontColor = XLColor.FromHtml("#0F172A");
+
+                            ws.Cell("A2").Value = "STOCK BALANCE & INVENTORY VALUATION AUDIT";
+                            ws.Cell("A2").Style.Font.Bold = true;
+                            ws.Cell("A2").Style.Font.FontSize = 10;
+                            ws.Cell("A2").Style.Font.FontColor = XLColor.FromHtml("#475569");
+
+                            ws.Cell("A4").Value = "Category:";
+                            ws.Cell("A4").Style.Font.Bold = true;
+                            ws.Cell("B4").Value = header?.CategoryName ?? "All Categories";
+
+                            ws.Cell("D4").Value = "Period:";
+                            ws.Cell("D4").Style.Font.Bold = true;
+                            ws.Cell("E4").Value = string.Format("{0:yyyy-MM-dd} to {1:yyyy-MM-dd}", header?.FromDate, header?.ToDate);
+
+                            ws.Cell("D5").Value = "Filter:";
+                            ws.Cell("D5").Style.Font.Bold = true;
+                            ws.Cell("E5").Value = header?.Filter ?? "All Stock";
+
+                            int startRow = 7;
+                            string[] headers = { "#", "Item / Product Name", "Unit", "Opening Qty", "Inward (+)", "Outward (-)", "Closing Qty", "Rate", "Total Value" };
+                            for (int c = 0; c < headers.Length; c++)
+                            {
+                                var cell = ws.Cell(startRow, c + 1);
+                                cell.Value = headers[c];
+                                cell.Style.Font.Bold = true;
+                                cell.Style.Font.FontColor = XLColor.FromHtml("#334155");
+                                cell.Style.Fill.BackgroundColor = XLColor.FromHtml("#F1F5F9");
+                                cell.Style.Alignment.Vertical = XLAlignmentVerticalValues.Center;
+                                if (c == 0 || c == 2) cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+                                if (c >= 3) cell.Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+                            }
+
+                            int rowIdx = startRow + 1;
+                            foreach (var itm in items)
+                            {
+                                ws.Cell(rowIdx, 1).Value = itm.Index;
+                                ws.Cell(rowIdx, 1).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                ws.Cell(rowIdx, 2).Value = itm.ItemName ?? "";
+
+                                ws.Cell(rowIdx, 3).Value = itm.Unit ?? "";
+                                ws.Cell(rowIdx, 3).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                                ws.Cell(rowIdx, 4).Value = itm.WandaFormattedOpening;
+                                ws.Cell(rowIdx, 5).Value = itm.WandaFormattedQtyIn;
+                                ws.Cell(rowIdx, 6).Value = itm.WandaFormattedQtyOut;
+                                ws.Cell(rowIdx, 7).Value = itm.WandaFormattedClosing;
+                                ws.Range(rowIdx, 4, rowIdx, 7).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Right;
+
+                                ws.Cell(rowIdx, 8).Value = itm.Rate;
+                                ws.Cell(rowIdx, 8).Style.NumberFormat.Format = "#,##0.00";
+
+                                ws.Cell(rowIdx, 9).Value = itm.TotalValue;
+                                ws.Cell(rowIdx, 9).Style.NumberFormat.Format = "#,##0.00";
+
+                                if (rowIdx % 2 == 1)
+                                {
+                                    ws.Range(rowIdx, 1, rowIdx, 9).Style.Fill.BackgroundColor = XLColor.FromHtml("#F8FAFC");
+                                }
+
+                                rowIdx++;
+                            }
+
+                            ws.Cell(rowIdx, 1).Value = "TOTAL SUMMARY";
+                            ws.Cell(rowIdx, 1).Style.Font.Bold = true;
+                            ws.Range(rowIdx, 1, rowIdx, 3).Merge();
+
+                            ws.Cell(rowIdx, 4).Value = items.Sum(x => x.OpeningQty);
+                            ws.Cell(rowIdx, 4).Style.Font.Bold = true;
+                            ws.Cell(rowIdx, 4).Style.NumberFormat.Format = "#,##0.##";
+
+                            ws.Cell(rowIdx, 5).Value = items.Sum(x => x.QtyIn);
+                            ws.Cell(rowIdx, 5).Style.Font.Bold = true;
+                            ws.Cell(rowIdx, 5).Style.NumberFormat.Format = "#,##0.##";
+
+                            ws.Cell(rowIdx, 6).Value = items.Sum(x => x.QtyOut);
+                            ws.Cell(rowIdx, 6).Style.Font.Bold = true;
+                            ws.Cell(rowIdx, 6).Style.NumberFormat.Format = "#,##0.##";
+
+                            ws.Cell(rowIdx, 7).Value = items.Sum(x => x.ClosingQty);
+                            ws.Cell(rowIdx, 7).Style.Font.Bold = true;
+                            ws.Cell(rowIdx, 7).Style.NumberFormat.Format = "#,##0.##";
+
+                            ws.Cell(rowIdx, 8).Value = "-";
+                            ws.Cell(rowIdx, 8).Style.Alignment.Horizontal = XLAlignmentHorizontalValues.Center;
+
+                            ws.Cell(rowIdx, 9).Value = items.Sum(x => x.TotalValue);
+                            ws.Cell(rowIdx, 9).Style.Font.Bold = true;
+                            ws.Cell(rowIdx, 9).Style.NumberFormat.Format = "#,##0.00";
+
+                            var totalRange = ws.Range(rowIdx, 1, rowIdx, 9);
+                            totalRange.Style.Border.TopBorder = XLBorderStyleValues.Medium;
+                            totalRange.Style.Border.BottomBorder = XLBorderStyleValues.Double;
+                            totalRange.Style.Fill.BackgroundColor = XLColor.FromHtml("#F1F5F9");
+
+                            ws.Columns().AdjustToContents();
+                            ws.Column(2).Width = Math.Max(ws.Column(2).Width, 35);
+
+                            workbook.SaveAs(filePath);
+                        }
+                    });
+
+                    SetLoadingState(false, "Excel export complete");
+                    MessageBox.Show(
+                        "Stock Balance exported to Excel successfully!\n\nFile: " + filePath,
+                        "Export Successful",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    SetLoadingState(false, "Excel export failed");
+                    MessageBox.Show("Failed to export to Excel: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
+        }
+
+        private async Task ExportWandaToCsvAsync()
+        {
+            if (_currentItems == null || _currentItems.Count == 0)
+            {
+                MessageBox.Show("There is no stock balance data available to export.", "Export Warning", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            using (var sfd = new SaveFileDialog())
+            {
+                sfd.Filter = "CSV Comma-Separated Values (*.csv)|*.csv";
+                sfd.FileName = string.Format("StockBalance_{0:yyyyMMdd_HHmmss}.csv", DateTime.Now);
+
+                if (sfd.ShowDialog(this) != DialogResult.OK) return;
+
+                SetLoadingState(true, "Exporting to CSV...");
+
+                try
+                {
+                    string filePath = sfd.FileName;
+                    var items = _currentItems;
+
+                    await Task.Run(() =>
+                    {
+                        using (var writer = new StreamWriter(filePath))
+                        using (var csv = new CsvWriter(writer, CultureInfo.InvariantCulture))
+                        {
+                            var exportRows = items.Select(x => new
+                            {
+                                x.Index,
+                                x.ItemName,
+                                x.Unit,
+                                OpeningQty = x.WandaFormattedOpening,
+                                QtyIn = x.WandaFormattedQtyIn,
+                                QtyOut = x.WandaFormattedQtyOut,
+                                ClosingQty = x.WandaFormattedClosing,
+                                x.Rate,
+                                x.TotalValue,
+                                x.Status
+                            }).ToList();
+                            csv.WriteRecords(exportRows);
+                        }
+                    });
+
+                    SetLoadingState(false, "CSV export complete");
+                    MessageBox.Show(
+                        "Stock Balance exported to CSV successfully!\n\nFile: " + filePath,
+                        "Export Successful",
+                        MessageBoxButtons.OK,
+                        MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    SetLoadingState(false, "CSV export failed");
+                    MessageBox.Show("Failed to export to CSV: " + ex.Message, "Export Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+            }
         }
     }
 }
