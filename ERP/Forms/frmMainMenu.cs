@@ -192,10 +192,53 @@ namespace ERP
             {
                 SetupMobileShopMenu();
             }
+
+            _ = RefreshCompanyBrandingAsync();
+        }
+
+        public async System.Threading.Tasks.Task RefreshCompanyBrandingAsync()
+        {
+            try
+            {
+                this.Text = CompanyInfo.CompanyName;
+                lblCompanyName.Text = CompanyInfo.CompanyName;
+                lblUrCompanyName.Text = CompanyInfo.UrCompanyName;
+
+                if (!string.IsNullOrWhiteSpace(CompanyInfo.LogoUrl))
+                {
+                    using (var httpClient = new System.Net.Http.HttpClient())
+                    {
+                        var bytes = await httpClient.GetByteArrayAsync(CompanyInfo.LogoUrl);
+                        if (bytes != null && bytes.Length > 0)
+                        {
+                            using (var ms = new MemoryStream(bytes))
+                            {
+                                var img = Image.FromStream(ms);
+                                picLogo.Image = new Bitmap(img);
+                            }
+                        }
+                    }
+                }
+                else
+                {
+                    picLogo.Image = global::ERP.Properties.Resources.logoPNG;
+                }
+            }
+            catch
+            {
+                // Keep default logo if custom logo fails to load
+            }
+
+            CompanyCetreLoc();
+            if (_mdiClient != null)
+            {
+                _mdiClient.Invalidate();
+            }
         }
 
         private void ApplyPermissions()
         {
+            companyInfoToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Settings);
             chartOfAccountToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ChartOfAccounts);
             detailAccountsToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.DetailAccounts);
             customerInformationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Customers);
@@ -743,6 +786,13 @@ namespace ERP
         private void changePasswordToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Forms.frmChangepassword frm = new Forms.frmChangepassword();
+            frm.MdiParent = this;
+            frm.Show();
+        }
+
+        private void companyInfoToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Forms.frmCompanyInfo frm = new Forms.frmCompanyInfo();
             frm.MdiParent = this;
             frm.Show();
         }

@@ -136,6 +136,7 @@ namespace ERP
         public const string Users = "Users";
         public const string Roles = "Roles";
         public const string Dashboard = "Dashboard";
+        public const string Settings = "Settings";
         public const string PrinterSettings = "PrinterSettings";
         public const string ChartOfAccounts = "ChartOfAccounts";
         public const string DetailAccounts = "DetailAccounts";

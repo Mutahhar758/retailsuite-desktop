@@ -7,10 +7,7 @@ using System.Data;
 namespace ERP
 {
     class CompanyInfo
-
     {
-        
-
         private static string _CompanyName;
         public static string CompanyName
         {
@@ -38,6 +35,13 @@ namespace ERP
             get { return CompanyInfo._Address; }
             set { CompanyInfo._Address = value; }
         }
+
+        private static string _Phone;
+        public static string Phone
+        {
+            get { return CompanyInfo._Phone; }
+            set { CompanyInfo._Phone = value; }
+        }
        
         private static string _Cell;
         public static string Cell
@@ -58,6 +62,48 @@ namespace ERP
         {
             get { return CompanyInfo._ContactHead; }
             set { CompanyInfo._ContactHead = value; }
+        }
+
+        private static string _Email;
+        public static string Email
+        {
+            get { return CompanyInfo._Email; }
+            set { CompanyInfo._Email = value; }
+        }
+
+        private static string _Website;
+        public static string Website
+        {
+            get { return CompanyInfo._Website; }
+            set { CompanyInfo._Website = value; }
+        }
+
+        private static string _Ntn;
+        public static string Ntn
+        {
+            get { return CompanyInfo._Ntn; }
+            set { CompanyInfo._Ntn = value; }
+        }
+
+        private static string _Strn;
+        public static string Strn
+        {
+            get { return CompanyInfo._Strn; }
+            set { CompanyInfo._Strn = value; }
+        }
+
+        private static string _LogoMediaId;
+        public static string LogoMediaId
+        {
+            get { return CompanyInfo._LogoMediaId; }
+            set { CompanyInfo._LogoMediaId = value; }
+        }
+
+        private static string _LogoUrl;
+        public static string LogoUrl
+        {
+            get { return CompanyInfo._LogoUrl; }
+            set { CompanyInfo._LogoUrl = value; }
         }
 
         public static string ThankyouLine

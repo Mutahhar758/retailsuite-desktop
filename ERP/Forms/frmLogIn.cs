@@ -153,9 +153,16 @@ namespace ERP
                     CompanyInfo.UrCompanyName = company.UrCompanyName;
                     CompanyInfo.Description = company.Descr;
                     CompanyInfo.Address = company.Address;
+                    CompanyInfo.Phone = company.Phone;
                     CompanyInfo.Cell = company.Cell;
                     CompanyInfo.Cell2 = company.Cell2;
                     CompanyInfo.ContactHead = company.ContactHeader ?? "";
+                    CompanyInfo.Email = company.Email;
+                    CompanyInfo.Website = company.Website;
+                    CompanyInfo.Ntn = company.Ntn;
+                    CompanyInfo.Strn = company.Strn;
+                    CompanyInfo.LogoMediaId = company.LogoMediaId;
+                    CompanyInfo.LogoUrl = company.LogoUrl;
                 }
                 catch (Exception ex)
                 {

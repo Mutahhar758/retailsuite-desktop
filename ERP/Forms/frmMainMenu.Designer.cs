@@ -31,6 +31,7 @@ namespace ERP
             System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(frmMainMenu));
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.setupToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.companyInfoToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.changePasswordToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.chartOfAccountToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.detailAccountsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -126,6 +127,7 @@ namespace ERP
             // setupToolStripMenuItem
             // 
             this.setupToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.companyInfoToolStripMenuItem,
             this.changePasswordToolStripMenuItem,
             this.chartOfAccountToolStripMenuItem,
             this.detailAccountsToolStripMenuItem,
@@ -144,6 +146,13 @@ namespace ERP
             this.setupToolStripMenuItem.Name = "setupToolStripMenuItem";
             this.setupToolStripMenuItem.Size = new System.Drawing.Size(49, 20);
             this.setupToolStripMenuItem.Text = "Setup";
+            // 
+            // companyInfoToolStripMenuItem
+            // 
+            this.companyInfoToolStripMenuItem.Name = "companyInfoToolStripMenuItem";
+            this.companyInfoToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
+            this.companyInfoToolStripMenuItem.Text = "Company Information";
+            this.companyInfoToolStripMenuItem.Click += new System.EventHandler(this.companyInfoToolStripMenuItem_Click);
             // 
             // changePasswordToolStripMenuItem
             // 
@@ -740,6 +749,7 @@ namespace ERP
 
         private System.Windows.Forms.MenuStrip menuStrip1;
         private System.Windows.Forms.ToolStripMenuItem setupToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem companyInfoToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem chartOfAccountToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerInformationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerCategoryToolStripMenuItem;
