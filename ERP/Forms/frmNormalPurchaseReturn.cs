@@ -1132,7 +1132,9 @@ namespace ERP
                             if (Math.Abs(existingRate - itemPriRate) < 0.001m)
                             {
                                 decimal existingQty = ParseDecimal(dgvSale[clnQty.Index, i].Value);
-                                dgvSale[clnQty.Index, i].Value = (existingQty + qtyToScan).ToString("0.##");
+                                string rowUnitId = Convert.ToString(dgvSale[clnUnit.Index, i].Value);
+                                decimal qtyToAddInRowUnit = UnitConversionHelper.ConvertFromBasePrimaryQty(qtyToScan, rowUnitId, dr, dtUnits);
+                                dgvSale[clnQty.Index, i].Value = (existingQty + qtyToAddInRowUnit).ToString("0.####");
                                 isFind = true;
                                 ind = i;
                                 break;

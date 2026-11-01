@@ -263,20 +263,50 @@ namespace ERP
             string primaryUnitId = itemRow.Table.Columns.Contains("PrimaryUnit")
                 ? Convert.ToString(itemRow["PrimaryUnit"]).Trim()
                 : "";
-            if (string.IsNullOrEmpty(primaryUnitId) || selectedUnitId.Trim() == primaryUnitId)
+            if (string.IsNullOrEmpty(primaryUnitId) || string.Equals(selectedUnitId.Trim(), primaryUnitId, StringComparison.OrdinalIgnoreCase))
                 return enteredQty;
 
             string additionalUnitsJson = itemRow.Table.Columns.Contains("AdditionalUnits")
                 ? Convert.ToString(itemRow["AdditionalUnits"])
                 : null;
             var subUnits = GetEffectiveSubUnits(primaryUnitId, additionalUnitsJson, dtUnits);
-            var matched = subUnits.FirstOrDefault(u => u.UnitId == selectedUnitId.Trim());
+            var matched = subUnits.FirstOrDefault(u =>
+                string.Equals(u.UnitId, selectedUnitId.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(u.UnitTitle, selectedUnitId.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(u.ShortTitle, selectedUnitId.Trim(), StringComparison.OrdinalIgnoreCase));
             if (matched != null && matched.Factor > 1m)
             {
                 return Math.Round(enteredQty / matched.Factor, 4, MidpointRounding.AwayFromZero);
             }
 
             return enteredQty;
+        }
+
+        public static decimal ConvertFromBasePrimaryQty(decimal baseQty, string targetUnitId, DataRow itemRow, DataTable dtUnits)
+        {
+            if (baseQty == 0m || itemRow == null || string.IsNullOrWhiteSpace(targetUnitId))
+                return baseQty;
+
+            string primaryUnitId = itemRow.Table.Columns.Contains("PrimaryUnit")
+                ? Convert.ToString(itemRow["PrimaryUnit"]).Trim()
+                : "";
+            if (string.IsNullOrEmpty(primaryUnitId) || string.Equals(targetUnitId.Trim(), primaryUnitId, StringComparison.OrdinalIgnoreCase))
+                return baseQty;
+
+            string additionalUnitsJson = itemRow.Table.Columns.Contains("AdditionalUnits")
+                ? Convert.ToString(itemRow["AdditionalUnits"])
+                : null;
+            var subUnits = GetEffectiveSubUnits(primaryUnitId, additionalUnitsJson, dtUnits);
+            var matched = subUnits.FirstOrDefault(u =>
+                string.Equals(u.UnitId, targetUnitId.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(u.UnitTitle, targetUnitId.Trim(), StringComparison.OrdinalIgnoreCase) ||
+                string.Equals(u.ShortTitle, targetUnitId.Trim(), StringComparison.OrdinalIgnoreCase));
+            if (matched != null && matched.Factor > 1m)
+            {
+                return Math.Round(baseQty * matched.Factor, 4, MidpointRounding.AwayFromZero);
+            }
+
+            return baseQty;
         }
 
         public static void ResolveDisplayQtyAndUnit(
