@@ -28,14 +28,37 @@ namespace ERP.Reporting.Documents
         private readonly List<BarcodeLabelItem> _items;
         private readonly BarcodePrintLayout _layout;
         private readonly string _companyName;
+        private readonly string _companySubHeader;
         private readonly float _sideStickersSpreadMm;
+        private readonly bool _includeCompanyName;
+        private readonly bool _includeCompanySubHeader;
+        private readonly bool _includeTitle;
+        private readonly bool _includePrice;
+        private readonly bool _includeRate;
 
-        public BarcodeDocument(List<BarcodeLabelItem> items, BarcodePrintLayout layout = BarcodePrintLayout.Roll4Inch3Up, float sideStickersSpreadMm = 2.0f)
+        public BarcodeDocument(
+            List<BarcodeLabelItem> items,
+            BarcodePrintLayout layout = BarcodePrintLayout.Roll4Inch3Up,
+            float sideStickersSpreadMm = 2.0f,
+            string companySubHeader = null,
+            bool includeCompanyName = true,
+            bool includeCompanySubHeader = true,
+            bool includeTitle = true,
+            bool includePrice = true,
+            bool includeRate = false)
         {
             _items = items ?? new List<BarcodeLabelItem>();
             _layout = layout;
             _companyName = !string.IsNullOrWhiteSpace(CompanyInfo.CompanyName) ? CompanyInfo.CompanyName : "Retail Suite";
             _sideStickersSpreadMm = Math.Max(0f, sideStickersSpreadMm);
+            _includeCompanyName = includeCompanyName;
+            _includeCompanySubHeader = includeCompanySubHeader;
+            _includeTitle = includeTitle;
+            _includePrice = includePrice;
+            _includeRate = includeRate;
+            _companySubHeader = _includeCompanySubHeader && !string.IsNullOrWhiteSpace(companySubHeader)
+                ? companySubHeader
+                : (_includeCompanySubHeader && !string.IsNullOrWhiteSpace(CompanyInfo.Description) ? CompanyInfo.Description : (_includeCompanySubHeader ? CompanyInfo.Address : null));
         }
 
         public DocumentMetadata GetMetadata() => DocumentMetadata.Default;
@@ -117,6 +140,28 @@ namespace ERP.Reporting.Documents
                                 string title = item.Title ?? string.Empty;
                                 if (title.Length > 22) title = title.Substring(0, 20) + "..";
 
+                                string subHead = _includeCompanySubHeader
+                                    ? (!string.IsNullOrWhiteSpace(item.CompanySubHeader) ? item.CompanySubHeader : _companySubHeader)
+                                    : null;
+                                bool hasSubHeader = _includeCompanyName && !string.IsNullOrWhiteSpace(subHead);
+                                bool isVariable = item.IsVariableWeight && item.Qty.HasValue;
+                                bool hasRate = _includeRate && item.Rate > 0;
+
+                                float barcodeHeightMm;
+                                if (hasSubHeader && hasRate)
+                                    barcodeHeightMm = 4.5f;
+                                else if (hasSubHeader || hasRate)
+                                    barcodeHeightMm = 5.2f;
+                                else
+                                    barcodeHeightMm = isVariable ? 6.2f : 7.2f;
+
+                                float compFontSize = hasSubHeader ? 5.0f : 5.5f;
+                                float subFontSize = 4.0f;
+                                float titleFontSize = hasSubHeader ? 5.8f : 6.5f;
+                                float barcodeNumFontSize = item.Barcode.Length > 18 ? 4.5f : (item.Barcode.Length > 13 ? 5.2f : 6.0f);
+                                float priceFontSize = hasSubHeader ? 6.2f : 7.0f;
+                                float rateFontSize = 4.8f;
+
                                 float leftPad = 1.0f;
                                 float rightPad = 1.0f;
                                 if (c == 0)
@@ -137,20 +182,35 @@ namespace ERP.Reporting.Documents
                                     .PaddingRight(rightPad, Unit.Millimetre)
                                     .Column(col =>
                                 {
-                                    col.Item().AlignCenter().Text(comp)
-                                        .FontSize(5.5f)
-                                        .Bold()
-                                        .FontColor(QuestPDF.Helpers.Colors.Black);
+                                    col.Spacing(0);
 
-                                    col.Item().AlignCenter().Text(title)
-                                        .FontSize(6.5f)
-                                        .Bold()
-                                        .FontColor(QuestPDF.Helpers.Colors.Black);
+                                    if (_includeCompanyName)
+                                    {
+                                        col.Item().AlignCenter().Text(comp)
+                                            .FontSize(compFontSize)
+                                            .Bold()
+                                            .FontColor(QuestPDF.Helpers.Colors.Black);
+
+                                        if (hasSubHeader)
+                                        {
+                                            string displaySub = subHead.Length > 28 ? subHead.Substring(0, 26) + ".." : subHead;
+                                            col.Item().AlignCenter().Text(displaySub)
+                                                .FontSize(subFontSize)
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
+                                    }
+
+                                    if (_includeTitle)
+                                    {
+                                        col.Item().AlignCenter().Text(title)
+                                            .FontSize(titleFontSize)
+                                            .Bold()
+                                            .FontColor(QuestPDF.Helpers.Colors.Black);
+                                    }
 
                                     col.Item()
-                                        .PaddingVertical(0.2f, Unit.Millimetre)
                                         .AlignCenter()
-                                        .Height(item.IsVariableWeight ? 8.0f : 8.8f, Unit.Millimetre)
+                                        .Height(barcodeHeightMm, Unit.Millimetre)
                                         .Row(bRow =>
                                         {
                                             foreach (var slice in slices)
@@ -163,31 +223,56 @@ namespace ERP.Reporting.Documents
                                         });
 
                                     col.Item().AlignCenter().Text(item.Barcode)
-                                        .FontSize(item.Barcode.Length > 18 ? 4.8f : (item.Barcode.Length > 13 ? 5.8f : 6.8f))
+                                        .FontSize(barcodeNumFontSize)
                                         .Bold()
                                         .FontColor(QuestPDF.Helpers.Colors.Black);
 
-                                    if (item.IsVariableWeight && item.Qty.HasValue)
+                                    if (isVariable)
                                     {
                                         decimal tot = Math.Round(item.TotalAmount ?? (item.Qty.Value * item.Rate));
-                                        decimal rate = Math.Round(item.Rate);
                                         string u = !string.IsNullOrWhiteSpace(item.Unit) && !decimal.TryParse(item.Unit, out _) ? item.Unit : "kg";
-                                        col.Item().AlignCenter().Text(string.Format("Qty: {0:0.###} {1} • Rs. {2:#,##0}", item.Qty.Value, u, tot))
-                                            .FontSize(7.2f)
-                                            .Bold()
-                                            .FontColor(QuestPDF.Helpers.Colors.Black);
 
-                                        col.Item().AlignCenter().Text(string.Format("Rate: Rs. {0:#,##0}/{1}", rate, u))
-                                            .FontSize(6.0f)
-                                            .Bold()
-                                            .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        decimal dispQty = item.DisplayQty.HasValue ? item.DisplayQty.Value : item.Qty.Value;
+                                        string dispUnit = !string.IsNullOrWhiteSpace(item.DisplayUnit) ? item.DisplayUnit : u;
+                                        string formattedQty = dispQty % 1m == 0m ? dispQty.ToString("0") : dispQty.ToString("0.###");
+
+                                        if (_includePrice)
+                                        {
+                                            string priceStr = tot > 0
+                                                ? string.Format("Qty: {0} {1} • Rs. {2:#,##0}", formattedQty, dispUnit, tot)
+                                                : string.Format("Qty: {0} {1}", formattedQty, dispUnit);
+
+                                            col.Item().AlignCenter().Text(priceStr)
+                                                .FontSize(priceFontSize)
+                                                .Bold()
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
+                                        else
+                                        {
+                                            col.Item().AlignCenter().Text(string.Format("Qty: {0} {1}", formattedQty, dispUnit))
+                                                .FontSize(priceFontSize)
+                                                .Bold()
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
+
+                                        if (hasRate)
+                                        {
+                                            decimal rate = Math.Round(item.Rate);
+                                            col.Item().AlignCenter().Text(string.Format("Rate: Rs. {0:#,##0}/{1}", rate, u))
+                                                .FontSize(rateFontSize)
+                                                .Bold()
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
                                     }
                                     else
                                     {
-                                        col.Item().AlignCenter().Text(item.FormattedRate)
-                                            .FontSize(8.8f)
-                                            .Bold()
-                                            .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        if (_includePrice)
+                                        {
+                                            col.Item().AlignCenter().Text(item.FormattedRate)
+                                                .FontSize(hasSubHeader ? 7.6f : 8.8f)
+                                                .Bold()
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
                                     }
                                 });
                             }
@@ -235,39 +320,81 @@ namespace ERP.Reporting.Documents
 
                     page.Content().Column(col =>
                     {
-                        col.Item().AlignCenter().Text(_companyName)
-                            .FontSize(6.5f)
-                            .Bold()
-                            .FontColor(QuestPDF.Helpers.Colors.Black);
+                        if (_includeCompanyName)
+                        {
+                            col.Item().AlignCenter().Text(_companyName)
+                                .FontSize(6.5f)
+                                .Bold()
+                                .FontColor(QuestPDF.Helpers.Colors.Black);
 
-                        col.Item().AlignCenter().Text(item.Title ?? string.Empty)
-                            .FontSize(8f)
-                            .Bold()
-                            .FontColor(QuestPDF.Helpers.Colors.Black);
+                            string subHead = _includeCompanySubHeader
+                                ? (!string.IsNullOrWhiteSpace(item.CompanySubHeader) ? item.CompanySubHeader : _companySubHeader)
+                                : null;
+                            if (!string.IsNullOrWhiteSpace(subHead))
+                            {
+                                string displaySub = subHead.Length > 36 ? subHead.Substring(0, 34) + ".." : subHead;
+                                col.Item().AlignCenter().Text(displaySub)
+                                    .FontSize(5.5f)
+                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                            }
+                        }
 
-                        col.Item().PaddingVertical(1).AlignCenter().Height(item.IsVariableWeight ? 12 : 14, Unit.Millimetre).Image(barcodeBytes);
+                        if (_includeTitle)
+                        {
+                            col.Item().AlignCenter().Text(item.Title ?? string.Empty)
+                                .FontSize(8f)
+                                .Bold()
+                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                        }
+
+                        col.Item().PaddingVertical(1).AlignCenter().Height(item.IsVariableWeight ? 11 : 13, Unit.Millimetre).Image(barcodeBytes);
 
                         if (item.IsVariableWeight && item.Qty.HasValue)
                         {
                             decimal tot = Math.Round(item.TotalAmount ?? (item.Qty.Value * item.Rate));
-                            decimal rate = Math.Round(item.Rate);
                             string u = !string.IsNullOrWhiteSpace(item.Unit) && !decimal.TryParse(item.Unit, out _) ? item.Unit : "kg";
-                            col.Item().AlignCenter().Text(string.Format("Qty: {0:0.###} {1} • Rs. {2:#,##0}", item.Qty.Value, u, tot))
-                                .FontSize(8.5f)
-                                .Bold()
-                                .FontColor(QuestPDF.Helpers.Colors.Black);
 
-                            col.Item().AlignCenter().Text(string.Format("Rate: Rs. {0:#,##0}/{1}", rate, u))
-                                .FontSize(7.2f)
-                                .Bold()
-                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                            decimal dispQty = item.DisplayQty.HasValue ? item.DisplayQty.Value : item.Qty.Value;
+                            string dispUnit = !string.IsNullOrWhiteSpace(item.DisplayUnit) ? item.DisplayUnit : u;
+                            string formattedQty = dispQty % 1m == 0m ? dispQty.ToString("0") : dispQty.ToString("0.###");
+
+                            if (_includePrice)
+                            {
+                                string priceStr = tot > 0
+                                    ? string.Format("Qty: {0} {1} • Rs. {2:#,##0}", formattedQty, dispUnit, tot)
+                                    : string.Format("Qty: {0} {1}", formattedQty, dispUnit);
+
+                                col.Item().AlignCenter().Text(priceStr)
+                                    .FontSize(8.5f)
+                                    .Bold()
+                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                            }
+                            else
+                            {
+                                col.Item().AlignCenter().Text(string.Format("Qty: {0} {1}", formattedQty, dispUnit))
+                                    .FontSize(8.5f)
+                                    .Bold()
+                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                            }
+
+                            if (_includeRate && item.Rate > 0)
+                            {
+                                decimal rate = Math.Round(item.Rate);
+                                col.Item().AlignCenter().Text(string.Format("Rate: Rs. {0:#,##0}/{1}", rate, u))
+                                    .FontSize(7.2f)
+                                    .Bold()
+                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                            }
                         }
                         else
                         {
-                            col.Item().AlignCenter().Text(item.FormattedRate)
-                                .FontSize(10f)
-                                .Bold()
-                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                            if (_includePrice)
+                            {
+                                col.Item().AlignCenter().Text(item.FormattedRate)
+                                    .FontSize(10f)
+                                    .Bold()
+                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                            }
                         }
                     });
                 });
@@ -310,39 +437,81 @@ namespace ERP.Reporting.Documents
                             grid.Item().Border(0.75f).BorderColor(QuestPDF.Helpers.Colors.Grey.Lighten2)
                                 .Background(QuestPDF.Helpers.Colors.White).Padding(6).Column(sticker =>
                                 {
-                                    sticker.Item().AlignCenter().Text(_companyName)
-                                        .FontSize(6.5f)
-                                        .Bold()
-                                        .FontColor(QuestPDF.Helpers.Colors.Black);
+                                    if (_includeCompanyName)
+                                    {
+                                        sticker.Item().AlignCenter().Text(_companyName)
+                                            .FontSize(6.5f)
+                                            .Bold()
+                                            .FontColor(QuestPDF.Helpers.Colors.Black);
 
-                                    sticker.Item().AlignCenter().Text(item.Title ?? string.Empty)
-                                        .FontSize(8f)
-                                        .Bold()
-                                        .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        string subHead = _includeCompanySubHeader
+                                            ? (!string.IsNullOrWhiteSpace(item.CompanySubHeader) ? item.CompanySubHeader : _companySubHeader)
+                                            : null;
+                                        if (!string.IsNullOrWhiteSpace(subHead))
+                                        {
+                                            string displaySub = subHead.Length > 36 ? subHead.Substring(0, 34) + ".." : subHead;
+                                            sticker.Item().AlignCenter().Text(displaySub)
+                                                .FontSize(5.5f)
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
+                                    }
+
+                                    if (_includeTitle)
+                                    {
+                                        sticker.Item().AlignCenter().Text(item.Title ?? string.Empty)
+                                            .FontSize(8f)
+                                            .Bold()
+                                            .FontColor(QuestPDF.Helpers.Colors.Black);
+                                    }
 
                                     sticker.Item().PaddingVertical(2).AlignCenter().Height(item.IsVariableWeight ? 13 : 16, Unit.Millimetre).Image(barcodeBytes);
 
                                     if (item.IsVariableWeight && item.Qty.HasValue)
                                     {
                                         decimal tot = Math.Round(item.TotalAmount ?? (item.Qty.Value * item.Rate));
-                                        decimal rate = Math.Round(item.Rate);
                                         string u = !string.IsNullOrWhiteSpace(item.Unit) && !decimal.TryParse(item.Unit, out _) ? item.Unit : "kg";
-                                        sticker.Item().AlignCenter().Text(string.Format("Qty: {0:0.###} {1} • Rs. {2:#,##0}", item.Qty.Value, u, tot))
-                                            .FontSize(8.5f)
-                                            .Bold()
-                                            .FontColor(QuestPDF.Helpers.Colors.Black);
 
-                                        sticker.Item().AlignCenter().Text(string.Format("Rate: Rs. {0:#,##0}/{1}", rate, u))
-                                            .FontSize(7.5f)
-                                            .Bold()
-                                            .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        decimal dispQty = item.DisplayQty.HasValue ? item.DisplayQty.Value : item.Qty.Value;
+                                        string dispUnit = !string.IsNullOrWhiteSpace(item.DisplayUnit) ? item.DisplayUnit : u;
+                                        string formattedQty = dispQty % 1m == 0m ? dispQty.ToString("0") : dispQty.ToString("0.###");
+
+                                        if (_includePrice)
+                                        {
+                                            string priceStr = tot > 0
+                                                ? string.Format("Qty: {0} {1} • Rs. {2:#,##0}", formattedQty, dispUnit, tot)
+                                                : string.Format("Qty: {0} {1}", formattedQty, dispUnit);
+
+                                            sticker.Item().AlignCenter().Text(priceStr)
+                                                .FontSize(8.5f)
+                                                .Bold()
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
+                                        else
+                                        {
+                                            sticker.Item().AlignCenter().Text(string.Format("Qty: {0} {1}", formattedQty, dispUnit))
+                                                .FontSize(8.5f)
+                                                .Bold()
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
+
+                                        if (_includeRate && item.Rate > 0)
+                                        {
+                                            decimal rate = Math.Round(item.Rate);
+                                            sticker.Item().AlignCenter().Text(string.Format("Rate: Rs. {0:#,##0}/{1}", rate, u))
+                                                .FontSize(7.5f)
+                                                .Bold()
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
                                     }
                                     else
                                     {
-                                        sticker.Item().AlignCenter().Text(item.FormattedRate)
-                                            .FontSize(9.5f)
-                                            .Bold()
-                                            .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        if (_includePrice)
+                                        {
+                                            sticker.Item().AlignCenter().Text(item.FormattedRate)
+                                                .FontSize(9.5f)
+                                                .Bold()
+                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                        }
                                     }
                                 });
                         }

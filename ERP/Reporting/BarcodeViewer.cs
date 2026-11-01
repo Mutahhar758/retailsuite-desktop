@@ -43,6 +43,10 @@ namespace ERP.Reporting
         private Label lblTotalAmount;
         private TextBox txtTotalAmount;
         private bool _isSyncingAmounts = false;
+        private CheckBox chkQtyOnlyBarcode;
+        private CheckBox chkIncludeCompanySubHeader;
+        private CheckBox chkIncludePrice;
+        private CheckBox chkIncludeRate;
         private Label lblLayout;
         private ComboBox cmbLayout;
         private Label lblSpread;
@@ -63,6 +67,7 @@ namespace ERP.Reporting
         // State
         private List<InventoryItemDto> _allItems = new List<InventoryItemDto>();
         private List<ItemCategoryDto> _allCategories = new List<ItemCategoryDto>();
+        private List<UnitLookupDto> _allUnits = new List<UnitLookupDto>();
         private BarcodeLabelItem _currentItem;
         private string _currentPdfPath;
         private bool _isWebViewReady = false;
@@ -270,7 +275,19 @@ namespace ERP.Reporting
                 Visible = false
             };
             pnlSidebar.Controls.Add(txtTotalAmount);
-            curY += 34;
+            curY += 32;
+
+            chkQtyOnlyBarcode = new CheckBox
+            {
+                Text = "Barcode: Qty Only (Realtime Live Rate at Scan)",
+                Location = new Point(14, curY),
+                Width = 330,
+                Font = new Font("Segoe UI", 8F),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(chkQtyOnlyBarcode);
+            curY += 26;
 
             chkVariableWeight.CheckedChanged += (s, e) =>
             {
@@ -280,6 +297,7 @@ namespace ERP.Reporting
                 lblUnitName.Visible = isVar;
                 lblTotalAmount.Visible = isVar;
                 txtTotalAmount.Visible = isVar;
+                chkQtyOnlyBarcode.Visible = isVar;
                 lblPrice.Text = isVar ? "UNIT RATE (RS):" : "PRINT PRICE (RS):";
                 SyncVariableWeightTotal();
             };
@@ -406,7 +424,43 @@ namespace ERP.Reporting
                 ForeColor = Color.FromArgb(100, 116, 139)
             };
             pnlSidebar.Controls.Add(lblSpreadHelp);
-            curY += 34;
+            curY += 30;
+
+            chkIncludeCompanySubHeader = new CheckBox
+            {
+                Text = "Show Tagline / Address on Sticker",
+                Location = new Point(14, curY),
+                Width = 330,
+                Font = new Font("Segoe UI", 8F),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Checked = true
+            };
+            pnlSidebar.Controls.Add(chkIncludeCompanySubHeader);
+            curY += 26;
+
+            chkIncludePrice = new CheckBox
+            {
+                Text = "Show Price / Amount on Sticker",
+                Location = new Point(14, curY),
+                Width = 330,
+                Font = new Font("Segoe UI", 8F),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Checked = true
+            };
+            pnlSidebar.Controls.Add(chkIncludePrice);
+            curY += 24;
+
+            chkIncludeRate = new CheckBox
+            {
+                Text = "Show Unit Rate on Sticker (e.g. Rs/kg)",
+                Location = new Point(14, curY),
+                Width = 330,
+                Font = new Font("Segoe UI", 8F),
+                ForeColor = Color.FromArgb(71, 85, 105),
+                Checked = false
+            };
+            pnlSidebar.Controls.Add(chkIncludeRate);
+            curY += 26;
 
             // Destination Printer
             lblPrinter = new Label
@@ -546,10 +600,11 @@ namespace ERP.Reporting
                 foreach (var c in _allCategories) cmbCategory.Items.Add(c.Title);
                 cmbCategory.SelectedIndex = 0;
 
-                // Load Units for Title Resolution
+                // Load Units for Title Resolution & Sub-Unit Structure
                 try
                 {
                     var units = await _unitApiService.GetLookupAsync();
+                    _allUnits = units ?? new List<UnitLookupDto>();
                     if (units != null)
                     {
                         foreach (var u in units)
@@ -652,6 +707,77 @@ namespace ERP.Reporting
             return "kg";
         }
 
+        private (decimal DisplayQty, string DisplayUnit) ResolveSubUnit(InventoryItemDto item, decimal baseQty)
+        {
+            if (item == null || baseQty <= 0m || baseQty % 1m == 0m)
+            {
+                return (baseQty, GetUnitTitle(item));
+            }
+
+            string primaryUnitCode = !string.IsNullOrWhiteSpace(item.PrimaryUnit) ? item.PrimaryUnit : item.DefaultUnit;
+            if (string.IsNullOrWhiteSpace(primaryUnitCode))
+            {
+                return (baseQty, GetUnitTitle(item));
+            }
+
+            // 1. Check item-level additional units override if available
+            if (!string.IsNullOrWhiteSpace(item.AdditionalUnits))
+            {
+                var explicitSubs = UnitConversionHelper.ParseAdditionalUnits(item.AdditionalUnits);
+                if (explicitSubs != null && explicitSubs.Count > 0)
+                {
+                    foreach (var sub in explicitSubs)
+                    {
+                        if (sub.Factor > 1m)
+                        {
+                            decimal cand = baseQty * sub.Factor;
+                            if (Math.Abs(cand - Math.Round(cand)) < 0.0001m)
+                            {
+                                string label = !string.IsNullOrWhiteSpace(sub.ShortTitle) ? sub.ShortTitle.Trim() : (!string.IsNullOrWhiteSpace(sub.UnitTitle) ? sub.UnitTitle.Trim() : sub.UnitId);
+                                return (Math.Round(cand, 3), label);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // 2. Query unit hierarchy from defined unit structure where ParentUnitId == primaryUnitCode
+            if (_allUnits != null && _allUnits.Count > 0)
+            {
+                var childUnits = _allUnits.Where(u =>
+                    (string.Equals(u.ParentUnitId, primaryUnitCode, StringComparison.OrdinalIgnoreCase) ||
+                     string.Equals(u.ParentUnitTitle, primaryUnitCode, StringComparison.OrdinalIgnoreCase)) &&
+                    u.ConversionRatio.HasValue && u.ConversionRatio.Value > 1m)
+                    .OrderBy(u => u.ConversionRatio.Value)
+                    .ToList();
+
+                foreach (var child in childUnits)
+                {
+                    decimal factor = child.ConversionRatio.Value;
+                    decimal cand = baseQty * factor;
+                    if (Math.Abs(cand - Math.Round(cand)) < 0.0001m)
+                    {
+                        string label = !string.IsNullOrWhiteSpace(child.ShortTitle) ? child.ShortTitle.Trim() : (!string.IsNullOrWhiteSpace(child.Title) ? child.Title.Trim() : child.Code);
+                        return (Math.Round(cand, 3), label);
+                    }
+                }
+            }
+
+            return (baseQty, GetUnitTitle(item));
+        }
+
+        private string GetCompanySubHeader()
+        {
+            if (chkIncludeCompanySubHeader != null && !chkIncludeCompanySubHeader.Checked)
+                return null;
+
+            if (!string.IsNullOrWhiteSpace(CompanyInfo.Description))
+                return CompanyInfo.Description.Trim();
+            if (!string.IsNullOrWhiteSpace(CompanyInfo.Address))
+                return CompanyInfo.Address.Trim();
+            return null;
+        }
+
         private void OnItemSelected()
         {
             var item = cmbItem.SelectedItem as InventoryItemDto;
@@ -718,20 +844,35 @@ namespace ERP.Reporting
                 string rawBase = !string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : (!string.IsNullOrWhiteSpace(item.ItemKey) ? item.ItemKey : item.Id);
                 string baseCode = rawBase?.Replace("\r", string.Empty).Replace("\n", string.Empty).Trim() ?? "000000";
 
-                // Format as compact 18-digit Code 128C format:
-                // 2 (prefix) + 6-digit Item ID + 5-digit Qty (x1000) + 6-digit Amount (whole number)
+                // Format as compact all-numeric Code 128C format:
+                // If Qty Only: 12-digit format: 2 (prefix) + 6-digit Item ID + 5-digit Qty (x1000)
+                // If Fixed Price: 18-digit format: 2 (prefix) + 6-digit Item ID + 5-digit Qty (x1000) + 6-digit Amount
                 string idStr = !string.IsNullOrWhiteSpace(item.Id) ? item.Id.Trim() : baseCode;
                 if (long.TryParse(idStr, out long numId) && numId <= 999999)
                 {
                     string idPart = numId.ToString("D6");
                     int qtyGrams = Math.Min(99999, Math.Max(1, (int)Math.Round(qty * 1000m)));
-                    int amtWhole = Math.Min(999999, Math.Max(0, (int)Math.Round(total)));
-                    barcode = string.Format(CultureInfo.InvariantCulture, "2{0}{1:D5}{2:D6}", idPart, qtyGrams, amtWhole);
+
+                    if (chkQtyOnlyBarcode != null && chkQtyOnlyBarcode.Checked)
+                    {
+                        // 12-digit All-Numeric: 2 + 6-digit Item ID + 5-digit Qty (x1000)
+                        barcode = string.Format(CultureInfo.InvariantCulture, "2{0}{1:D5}", idPart, qtyGrams);
+                    }
+                    else
+                    {
+                        // 18-digit All-Numeric: 2 + 6-digit Item ID + 5-digit Qty (x1000) + 6-digit Amount
+                        int amtWhole = Math.Min(999999, Math.Max(0, (int)Math.Round(total)));
+                        barcode = string.Format(CultureInfo.InvariantCulture, "2{0}{1:D5}{2:D6}", idPart, qtyGrams, amtWhole);
+                    }
                 }
                 else
                 {
                     decimal defaultRate = Math.Round(item.PriRate);
-                    if (rate == defaultRate)
+                    if (chkQtyOnlyBarcode != null && chkQtyOnlyBarcode.Checked)
+                    {
+                        barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
+                    }
+                    else if (rate == defaultRate)
                     {
                         barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
                     }
@@ -751,6 +892,9 @@ namespace ERP.Reporting
                 barcode = (!string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : ("200" + (item.Id ?? "101").PadLeft(7, '0'))).Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
             }
 
+            var (subQty, subUnit) = isVariable ? ResolveSubUnit(item, varQty ?? 1m) : (1m, GetUnitTitle(item));
+            string companySub = GetCompanySubHeader();
+
             var labelItem = new BarcodeLabelItem
             {
                 ItemId = item.Id,
@@ -761,7 +905,10 @@ namespace ERP.Reporting
                 IsVariableWeight = isVariable,
                 Qty = varQty,
                 Unit = varUnit,
-                TotalAmount = varTotal
+                DisplayQty = isVariable ? subQty : (decimal?)null,
+                DisplayUnit = isVariable ? subUnit : null,
+                TotalAmount = varTotal,
+                CompanySubHeader = companySub
             };
             _currentItem = labelItem;
 
@@ -771,7 +918,15 @@ namespace ERP.Reporting
             try
             {
                 float spread = nudSpread != null ? (float)nudSpread.Value : 2.0f;
-                var doc = new BarcodeDocument(new List<BarcodeLabelItem> { labelItem }, layout, spread);
+                bool incPrice = chkIncludePrice == null || chkIncludePrice.Checked;
+                bool incRate = chkIncludeRate != null && chkIncludeRate.Checked;
+                bool incSub = chkIncludeCompanySubHeader == null || chkIncludeCompanySubHeader.Checked;
+                var doc = new BarcodeDocument(new List<BarcodeLabelItem> { labelItem }, layout, spread, companySub,
+                    includeCompanyName: true,
+                    includeCompanySubHeader: incSub,
+                    includeTitle: true,
+                    includePrice: incPrice,
+                    includeRate: incRate);
                 _currentPdfPath = await doc.GeneratePdfToTempFileAsync();
 
                 webView.CoreWebView2.Navigate(_currentPdfPath);
@@ -821,7 +976,16 @@ namespace ERP.Reporting
                 await Task.Run(() =>
                 {
                     float spread = nudSpread != null ? (float)nudSpread.Value : 2.0f;
-                    var doc = new BarcodeDocument(new List<BarcodeLabelItem> { _currentItem }, layout, spread);
+                    string companySub = GetCompanySubHeader();
+                    bool incPrice = chkIncludePrice == null || chkIncludePrice.Checked;
+                    bool incRate = chkIncludeRate != null && chkIncludeRate.Checked;
+                    bool incSub = chkIncludeCompanySubHeader == null || chkIncludeCompanySubHeader.Checked;
+                    var doc = new BarcodeDocument(new List<BarcodeLabelItem> { _currentItem }, layout, spread, companySub,
+                        includeCompanyName: true,
+                        includeCompanySubHeader: incSub,
+                        includeTitle: true,
+                        includePrice: incPrice,
+                        includeRate: incRate);
                     BarcodeDocument.PrintDirectToPrinter(doc, printer);
                 });
 

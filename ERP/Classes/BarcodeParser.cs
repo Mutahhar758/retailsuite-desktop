@@ -37,8 +37,42 @@ namespace ERP.Classes
             string raw = rawInput.Trim();
             string cleanDigits = Regex.Replace(raw, @"\D", "");
 
-            // 0. Compact 18-digit Variable Barcode: 2 + IIIIII + QQQQQ + AAAAAA
+            // 0a. Compact 12-digit All-Numeric Variable Barcode (Qty Only): 2 + IIIIII + QQQQQ
+            // Prefix 2 (1 digit) + Item ID (6 digits) + Qty*1000 (5 digits)
+            // Even length (12 digits) for compact Code-128C; resolves live rate from product.
+            // e.g. 200010500250 -> Item 000105, 0.250 kg (250g), Live rate from product
+            if (cleanDigits.Length == 12 && cleanDigits.StartsWith("2"))
+            {
+                string itemCode = cleanDigits.Substring(1, 6);
+                string qtyStr = cleanDigits.Substring(7, 5);
+
+                DataRow dr = FindItemByPlu(itemCode, dtItems) ?? FindItemByCode(itemCode, dtItems);
+                if (dr != null && int.TryParse(qtyStr, out int rawQty) && rawQty > 0)
+                {
+                    decimal parsedQty = decimal.Round(rawQty / 1000m, 3);
+                    decimal baseRate = dr["PriRate"] != DBNull.Value ? Convert.ToDecimal(dr["PriRate"]) : 0m;
+                    if (rateResolver != null && dr.Table.Columns.Contains("Id") && dr["Id"] != DBNull.Value)
+                        baseRate = rateResolver(dr["Id"].ToString(), baseRate);
+
+                    decimal totalAmt = decimal.Round(parsedQty * baseRate, 2);
+                    string unit = ResolveUnitTitle(dr);
+
+                    return new ParsedBarcodeItem
+                    {
+                        ItemRow = dr,
+                        Qty = parsedQty,
+                        Rate = baseRate,
+                        Amount = totalAmt,
+                        IsVariableWeight = true,
+                        Unit = unit,
+                        RawCode = raw
+                    };
+                }
+            }
+
+            // 0b. Compact 18-digit Variable Barcode: 2 + IIIIII + QQQQQ + AAAAAA
             // Prefix 2 (1 digit) + Item ID (6 digits) + Qty*1000 (5 digits) + Amount (6 digits, whole number max 9 lac)
+            // If Amount is 000000, resolves live rate from product at scan time.
             // e.g. 200010500325000450 -> Item 000105, 0.325 kg (325g), Rs. 450
             if (cleanDigits.Length == 18 && cleanDigits.StartsWith("2"))
             {
@@ -52,8 +86,23 @@ namespace ERP.Classes
                     int.TryParse(amtStr, out int rawAmt) && rawQty > 0)
                 {
                     decimal parsedQty = decimal.Round(rawQty / 1000m, 3);
-                    decimal totalAmt = decimal.Round(rawAmt, 2);
-                    decimal effectiveRate = parsedQty > 0 ? decimal.Round(totalAmt / parsedQty, 2) : 0m;
+                    decimal effectiveRate;
+                    decimal totalAmt;
+
+                    if (rawAmt > 0)
+                    {
+                        totalAmt = decimal.Round(rawAmt, 2);
+                        effectiveRate = parsedQty > 0 ? decimal.Round(totalAmt / parsedQty, 2) : 0m;
+                    }
+                    else
+                    {
+                        decimal baseRate = dr["PriRate"] != DBNull.Value ? Convert.ToDecimal(dr["PriRate"]) : 0m;
+                        if (rateResolver != null && dr.Table.Columns.Contains("Id") && dr["Id"] != DBNull.Value)
+                            baseRate = rateResolver(dr["Id"].ToString(), baseRate);
+
+                        effectiveRate = baseRate;
+                        totalAmt = decimal.Round(parsedQty * effectiveRate, 2);
+                    }
 
                     string unit = ResolveUnitTitle(dr);
 

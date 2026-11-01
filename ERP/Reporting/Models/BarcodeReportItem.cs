@@ -21,8 +21,11 @@ namespace ERP.Reporting.Models
         public int Copies { get; set; } = 1;
         public decimal? Qty { get; set; }
         public string Unit { get; set; }
+        public decimal? DisplayQty { get; set; }
+        public string DisplayUnit { get; set; }
         public decimal? TotalAmount { get; set; }
         public bool IsVariableWeight { get; set; }
+        public string CompanySubHeader { get; set; }
 
         public string FormattedRate => "Rs. " + Math.Round(Rate).ToString("#,##0");
     }
