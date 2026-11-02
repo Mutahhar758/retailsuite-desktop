@@ -1,5 +1,6 @@
 using System;
 using System.Collections.Generic;
+using System.Drawing;
 using System.Linq;
 using System.Windows.Forms;
 using ERP.Services.Legacy;
@@ -22,6 +23,7 @@ namespace ERP
             _vendorApiService = new VendorApiService();
             _vendors = new List<VendorDto>();
             UserInfo.ApplyFormPermissions(this, AppResource.Vendors);
+            SetupEntryFlow();
         }
 
         // ══════════════════════════════════════════════════════════════════
@@ -203,8 +205,10 @@ namespace ERP
 
         private void DgvVendors_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0) return;
-            string code = dgvVendors.Rows[e.RowIndex].Cells["Account"].Value?.ToString();
+            if (e.RowIndex < 0 || e.RowIndex >= dgvVendors.Rows.Count) return;
+            string code = (dgvVendors.Columns.Contains("Account")
+                ? dgvVendors.Rows[e.RowIndex].Cells["Account"].Value
+                : dgvVendors.Rows[e.RowIndex].Cells[0].Value)?.ToString();
             if (string.IsNullOrEmpty(code)) return;
 
             _isNewMode = false;
@@ -316,7 +320,7 @@ namespace ERP
         //  Form events
         // ══════════════════════════════════════════════════════════════════
 
-        private async void frmCustomerInfo_Load(object sender, EventArgs e)
+        private async void frmSupplierInfo_Load(object sender, EventArgs e)
         {
             try
             {
@@ -335,9 +339,107 @@ namespace ERP
             catch (Exception ex) { ShowError(ex); }
         }
 
+        // ══════════════════════════════════════════════════════════════════
+        //  Data-entry flow: Enter = next field,
+        //  F5 = Save, F3 = New, Esc = Close, focus highlights
+        // ══════════════════════════════════════════════════════════════════
+
+        private Control[] _enterOrder;
+
+        private void SetupEntryFlow()
+        {
+            _enterOrder = new Control[]
+            {
+                txtTitle, txtEmail, txtPhone1, txtPhone2, txtFax, txtNic, txtAddress,
+                txtQualification, txtSMSNumber, txtIBAN, chkSMSAlert, chkEmailAlert,
+                chkActive, chkShowInSales, btnSave
+            };
+
+            // Tab order = Enter order (details tab)
+            int idx = 1;
+            foreach (var c in _enterOrder)
+            {
+                if (c == chkSMSAlert || c == chkEmailAlert) continue; // children of groupBox1
+                if (c == btnSave) continue;                           // child of panel2
+                c.TabIndex = idx++;
+                c.TabStop = true;
+                if (c == txtIBAN) groupBox1.TabIndex = idx++;
+            }
+            chkSMSAlert.TabIndex = 0;
+            chkEmailAlert.TabIndex = 1;
+            panel2.TabIndex = idx++;
+            btnSave.TabIndex = 0; btnNew.TabIndex = 1; btnDelete.TabIndex = 2; btnClose.TabIndex = 3;
+
+            // Visible focus indication
+            foreach (var tb in new TextBox[] { txtTitle, txtEmail, txtPhone1, txtPhone2, txtFax, txtNic,
+                                               txtAddress, txtQualification, txtSMSNumber, txtIBAN })
+            {
+                var box = tb;
+                box.Enter += (s, e) => box.BackColor = Color.FromArgb(254, 243, 199);
+                box.Leave += (s, e) => box.BackColor = Color.White;
+            }
+
+            foreach (var chk in new CheckBox[] { chkActive, chkShowInSales, chkSMSAlert, chkEmailAlert })
+            {
+                var k = chk;
+                k.Enter += (s, e) => k.BackColor = Color.FromArgb(254, 243, 199);
+                k.Leave += (s, e) => k.BackColor = Color.Transparent;
+            }
+
+            foreach (var btn in new Button[] { btnNew, btnSave, btnDelete, btnClose })
+            {
+                var b = btn;
+                b.Enter += (s, e) => b.Invalidate();
+                b.Leave += (s, e) => b.Invalidate();
+                b.Paint += (s, e) =>
+                {
+                    if (!b.Focused) return;
+                    using (var p = new Pen(Color.FromArgb(59, 130, 246), 2))
+                        e.Graphics.DrawRectangle(p, 1, 1, b.Width - 3, b.Height - 3);
+                };
+            }
+
+            dgvVendors.KeyDown += DgvVendors_KeyDown;
+        }
+
+        private void DgvVendors_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter && dgvVendors.CurrentRow != null)
+            {
+                e.Handled = true;
+                DgvVendors_CellDoubleClick(sender, new DataGridViewCellEventArgs(0, dgvVendors.CurrentRow.Index));
+            }
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            Keys key = keyData & Keys.KeyCode;
+            if (keyData == key && (key == Keys.Enter || key == Keys.Tab) && tabControl.SelectedTab == tpDetails)
+            {
+                if (key == Keys.Enter && ActiveControl is Button == false)
+                {
+                    int i = Array.IndexOf(_enterOrder, ActiveControl);
+                    if (i >= 0)
+                    {
+                        for (int n = i + 1; n < _enterOrder.Length; n++)
+                        {
+                            var next = _enterOrder[n];
+                            if (!next.Enabled || !next.Visible) continue;
+                            next.Focus();
+                            if (next is TextBox t) t.SelectAll();
+                            return true;
+                        }
+                    }
+                }
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
         private void frmCustomerInfo_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter) SendKeys.Send("{tab}");
+            if (e.KeyCode == Keys.F5 && btnSave.Enabled) { e.Handled = true; btnSave.PerformClick(); }
+            else if (e.KeyCode == Keys.F3 && btnNew.Enabled) { e.Handled = true; btnNew.PerformClick(); }
+            else if (e.KeyCode == Keys.Escape && btnClose.Enabled) { e.Handled = true; btnClose.PerformClick(); }
         }
 
         private void cmbCustomerCode_SelectedIndexChanged(object sender, EventArgs e)

@@ -1,6 +1,7 @@
 using System;
 using System.Collections.Generic;
 using System.Linq;
+using System.Drawing;
 using System.Windows.Forms;
 using ERP.Classes;
 using ERP.Services.Legacy;
@@ -33,6 +34,7 @@ namespace ERP
             _customerCategoryApiService = new CustomerCategoryApiService();
             _customers = new List<CustomerDto>();
             UserInfo.ApplyFormPermissions(this, AppResource.Customers);
+            SetupEntryFlow();
         }
 
         // ══════════════════════════════════════════════════════════════════
@@ -311,8 +313,10 @@ namespace ERP
 
         private void DgvCustomers_CellDoubleClick(object sender, DataGridViewCellEventArgs e)
         {
-            if (e.RowIndex < 0) return;
-            string code = dgvCustomers.Rows[e.RowIndex].Cells["Account"].Value?.ToString();
+            if (e.RowIndex < 0 || e.RowIndex >= dgvCustomers.Rows.Count) return;
+            string code = (dgvCustomers.Columns.Contains("Account")
+                ? dgvCustomers.Rows[e.RowIndex].Cells["Account"].Value
+                : dgvCustomers.Rows[e.RowIndex].Cells[0].Value)?.ToString();
             if (string.IsNullOrEmpty(code)) return;
 
             _isNewMode = false;
@@ -322,6 +326,15 @@ namespace ERP
             FillDetail(code);
             tabControl.SelectedTab = tpDetails;
             btnDelete.Enabled = true;
+        }
+
+        private void DgvCustomers_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter && dgvCustomers.CurrentRow != null)
+            {
+                e.Handled = true;
+                DgvCustomers_CellDoubleClick(sender, new DataGridViewCellEventArgs(0, dgvCustomers.CurrentRow.Index));
+            }
         }
 
         private void BtnAddNew_Click(object sender, EventArgs e)
@@ -433,6 +446,7 @@ namespace ERP
                 dgvSupplyItems.DataError += dgvSupplyItems_DataError;
 
                 var items = await _inventoryApiService.GetLookupAsync(null);
+                _supplyItems = items ?? new List<InventoryItemDto>();
                 clnSupplyItemId.DataSource = items;
                 clnSupplyItemId.DisplayMember = "Title";
                 clnSupplyItemId.ValueMember = "Id";
@@ -468,6 +482,218 @@ namespace ERP
             catch (Exception ex) { ShowError(ex); }
         }
 
+        private List<InventoryItemDto> _supplyItems = new List<InventoryItemDto>();
+
+        // ══════════════════════════════════════════════════════════════════
+        //  Data-entry flow (same as Sale / Purchase): Enter = next field,
+        //  grid cells advance on Enter, empty last row -> Save (row kept)
+        // ══════════════════════════════════════════════════════════════════
+
+        private Control[] _enterOrder;
+
+        private void SetupEntryFlow()
+        {
+            _enterOrder = new Control[]
+            {
+                txtTitle, txtEmail, txtPhone1, txtPhone2, txtFax, txtNic, txtAddress,
+                txtQualification, txtSMSNumber, txtIBAN, chkSMSAlert, chkEmailAlert,
+                cmbCustomerCategory, chkIsSubAccount, cmbParentCustomer, chkActive, dgvSupplyItems
+            };
+
+            // Tab order = Enter order (details tab)
+            int idx = 1;
+            foreach (var c in _enterOrder)
+            {
+                if (c == chkSMSAlert || c == chkEmailAlert) continue; // children of groupBox1
+                if (c == btnSave) continue;                           // child of panel2
+                if (c == dgvSupplyItems)
+                {
+                    grpSupplyDefaults.TabStop = false; grpSupplyDefaults.TabIndex = idx++;
+                }
+                c.TabIndex = idx++;
+                c.TabStop = true;
+                if (c == txtIBAN) groupBox1.TabIndex = idx++;
+            }
+            chkSMSAlert.TabIndex = 0;
+            chkEmailAlert.TabIndex = 1;
+            panel2.TabIndex = idx++;
+            btnSave.TabIndex = 0; btnNew.TabIndex = 1; btnDelete.TabIndex = 2; btnClose.TabIndex = 3;
+
+            // Visible focus indication
+            foreach (var tb in new TextBox[] { txtTitle, txtEmail, txtPhone1, txtPhone2, txtFax, txtNic,
+                                               txtAddress, txtQualification, txtSMSNumber, txtIBAN })
+            {
+                var box = tb;
+                box.Enter += (s, e) => box.BackColor = Color.FromArgb(254, 243, 199);
+                box.Leave += (s, e) => box.BackColor = Color.White;
+            }
+
+            foreach (var cmb in new ComboBox[] { cmbCustomerCategory, cmbParentCustomer })
+            {
+                var c = cmb;
+                c.DrawMode = DrawMode.OwnerDrawFixed;
+                c.ItemHeight = 19;
+                c.Enter += (s, e) => c.Invalidate();
+                c.Leave += (s, e) => c.Invalidate();
+                c.DrawItem += (s, e) =>
+                {
+                    bool open = c.DroppedDown;
+                    bool hot = (e.State & DrawItemState.Selected) == DrawItemState.Selected && open;
+                    Color bg = hot ? Color.FromArgb(37, 99, 235)
+                             : (c.Focused && !open) ? Color.FromArgb(254, 243, 199) : Color.White;
+                    Color fg = hot ? Color.White : Color.FromArgb(15, 23, 42);
+                    using (var b = new SolidBrush(bg)) e.Graphics.FillRectangle(b, e.Bounds);
+                    if (e.Index >= 0 && e.Index < c.Items.Count)
+                        TextRenderer.DrawText(e.Graphics, c.GetItemText(c.Items[e.Index]), c.Font,
+                            new Rectangle(e.Bounds.X + 2, e.Bounds.Y, e.Bounds.Width - 4, e.Bounds.Height), fg,
+                            TextFormatFlags.VerticalCenter | TextFormatFlags.Left | TextFormatFlags.EndEllipsis);
+                    if (c.Focused && !open)
+                        using (var p = new Pen(Color.FromArgb(217, 119, 6), 1.5f))
+                            e.Graphics.DrawRectangle(p, e.Bounds.X, e.Bounds.Y, e.Bounds.Width - 1, e.Bounds.Height - 1);
+                };
+            }
+
+            foreach (var chk in new CheckBox[] { chkActive, chkIsSubAccount, chkSMSAlert, chkEmailAlert })
+            {
+                var k = chk;
+                k.Enter += (s, e) => k.BackColor = Color.FromArgb(254, 243, 199);
+                k.Leave += (s, e) => k.BackColor = Color.Transparent;
+            }
+
+            foreach (var btn in new Button[] { btnNew, btnSave, btnDelete, btnClose, btnAddSupplyItem, btnDeleteSupplyItem })
+            {
+                var b = btn;
+                b.Enter += (s, e) => b.Invalidate();
+                b.Leave += (s, e) => b.Invalidate();
+                b.Paint += (s, e) =>
+                {
+                    if (!b.Focused) return;
+                    using (var p = new Pen(Color.FromArgb(59, 130, 246), 2))
+                        e.Graphics.DrawRectangle(p, 1, 1, b.Width - 3, b.Height - 3);
+                };
+            }
+
+            dgvSupplyItems.EditingControlShowing += dgvSupplyItems_EditingControlShowing;
+            dgvCustomers.KeyDown += DgvCustomers_KeyDown;
+        }
+
+        protected override bool ProcessCmdKey(ref Message msg, Keys keyData)
+        {
+            Keys key = keyData & Keys.KeyCode;
+            if (keyData == key && (key == Keys.Enter || key == Keys.Tab) && tabControl.SelectedTab == tpDetails)
+            {
+                if (dgvSupplyItems.ContainsFocus)
+                {
+                    if (HandleSupplyGridNavigation()) return true;
+                }
+                else if (key == Keys.Enter && ActiveControl is Button == false)
+                {
+                    int i = Array.IndexOf(_enterOrder, ActiveControl);
+                    if (i >= 0)
+                    {
+                        for (int n = i + 1; n < _enterOrder.Length; n++)
+                        {
+                            var next = _enterOrder[n];
+                            if (!next.Enabled || !next.Visible) continue;
+                            if (next == dgvSupplyItems) { FocusSupplyGrid(); return true; }
+                            next.Focus();
+                            if (next is TextBox t) t.SelectAll();
+                            return true;
+                        }
+                    }
+                }
+            }
+            return base.ProcessCmdKey(ref msg, keyData);
+        }
+
+        private void dgvSupplyItems_EditingControlShowing(object sender, DataGridViewEditingControlShowingEventArgs e)
+        {
+            if (dgvSupplyItems.CurrentCell == null || dgvSupplyItems.CurrentCell.ColumnIndex != clnSupplyItemId.Index) return;
+            if (e.Control is ComboBox cb)
+            {
+                cb.DropDownStyle = ComboBoxStyle.DropDown;
+                cb.AutoCompleteSource = AutoCompleteSource.ListItems;
+                cb.AutoCompleteMode = AutoCompleteMode.SuggestAppend;
+                var v = dgvSupplyItems.CurrentCell.Value;
+                if (v == null || string.IsNullOrWhiteSpace(v.ToString()))
+                {
+                    try { cb.SelectedIndex = -1; cb.Text = ""; } catch { }
+                }
+                else
+                {
+                    try { cb.SelectedValue = v.ToString(); } catch { }
+                }
+            }
+        }
+
+        private bool HandleSupplyGridNavigation()
+        {
+            var cell = dgvSupplyItems.CurrentCell;
+            if (cell == null) return false;
+            int row = cell.RowIndex, col = cell.ColumnIndex;
+
+            if (col == clnSupplyItemId.Index)
+            {
+                if (dgvSupplyItems.EditingControl is ComboBox cb)
+                {
+                    InventoryItemDto match = null;
+                    if (cb.SelectedValue != null && cb.SelectedIndex != -1)
+                        match = _supplyItems.FirstOrDefault(i => i.Id == cb.SelectedValue.ToString());
+                    else if (!string.IsNullOrWhiteSpace(cb.Text))
+                    {
+                        string t = cb.Text.Trim();
+                        match = _supplyItems.FirstOrDefault(i => string.Equals(i.Title, t, StringComparison.OrdinalIgnoreCase)
+                                                              || string.Equals(i.Id, t, StringComparison.OrdinalIgnoreCase))
+                             ?? _supplyItems.FirstOrDefault(i => i.Title != null && i.Title.StartsWith(t, StringComparison.OrdinalIgnoreCase));
+                    }
+                    if (match != null) dgvSupplyItems[clnSupplyItemId.Index, row].Value = match.Id;
+                }
+                dgvSupplyItems.EndEdit();
+
+                var val = dgvSupplyItems[clnSupplyItemId.Index, row].Value;
+                bool empty = val == null || string.IsNullOrWhiteSpace(val.ToString());
+                if (empty && row == dgvSupplyItems.Rows.Count - 1)
+                {
+                    btnSave.Focus();   // last row kept as-is, focus leaves grid
+                    return true;
+                }
+                if (empty) { MoveSupplyTo(row + 1, clnSupplyItemId.Index); return true; }
+            }
+            else
+            {
+                dgvSupplyItems.EndEdit();
+            }
+
+            // next visible, editable column in display order
+            var cols = dgvSupplyItems.Columns.Cast<DataGridViewColumn>()
+                       .Where(c => c.Visible && !c.ReadOnly).OrderBy(c => c.DisplayIndex).ToList();
+            int pos = cols.FindIndex(c => c.Index == col);
+            if (pos >= 0 && pos < cols.Count - 1)
+            {
+                MoveSupplyTo(row, cols[pos + 1].Index);
+                return true;
+            }
+
+            // end of row -> next row's item cell
+            if (row == dgvSupplyItems.Rows.Count - 1) btnAddSupplyItem_Click(null, null);
+            MoveSupplyTo(row + 1, clnSupplyItemId.Index);
+            return true;
+        }
+
+        private void FocusSupplyGrid()
+        {
+            if (dgvSupplyItems.Rows.Count == 0) btnAddSupplyItem_Click(null, null);
+            dgvSupplyItems.Focus();
+            MoveSupplyTo(0, clnSupplyItemId.Index);
+        }
+
+        private void MoveSupplyTo(int row, int col)
+        {
+            if (row < 0 || row >= dgvSupplyItems.Rows.Count) return;
+            dgvSupplyItems.CurrentCell = dgvSupplyItems[col, row];
+            dgvSupplyItems.BeginEdit(true);
+        }
+
         private void dgvSupplyItems_DataError(object sender, DataGridViewDataErrorEventArgs e)
         {
             e.ThrowException = false;
@@ -491,7 +717,9 @@ namespace ERP
 
         private void frmCustomerInfo_KeyDown(object sender, KeyEventArgs e)
         {
-            if (e.KeyCode == Keys.Enter) SendKeys.Send("{tab}");
+            if (e.KeyCode == Keys.F5 && btnSave.Enabled) { e.Handled = true; btnSave.PerformClick(); }
+            else if (e.KeyCode == Keys.F3 && btnNew.Enabled) { e.Handled = true; btnNew.PerformClick(); }
+            else if (e.KeyCode == Keys.Escape && btnClose.Enabled) { e.Handled = true; btnClose.PerformClick(); }
         }
 
         private void cmbCustomerCode_SelectedIndexChanged(object sender, EventArgs e)
