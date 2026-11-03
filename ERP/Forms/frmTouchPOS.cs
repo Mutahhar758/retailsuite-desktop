@@ -25,7 +25,9 @@ namespace ERP.Forms
         private readonly InventoryApiService _inventoryApiService;
         private readonly ItemCategoryApiService _categoryApiService;
         private readonly ChartOfAccountApiService _chartOfAccountApiService;
+        private readonly UnitApiService _unitApiService;
 
+        private DataTable _dtUnits = new DataTable();
         private List<InventoryItemDto> _allItems = new List<InventoryItemDto>();
         private List<InventoryItemDto> _filteredItems = new List<InventoryItemDto>();
         private List<ItemCategoryDto> _categories = new List<ItemCategoryDto>();
@@ -67,6 +69,15 @@ namespace ERP.Forms
         private Button btnOrder3;
 
         private DataGridView dgvCart;
+        private DataGridViewTextBoxColumn colTitle;
+        private DataGridViewButtonColumn colUnit;
+        private DataGridViewTextBoxColumn colRate;
+        private DataGridViewTextBoxColumn colQty;
+        private DataGridViewTextBoxColumn colTotal;
+        private DataGridViewButtonColumn colDec;
+        private DataGridViewButtonColumn colInc;
+        private DataGridViewButtonColumn colDel;
+
         private Panel pnlCartSummary;
         private Label lblSummaryCounts;
         private Label lblSubtotal;
@@ -84,17 +95,60 @@ namespace ERP.Forms
         private Button btnClearCart;
         private Button btnPay;
 
+        public class SelectableUnitOption
+        {
+            public string UnitId { get; set; }
+            public string Title { get; set; }
+            public decimal Factor { get; set; }
+        }
+
         public class TouchCartItem
         {
             public string ItemId { get; set; }
             public string Title { get; set; }
             public string ItemCode { get; set; }
             public string Barcode { get; set; }
-            public string Unit { get; set; }
-            public decimal Qty { get; set; }
-            public decimal Rate { get; set; }
+            public decimal BaseRate { get; set; }
             public decimal Discount { get; set; }
-            public decimal LineTotal => Math.Max(0, Math.Round(Qty * Rate - Discount, 2));
+
+            public List<SelectableUnitOption> SelectableUnits { get; set; } = new List<SelectableUnitOption>();
+            public string SelectedUnitId { get; set; }
+            public string SelectedUnitTitle { get; set; }
+            public decimal SelectedUnitFactor { get; set; } = 1m;
+
+            // Effective rate per selected display unit
+            public decimal Rate
+            {
+                get
+                {
+                    if (SelectedUnitFactor > 1m)
+                    {
+                        return Math.Round(BaseRate / SelectedUnitFactor, 2);
+                    }
+                    return BaseRate;
+                }
+                set
+                {
+                    if (SelectedUnitFactor <= 1m)
+                    {
+                        BaseRate = value;
+                    }
+                }
+            }
+
+            public string DisplayUnitLabel => (SelectableUnits != null && SelectableUnits.Count > 1)
+                ? $"{SelectedUnitTitle} ▾"
+                : (SelectedUnitTitle ?? "Pcs");
+
+            // DisplayQty is the directly editable quantity (e.g. 2 Boxes or 10 Pcs)
+            public decimal DisplayQty { get; set; } = 1m;
+
+            // Qty is the converted base primary quantity for backend inventory ledger deduction
+            public decimal Qty => SelectedUnitFactor > 1m
+                ? Math.Round(DisplayQty / SelectedUnitFactor, 4, MidpointRounding.AwayFromZero)
+                : DisplayQty;
+
+            public decimal LineTotal => Math.Max(0, Math.Round(DisplayQty * Rate - Discount, 2));
         }
 
         public frmTouchPOS()
@@ -103,6 +157,7 @@ namespace ERP.Forms
             _inventoryApiService = new InventoryApiService();
             _categoryApiService = new ItemCategoryApiService();
             _chartOfAccountApiService = new ChartOfAccountApiService();
+            _unitApiService = new UnitApiService();
 
             _orders[1] = new List<TouchCartItem>();
             _orders[2] = new List<TouchCartItem>();
@@ -239,7 +294,8 @@ namespace ERP.Forms
                 AllowUserToResizeRows = false,
                 SelectionMode = DataGridViewSelectionMode.FullRowSelect,
                 MultiSelect = false,
-                AutoGenerateColumns = false
+                AutoGenerateColumns = false,
+                EditMode = DataGridViewEditMode.EditOnEnter
             };
             dgvCart.ColumnHeadersDefaultCellStyle.BackColor = Color.FromArgb(241, 245, 249);
             dgvCart.ColumnHeadersDefaultCellStyle.ForeColor = Color.FromArgb(51, 65, 85);
@@ -251,65 +307,82 @@ namespace ERP.Forms
             dgvCart.DefaultCellStyle.SelectionForeColor = Color.FromArgb(15, 23, 42);
 
             // Cart Columns
-            var colTitle = new DataGridViewTextBoxColumn
+            colTitle = new DataGridViewTextBoxColumn
             {
                 HeaderText = "Item",
                 DataPropertyName = "Title",
                 AutoSizeMode = DataGridViewAutoSizeColumnMode.Fill,
                 ReadOnly = true
             };
-            var colRate = new DataGridViewTextBoxColumn
+            colUnit = new DataGridViewButtonColumn
+            {
+                HeaderText = "Unit",
+                DataPropertyName = "DisplayUnitLabel",
+                Width = 62,
+                FlatStyle = FlatStyle.Flat
+            };
+            colRate = new DataGridViewTextBoxColumn
             {
                 HeaderText = "Rate",
                 DataPropertyName = "Rate",
-                Width = 65,
+                Width = 58,
                 ReadOnly = true,
                 DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight, Format = "N0" }
             };
-            var colQty = new DataGridViewTextBoxColumn
+            colQty = new DataGridViewTextBoxColumn
             {
                 HeaderText = "Qty",
-                DataPropertyName = "Qty",
-                Width = 55,
-                ReadOnly = true,
-                DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleCenter, Font = new Font("Segoe UI", 10F, FontStyle.Bold) }
+                DataPropertyName = "DisplayQty",
+                Width = 60,
+                ReadOnly = false, // Directly editable text field!
+                DefaultCellStyle = new DataGridViewCellStyle
+                {
+                    Alignment = DataGridViewContentAlignment.MiddleCenter,
+                    Font = new Font("Segoe UI", 10.5F, FontStyle.Bold),
+                    BackColor = Color.FromArgb(240, 249, 255), // Highlighted so cashier knows it's editable
+                    SelectionBackColor = Color.FromArgb(186, 230, 253),
+                    SelectionForeColor = Color.FromArgb(15, 23, 42)
+                }
             };
-            var colTotal = new DataGridViewTextBoxColumn
+            colTotal = new DataGridViewTextBoxColumn
             {
                 HeaderText = "Total",
                 DataPropertyName = "LineTotal",
-                Width = 75,
+                Width = 72,
                 ReadOnly = true,
                 DefaultCellStyle = new DataGridViewCellStyle { Alignment = DataGridViewContentAlignment.MiddleRight, Font = new Font("Segoe UI", 10F, FontStyle.Bold), ForeColor = Color.FromArgb(15, 23, 42), Format = "N0" }
             };
 
-            var colDec = new DataGridViewButtonColumn
+            colDec = new DataGridViewButtonColumn
             {
                 HeaderText = "-",
                 Text = "➖",
                 UseColumnTextForButtonValue = true,
-                Width = 38,
+                Width = 36,
                 FlatStyle = FlatStyle.Flat
             };
-            var colInc = new DataGridViewButtonColumn
+            colInc = new DataGridViewButtonColumn
             {
                 HeaderText = "+",
                 Text = "➕",
                 UseColumnTextForButtonValue = true,
-                Width = 38,
+                Width = 36,
                 FlatStyle = FlatStyle.Flat
             };
-            var colDel = new DataGridViewButtonColumn
+            colDel = new DataGridViewButtonColumn
             {
                 HeaderText = "✕",
                 Text = "✕",
                 UseColumnTextForButtonValue = true,
-                Width = 38,
+                Width = 36,
                 FlatStyle = FlatStyle.Flat
             };
 
-            dgvCart.Columns.AddRange(colTitle, colRate, colQty, colTotal, colDec, colInc, colDel);
+            dgvCart.Columns.AddRange(colTitle, colUnit, colRate, colQty, colTotal, colDec, colInc, colDel);
             dgvCart.CellContentClick += DgvCart_CellContentClick;
+            dgvCart.CellEndEdit += DgvCart_CellEndEdit;
+            dgvCart.CellFormatting += DgvCart_CellFormatting;
+            dgvCart.DataError += (s, e) => { e.Cancel = false; };
 
             // Cart Summary Panel
             pnlCartSummary = new Panel
@@ -632,11 +705,22 @@ namespace ERP.Forms
                     cmbCustomer.SelectedIndex = 0;
                 }
 
-                // 2. Fetch Categories
+                // 2. Fetch Units (for sub-unit conversion)
+                try
+                {
+                    var unitsList = await _unitApiService.GetLookupAsync();
+                    _dtUnits = UnitConversionHelper.CreateUnitsTable(unitsList);
+                }
+                catch (Exception unitEx)
+                {
+                    System.Diagnostics.Debug.WriteLine("Units lookup load error: " + unitEx.Message);
+                }
+
+                // 3. Fetch Categories
                 _categories = await _categoryApiService.GetLookupAsync();
                 RenderCategoryButtons();
 
-                // 3. Fetch Items
+                // 4. Fetch Items
                 _allItems = await _inventoryApiService.GetLookupAsync(null);
                 _filteredItems = new List<InventoryItemDto>(_allItems);
                 RenderProductTiles();
@@ -665,6 +749,10 @@ namespace ERP.Forms
             {
                 var catCode = cat.Code;
                 Button btnCat = CreateCategoryChip(cat.Title, catCode, _activeCategoryCode == catCode);
+                if (!string.IsNullOrWhiteSpace(cat.MediaUrl))
+                {
+                    _ = LoadCategoryIconAsync(btnCat, cat.MediaUrl);
+                }
                 pnlCategories.Controls.Add(btnCat);
             }
             pnlCategories.ResumeLayout();
@@ -718,6 +806,111 @@ namespace ERP.Forms
             RenderProductTiles();
         }
 
+        private static readonly System.Collections.Concurrent.ConcurrentDictionary<string, Image> _imageCache =
+            new System.Collections.Concurrent.ConcurrentDictionary<string, Image>(StringComparer.OrdinalIgnoreCase);
+
+        private static readonly System.Net.Http.HttpClient _httpClient = new System.Net.Http.HttpClient(new System.Net.Http.HttpClientHandler
+        {
+            ServerCertificateCustomValidationCallback = delegate { return true; }
+        });
+
+        private async Task LoadImageIntoPictureBoxAsync(PictureBox pic, string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return;
+
+            if (_imageCache.TryGetValue(url, out Image cached))
+            {
+                if (!pic.IsDisposed) pic.Image = cached;
+                return;
+            }
+
+            try
+            {
+                byte[] bytes;
+                if (url.Contains(":\\") || url.StartsWith("file://") || System.IO.File.Exists(url))
+                {
+                    bytes = System.IO.File.ReadAllBytes(url);
+                }
+                else
+                {
+                    bytes = await _httpClient.GetByteArrayAsync(url);
+                }
+
+                if (bytes != null && bytes.Length > 0)
+                {
+                    using (var ms = new System.IO.MemoryStream(bytes))
+                    {
+                        var original = Image.FromStream(ms);
+                        var bmp = new Bitmap(original);
+                        _imageCache[url] = bmp;
+                        if (!pic.IsDisposed)
+                        {
+                            pic.BeginInvoke(new Action(() =>
+                            {
+                                if (!pic.IsDisposed) pic.Image = bmp;
+                            }));
+                        }
+                    }
+                }
+            }
+            catch
+            {
+                // Silently leave placeholder if image fails to load
+            }
+        }
+
+        private async Task LoadCategoryIconAsync(Button btn, string url)
+        {
+            if (string.IsNullOrWhiteSpace(url)) return;
+
+            if (_imageCache.TryGetValue(url, out Image cached))
+            {
+                if (!btn.IsDisposed)
+                {
+                    btn.Image = new Bitmap(cached, new Size(24, 24));
+                    btn.ImageAlign = ContentAlignment.MiddleLeft;
+                    btn.TextImageRelation = TextImageRelation.ImageBeforeText;
+                }
+                return;
+            }
+
+            try
+            {
+                byte[] bytes;
+                if (url.Contains(":\\") || url.StartsWith("file://") || System.IO.File.Exists(url))
+                {
+                    bytes = System.IO.File.ReadAllBytes(url);
+                }
+                else
+                {
+                    bytes = await _httpClient.GetByteArrayAsync(url);
+                }
+
+                if (bytes != null && bytes.Length > 0)
+                {
+                    using (var ms = new System.IO.MemoryStream(bytes))
+                    {
+                        var original = Image.FromStream(ms);
+                        var bmp = new Bitmap(original);
+                        _imageCache[url] = bmp;
+                        if (!btn.IsDisposed)
+                        {
+                            btn.BeginInvoke(new Action(() =>
+                            {
+                                if (!btn.IsDisposed)
+                                {
+                                    btn.Image = new Bitmap(bmp, new Size(24, 24));
+                                    btn.ImageAlign = ContentAlignment.MiddleLeft;
+                                    btn.TextImageRelation = TextImageRelation.ImageBeforeText;
+                                }
+                            }));
+                        }
+                    }
+                }
+            }
+            catch { }
+        }
+
         private void RenderProductTiles()
         {
             pnlProducts.SuspendLayout();
@@ -728,42 +921,69 @@ namespace ERP.Forms
                 var currentItem = item;
                 Panel card = new Panel
                 {
-                    Size = new Size(140, 115),
+                    Size = new Size(146, 185),
                     Margin = new Padding(6),
                     BackColor = Color.White,
                     BorderStyle = BorderStyle.FixedSingle,
                     Cursor = Cursors.Hand
                 };
 
+                // Product Image
+                PictureBox pic = new PictureBox
+                {
+                    Location = new Point(4, 4),
+                    Size = new Size(136, 95),
+                    SizeMode = PictureBoxSizeMode.Zoom,
+                    BackColor = Color.FromArgb(248, 250, 252),
+                    Cursor = Cursors.Hand
+                };
+
+                // Set placeholder first
+                try
+                {
+                    pic.Image = ERP.Controls.ProfileImage.CreateProductPlaceholder(136, 95);
+                }
+                catch { }
+
+                if (!string.IsNullOrWhiteSpace(currentItem.MediaUrl))
+                {
+                    _ = LoadImageIntoPictureBoxAsync(pic, currentItem.MediaUrl);
+                }
+
                 Label lblTitle = new Label
                 {
                     Text = currentItem.Title ?? "Item",
-                    Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                    Font = new Font("Segoe UI", 9F, FontStyle.Bold),
                     ForeColor = Color.FromArgb(15, 23, 42),
-                    Location = new Point(6, 6),
-                    Size = new Size(126, 42),
-                    TextAlign = ContentAlignment.TopLeft
+                    Location = new Point(5, 102),
+                    Size = new Size(134, 34),
+                    TextAlign = ContentAlignment.TopLeft,
+                    AutoEllipsis = true,
+                    Cursor = Cursors.Hand
                 };
 
                 Label lblUnit = new Label
                 {
                     Text = currentItem.DefaultUnitTitle ?? currentItem.PrimaryUnit ?? "Pcs",
-                    Font = new Font("Segoe UI", 8F, FontStyle.Regular),
+                    Font = new Font("Segoe UI", 7.5F, FontStyle.Regular),
                     ForeColor = Color.FromArgb(100, 116, 139),
-                    Location = new Point(6, 52),
-                    Size = new Size(126, 16)
+                    Location = new Point(5, 138),
+                    Size = new Size(134, 16),
+                    Cursor = Cursors.Hand
                 };
 
                 Label lblPrice = new Label
                 {
                     Text = "Rs. " + currentItem.PriRate.ToString("N0", CultureInfo.InvariantCulture),
-                    Font = new Font("Segoe UI", 12F, FontStyle.Bold),
+                    Font = new Font("Segoe UI", 11.5F, FontStyle.Bold),
                     ForeColor = Color.FromArgb(2, 132, 199), // Sky-600
-                    Location = new Point(6, 74),
-                    Size = new Size(126, 32),
-                    TextAlign = ContentAlignment.BottomRight
+                    Location = new Point(5, 154),
+                    Size = new Size(134, 25),
+                    TextAlign = ContentAlignment.BottomRight,
+                    Cursor = Cursors.Hand
                 };
 
+                card.Controls.Add(pic);
                 card.Controls.Add(lblTitle);
                 card.Controls.Add(lblUnit);
                 card.Controls.Add(lblPrice);
@@ -771,6 +991,7 @@ namespace ERP.Forms
                 Action clickAction = () => AddOrIncrementItem(currentItem);
 
                 card.Click += (s, e) => clickAction();
+                pic.Click += (s, e) => clickAction();
                 lblTitle.Click += (s, e) => clickAction();
                 lblUnit.Click += (s, e) => clickAction();
                 lblPrice.Click += (s, e) => clickAction();
@@ -790,6 +1011,50 @@ namespace ERP.Forms
             return _orders[_activeOrderIndex];
         }
 
+        private List<SelectableUnitOption> GetSelectableUnitsForItem(InventoryItemDto item)
+        {
+            var list = new List<SelectableUnitOption>();
+            string primaryUnit = !string.IsNullOrWhiteSpace(item.PrimaryUnit) ? item.PrimaryUnit : (item.DefaultUnit ?? "Pcs");
+            string primaryTitle = !string.IsNullOrWhiteSpace(item.DefaultUnitTitle) ? item.DefaultUnitTitle : primaryUnit;
+
+            if (_dtUnits != null && _dtUnits.Rows.Count > 0)
+            {
+                var priRows = _dtUnits.Select("Code = '" + primaryUnit.Replace("'", "''") + "'");
+                if (priRows.Length > 0)
+                {
+                    string st = _dtUnits.Columns.Contains("ShortTitle") ? Convert.ToString(priRows[0]["ShortTitle"]).Trim() : "";
+                    string t = Convert.ToString(priRows[0]["Title"]).Trim();
+                    primaryTitle = !string.IsNullOrEmpty(st) ? st : t;
+                }
+            }
+
+            list.Add(new SelectableUnitOption
+            {
+                UnitId = primaryUnit,
+                Title = primaryTitle,
+                Factor = 1m
+            });
+
+            var subUnits = UnitConversionHelper.GetEffectiveSubUnits(primaryUnit, item.AdditionalUnits, _dtUnits);
+            if (subUnits != null)
+            {
+                foreach (var sub in subUnits)
+                {
+                    if (sub.Factor > 1m && !list.Any(u => u.UnitId == sub.UnitId))
+                    {
+                        list.Add(new SelectableUnitOption
+                        {
+                            UnitId = sub.UnitId,
+                            Title = !string.IsNullOrWhiteSpace(sub.ShortTitle) ? sub.ShortTitle : sub.UnitTitle,
+                            Factor = sub.Factor
+                        });
+                    }
+                }
+            }
+
+            return list;
+        }
+
         private void AddOrIncrementItem(InventoryItemDto item)
         {
             var cart = GetActiveCart();
@@ -797,20 +1062,32 @@ namespace ERP.Forms
 
             if (existing != null)
             {
-                existing.Qty += 1;
+                existing.DisplayQty += 1;
             }
             else
             {
+                var selectableUnits = GetSelectableUnitsForItem(item);
+                var defaultOpt = selectableUnits.FirstOrDefault() ?? new SelectableUnitOption
+                {
+                    UnitId = item.PrimaryUnit ?? "Pcs",
+                    Title = item.DefaultUnitTitle ?? item.PrimaryUnit ?? "Pcs",
+                    Factor = 1m
+                };
+
                 cart.Add(new TouchCartItem
                 {
                     ItemId = item.Id,
                     Title = item.Title,
                     ItemCode = item.ItemKey,
                     Barcode = item.Barcode,
-                    Unit = item.DefaultUnitTitle ?? item.PrimaryUnit ?? "Pcs",
-                    Qty = 1,
+                    BaseRate = item.PriRate,
                     Rate = item.PriRate,
-                    Discount = 0
+                    Discount = 0,
+                    SelectableUnits = selectableUnits,
+                    SelectedUnitId = defaultOpt.UnitId,
+                    SelectedUnitTitle = defaultOpt.Title,
+                    SelectedUnitFactor = defaultOpt.Factor,
+                    DisplayQty = 1m
                 });
             }
 
@@ -821,18 +1098,64 @@ namespace ERP.Forms
 
         private void RefreshCartGrid()
         {
-            var cart = GetActiveCart();
-            dgvCart.DataSource = null;
-            dgvCart.DataSource = cart.ToList();
+            if (this.IsDisposed) return;
 
-            RecalculateTotals();
+            Action action = () =>
+            {
+                if (this.IsDisposed || dgvCart.IsDisposed) return;
+
+                try
+                {
+                    dgvCart.EndEdit();
+                }
+                catch { }
+
+                var cart = GetActiveCart();
+                int prevRow = -1;
+                int prevCol = -1;
+                try
+                {
+                    if (dgvCart.CurrentCell != null)
+                    {
+                        prevRow = dgvCart.CurrentCell.RowIndex;
+                        prevCol = dgvCart.CurrentCell.ColumnIndex;
+                    }
+                }
+                catch { }
+
+                try
+                {
+                    dgvCart.DataSource = null;
+                    dgvCart.DataSource = cart.ToList();
+
+                    if (prevRow >= 0 && prevRow < dgvCart.Rows.Count && prevCol >= 0 && prevCol < dgvCart.Columns.Count)
+                    {
+                        dgvCart.CurrentCell = dgvCart.Rows[prevRow].Cells[prevCol];
+                    }
+                }
+                catch (Exception ex)
+                {
+                    System.Diagnostics.Debug.WriteLine("Cart grid refresh error: " + ex.Message);
+                }
+
+                RecalculateTotals();
+            };
+
+            if (this.IsHandleCreated)
+            {
+                this.BeginInvoke(action);
+            }
+            else
+            {
+                action();
+            }
         }
 
         private void RecalculateTotals()
         {
             var cart = GetActiveCart();
             int itemCount = cart.Count;
-            decimal totalQty = cart.Sum(i => i.Qty);
+            decimal totalQty = cart.Sum(i => i.DisplayQty);
             decimal subtotal = cart.Sum(i => i.LineTotal);
 
             lblSummaryCounts.Text = $"Items: {itemCount}   |   Total Qty: {totalQty:0.##}";
@@ -854,12 +1177,32 @@ namespace ERP.Forms
 
             var item = cart[e.RowIndex];
 
-            // colDec: 4, colInc: 5, colDel: 6
-            if (e.ColumnIndex == 4) // Minus
+            // Unit column: Cycle through available sub-units
+            if (dgvCart.Columns[e.ColumnIndex] == colUnit)
             {
-                if (item.Qty > 1)
+                if (item.SelectableUnits != null && item.SelectableUnits.Count > 1)
                 {
-                    item.Qty -= 1;
+                    int currentIndex = item.SelectableUnits.FindIndex(u => u.UnitId == item.SelectedUnitId);
+                    int nextIndex = (currentIndex + 1) % item.SelectableUnits.Count;
+                    var nextUnit = item.SelectableUnits[nextIndex];
+
+                    // Convert current base quantity to new unit display quantity
+                    decimal currentBaseQty = item.Qty;
+                    item.SelectedUnitId = nextUnit.UnitId;
+                    item.SelectedUnitTitle = nextUnit.Title;
+                    item.SelectedUnitFactor = nextUnit.Factor;
+                    item.DisplayQty = Math.Max(1, Math.Round(currentBaseQty * nextUnit.Factor, 2));
+
+                    RefreshCartGrid();
+                }
+                return;
+            }
+
+            if (dgvCart.Columns[e.ColumnIndex] == colDec) // Minus
+            {
+                if (item.DisplayQty > 1)
+                {
+                    item.DisplayQty -= 1;
                 }
                 else
                 {
@@ -867,15 +1210,67 @@ namespace ERP.Forms
                 }
                 RefreshCartGrid();
             }
-            else if (e.ColumnIndex == 5) // Plus
+            else if (dgvCart.Columns[e.ColumnIndex] == colInc) // Plus
             {
-                item.Qty += 1;
+                item.DisplayQty += 1;
                 RefreshCartGrid();
             }
-            else if (e.ColumnIndex == 6) // Delete
+            else if (dgvCart.Columns[e.ColumnIndex] == colDel) // Delete
             {
                 cart.RemoveAt(e.RowIndex);
                 RefreshCartGrid();
+            }
+        }
+
+        private void DgvCart_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.RowIndex >= dgvCart.Rows.Count) return;
+
+            var cart = GetActiveCart();
+            if (e.RowIndex >= cart.Count) return;
+
+            var item = cart[e.RowIndex];
+
+            if (dgvCart.Columns[e.ColumnIndex] == colQty)
+            {
+                var cellVal = dgvCart.Rows[e.RowIndex].Cells[e.ColumnIndex].Value;
+                if (cellVal != null && decimal.TryParse(cellVal.ToString(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal enteredQty))
+                {
+                    if (enteredQty > 0)
+                    {
+                        item.DisplayQty = enteredQty;
+                    }
+                    else
+                    {
+                        cart.RemoveAt(e.RowIndex);
+                    }
+                }
+                RefreshCartGrid();
+            }
+        }
+
+        private void DgvCart_CellFormatting(object sender, DataGridViewCellFormattingEventArgs e)
+        {
+            if (e.RowIndex < 0 || e.RowIndex >= dgvCart.Rows.Count) return;
+
+            var cart = GetActiveCart();
+            if (e.RowIndex >= cart.Count) return;
+
+            var item = cart[e.RowIndex];
+
+            if (dgvCart.Columns[e.ColumnIndex] == colUnit)
+            {
+                if (item.SelectableUnits != null && item.SelectableUnits.Count > 1)
+                {
+                    e.CellStyle.BackColor = Color.FromArgb(238, 242, 255); // Indigo-50
+                    e.CellStyle.ForeColor = Color.FromArgb(79, 70, 229);   // Indigo-600
+                    e.CellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
+                }
+            }
+            else if (dgvCart.Columns[e.ColumnIndex] == colDel)
+            {
+                e.CellStyle.ForeColor = Color.FromArgb(220, 38, 38);
+                e.CellStyle.Font = new Font("Segoe UI", 9F, FontStyle.Bold);
             }
         }
 
@@ -993,8 +1388,8 @@ namespace ERP.Forms
                 {
                     Seq = seq++,
                     ItemId = item.ItemId,
-                    Qty = item.Qty,
-                    Rate = item.Rate,
+                    Qty = item.Qty, // Base primary quantity for ledger deduction
+                    Rate = item.BaseRate, // Primary unit rate
                     Discount = item.Discount
                 });
             }
