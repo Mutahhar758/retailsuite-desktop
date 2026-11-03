@@ -261,6 +261,7 @@ namespace ERP
             purchaseReturnToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PurchaseReturns);
             toolStripMenuItem1.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SaleSupplies);
             customerSupplyRegisterToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SaleSupplies);
+            touchPosToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Sales);
             saleOrderToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.Sales);
             saleReturnToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.SaleReturns);
             stockAdjustmentToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.StockAdjustments);
@@ -350,6 +351,25 @@ namespace ERP
         }
 
 
+
+        public void OpenTouchPosForm()
+        {
+            if (Application.OpenForms["frmTouchPOS"] != null)
+            {
+                Application.OpenForms["frmTouchPOS"].Focus();
+            }
+            else
+            {
+                frmTouchPOS frm = new frmTouchPOS();
+                frm.MdiParent = this;
+                frm.Show();
+            }
+        }
+
+        private void touchPosToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            OpenTouchPosForm();
+        }
 
         private void OpenSaleForm()
         {
@@ -548,6 +568,10 @@ namespace ERP
                 {
                     Application.Exit();
                 }
+            }
+            else if (e.KeyCode == Keys.F4)
+            {
+                OpenTouchPosForm();
             }
             else if (e.KeyCode == Keys.F12)
             {

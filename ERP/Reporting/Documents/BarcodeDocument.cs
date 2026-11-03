@@ -115,8 +115,9 @@ namespace ERP.Reporting.Documents
 
                 container.Page(page =>
                 {
+                    // 3.94 in x 0.90 in (100mm x 22.86mm) 3-up continuous thermal sticker roll
                     page.Size(100f, 22.86f, Unit.Millimetre);
-                    page.MarginVertical(0.3f, Unit.Millimetre);
+                    page.MarginVertical(0.4f, Unit.Millimetre);
                     page.MarginHorizontal(pageMarginH, Unit.Millimetre);
                     page.PageColor(QuestPDF.Helpers.Colors.White);
 
@@ -148,19 +149,43 @@ namespace ERP.Reporting.Documents
                                 bool hasRate = _includeRate && item.Rate > 0;
 
                                 float barcodeHeightMm;
-                                if (hasSubHeader && hasRate)
-                                    barcodeHeightMm = 4.5f;
-                                else if (hasSubHeader || hasRate)
-                                    barcodeHeightMm = 5.2f;
-                                else
-                                    barcodeHeightMm = isVariable ? 6.2f : 7.2f;
-
-                                float compFontSize = hasSubHeader ? 5.0f : 5.5f;
+                                float compFontSize;
                                 float subFontSize = 4.0f;
-                                float titleFontSize = hasSubHeader ? 5.8f : 6.5f;
-                                float barcodeNumFontSize = item.Barcode.Length > 18 ? 4.5f : (item.Barcode.Length > 13 ? 5.2f : 6.0f);
-                                float priceFontSize = hasSubHeader ? 6.2f : 7.0f;
+                                float titleFontSize;
+                                float barcodeNumFontSize;
+                                float priceFontSize;
                                 float rateFontSize = 4.8f;
+                                float itemSpacing;
+
+                                if (hasSubHeader && hasRate)
+                                {
+                                    barcodeHeightMm = 4.8f;
+                                    compFontSize = 5.0f;
+                                    titleFontSize = 5.5f;
+                                    barcodeNumFontSize = 4.5f;
+                                    priceFontSize = 6.2f;
+                                    itemSpacing = 0f;
+                                }
+                                else if (hasSubHeader || hasRate)
+                                {
+                                    barcodeHeightMm = 5.2f;
+                                    compFontSize = 5.0f;
+                                    titleFontSize = 5.8f;
+                                    barcodeNumFontSize = item.Barcode.Length > 18 ? 4.5f : (item.Barcode.Length > 13 ? 5.2f : 5.8f);
+                                    priceFontSize = 6.8f;
+                                    itemSpacing = 0f;
+                                }
+                                else
+                                {
+                                    // Standard 5-line sticker (Company, Title, Barcode, Barcode Number, Price) on 0.90 in sticker
+                                    // Balanced height & spacing so it fills the sticker and is centered vertically without touching edges
+                                    barcodeHeightMm = isVariable ? 6.8f : 7.5f;
+                                    compFontSize = 5.5f;
+                                    titleFontSize = 6.2f;
+                                    barcodeNumFontSize = item.Barcode.Length > 18 ? 4.8f : (item.Barcode.Length > 13 ? 5.8f : 6.2f);
+                                    priceFontSize = 7.8f;
+                                    itemSpacing = 0.2f;
+                                }
 
                                 float leftPad = 1.0f;
                                 float rightPad = 1.0f;
@@ -180,9 +205,10 @@ namespace ERP.Reporting.Documents
                                 row.RelativeItem()
                                     .PaddingLeft(leftPad, Unit.Millimetre)
                                     .PaddingRight(rightPad, Unit.Millimetre)
+                                    .PaddingVertical(hasSubHeader || hasRate ? 0.2f : 0.5f, Unit.Millimetre)
                                     .Column(col =>
                                 {
-                                    col.Spacing(0);
+                                    col.Spacing(itemSpacing);
 
                                     if (_includeCompanyName)
                                     {
@@ -209,6 +235,7 @@ namespace ERP.Reporting.Documents
                                     }
 
                                     col.Item()
+                                        .PaddingVertical(hasSubHeader || hasRate ? 0.1f : 0.25f, Unit.Millimetre)
                                         .AlignCenter()
                                         .Height(barcodeHeightMm, Unit.Millimetre)
                                         .Row(bRow =>
@@ -269,7 +296,7 @@ namespace ERP.Reporting.Documents
                                         if (_includePrice)
                                         {
                                             col.Item().AlignCenter().Text(item.FormattedRate)
-                                                .FontSize(hasSubHeader ? 7.6f : 8.8f)
+                                                .FontSize(priceFontSize)
                                                 .Bold()
                                                 .FontColor(QuestPDF.Helpers.Colors.Black);
                                         }
@@ -535,7 +562,7 @@ namespace ERP.Reporting.Documents
             });
         }
 
-        public static void PrintDirectToPrinter(IDocument document, string printerName)
+        public static void PrintDirectToPrinter(IDocument document, string printerName, BarcodePrintLayout layout = BarcodePrintLayout.Roll4Inch3Up)
         {
             var settings = new ImageGenerationSettings { RasterDpi = 300 };
             var images = document.GenerateImages(settings).ToList();
@@ -551,6 +578,29 @@ namespace ERP.Reporting.Documents
 
                 pd.DefaultPageSettings.Margins = new System.Drawing.Printing.Margins(0, 0, 0, 0);
                 pd.OriginAtMargins = false;
+
+                // Explicitly define target dimensions in hundredths of an inch (1/100 inch)
+                int targetWidthHundredths;
+                int targetHeightHundredths;
+                if (layout == BarcodePrintLayout.Roll4Inch3Up)
+                {
+                    targetWidthHundredths = 394; // 3.94 inches (100mm)
+                    targetHeightHundredths = 90; // 0.90 inch (22.86mm)
+                    pd.DefaultPageSettings.PaperSize = new PaperSize("Roll 3.94x0.90 in", targetWidthHundredths, targetHeightHundredths);
+                }
+                else if (layout == BarcodePrintLayout.ThermalRoll)
+                {
+                    targetWidthHundredths = 197; // 50mm
+                    targetHeightHundredths = 118; // 30mm
+                    pd.DefaultPageSettings.PaperSize = new PaperSize("Roll 50x30mm", targetWidthHundredths, targetHeightHundredths);
+                }
+                else
+                {
+                    targetWidthHundredths = 827; // A4
+                    targetHeightHundredths = 1169;
+                    pd.DefaultPageSettings.PaperSize = new PaperSize("A4", targetWidthHundredths, targetHeightHundredths);
+                }
+
                 pd.PrintController = new StandardPrintController();
                 pd.PrintPage += (s, ev) =>
                 {
@@ -559,7 +609,18 @@ namespace ERP.Reporting.Documents
                         using (var ms = new MemoryStream(images[pageIndex]))
                         using (var img = System.Drawing.Image.FromStream(ms))
                         {
-                            System.Drawing.Rectangle bounds = ev.PageBounds;
+                            // Prevent thermal label drivers (e.g. Xprinter USER 409x709) from stretching stickers
+                            int drawWidth = ev.PageBounds.Width > 0 ? ev.PageBounds.Width : targetWidthHundredths;
+                            int drawHeight = targetHeightHundredths;
+                            if (ev.PageBounds.Height > 0 && ev.PageBounds.Height <= 110)
+                            {
+                                drawHeight = ev.PageBounds.Height;
+                            }
+
+                            var bounds = new System.Drawing.Rectangle(0, 0, drawWidth, drawHeight);
+
+                            // Clear solid white so thermal printers don't burn transparent/uninitialized areas black
+                            ev.Graphics.Clear(System.Drawing.Color.White);
                             ev.Graphics.InterpolationMode = System.Drawing.Drawing2D.InterpolationMode.HighQualityBicubic;
                             ev.Graphics.PixelOffsetMode = System.Drawing.Drawing2D.PixelOffsetMode.HighQuality;
                             ev.Graphics.DrawImage(img, bounds);

@@ -986,7 +986,7 @@ namespace ERP.Reporting
                         includeTitle: true,
                         includePrice: incPrice,
                         includeRate: incRate);
-                    BarcodeDocument.PrintDirectToPrinter(doc, printer);
+                    BarcodeDocument.PrintDirectToPrinter(doc, printer, layout);
                 });
 
                 MessageBox.Show(string.Format("{0} barcode label(s) sent directly to '{1}' successfully!", _currentItem.Copies, printer), "Print Complete", MessageBoxButtons.OK, MessageBoxIcon.Information);

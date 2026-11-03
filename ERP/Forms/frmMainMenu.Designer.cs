@@ -57,6 +57,7 @@ namespace ERP
             this.toolStripSeparator2 = new System.Windows.Forms.ToolStripSeparator();
             this.toolStripMenuItem1 = new System.Windows.Forms.ToolStripMenuItem();
             this.customerSupplyRegisterToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.touchPosToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saleOrderToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.saleReturnToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripSeparator3 = new System.Windows.Forms.ToolStripSeparator();
@@ -265,6 +266,7 @@ namespace ERP
             this.toolStripSeparator2,
             this.toolStripMenuItem1,
             this.customerSupplyRegisterToolStripMenuItem,
+            this.touchPosToolStripMenuItem,
             this.saleOrderToolStripMenuItem,
             this.saleReturnToolStripMenuItem,
             this.toolStripSeparator3,
@@ -335,6 +337,13 @@ namespace ERP
             this.customerSupplyRegisterToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
             this.customerSupplyRegisterToolStripMenuItem.Text = "Customer Supply Register";
             this.customerSupplyRegisterToolStripMenuItem.Click += new System.EventHandler(this.customerSupplyRegisterToolStripMenuItem_Click);
+            // 
+            // touchPosToolStripMenuItem
+            // 
+            this.touchPosToolStripMenuItem.Name = "touchPosToolStripMenuItem";
+            this.touchPosToolStripMenuItem.Size = new System.Drawing.Size(205, 22);
+            this.touchPosToolStripMenuItem.Text = "Touch Screen POS (F4)";
+            this.touchPosToolStripMenuItem.Click += new System.EventHandler(this.touchPosToolStripMenuItem_Click);
             // 
             // saleOrderToolStripMenuItem
             // 
@@ -761,6 +770,7 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem journalVoucherToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem narrationToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem itemDetailToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem touchPosToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem saleOrderToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem unitIndexToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem purchaseToolStripMenuItem;
