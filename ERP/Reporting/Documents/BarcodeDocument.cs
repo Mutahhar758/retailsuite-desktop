@@ -117,7 +117,8 @@ namespace ERP.Reporting.Documents
                 {
                     // 3.94 in x 0.90 in (100mm x 22.86mm) 3-up continuous thermal sticker roll
                     page.Size(100f, 22.86f, Unit.Millimetre);
-                    page.MarginVertical(0.4f, Unit.Millimetre);
+                    page.MarginTop(2.0f, Unit.Millimetre);
+                    page.MarginBottom(0.4f, Unit.Millimetre);
                     page.MarginHorizontal(pageMarginH, Unit.Millimetre);
                     page.PageColor(QuestPDF.Helpers.Colors.White);
 
@@ -159,8 +160,8 @@ namespace ERP.Reporting.Documents
 
                                 if (hasSubHeader && hasRate)
                                 {
-                                    barcodeHeightMm = 4.8f;
-                                    compFontSize = 5.0f;
+                                    barcodeHeightMm = 4.5f;
+                                    compFontSize = 5.8f;
                                     titleFontSize = 5.5f;
                                     barcodeNumFontSize = 4.5f;
                                     priceFontSize = 6.2f;
@@ -168,23 +169,23 @@ namespace ERP.Reporting.Documents
                                 }
                                 else if (hasSubHeader || hasRate)
                                 {
-                                    barcodeHeightMm = 5.2f;
-                                    compFontSize = 5.0f;
-                                    titleFontSize = 5.8f;
+                                    barcodeHeightMm = 4.8f;
+                                    compFontSize = 6.2f;
+                                    titleFontSize = 5.6f;
                                     barcodeNumFontSize = item.Barcode.Length > 18 ? 4.5f : (item.Barcode.Length > 13 ? 5.2f : 5.8f);
-                                    priceFontSize = 6.8f;
+                                    priceFontSize = 6.6f;
                                     itemSpacing = 0f;
                                 }
                                 else
                                 {
                                     // Standard 5-line sticker (Company, Title, Barcode, Barcode Number, Price) on 0.90 in sticker
-                                    // Balanced height & spacing so it fills the sticker and is centered vertically without touching edges
-                                    barcodeHeightMm = isVariable ? 6.8f : 7.5f;
-                                    compFontSize = 5.5f;
-                                    titleFontSize = 6.2f;
-                                    barcodeNumFontSize = item.Barcode.Length > 18 ? 4.8f : (item.Barcode.Length > 13 ? 5.8f : 6.2f);
-                                    priceFontSize = 7.8f;
-                                    itemSpacing = 0.2f;
+                                    // Balanced height & spacing so it fills the sticker with 2mm top margin
+                                    barcodeHeightMm = isVariable ? 6.0f : 6.6f;
+                                    compFontSize = 6.8f;
+                                    titleFontSize = 6.0f;
+                                    barcodeNumFontSize = item.Barcode.Length > 18 ? 4.8f : (item.Barcode.Length > 13 ? 5.6f : 6.0f);
+                                    priceFontSize = 7.5f;
+                                    itemSpacing = 0.15f;
                                 }
 
                                 float leftPad = 1.0f;
@@ -342,7 +343,9 @@ namespace ERP.Reporting.Documents
                 {
                     // Standard 50mm x 30mm thermal sticker
                     page.Size(50, 30, Unit.Millimetre);
-                    page.Margin(4, Unit.Point);
+                    page.MarginTop(2.0f, Unit.Millimetre);
+                    page.MarginBottom(1.0f, Unit.Millimetre);
+                    page.MarginHorizontal(1.5f, Unit.Millimetre);
                     page.PageColor(QuestPDF.Helpers.Colors.White);
 
                     page.Content().Column(col =>
@@ -350,7 +353,7 @@ namespace ERP.Reporting.Documents
                         if (_includeCompanyName)
                         {
                             col.Item().AlignCenter().Text(_companyName)
-                                .FontSize(6.5f)
+                                .FontSize(7.5f)
                                 .Bold()
                                 .FontColor(QuestPDF.Helpers.Colors.Black);
 
