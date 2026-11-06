@@ -31,6 +31,9 @@ namespace ERP
         private readonly DataTable dtCategories = new DataTable();
         private readonly DataTable dtAccounts = new DataTable();
         private readonly DataTable dtNarration = new DataTable();
+        private readonly DataTable dtCashBankAccounts = new DataTable();
+        private string _defaultCashAccountId = null;
+        private decimal _lastCalculatedTotal = 0;
 
         private int currentRow;
         private bool resetRow = false;
@@ -52,6 +55,7 @@ namespace ERP
             InitializeLookupTables();
             dgvSale.Rows.Add();
             EnableDoubleBuffering(dgvSale);
+            EnableDoubleBuffering(dgvPayments);
             dgvSale.Enter += dgvSale_Enter;
             UserInfo.ApplyFormPermissions(this, AppResource.Purchases);
         }
@@ -61,6 +65,12 @@ namespace ERP
             if ((keyData == Keys.Enter || keyData == Keys.Tab) && dgvSale.ContainsFocus)
             {
                 if (HandleGridEnterNavigation())
+                    return true;
+            }
+
+            if ((keyData == Keys.Enter || keyData == Keys.Tab) && dgvPayments.ContainsFocus)
+            {
+                if (HandlePaymentsEnterNavigation())
                     return true;
             }
 
@@ -169,6 +179,9 @@ namespace ERP
 
             dtNarration.Columns.Add("Code", typeof(string));
             dtNarration.Columns.Add("Title", typeof(string));
+
+            dtCashBankAccounts.Columns.Add("Account", typeof(string));
+            dtCashBankAccounts.Columns.Add("Title", typeof(string));
         }
 
         private async System.Threading.Tasks.Task LoadLookupsAsync()
@@ -178,7 +191,8 @@ namespace ERP
             var categoriesTask = _itemCategoryApiService.GetLookupAsync();
             var unitsTask = _unitApiService.GetLookupAsync();
             var itemsTask = _inventoryApiService.GetLookupAsync(null, true);
-            await System.Threading.Tasks.Task.WhenAll(accountsTask, narrationsTask, categoriesTask, unitsTask, itemsTask);
+            var cashBankTask = _chartOfAccountApiService.GetCashBankAccountsAsync();
+            await System.Threading.Tasks.Task.WhenAll(accountsTask, narrationsTask, categoriesTask, unitsTask, itemsTask, cashBankTask);
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
@@ -197,6 +211,30 @@ namespace ERP
             dtNarration.Rows.Clear();
             foreach (var n in narrationsTask.Result)
                 dtNarration.Rows.Add(n.Code, n.Title);
+
+            dtCashBankAccounts.Rows.Clear();
+            _defaultCashAccountId = null;
+            foreach (var cb in cashBankTask.Result)
+            {
+                dtCashBankAccounts.Rows.Add(cb.Account, cb.Title);
+                if (_defaultCashAccountId == null && (cb.Account.StartsWith("001002002001") || cb.Title.IndexOf("Cash", StringComparison.OrdinalIgnoreCase) >= 0))
+                {
+                    _defaultCashAccountId = cb.Account;
+                }
+            }
+            if (_defaultCashAccountId == null && dtCashBankAccounts.Rows.Count > 0)
+            {
+                _defaultCashAccountId = dtCashBankAccounts.Rows[0]["Account"].ToString();
+            }
+
+            clnPayAccount.DataSource = dtCashBankAccounts;
+            clnPayAccount.DisplayMember = "Title";
+            clnPayAccount.ValueMember = "Account";
+
+            if (dgvPayments.Rows.Count == 0)
+            {
+                EnsureDefaultPaymentRow(txtTotAmount.Value);
+            }
 
             FillAccounts();
             FillNarration();
@@ -295,6 +333,24 @@ namespace ERP
             var lines = await _apiService.GetDetailAsync(vno);
             txtVoucherNo.Text = "PU-" + vno;
             dgvSale.Rows.Clear();
+            dgvPayments.Rows.Clear();
+            try
+            {
+                var payments = await _apiService.GetPaymentsAsync(vno);
+                if (payments != null && payments.Count > 0)
+                {
+                    foreach (var p in payments)
+                    {
+                        int pIdx = dgvPayments.Rows.Add();
+                        dgvPayments[clnPaySeq.Index, pIdx].Value = p.Seq > 0 ? p.Seq.ToString() : (pIdx + 1).ToString();
+                        dgvPayments[clnPayAccount.Index, pIdx].Value = p.AccountId;
+                        dgvPayments[clnPayAmount.Index, pIdx].Value = p.Amount.ToString("N2");
+                        dgvPayments[clnPayReference.Index, pIdx].Value = p.Reference ?? "";
+                    }
+                }
+            }
+            catch { }
+            CalcPaymentTotals();
 
             if (lines.Count > 0)
             {
@@ -373,6 +429,12 @@ namespace ERP
                 }
             }
 
+            if (dgvPayments.Rows.Count == 0 && lines.Count > 0)
+            {
+                EnsureDefaultPaymentRow(lines[0].CashPaid ?? 0);
+            }
+            CalcPaymentTotals();
+
             dgvSale.Rows.Add();
             CalcTotAmount();
         }
@@ -395,6 +457,24 @@ namespace ERP
 
             lblTotAmount.Text = totAmount.ToString();
             txtTotAmount.Text = totAmount.ToString("N2");
+
+            if (dgvPayments.Rows.Count <= 1)
+            {
+                if (dgvPayments.Rows.Count == 0)
+                {
+                    EnsureDefaultPaymentRow(totAmount);
+                }
+                else
+                {
+                    decimal currentPay = ParseDecimal(dgvPayments[clnPayAmount.Index, 0].Value);
+                    if (string.IsNullOrWhiteSpace(txtVoucherNo.Text) || currentPay == 0 || currentPay == _lastCalculatedTotal)
+                    {
+                        dgvPayments[clnPayAmount.Index, 0].Value = totAmount.ToString("N2");
+                    }
+                }
+            }
+            _lastCalculatedTotal = totAmount;
+            CalcPaymentTotals();
         }
 
         private static decimal ParseDecimal(object value)
@@ -644,7 +724,7 @@ namespace ERP
             try
             {
                 if (groupBox2 == null) return;
-                int bottomBoundary = Math.Min(panel1.Top, groupBox3.Top);
+                int bottomBoundary = grpPayments != null ? grpPayments.Top : Math.Min(panel1.Top, groupBox3.Top);
 
                 if (!ApiSession.IsBarcodeFastScanEnabled)
                 {
@@ -808,6 +888,207 @@ namespace ERP
                     e.Handled = true;
                 }
             }
+        }
+
+        private void EnsureDefaultPaymentRow(decimal defaultAmount)
+        {
+            if (dgvPayments.Rows.Count == 0)
+            {
+                int idx = dgvPayments.Rows.Add();
+                dgvPayments[clnPaySeq.Index, idx].Value = "1";
+                dgvPayments[clnPayAccount.Index, idx].Value = _defaultCashAccountId;
+                dgvPayments[clnPayAmount.Index, idx].Value = defaultAmount.ToString("N2");
+                dgvPayments[clnPayReference.Index, idx].Value = "";
+            }
+        }
+
+        private decimal GetTotalPaid()
+        {
+            decimal sum = 0;
+            foreach (DataGridViewRow r in dgvPayments.Rows)
+            {
+                if (r.IsNewRow) continue;
+                sum += ParseDecimal(r.Cells[clnPayAmount.Index].Value);
+            }
+            return sum;
+        }
+
+        private void CalcPaymentTotals()
+        {
+            decimal totalPaid = GetTotalPaid();
+            txtCashReceipt.Text = totalPaid.ToString("N2");
+            decimal netBill = txtTotAmount.Value;
+            if (totalPaid > netBill)
+            {
+                txtCashBack.Text = (totalPaid - netBill).ToString("N2");
+                txtBalance.Text = "0.00";
+            }
+            else
+            {
+                txtCashBack.Text = "0.00";
+                txtBalance.Text = (netBill - totalPaid).ToString("N2");
+            }
+        }
+
+        private List<PaymentRecordRequest> GetPaymentsList()
+        {
+            var list = new List<PaymentRecordRequest>();
+            int seq = 1;
+            foreach (DataGridViewRow r in dgvPayments.Rows)
+            {
+                if (r.IsNewRow) continue;
+                var accId = Convert.ToString(r.Cells[clnPayAccount.Index].Value);
+                decimal amt = ParseDecimal(r.Cells[clnPayAmount.Index].Value);
+                string rf = Convert.ToString(r.Cells[clnPayReference.Index].Value);
+
+                if (!string.IsNullOrWhiteSpace(accId) && amt > 0)
+                {
+                    list.Add(new PaymentRecordRequest
+                    {
+                        Seq = seq++,
+                        AccountId = accId,
+                        Amount = amt,
+                        Reference = rf
+                    });
+                }
+            }
+            return list;
+        }
+
+        private void btnAddPayment_Click(object sender, EventArgs e)
+        {
+            decimal netBill = txtTotAmount.Value;
+            decimal totalPaid = GetTotalPaid();
+            decimal remaining = netBill > totalPaid ? netBill - totalPaid : 0;
+
+            int newRowIdx = dgvPayments.Rows.Add();
+            dgvPayments[clnPaySeq.Index, newRowIdx].Value = (newRowIdx + 1).ToString();
+            dgvPayments[clnPayAccount.Index, newRowIdx].Value = _defaultCashAccountId;
+            dgvPayments[clnPayAmount.Index, newRowIdx].Value = remaining.ToString("N2");
+            dgvPayments[clnPayReference.Index, newRowIdx].Value = "";
+            CalcPaymentTotals();
+
+            dgvPayments.Focus();
+            dgvPayments.CurrentCell = dgvPayments[clnPayAccount.Index, newRowIdx];
+            dgvPayments.BeginEdit(true);
+        }
+
+        private void dgvPayments_CellContentClick(object sender, DataGridViewCellEventArgs e)
+        {
+            if (e.RowIndex < 0) return;
+            if (e.ColumnIndex == clnPayDelete.Index)
+            {
+                if (dgvPayments.Rows.Count > 1)
+                {
+                    dgvPayments.Rows.RemoveAt(e.RowIndex);
+                    for (int i = 0; i < dgvPayments.Rows.Count; i++)
+                    {
+                        dgvPayments[clnPaySeq.Index, i].Value = (i + 1).ToString();
+                    }
+                }
+                else
+                {
+                    dgvPayments[clnPayAmount.Index, 0].Value = "0.00";
+                    dgvPayments[clnPayReference.Index, 0].Value = "";
+                }
+                CalcPaymentTotals();
+            }
+        }
+
+        private void dgvPayments_CellEndEdit(object sender, DataGridViewCellEventArgs e)
+        {
+            CalcPaymentTotals();
+        }
+
+        private void dgvPayments_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                e.Handled = true;
+                HandlePaymentsEnterNavigation();
+            }
+        }
+
+        private bool HandlePaymentsEnterNavigation()
+        {
+            if (dgvPayments.CurrentCell == null) return false;
+
+            int rowIndex = dgvPayments.CurrentCell.RowIndex;
+            int colIndex = dgvPayments.CurrentCell.ColumnIndex;
+
+            if (colIndex == clnPayAccount.Index)
+            {
+                dgvPayments.EndEdit();
+                dgvPayments.CurrentCell = dgvPayments[clnPayAmount.Index, rowIndex];
+                dgvPayments.BeginEdit(true);
+                return true;
+            }
+
+            if (colIndex == clnPayAmount.Index)
+            {
+                dgvPayments.EndEdit();
+                CalcPaymentTotals();
+
+                decimal rowAmt = ParseDecimal(dgvPayments[clnPayAmount.Index, rowIndex].Value);
+                decimal netBill = txtTotAmount.Value;
+                decimal totalPaid = GetTotalPaid();
+
+                // 1. If amount is zero -> Credit purchase, trigger save
+                if (rowAmt == 0 || (totalPaid == 0 && netBill > 0))
+                {
+                    btnSave.Focus();
+                    return true;
+                }
+
+                // 2. If amount is less than total balance amount -> auto add new row
+                if (totalPaid < netBill)
+                {
+                    decimal remaining = netBill - totalPaid;
+                    int newRowIdx = dgvPayments.Rows.Add();
+                    dgvPayments[clnPaySeq.Index, newRowIdx].Value = (newRowIdx + 1).ToString();
+                    dgvPayments[clnPayAccount.Index, newRowIdx].Value = _defaultCashAccountId;
+                    dgvPayments[clnPayAmount.Index, newRowIdx].Value = remaining.ToString("N2");
+                    dgvPayments[clnPayReference.Index, newRowIdx].Value = "";
+                    CalcPaymentTotals();
+
+                    dgvPayments.CurrentCell = dgvPayments[clnPayAccount.Index, newRowIdx];
+                    dgvPayments.BeginEdit(true);
+                    return true;
+                }
+
+                // 3. If fully covered -> Focus Save
+                btnSave.Focus();
+                return true;
+            }
+
+            if (colIndex == clnPayReference.Index)
+            {
+                dgvPayments.EndEdit();
+                CalcPaymentTotals();
+                decimal netBill = txtTotAmount.Value;
+                decimal totalPaid = GetTotalPaid();
+                if (totalPaid < netBill)
+                {
+                    decimal remaining = netBill - totalPaid;
+                    int newRowIdx = dgvPayments.Rows.Add();
+                    dgvPayments[clnPaySeq.Index, newRowIdx].Value = (newRowIdx + 1).ToString();
+                    dgvPayments[clnPayAccount.Index, newRowIdx].Value = _defaultCashAccountId;
+                    dgvPayments[clnPayAmount.Index, newRowIdx].Value = remaining.ToString("N2");
+                    dgvPayments[clnPayReference.Index, newRowIdx].Value = "";
+                    CalcPaymentTotals();
+
+                    dgvPayments.CurrentCell = dgvPayments[clnPayAccount.Index, newRowIdx];
+                    dgvPayments.BeginEdit(true);
+                }
+                else
+                {
+                    btnSave.Focus();
+                }
+                return true;
+            }
+
+            return false;
         }
 
         private void SetcmbItemSource(string itemCategory, int rowInd)
@@ -1079,14 +1360,20 @@ namespace ERP
                 bool isItemEmpty = itemVal == null || string.IsNullOrWhiteSpace(itemVal.ToString());
                 bool isLastRow = (rowIndex == dgvSale.Rows.Count - 1);
 
-                // If on last row without selecting item -> Exit grid to txtCashReceipt!
+                // If on last row without selecting item -> Exit grid to dgvPayments!
                 if (isLastRow && isItemEmpty)
                 {
                     dgvSale.EndEdit();
                     CalcTotAmount();
-                    txtCashReceipt.Text = txtTotAmount.Text;
-                    txtCashReceipt.Focus();
-                    txtCashReceipt.SelectAll();
+                    if (dgvPayments.Rows.Count == 0)
+                        EnsureDefaultPaymentRow(txtTotAmount.Value);
+
+                    dgvPayments.Focus();
+                    if (dgvPayments.Rows.Count > 0)
+                    {
+                        dgvPayments.CurrentCell = dgvPayments[clnPayAmount.Index, 0];
+                        dgvPayments.BeginEdit(true);
+                    }
                     return true;
                 }
 
@@ -1309,7 +1596,8 @@ namespace ERP
                         CashBack = txtCashBack.Value,
                         SellerCnic = ApiSession.HasMobileShopFeature && txtSellerCnic != null ? txtSellerCnic.Text.Trim() : null,
                         SellerContact = ApiSession.HasMobileShopFeature && txtSellerContact != null ? txtSellerContact.Text.Trim() : null,
-                        Lines = lines
+                        Lines = lines,
+                        Payments = GetPaymentsList()
                     };
                     voucher = await _apiService.CreateAsync(createRequest);
                 }
@@ -1325,7 +1613,8 @@ namespace ERP
                         CashBack = txtCashBack.Value,
                         SellerCnic = ApiSession.HasMobileShopFeature && txtSellerCnic != null ? txtSellerCnic.Text.Trim() : null,
                         SellerContact = ApiSession.HasMobileShopFeature && txtSellerContact != null ? txtSellerContact.Text.Trim() : null,
-                        Lines = lines
+                        Lines = lines,
+                        Payments = GetPaymentsList()
                     };
                     await _apiService.UpdateAsync(voucher, updateRequest);
                 }
@@ -1407,6 +1696,9 @@ namespace ERP
         private void btnNew_Click(object sender, EventArgs e)
         {
             dgvSale.Rows.Clear();
+            dgvPayments.Rows.Clear();
+            EnsureDefaultPaymentRow(0);
+            CalcPaymentTotals();
             Validation.Clear(grpInvoiceDetail);
             txtDescription.Text = "";
             txtCreatedBy.Text = "";

@@ -245,6 +245,7 @@
     <Compile Include="Services\Legacy\PaymentApiService.cs" />
     <Compile Include="Services\Legacy\PayrollApiService.cs" />
     <Compile Include="Services\Legacy\PersonalApiService.cs" />
+    <Compile Include="Services\Legacy\PaymentRecordDto.cs" />
     <Compile Include="Services\Legacy\PurchaseApiService.cs" />
     <Compile Include="Services\Legacy\PurchaseReturnApiService.cs" />
     <Compile Include="Services\Legacy\ReceiptApiService.cs" />

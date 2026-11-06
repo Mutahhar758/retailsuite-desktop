@@ -40,10 +40,12 @@ namespace ERP.Reporting
         private Label lblWeightQty;
         private NumericUpDown nudWeightQty;
         private Label lblUnitName;
-        private Label lblTotalAmount;
-        private TextBox txtTotalAmount;
+        private Label lblCalcAmount;
+        private TextBox txtCalcAmount;
+        private Label lblCalcRate;
+        private TextBox txtCalcRate;
+        private Label lblCalcHelp;
         private bool _isSyncingAmounts = false;
-        private CheckBox chkQtyOnlyBarcode;
         private CheckBox chkIncludeCompanySubHeader;
         private CheckBox chkIncludePrice;
         private CheckBox chkIncludeRate;
@@ -164,10 +166,10 @@ namespace ERP.Reporting
             pnlSidebar.Controls.Add(cmbItem);
             curY += 34;
 
-            // Copies & Price Row
+            // Copies & Standard Price Row
             lblCopies = new Label
             {
-                Text = "COPIES / QUANTITY:",
+                Text = "STICKER COPIES:",
                 Location = new Point(14, curY),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
@@ -209,7 +211,7 @@ namespace ERP.Reporting
             // Variable Weight Checkbox
             chkVariableWeight = new CheckBox
             {
-                Text = "Variable Weight / Quantity (e.g. Meat / Produce)",
+                Text = "Variable Weight / Quantity (Put Qty in Barcode)",
                 Location = new Point(14, curY),
                 Width = 330,
                 Font = new Font("Segoe UI", 8F, FontStyle.Bold),
@@ -218,7 +220,7 @@ namespace ERP.Reporting
             pnlSidebar.Controls.Add(chkVariableWeight);
             curY += 26;
 
-            // Variable Weight Controls: Qty & Total Amount
+            // Variable Weight Controls: Qty & Amount to calculate Qty
             lblWeightQty = new Label
             {
                 Text = "QTY (PRIMARY UNIT):",
@@ -230,16 +232,16 @@ namespace ERP.Reporting
             };
             pnlSidebar.Controls.Add(lblWeightQty);
 
-            lblTotalAmount = new Label
+            lblCalcAmount = new Label
             {
-                Text = "TOTAL AMOUNT (RS):",
+                Text = "CALC FROM AMOUNT (RS):",
                 Location = new Point(180, curY),
                 AutoSize = true,
                 Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(100, 116, 139),
                 Visible = false
             };
-            pnlSidebar.Controls.Add(lblTotalAmount);
+            pnlSidebar.Controls.Add(lblCalcAmount);
             curY += 18;
 
             nudWeightQty = new NumericUpDown
@@ -267,26 +269,48 @@ namespace ERP.Reporting
             };
             pnlSidebar.Controls.Add(lblUnitName);
 
-            txtTotalAmount = new TextBox
+            txtCalcAmount = new TextBox
             {
                 Location = new Point(180, curY),
                 Width = 164,
                 Font = new Font("Segoe UI", 9F),
                 Visible = false
             };
-            pnlSidebar.Controls.Add(txtTotalAmount);
-            curY += 32;
+            pnlSidebar.Controls.Add(txtCalcAmount);
+            curY += 30;
 
-            chkQtyOnlyBarcode = new CheckBox
+            lblCalcRate = new Label
             {
-                Text = "Barcode: Qty Only (Realtime Live Rate at Scan)",
+                Text = "ITEM RATE FOR CALC (RS):",
                 Location = new Point(14, curY),
-                Width = 330,
-                Font = new Font("Segoe UI", 8F),
-                ForeColor = Color.FromArgb(71, 85, 105),
+                AutoSize = true,
+                Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(100, 116, 139),
                 Visible = false
             };
-            pnlSidebar.Controls.Add(chkQtyOnlyBarcode);
+            pnlSidebar.Controls.Add(lblCalcRate);
+            curY += 18;
+
+            txtCalcRate = new TextBox
+            {
+                Location = new Point(14, curY),
+                Width = 330,
+                Font = new Font("Segoe UI", 9F),
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(txtCalcRate);
+            curY += 28;
+
+            lblCalcHelp = new Label
+            {
+                Text = "* Enter amount to auto-calculate qty. Neither amount nor price will be printed.",
+                Location = new Point(14, curY),
+                Width = 330,
+                Font = new Font("Segoe UI", 7.5F, FontStyle.Italic),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(lblCalcHelp);
             curY += 26;
 
             chkVariableWeight.CheckedChanged += (s, e) =>
@@ -295,36 +319,84 @@ namespace ERP.Reporting
                 lblWeightQty.Visible = isVar;
                 nudWeightQty.Visible = isVar;
                 lblUnitName.Visible = isVar;
-                lblTotalAmount.Visible = isVar;
-                txtTotalAmount.Visible = isVar;
-                chkQtyOnlyBarcode.Visible = isVar;
-                lblPrice.Text = isVar ? "UNIT RATE (RS):" : "PRINT PRICE (RS):";
-                SyncVariableWeightTotal();
+                lblCalcAmount.Visible = isVar;
+                txtCalcAmount.Visible = isVar;
+                lblCalcRate.Visible = isVar;
+                txtCalcRate.Visible = isVar;
+                lblCalcHelp.Visible = isVar;
+
+                lblPrice.Visible = !isVar;
+                txtPrice.Visible = !isVar;
+                nudCopies.Width = isVar ? 330 : 150;
+
+                if (isVar)
+                {
+                    if (!string.IsNullOrWhiteSpace(txtPrice.Text))
+                    {
+                        txtCalcRate.Text = txtPrice.Text;
+                    }
+                    SyncQtyFromRateAndAmount();
+                }
             };
 
-            nudWeightQty.ValueChanged += (s, e) => SyncVariableWeightTotal();
-            txtPrice.TextChanged += (s, e) =>
+            nudWeightQty.ValueChanged += (s, e) =>
             {
-                if (chkVariableWeight.Checked)
-                    SyncVariableWeightTotal();
-            };
-            txtTotalAmount.TextChanged += (s, e) =>
-            {
-                if (chkVariableWeight.Checked && !_isSyncingAmounts && nudWeightQty.Value > 0)
+                if (_isSyncingAmounts || !chkVariableWeight.Checked) return;
+                try
                 {
-                    if (decimal.TryParse(txtTotalAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal tot))
+                    _isSyncingAmounts = true;
+                    if (decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal rate) && rate > 0)
                     {
-                        try
+                        txtCalcAmount.Text = Math.Round(nudWeightQty.Value * rate).ToString("0");
+                    }
+                }
+                finally
+                {
+                    _isSyncingAmounts = false;
+                }
+            };
+
+            txtCalcAmount.TextChanged += (s, e) =>
+            {
+                if (_isSyncingAmounts || !chkVariableWeight.Checked) return;
+                try
+                {
+                    _isSyncingAmounts = true;
+                    if (decimal.TryParse(txtCalcAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amt) &&
+                        decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal rate) && rate > 0)
+                    {
+                        decimal calculatedQty = Math.Max(0.001m, Math.Round(amt / rate, 3));
+                        if (calculatedQty <= nudWeightQty.Maximum)
                         {
-                            _isSyncingAmounts = true;
-                            decimal computedRate = Math.Round(tot / nudWeightQty.Value);
-                            txtPrice.Text = computedRate.ToString("0");
-                        }
-                        finally
-                        {
-                            _isSyncingAmounts = false;
+                            nudWeightQty.Value = calculatedQty;
                         }
                     }
+                }
+                finally
+                {
+                    _isSyncingAmounts = false;
+                }
+            };
+
+            txtCalcRate.TextChanged += (s, e) =>
+            {
+                if (_isSyncingAmounts || !chkVariableWeight.Checked) return;
+                try
+                {
+                    _isSyncingAmounts = true;
+                    if (decimal.TryParse(txtCalcAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amt) &&
+                        decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal rate) && rate > 0)
+                    {
+                        decimal calculatedQty = Math.Max(0.001m, Math.Round(amt / rate, 3));
+                        if (calculatedQty <= nudWeightQty.Maximum)
+                        {
+                            nudWeightQty.Value = calculatedQty;
+                        }
+                    }
+                }
+                finally
+                {
+                    _isSyncingAmounts = false;
                 }
             };
 
@@ -663,18 +735,25 @@ namespace ERP.Reporting
             if (list.Count > 0) cmbItem.SelectedIndex = 0;
         }
 
-        private void SyncVariableWeightTotal()
+        private void SyncQtyFromRateAndAmount()
         {
             if (_isSyncingAmounts) return;
             try
             {
                 _isSyncingAmounts = true;
-                decimal rate = 0m;
-                decimal.TryParse(txtPrice.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out rate);
-                rate = Math.Round(rate);
-                decimal qty = nudWeightQty.Value;
-                decimal total = Math.Round(qty * rate);
-                txtTotalAmount.Text = total.ToString("0");
+                if (decimal.TryParse(txtCalcAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amt) &&
+                    decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal rate) && rate > 0)
+                {
+                    decimal calculatedQty = Math.Max(0.001m, Math.Round(amt / rate, 3));
+                    if (calculatedQty <= nudWeightQty.Maximum)
+                    {
+                        nudWeightQty.Value = calculatedQty;
+                    }
+                }
+                else if (decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal r) && r > 0)
+                {
+                    txtCalcAmount.Text = Math.Round(nudWeightQty.Value * r).ToString("0");
+                }
             }
             finally
             {
@@ -783,12 +862,14 @@ namespace ERP.Reporting
             var item = cmbItem.SelectedItem as InventoryItemDto;
             if (item != null)
             {
-                txtPrice.Text = Math.Round(item.PriRate).ToString("0");
+                string rStr = Math.Round(item.PriRate).ToString("0");
+                if (txtPrice != null) txtPrice.Text = rStr;
+                if (txtCalcRate != null) txtCalcRate.Text = rStr;
                 string u = GetUnitTitle(item);
                 if (lblUnitName != null) lblUnitName.Text = u;
                 if (chkVariableWeight != null && chkVariableWeight.Checked)
                 {
-                    SyncVariableWeightTotal();
+                    SyncQtyFromRateAndAmount();
                 }
             }
         }
@@ -820,8 +901,6 @@ namespace ERP.Reporting
                 return;
             }
 
-            decimal price = item.PriRate;
-            decimal.TryParse(txtPrice.Text, NumberStyles.Any, CultureInfo.InvariantCulture, out price);
             int copies = (int)nudCopies.Value;
             var layout = GetSelectedLayout();
 
@@ -829,66 +908,39 @@ namespace ERP.Reporting
             bool isVariable = chkVariableWeight.Checked;
             decimal? varQty = null;
             string varUnit = null;
-            decimal? varTotal = null;
+            decimal rate = 0m;
+            decimal totalAmount = 0m;
 
             if (isVariable)
             {
                 decimal qty = nudWeightQty.Value;
-                decimal rate = Math.Round(price);
-                decimal total = Math.Round(qty * rate);
-                if (decimal.TryParse(txtTotalAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal parsedTot))
-                {
-                    total = Math.Round(parsedTot);
-                }
+                decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out rate);
+                rate = Math.Round(rate);
+                totalAmount = Math.Round(qty * rate);
 
                 string rawBase = !string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : (!string.IsNullOrWhiteSpace(item.ItemKey) ? item.ItemKey : item.Id);
                 string baseCode = rawBase?.Replace("\r", string.Empty).Replace("\n", string.Empty).Trim() ?? "000000";
 
                 // Format as compact all-numeric Code 128C format:
-                // If Qty Only: 12-digit format: 2 (prefix) + 6-digit Item ID + 5-digit Qty (x1000)
-                // If Fixed Price: 18-digit format: 2 (prefix) + 6-digit Item ID + 5-digit Qty (x1000) + 6-digit Amount
+                // 12-digit format: 2 (prefix) + 6-digit Item ID + 5-digit Qty (x1000) (Qty Only, NO AMOUNT IN BARCODE NUMBER)
                 string idStr = !string.IsNullOrWhiteSpace(item.Id) ? item.Id.Trim() : baseCode;
                 if (long.TryParse(idStr, out long numId) && numId <= 999999)
                 {
                     string idPart = numId.ToString("D6");
                     int qtyGrams = Math.Min(99999, Math.Max(1, (int)Math.Round(qty * 1000m)));
-
-                    if (chkQtyOnlyBarcode != null && chkQtyOnlyBarcode.Checked)
-                    {
-                        // 12-digit All-Numeric: 2 + 6-digit Item ID + 5-digit Qty (x1000)
-                        barcode = string.Format(CultureInfo.InvariantCulture, "2{0}{1:D5}", idPart, qtyGrams);
-                    }
-                    else
-                    {
-                        // 18-digit All-Numeric: 2 + 6-digit Item ID + 5-digit Qty (x1000) + 6-digit Amount
-                        int amtWhole = Math.Min(999999, Math.Max(0, (int)Math.Round(total)));
-                        barcode = string.Format(CultureInfo.InvariantCulture, "2{0}{1:D5}{2:D6}", idPart, qtyGrams, amtWhole);
-                    }
+                    barcode = string.Format(CultureInfo.InvariantCulture, "2{0}{1:D5}", idPart, qtyGrams);
                 }
                 else
                 {
-                    decimal defaultRate = Math.Round(item.PriRate);
-                    if (chkQtyOnlyBarcode != null && chkQtyOnlyBarcode.Checked)
-                    {
-                        barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
-                    }
-                    else if (rate == defaultRate)
-                    {
-                        barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
-                    }
-                    else
-                    {
-                        barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}*{2:0}", baseCode, qty, rate);
-                    }
+                    barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
                 }
 
                 varQty = qty;
                 varUnit = GetUnitTitle(item);
-                varTotal = total;
-                price = rate;
             }
             else
             {
+                decimal.TryParse(txtPrice.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out rate);
                 barcode = (!string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : ("200" + (item.Id ?? "101").PadLeft(7, '0'))).Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
             }
 
@@ -900,14 +952,14 @@ namespace ERP.Reporting
                 ItemId = item.Id,
                 Title = item.Title,
                 Barcode = barcode,
-                Rate = price,
+                Rate = rate,
                 Copies = copies,
                 IsVariableWeight = isVariable,
                 Qty = varQty,
                 Unit = varUnit,
                 DisplayQty = isVariable ? subQty : (decimal?)null,
                 DisplayUnit = isVariable ? subUnit : null,
-                TotalAmount = varTotal,
+                TotalAmount = isVariable ? totalAmount : (decimal?)null,
                 CompanySubHeader = companySub
             };
             _currentItem = labelItem;

@@ -156,6 +156,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("title")]
         public string Title { get; set; }
 
+        [JsonProperty("accountType")]
+        public string AccountType { get; set; } = "Customer";
+
         [JsonProperty("customerCategoryId")]
         public string CustomerCategoryId { get; set; }
 
@@ -176,6 +179,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("title")]
         public string Title { get; set; }
+
+        [JsonProperty("accountType")]
+        public string AccountType { get; set; } = "Customer";
 
         [JsonProperty("parentId")]
         public string ParentId { get; set; }

@@ -113,6 +113,18 @@ namespace ERP.Services.Legacy
             }
         }
 
+        public async Task<List<PaymentRecordResponse>> GetPaymentsAsync(string voucherNo)
+        {
+            using (var client = CreateClient())
+            {
+                var response = await client.GetAsync(SaleEndpoint + "/" + Uri.EscapeDataString(voucherNo) + "/payments");
+                await EnsureSuccessWithServerMessageAsync(response);
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<List<PaymentRecordResponse>>>(json);
+                return payload?.Body ?? new List<PaymentRecordResponse>();
+            }
+        }
+
         public async Task DeleteLineAsync(string voucherNo, int seq)
         {
             using (var client = CreateClient())
@@ -284,6 +296,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lines")]
         public List<SaleLineRequest> Lines { get; set; } = new List<SaleLineRequest>();
+
+        [JsonProperty("payments")]
+        public List<PaymentRecordRequest> Payments { get; set; } = new List<PaymentRecordRequest>();
     }
 
     internal class SaleUpdateRequest
@@ -308,6 +323,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lines")]
         public List<SaleLineRequest> Lines { get; set; } = new List<SaleLineRequest>();
+
+        [JsonProperty("payments")]
+        public List<PaymentRecordRequest> Payments { get; set; } = new List<PaymentRecordRequest>();
     }
 
     internal class SaleLineRequest

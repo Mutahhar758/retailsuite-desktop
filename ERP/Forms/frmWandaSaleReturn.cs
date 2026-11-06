@@ -98,7 +98,10 @@ namespace ERP
 
             dtAccounts.Rows.Clear();
             foreach (var a in accountsTask.Result)
-                dtAccounts.Rows.Add(a.Account, a.Title);
+            {
+                string typeLabel = string.Equals(a.AccountType, "Vendor", StringComparison.OrdinalIgnoreCase) ? "Vendor" : "Customer";
+                dtAccounts.Rows.Add(a.Account, $"{a.Title} ({typeLabel})");
+            }
 
             dtNarration.Rows.Clear();
             foreach (var n in narrationsTask.Result)

@@ -77,6 +77,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("account")]
         public string Account { get; set; }
 
+        [JsonProperty("accountType")]
+        public string AccountType { get; set; } = "Bank";
+
         [JsonProperty("bankName")]
         public string BankName { get; set; }
 
@@ -125,6 +128,9 @@ namespace ERP.Services.Legacy
 
     internal class BankAccountCreateApiRequest
     {
+        [JsonProperty("accountType")]
+        public string AccountType { get; set; } = "Bank";
+
         [JsonProperty("bankName")]
         public string BankName { get; set; }
 
@@ -161,6 +167,9 @@ namespace ERP.Services.Legacy
 
     internal class BankAccountUpdateApiRequest
     {
+        [JsonProperty("accountType")]
+        public string AccountType { get; set; }
+
         [JsonProperty("bankName")]
         public string BankName { get; set; }
 

@@ -201,7 +201,7 @@ namespace ERP
             // 
             this.bankAccountToolStripMenuItem.Name = "bankAccountToolStripMenuItem";
             this.bankAccountToolStripMenuItem.Size = new System.Drawing.Size(192, 22);
-            this.bankAccountToolStripMenuItem.Text = "Bank Account Information";
+            this.bankAccountToolStripMenuItem.Text = "Cash & Bank Accounts Information";
             this.bankAccountToolStripMenuItem.Click += new System.EventHandler(this.bankAccountToolStripMenuItem_Click);
             // 
             // narrationToolStripMenuItem

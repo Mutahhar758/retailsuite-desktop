@@ -43,6 +43,14 @@ namespace ERP
             this.pictureBox1 = new System.Windows.Forms.PictureBox();
             this.tbSaleQuery = new System.Windows.Forms.TabControl();
             this.tbDetail = new System.Windows.Forms.TabPage();
+            this.grpPayments = new System.Windows.Forms.GroupBox();
+            this.dgvPayments = new System.Windows.Forms.DataGridView();
+            this.clnPaySeq = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnPayAccount = new System.Windows.Forms.DataGridViewComboBoxColumn();
+            this.clnPayAmount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnPayReference = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.clnPayDelete = new System.Windows.Forms.DataGridViewButtonColumn();
+            this.btnAddPayment = new System.Windows.Forms.Button();
             this.groupBox2 = new System.Windows.Forms.GroupBox();
             this.txtBarcode = new System.Windows.Forms.TextBox();
             this.label12 = new System.Windows.Forms.Label();
@@ -225,6 +233,7 @@ namespace ERP
             this.tbDetail.Controls.Add(this.btnAddNewItem);
             this.tbDetail.Controls.Add(this.grpInvoiceDetail);
             this.tbDetail.Controls.Add(this.dgvSale);
+            this.tbDetail.Controls.Add(this.grpPayments);
             this.tbDetail.Controls.Add(this.panel1);
             this.tbDetail.Controls.Add(this.groupBox3);
             this.tbDetail.Location = new System.Drawing.Point(4, 26);
@@ -527,7 +536,7 @@ namespace ERP
             this.dgvSale.RowHeadersWidth = 24;
             this.dgvSale.RowTemplate.Height = 28;
             this.dgvSale.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
-            this.dgvSale.Size = new System.Drawing.Size(1200, 308);
+            this.dgvSale.Size = new System.Drawing.Size(1200, 240);
             this.dgvSale.TabIndex = 1;
             this.dgvSale.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvSale_CellContentClick);
             this.dgvSale.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPurchase_CellEndEdit);
@@ -642,29 +651,33 @@ namespace ERP
             this.panel1.Controls.Add(this.btnPreview);
             this.panel1.Controls.Add(this.btnPrint);
             this.panel1.Controls.Add(this.btnDelete);
+            this.panel1.Controls.Add(this.lblShortcutsBar);
+            this.panel1.Controls.Add(this.btnSaveAndPrint);
+            this.panel1.Controls.Add(this.btnSave);
+            this.panel1.Controls.Add(this.btnNew);
+            this.panel1.Controls.Add(this.btnCopyAsNew);
+            this.panel1.Controls.Add(this.btnPreview);
+            this.panel1.Controls.Add(this.btnPrint);
+            this.panel1.Controls.Add(this.btnDelete);
             this.panel1.Controls.Add(this.btnClose);
             this.panel1.Controls.Add(this.btnHome);
             this.panel1.Controls.Add(this.btnPri);
             this.panel1.Controls.Add(this.btnNext);
             this.panel1.Controls.Add(this.btnEnd);
-            this.panel1.Location = new System.Drawing.Point(8, 500);
+            this.panel1.Location = new System.Drawing.Point(8, 592);
             this.panel1.Name = "panel1";
-            this.panel1.Size = new System.Drawing.Size(890, 146);
+            this.panel1.Size = new System.Drawing.Size(1198, 60);
             this.panel1.TabIndex = 3;
             // 
             // lblShortcutsBar
             // 
-            this.lblShortcutsBar.Anchor = ((System.Windows.Forms.AnchorStyles)(((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Left) 
-            | System.Windows.Forms.AnchorStyles.Right)));
             this.lblShortcutsBar.Font = new System.Drawing.Font("Segoe UI", 8.25F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblShortcutsBar.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(116)))), ((int)(((byte)(139)))));
-            this.lblShortcutsBar.Location = new System.Drawing.Point(10, 64);
+            this.lblShortcutsBar.Location = new System.Drawing.Point(835, 8);
             this.lblShortcutsBar.Name = "lblShortcutsBar";
-            this.lblShortcutsBar.Size = new System.Drawing.Size(868, 70);
+            this.lblShortcutsBar.Size = new System.Drawing.Size(355, 44);
             this.lblShortcutsBar.TabIndex = 171;
-            this.lblShortcutsBar.Text = "⌨ Quick Reference:\r\n• [F2] Focus Barcode scanner  •  [F3] New Sale  •  [F5] Quick" +
-    " Save  •  [F6] Save & Print  •  [F1] Print Preview  •  [F9] Customer Price History\r" +
-    "\n• Press [Enter] to cycle through form inputs smoothly.";
+            this.lblShortcutsBar.Text = "⌨ [F2] Barcode  •  [F3] New  •  [F5] Save  •  [F6] Save && Print\r\n• [Enter] in payments: 0 -> Save | <Total -> Add Row";
             // 
             // btnSaveAndPrint
             // 
@@ -674,9 +687,9 @@ namespace ERP
             this.btnSaveAndPrint.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSaveAndPrint.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnSaveAndPrint.ForeColor = System.Drawing.Color.White;
-            this.btnSaveAndPrint.Location = new System.Drawing.Point(10, 10);
+            this.btnSaveAndPrint.Location = new System.Drawing.Point(10, 8);
             this.btnSaveAndPrint.Name = "btnSaveAndPrint";
-            this.btnSaveAndPrint.Size = new System.Drawing.Size(150, 42);
+            this.btnSaveAndPrint.Size = new System.Drawing.Size(140, 42);
             this.btnSaveAndPrint.TabIndex = 1;
             this.btnSaveAndPrint.Text = "Save && &Print [F6]";
             this.btnSaveAndPrint.UseVisualStyleBackColor = false;
@@ -690,9 +703,9 @@ namespace ERP
             this.btnSave.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnSave.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnSave.ForeColor = System.Drawing.Color.White;
-            this.btnSave.Location = new System.Drawing.Point(168, 10);
+            this.btnSave.Location = new System.Drawing.Point(156, 8);
             this.btnSave.Name = "btnSave";
-            this.btnSave.Size = new System.Drawing.Size(115, 42);
+            this.btnSave.Size = new System.Drawing.Size(105, 42);
             this.btnSave.TabIndex = 0;
             this.btnSave.Text = "&Save [F5]";
             this.btnSave.UseVisualStyleBackColor = false;
@@ -706,9 +719,9 @@ namespace ERP
             this.btnNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnNew.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnNew.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(41)))), ((int)(((byte)(59)))));
-            this.btnNew.Location = new System.Drawing.Point(291, 10);
+            this.btnNew.Location = new System.Drawing.Point(267, 8);
             this.btnNew.Name = "btnNew";
-            this.btnNew.Size = new System.Drawing.Size(95, 42);
+            this.btnNew.Size = new System.Drawing.Size(85, 42);
             this.btnNew.TabIndex = 2;
             this.btnNew.Text = "&New [F3]";
             this.btnNew.UseVisualStyleBackColor = false;
@@ -722,9 +735,9 @@ namespace ERP
             this.btnCopyAsNew.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnCopyAsNew.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnCopyAsNew.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(41)))), ((int)(((byte)(59)))));
-            this.btnCopyAsNew.Location = new System.Drawing.Point(394, 10);
+            this.btnCopyAsNew.Location = new System.Drawing.Point(358, 8);
             this.btnCopyAsNew.Name = "btnCopyAsNew";
-            this.btnCopyAsNew.Size = new System.Drawing.Size(115, 42);
+            this.btnCopyAsNew.Size = new System.Drawing.Size(110, 42);
             this.btnCopyAsNew.TabIndex = 170;
             this.btnCopyAsNew.Text = "Copy as &New";
             this.btnCopyAsNew.UseVisualStyleBackColor = false;
@@ -738,9 +751,9 @@ namespace ERP
             this.btnPreview.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPreview.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnPreview.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(41)))), ((int)(((byte)(59)))));
-            this.btnPreview.Location = new System.Drawing.Point(517, 10);
+            this.btnPreview.Location = new System.Drawing.Point(474, 8);
             this.btnPreview.Name = "btnPreview";
-            this.btnPreview.Size = new System.Drawing.Size(105, 42);
+            this.btnPreview.Size = new System.Drawing.Size(95, 42);
             this.btnPreview.TabIndex = 169;
             this.btnPreview.Text = "Pre&view [F1]";
             this.btnPreview.UseVisualStyleBackColor = false;
@@ -754,7 +767,7 @@ namespace ERP
             this.btnPrint.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnPrint.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnPrint.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(41)))), ((int)(((byte)(59)))));
-            this.btnPrint.Location = new System.Drawing.Point(630, 10);
+            this.btnPrint.Location = new System.Drawing.Point(575, 8);
             this.btnPrint.Name = "btnPrint";
             this.btnPrint.Size = new System.Drawing.Size(80, 42);
             this.btnPrint.TabIndex = 165;
@@ -770,7 +783,7 @@ namespace ERP
             this.btnDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnDelete.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnDelete.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(220)))), ((int)(((byte)(38)))), ((int)(((byte)(38)))));
-            this.btnDelete.Location = new System.Drawing.Point(718, 10);
+            this.btnDelete.Location = new System.Drawing.Point(661, 8);
             this.btnDelete.Name = "btnDelete";
             this.btnDelete.Size = new System.Drawing.Size(80, 42);
             this.btnDelete.TabIndex = 168;
@@ -786,9 +799,9 @@ namespace ERP
             this.btnClose.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
             this.btnClose.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.btnClose.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(71)))), ((int)(((byte)(85)))), ((int)(((byte)(105)))));
-            this.btnClose.Location = new System.Drawing.Point(806, 10);
+            this.btnClose.Location = new System.Drawing.Point(747, 8);
             this.btnClose.Name = "btnClose";
-            this.btnClose.Size = new System.Drawing.Size(72, 42);
+            this.btnClose.Size = new System.Drawing.Size(80, 42);
             this.btnClose.TabIndex = 163;
             this.btnClose.Text = "Close";
             this.btnClose.UseVisualStyleBackColor = false;
@@ -834,9 +847,100 @@ namespace ERP
             this.btnEnd.Visible = false;
             this.btnEnd.Click += new System.EventHandler(this.btnEnd_Click);
             // 
+            // grpPayments
+            // 
+            this.grpPayments.BackColor = System.Drawing.Color.White;
+            this.grpPayments.Controls.Add(this.btnAddPayment);
+            this.grpPayments.Controls.Add(this.dgvPayments);
+            this.grpPayments.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.grpPayments.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(41)))), ((int)(((byte)(59)))));
+            this.grpPayments.Location = new System.Drawing.Point(8, 430);
+            this.grpPayments.Name = "grpPayments";
+            this.grpPayments.Size = new System.Drawing.Size(890, 155);
+            this.grpPayments.TabIndex = 2;
+            this.grpPayments.TabStop = false;
+            this.grpPayments.Text = " Payment Settlement & Multi-Account Receipt ";
+            // 
+            // dgvPayments
+            // 
+            this.dgvPayments.AllowUserToAddRows = false;
+            this.dgvPayments.AllowUserToDeleteRows = false;
+            this.dgvPayments.BackgroundColor = System.Drawing.Color.White;
+            this.dgvPayments.BorderStyle = System.Windows.Forms.BorderStyle.Fixed3D;
+            this.dgvPayments.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.AutoSize;
+            this.dgvPayments.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
+            this.clnPaySeq,
+            this.clnPayAccount,
+            this.clnPayAmount,
+            this.clnPayReference,
+            this.clnPayDelete});
+            this.dgvPayments.EnableHeadersVisualStyles = false;
+            this.dgvPayments.GridColor = System.Drawing.Color.FromArgb(((int)(((byte)(226)))), ((int)(((byte)(232)))), ((int)(((byte)(240)))));
+            this.dgvPayments.Location = new System.Drawing.Point(8, 20);
+            this.dgvPayments.MultiSelect = false;
+            this.dgvPayments.Name = "dgvPayments";
+            this.dgvPayments.RowHeadersWidth = 24;
+            this.dgvPayments.RowTemplate.Height = 26;
+            this.dgvPayments.SelectionMode = System.Windows.Forms.DataGridViewSelectionMode.CellSelect;
+            this.dgvPayments.Size = new System.Drawing.Size(796, 126);
+            this.dgvPayments.TabIndex = 0;
+            this.dgvPayments.CellContentClick += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPayments_CellContentClick);
+            this.dgvPayments.CellEndEdit += new System.Windows.Forms.DataGridViewCellEventHandler(this.dgvPayments_CellEndEdit);
+            this.dgvPayments.KeyDown += new System.Windows.Forms.KeyEventHandler(this.dgvPayments_KeyDown);
+            // 
+            // clnPaySeq
+            // 
+            this.clnPaySeq.HeaderText = "Seq";
+            this.clnPaySeq.Name = "clnPaySeq";
+            this.clnPaySeq.ReadOnly = true;
+            this.clnPaySeq.Width = 45;
+            // 
+            // clnPayAccount
+            // 
+            this.clnPayAccount.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.clnPayAccount.HeaderText = "Account (Cash / Bank)";
+            this.clnPayAccount.Name = "clnPayAccount";
+            this.clnPayAccount.Width = 260;
+            // 
+            // clnPayAmount
+            // 
+            this.clnPayAmount.HeaderText = "Amount (Rs.)";
+            this.clnPayAmount.Name = "clnPayAmount";
+            this.clnPayAmount.Width = 140;
+            // 
+            // clnPayReference
+            // 
+            this.clnPayReference.HeaderText = "Reference / Cheque #";
+            this.clnPayReference.Name = "clnPayReference";
+            this.clnPayReference.Width = 240;
+            // 
+            // clnPayDelete
+            // 
+            this.clnPayDelete.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.clnPayDelete.HeaderText = "";
+            this.clnPayDelete.Name = "clnPayDelete";
+            this.clnPayDelete.Text = "X";
+            this.clnPayDelete.UseColumnTextForButtonValue = true;
+            this.clnPayDelete.Width = 50;
+            // 
+            // btnAddPayment
+            // 
+            this.btnAddPayment.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(239)))), ((int)(((byte)(246)))), ((int)(((byte)(255)))));
+            this.btnAddPayment.Cursor = System.Windows.Forms.Cursors.Hand;
+            this.btnAddPayment.FlatAppearance.BorderColor = System.Drawing.Color.FromArgb(((int)(((byte)(191)))), ((int)(((byte)(219)))), ((int)(((byte)(254)))));
+            this.btnAddPayment.FlatStyle = System.Windows.Forms.FlatStyle.Flat;
+            this.btnAddPayment.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.btnAddPayment.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(29)))), ((int)(((byte)(78)))), ((int)(((byte)(216)))));
+            this.btnAddPayment.Location = new System.Drawing.Point(810, 20);
+            this.btnAddPayment.Name = "btnAddPayment";
+            this.btnAddPayment.Size = new System.Drawing.Size(72, 32);
+            this.btnAddPayment.TabIndex = 1;
+            this.btnAddPayment.Text = "+ Add";
+            this.btnAddPayment.UseVisualStyleBackColor = false;
+            this.btnAddPayment.Click += new System.EventHandler(this.btnAddPayment_Click);
+            // 
             // groupBox3
             // 
-            this.groupBox3.Anchor = ((System.Windows.Forms.AnchorStyles)((System.Windows.Forms.AnchorStyles.Bottom | System.Windows.Forms.AnchorStyles.Right)));
             this.groupBox3.BackColor = System.Drawing.Color.White;
             this.groupBox3.Controls.Add(this.txtCashBack);
             this.groupBox3.Controls.Add(this.label16);
@@ -848,9 +952,9 @@ namespace ERP
             this.groupBox3.Controls.Add(this.label15);
             this.groupBox3.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.groupBox3.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(41)))), ((int)(((byte)(59)))));
-            this.groupBox3.Location = new System.Drawing.Point(908, 500);
+            this.groupBox3.Location = new System.Drawing.Point(908, 430);
             this.groupBox3.Name = "groupBox3";
-            this.groupBox3.Size = new System.Drawing.Size(298, 146);
+            this.groupBox3.Size = new System.Drawing.Size(298, 155);
             this.groupBox3.TabIndex = 2;
             this.groupBox3.TabStop = false;
             this.groupBox3.Text = " Bill Summary ";
@@ -860,8 +964,9 @@ namespace ERP
             this.txtCashBack.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(240)))), ((int)(((byte)(253)))), ((int)(((byte)(244)))));
             this.txtCashBack.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCashBack.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(101)))), ((int)(((byte)(52)))));
-            this.txtCashBack.Location = new System.Drawing.Point(114, 81);
+            this.txtCashBack.Location = new System.Drawing.Point(114, 113);
             this.txtCashBack.Name = "txtCashBack";
+            this.txtCashBack.ReadOnly = true;
             this.txtCashBack.Size = new System.Drawing.Size(172, 24);
             this.txtCashBack.TabIndex = 220;
             this.txtCashBack.TabStop = false;
@@ -873,18 +978,18 @@ namespace ERP
             this.label16.AutoSize = true;
             this.label16.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label16.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(101)))), ((int)(((byte)(52)))));
-            this.label16.Location = new System.Drawing.Point(12, 85);
+            this.label16.Location = new System.Drawing.Point(12, 117);
             this.label16.Name = "label16";
-            this.label16.Size = new System.Drawing.Size(68, 15);
+            this.label16.Size = new System.Drawing.Size(76, 15);
             this.label16.TabIndex = 219;
-            this.label16.Text = "Cash Back:";
+            this.label16.Text = "Change Due:";
             // 
             // txtBalance
             // 
             this.txtBalance.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(254)))), ((int)(((byte)(242)))), ((int)(((byte)(242)))));
             this.txtBalance.Font = new System.Drawing.Font("Segoe UI", 9.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtBalance.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(185)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
-            this.txtBalance.Location = new System.Drawing.Point(114, 111);
+            this.txtBalance.Location = new System.Drawing.Point(114, 82);
             this.txtBalance.Name = "txtBalance";
             this.txtBalance.ReadOnly = true;
             this.txtBalance.Size = new System.Drawing.Size(172, 24);
@@ -898,23 +1003,25 @@ namespace ERP
             this.label14.AutoSize = true;
             this.label14.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.label14.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(185)))), ((int)(((byte)(28)))), ((int)(((byte)(28)))));
-            this.label14.Location = new System.Drawing.Point(12, 115);
+            this.label14.Location = new System.Drawing.Point(12, 86);
             this.label14.Name = "label14";
-            this.label14.Size = new System.Drawing.Size(53, 15);
+            this.label14.Size = new System.Drawing.Size(80, 15);
             this.label14.TabIndex = 215;
-            this.label14.Text = "Balance:";
+            this.label14.Text = "Balance Due:";
             // 
             // txtCashReceipt
             // 
+            this.txtCashReceipt.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(241)))), ((int)(((byte)(245)))), ((int)(((byte)(249)))));
             this.txtCashReceipt.Font = new System.Drawing.Font("Segoe UI", 11.5F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
-            this.txtCashReceipt.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(23)))), ((int)(((byte)(42)))));
+            this.txtCashReceipt.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(99)))), ((int)(((byte)(235)))));
             this.txtCashReceipt.Location = new System.Drawing.Point(114, 49);
             this.txtCashReceipt.Name = "txtCashReceipt";
+            this.txtCashReceipt.ReadOnly = true;
             this.txtCashReceipt.Size = new System.Drawing.Size(172, 28);
             this.txtCashReceipt.TabIndex = 0;
+            this.txtCashReceipt.TabStop = false;
             this.txtCashReceipt.Text = "0";
             this.txtCashReceipt.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.txtCashReceipt.TextChanged += new System.EventHandler(this.txtCashReceipt_TextChanged);
             // 
             // label13
             // 
@@ -925,7 +1032,7 @@ namespace ERP
             this.label13.Name = "label13";
             this.label13.Size = new System.Drawing.Size(83, 15);
             this.label13.TabIndex = 211;
-            this.label13.Text = "Cash Paid [F]:";
+            this.label13.Text = "Total Paid:";
             // 
             // txtTotAmount
             // 
@@ -1428,5 +1535,13 @@ namespace ERP
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn12;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn13;
         private System.Windows.Forms.DataGridViewTextBoxColumn dataGridViewTextBoxColumn14;
+        private System.Windows.Forms.GroupBox grpPayments;
+        private System.Windows.Forms.DataGridView dgvPayments;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnPaySeq;
+        private System.Windows.Forms.DataGridViewComboBoxColumn clnPayAccount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnPayAmount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn clnPayReference;
+        private System.Windows.Forms.DataGridViewButtonColumn clnPayDelete;
+        private System.Windows.Forms.Button btnAddPayment;
     }
 }

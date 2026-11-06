@@ -80,15 +80,45 @@ namespace ERP
         //  State Management
         // ══════════════════════════════════════════════════════════════════
 
+        private void RdoAccountType_CheckedChanged(object sender, EventArgs e)
+        {
+            UpdateAccountTypeVisibility();
+        }
+
+        private void UpdateAccountTypeVisibility()
+        {
+            bool isCash = rdoCash.Checked;
+            lblBankName.Visible = !isCash;
+            txtBankName.Visible = !isCash;
+            lblAccountNumber.Visible = !isCash;
+            txtAccountNumber.Visible = !isCash;
+            lblIBAN.Visible = !isCash;
+            txtIBAN.Visible = !isCash;
+            lblBranchName.Visible = !isCash;
+            txtBranchName.Visible = !isCash;
+            lblBranchCode.Visible = !isCash;
+            txtBranchCode.Visible = !isCash;
+            lblSwiftCode.Visible = !isCash;
+            txtSwiftCode.Visible = !isCash;
+            btnReconcile.Enabled = !isCash && !string.IsNullOrEmpty(_currentAccountCode);
+
+            lblAccountTitle.Text = isCash ? "Cash Title * :" : "Account Title * :";
+        }
+
         private void SetNewMode(bool isNew)
         {
             _isNewMode = isNew;
+            rdoBank.Enabled = isNew;
+            rdoCash.Enabled = isNew;
             if (isNew)
             {
                 btnNew.Text = "Cancel";
                 _currentAccountCode = null;
                 ClearDetail();
-                txtBankName.Focus();
+                if (rdoCash.Checked)
+                    txtAccountTitle.Focus();
+                else
+                    txtBankName.Focus();
                 btnDelete.Enabled = false;
                 btnStatement.Enabled = false;
                 btnReconcile.Enabled = false;
@@ -99,12 +129,14 @@ namespace ERP
                 bool hasSelection = !string.IsNullOrEmpty(_currentAccountCode);
                 btnDelete.Enabled = hasSelection;
                 btnStatement.Enabled = hasSelection;
-                btnReconcile.Enabled = hasSelection;
+                btnReconcile.Enabled = hasSelection && !rdoCash.Checked;
             }
         }
 
         private void ClearDetail()
         {
+            rdoBank.Checked = true;
+            UpdateAccountTypeVisibility();
             txtBankName.Text = string.Empty;
             txtAccountTitle.Text = string.Empty;
             txtAccountNumber.Text = string.Empty;
@@ -137,12 +169,14 @@ namespace ERP
 
             foreach (var b in list)
             {
+                bool isCash = string.Equals(b.AccountType, "Cash", StringComparison.OrdinalIgnoreCase);
                 dgvBankAccounts.Rows.Add(
                     b.Account,
-                    b.BankName ?? "-",
+                    isCash ? "Cash" : "Bank",
+                    isCash ? "Cash Drawer" : (b.BankName ?? "-"),
                     b.AccountTitle,
-                    b.AccountNumber ?? "-",
-                    b.BranchName ?? "-",
+                    isCash ? "-" : (b.AccountNumber ?? "-"),
+                    isCash ? "-" : (b.BranchName ?? "-"),
                     b.OpeningBalance.ToString("N2"),
                     b.Currency ?? "PKR",
                     b.Active ? "Yes" : "No"
@@ -164,6 +198,13 @@ namespace ERP
             }
 
             _currentAccountCode = b.Account;
+            bool isCash = string.Equals(b.AccountType, "Cash", StringComparison.OrdinalIgnoreCase);
+            if (isCash)
+                rdoCash.Checked = true;
+            else
+                rdoBank.Checked = true;
+            UpdateAccountTypeVisibility();
+
             txtBankName.Text = b.BankName ?? string.Empty;
             txtAccountTitle.Text = b.AccountTitle ?? string.Empty;
             txtAccountNumber.Text = b.AccountNumber ?? string.Empty;
@@ -200,6 +241,7 @@ namespace ERP
             var filtered = string.IsNullOrWhiteSpace(q)
                 ? _bankAccounts
                 : _bankAccounts?.Where(b =>
+                    Contains(b.AccountType, q) ||
                     Contains(b.BankName, q) ||
                     Contains(b.AccountTitle, q) ||
                     Contains(b.AccountNumber, q) ||
@@ -255,7 +297,8 @@ namespace ERP
         {
             if (_isSaving) return;
 
-            if (string.IsNullOrWhiteSpace(txtBankName.Text))
+            bool isCash = rdoCash.Checked;
+            if (!isCash && string.IsNullOrWhiteSpace(txtBankName.Text))
             {
                 MessageBox.Show("Bank Name is required.", "Validation",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
@@ -265,13 +308,13 @@ namespace ERP
 
             if (string.IsNullOrWhiteSpace(txtAccountTitle.Text))
             {
-                MessageBox.Show("Account Title is required.", "Validation",
+                MessageBox.Show((isCash ? "Cash Account Title" : "Account Title") + " is required.", "Validation",
                     MessageBoxButtons.OK, MessageBoxIcon.Warning);
                 txtAccountTitle.Focus();
                 return;
             }
 
-            if (MessageBox.Show("Save bank account details?", "Confirm",
+            if (MessageBox.Show($"Save {(isCash ? "cash" : "bank")} account details?", "Confirm",
                     MessageBoxButtons.YesNo, MessageBoxIcon.Question) != DialogResult.Yes)
                 return;
 
@@ -286,13 +329,14 @@ namespace ERP
                 {
                     var createReq = new BankAccountCreateApiRequest
                     {
-                        BankName = txtBankName.Text.Trim(),
+                        AccountType = isCash ? "Cash" : "Bank",
+                        BankName = isCash ? "Cash" : txtBankName.Text.Trim(),
                         AccountTitle = txtAccountTitle.Text.Trim(),
-                        AccountNumber = string.IsNullOrWhiteSpace(txtAccountNumber.Text) ? null : txtAccountNumber.Text.Trim(),
-                        Iban = string.IsNullOrWhiteSpace(txtIBAN.Text) ? null : txtIBAN.Text.Trim(),
-                        BranchName = string.IsNullOrWhiteSpace(txtBranchName.Text) ? null : txtBranchName.Text.Trim(),
-                        BranchCode = string.IsNullOrWhiteSpace(txtBranchCode.Text) ? null : txtBranchCode.Text.Trim(),
-                        SwiftCode = string.IsNullOrWhiteSpace(txtSwiftCode.Text) ? null : txtSwiftCode.Text.Trim(),
+                        AccountNumber = isCash || string.IsNullOrWhiteSpace(txtAccountNumber.Text) ? null : txtAccountNumber.Text.Trim(),
+                        Iban = isCash || string.IsNullOrWhiteSpace(txtIBAN.Text) ? null : txtIBAN.Text.Trim(),
+                        BranchName = isCash || string.IsNullOrWhiteSpace(txtBranchName.Text) ? null : txtBranchName.Text.Trim(),
+                        BranchCode = isCash || string.IsNullOrWhiteSpace(txtBranchCode.Text) ? null : txtBranchCode.Text.Trim(),
+                        SwiftCode = isCash || string.IsNullOrWhiteSpace(txtSwiftCode.Text) ? null : txtSwiftCode.Text.Trim(),
                         Currency = cmbCurrency.SelectedItem?.ToString() ?? "PKR",
                         Notes = string.IsNullOrWhiteSpace(txtNotes.Text) ? null : txtNotes.Text.Trim(),
                         Active = chkActive.Checked,
@@ -300,7 +344,7 @@ namespace ERP
                     };
 
                     string newCode = await _bankAccountApiService.CreateAsync(createReq);
-                    MessageBox.Show($"Bank account '{createReq.AccountTitle}' created successfully!", "Success",
+                    MessageBox.Show($"{(isCash ? "Cash" : "Bank")} account '{createReq.AccountTitle}' created successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     await FillBankAccountsAsync();
@@ -312,13 +356,14 @@ namespace ERP
                 {
                     var updateReq = new BankAccountUpdateApiRequest
                     {
-                        BankName = txtBankName.Text.Trim(),
+                        AccountType = isCash ? "Cash" : "Bank",
+                        BankName = isCash ? "Cash" : txtBankName.Text.Trim(),
                         AccountTitle = txtAccountTitle.Text.Trim(),
-                        AccountNumber = string.IsNullOrWhiteSpace(txtAccountNumber.Text) ? null : txtAccountNumber.Text.Trim(),
-                        Iban = string.IsNullOrWhiteSpace(txtIBAN.Text) ? null : txtIBAN.Text.Trim(),
-                        BranchName = string.IsNullOrWhiteSpace(txtBranchName.Text) ? null : txtBranchName.Text.Trim(),
-                        BranchCode = string.IsNullOrWhiteSpace(txtBranchCode.Text) ? null : txtBranchCode.Text.Trim(),
-                        SwiftCode = string.IsNullOrWhiteSpace(txtSwiftCode.Text) ? null : txtSwiftCode.Text.Trim(),
+                        AccountNumber = isCash || string.IsNullOrWhiteSpace(txtAccountNumber.Text) ? null : txtAccountNumber.Text.Trim(),
+                        Iban = isCash || string.IsNullOrWhiteSpace(txtIBAN.Text) ? null : txtIBAN.Text.Trim(),
+                        BranchName = isCash || string.IsNullOrWhiteSpace(txtBranchName.Text) ? null : txtBranchName.Text.Trim(),
+                        BranchCode = isCash || string.IsNullOrWhiteSpace(txtBranchCode.Text) ? null : txtBranchCode.Text.Trim(),
+                        SwiftCode = isCash || string.IsNullOrWhiteSpace(txtSwiftCode.Text) ? null : txtSwiftCode.Text.Trim(),
                         Currency = cmbCurrency.SelectedItem?.ToString() ?? "PKR",
                         Notes = string.IsNullOrWhiteSpace(txtNotes.Text) ? null : txtNotes.Text.Trim(),
                         Active = chkActive.Checked,
@@ -326,7 +371,7 @@ namespace ERP
                     };
 
                     await _bankAccountApiService.UpdateAsync(_currentAccountCode, updateReq);
-                    MessageBox.Show($"Bank account '{updateReq.AccountTitle}' updated successfully!", "Success",
+                    MessageBox.Show($"{(isCash ? "Cash" : "Bank")} account '{updateReq.AccountTitle}' updated successfully!", "Success",
                         MessageBoxButtons.OK, MessageBoxIcon.Information);
 
                     await FillBankAccountsAsync();

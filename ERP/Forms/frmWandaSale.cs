@@ -194,9 +194,10 @@ namespace ERP
             dtAccounts.Rows.Clear();
             foreach (var a in accountsTask.Result)
             {
+                string typeLabel = string.Equals(a.AccountType, "Vendor", StringComparison.OrdinalIgnoreCase) ? "Vendor" : "Customer";
                 string displayTitle = !string.IsNullOrWhiteSpace(a.ParentCustomerTitle)
                     ? $"{a.Title} (Sub of: {a.ParentCustomerTitle})"
-                    : a.Title;
+                    : $"{a.Title} ({typeLabel})";
                 dtAccounts.Rows.Add(a.Account, displayTitle, a.CustomerCategoryId);
             }
 

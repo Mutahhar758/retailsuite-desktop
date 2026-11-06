@@ -24,6 +24,7 @@ namespace ERP
             this.tpList = new System.Windows.Forms.TabPage();
             this.dgvBankAccounts = new System.Windows.Forms.DataGridView();
             this.colAccount = new System.Windows.Forms.DataGridViewTextBoxColumn();
+            this.colAccountType = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colBankName = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colAccountTitle = new System.Windows.Forms.DataGridViewTextBoxColumn();
             this.colAccountNumber = new System.Windows.Forms.DataGridViewTextBoxColumn();
@@ -40,6 +41,9 @@ namespace ERP
             this.pnlDetailBanner = new System.Windows.Forms.Panel();
             this.lblBannerSubtitle = new System.Windows.Forms.Label();
             this.lblBannerTitle = new System.Windows.Forms.Label();
+            this.lblAccountType = new System.Windows.Forms.Label();
+            this.rdoBank = new System.Windows.Forms.RadioButton();
+            this.rdoCash = new System.Windows.Forms.RadioButton();
             this.lblBankName = new System.Windows.Forms.Label();
             this.txtBankName = new System.Windows.Forms.TextBox();
             this.chkActive = new System.Windows.Forms.CheckBox();
@@ -103,7 +107,7 @@ namespace ERP
             this.tpList.Name = "tpList";
             this.tpList.Size = new System.Drawing.Size(852, 531);
             this.tpList.TabIndex = 0;
-            this.tpList.Text = "Bank Accounts Directory";
+            this.tpList.Text = "Cash & Bank Accounts Directory";
             // 
             // dgvBankAccounts
             // 
@@ -125,6 +129,7 @@ namespace ERP
             this.dgvBankAccounts.ColumnHeadersHeightSizeMode = System.Windows.Forms.DataGridViewColumnHeadersHeightSizeMode.DisableResizing;
             this.dgvBankAccounts.Columns.AddRange(new System.Windows.Forms.DataGridViewColumn[] {
             this.colAccount,
+            this.colAccountType,
             this.colBankName,
             this.colAccountTitle,
             this.colAccountNumber,
@@ -151,6 +156,13 @@ namespace ERP
             this.colAccount.Name = "colAccount";
             this.colAccount.ReadOnly = true;
             this.colAccount.Visible = false;
+            // 
+            // colAccountType
+            // 
+            this.colAccountType.HeaderText = "Type";
+            this.colAccountType.Name = "colAccountType";
+            this.colAccountType.ReadOnly = true;
+            this.colAccountType.Width = 65;
             // 
             // colBankName
             // 
@@ -265,7 +277,7 @@ namespace ERP
             this.btnAddNew.Name = "btnAddNew";
             this.btnAddNew.Size = new System.Drawing.Size(150, 30);
             this.btnAddNew.TabIndex = 3;
-            this.btnAddNew.Text = "+ New Bank Account";
+            this.btnAddNew.Text = "+ New Account";
             this.btnAddNew.UseVisualStyleBackColor = false;
             this.btnAddNew.Click += new System.EventHandler(this.BtnAddNew_Click);
             // 
@@ -273,6 +285,9 @@ namespace ERP
             // 
             this.tpDetails.BackColor = System.Drawing.Color.FromArgb(((int)(((byte)(250)))), ((int)(((byte)(251)))), ((int)(((byte)(253)))));
             this.tpDetails.Controls.Add(this.pnlDetailBanner);
+            this.tpDetails.Controls.Add(this.lblAccountType);
+            this.tpDetails.Controls.Add(this.rdoBank);
+            this.tpDetails.Controls.Add(this.rdoCash);
             this.tpDetails.Controls.Add(this.lblBankName);
             this.tpDetails.Controls.Add(this.txtBankName);
             this.tpDetails.Controls.Add(this.chkActive);
@@ -304,7 +319,7 @@ namespace ERP
             this.tpDetails.Name = "tpDetails";
             this.tpDetails.Size = new System.Drawing.Size(852, 531);
             this.tpDetails.TabIndex = 1;
-            this.tpDetails.Text = "Bank Account Details";
+            this.tpDetails.Text = "Account Details";
             // 
             // pnlDetailBanner
             // 
@@ -324,9 +339,9 @@ namespace ERP
             this.lblBannerSubtitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(219)))), ((int)(((byte)(234)))), ((int)(((byte)(254)))));
             this.lblBannerSubtitle.Location = new System.Drawing.Point(14, 28);
             this.lblBannerSubtitle.Name = "lblBannerSubtitle";
-            this.lblBannerSubtitle.Size = new System.Drawing.Size(325, 13);
+            this.lblBannerSubtitle.Size = new System.Drawing.Size(340, 13);
             this.lblBannerSubtitle.TabIndex = 1;
-            this.lblBannerSubtitle.Text = "Manage company bank accounts, branches, and opening balances.";
+            this.lblBannerSubtitle.Text = "Manage company cash drawers, petty cash, and bank accounts.";
             // 
             // lblBannerTitle
             // 
@@ -335,32 +350,48 @@ namespace ERP
             this.lblBannerTitle.ForeColor = System.Drawing.Color.White;
             this.lblBannerTitle.Location = new System.Drawing.Point(13, 8);
             this.lblBannerTitle.Name = "lblBannerTitle";
-            this.lblBannerTitle.Size = new System.Drawing.Size(199, 18);
+            this.lblBannerTitle.Size = new System.Drawing.Size(260, 18);
             this.lblBannerTitle.TabIndex = 0;
-            this.lblBannerTitle.Text = "Bank Account Information";
+            this.lblBannerTitle.Text = "Cash & Bank Accounts Information";
             // 
-            // lblBankName
+            // lblAccountType
             // 
-            this.lblBankName.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
-            this.lblBankName.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblBankName.Location = new System.Drawing.Point(12, 67);
-            this.lblBankName.Name = "lblBankName";
-            this.lblBankName.Size = new System.Drawing.Size(140, 20);
-            this.lblBankName.TabIndex = 1;
-            this.lblBankName.Text = "Bank Name * :";
-            this.lblBankName.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            this.lblAccountType.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Bold);
+            this.lblAccountType.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
+            this.lblAccountType.Location = new System.Drawing.Point(12, 67);
+            this.lblAccountType.Name = "lblAccountType";
+            this.lblAccountType.Size = new System.Drawing.Size(140, 20);
+            this.lblAccountType.TabIndex = 1;
+            this.lblAccountType.Text = "Account Type * :";
+            this.lblAccountType.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
-            // txtBankName
+            // rdoBank
             // 
-            this.txtBankName.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
-            this.txtBankName.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
-            this.txtBankName.BackColor = System.Drawing.Color.White;
-            this.txtBankName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
-            this.txtBankName.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
-            this.txtBankName.Location = new System.Drawing.Point(158, 66);
-            this.txtBankName.Name = "txtBankName";
-            this.txtBankName.Size = new System.Drawing.Size(260, 21);
-            this.txtBankName.TabIndex = 2;
+            this.rdoBank.AutoSize = true;
+            this.rdoBank.Checked = true;
+            this.rdoBank.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Bold);
+            this.rdoBank.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(37)))), ((int)(((byte)(99)))), ((int)(((byte)(235)))));
+            this.rdoBank.Location = new System.Drawing.Point(158, 67);
+            this.rdoBank.Name = "rdoBank";
+            this.rdoBank.Size = new System.Drawing.Size(110, 19);
+            this.rdoBank.TabIndex = 2;
+            this.rdoBank.TabStop = true;
+            this.rdoBank.Text = "Bank Account";
+            this.rdoBank.UseVisualStyleBackColor = true;
+            this.rdoBank.CheckedChanged += new System.EventHandler(this.RdoAccountType_CheckedChanged);
+            // 
+            // rdoCash
+            // 
+            this.rdoCash.AutoSize = true;
+            this.rdoCash.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Bold);
+            this.rdoCash.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(22)))), ((int)(((byte)(163)))), ((int)(((byte)(74)))));
+            this.rdoCash.Location = new System.Drawing.Point(275, 67);
+            this.rdoCash.Name = "rdoCash";
+            this.rdoCash.Size = new System.Drawing.Size(145, 19);
+            this.rdoCash.TabIndex = 3;
+            this.rdoCash.Text = "Cash / Petty Cash";
+            this.rdoCash.UseVisualStyleBackColor = true;
+            this.rdoCash.CheckedChanged += new System.EventHandler(this.RdoAccountType_CheckedChanged);
             // 
             // chkActive
             // 
@@ -371,17 +402,40 @@ namespace ERP
             this.chkActive.Location = new System.Drawing.Point(440, 67);
             this.chkActive.Name = "chkActive";
             this.chkActive.Size = new System.Drawing.Size(80, 20);
-            this.chkActive.TabIndex = 3;
+            this.chkActive.TabIndex = 4;
             this.chkActive.Text = "Active";
+            // 
+            // lblBankName
+            // 
+            this.lblBankName.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
+            this.lblBankName.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
+            this.lblBankName.Location = new System.Drawing.Point(12, 99);
+            this.lblBankName.Name = "lblBankName";
+            this.lblBankName.Size = new System.Drawing.Size(140, 20);
+            this.lblBankName.TabIndex = 5;
+            this.lblBankName.Text = "Bank Name * :";
+            this.lblBankName.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // txtBankName
+            // 
+            this.txtBankName.AutoCompleteMode = System.Windows.Forms.AutoCompleteMode.SuggestAppend;
+            this.txtBankName.AutoCompleteSource = System.Windows.Forms.AutoCompleteSource.CustomSource;
+            this.txtBankName.BackColor = System.Drawing.Color.White;
+            this.txtBankName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtBankName.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
+            this.txtBankName.Location = new System.Drawing.Point(158, 98);
+            this.txtBankName.Name = "txtBankName";
+            this.txtBankName.Size = new System.Drawing.Size(260, 21);
+            this.txtBankName.TabIndex = 6;
             // 
             // lblAccountTitle
             // 
             this.lblAccountTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
             this.lblAccountTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblAccountTitle.Location = new System.Drawing.Point(12, 99);
+            this.lblAccountTitle.Location = new System.Drawing.Point(12, 131);
             this.lblAccountTitle.Name = "lblAccountTitle";
             this.lblAccountTitle.Size = new System.Drawing.Size(140, 20);
-            this.lblAccountTitle.TabIndex = 4;
+            this.lblAccountTitle.TabIndex = 7;
             this.lblAccountTitle.Text = "Account Title * :";
             this.lblAccountTitle.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -390,19 +444,19 @@ namespace ERP
             this.txtAccountTitle.BackColor = System.Drawing.Color.White;
             this.txtAccountTitle.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtAccountTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
-            this.txtAccountTitle.Location = new System.Drawing.Point(158, 98);
+            this.txtAccountTitle.Location = new System.Drawing.Point(158, 130);
             this.txtAccountTitle.Name = "txtAccountTitle";
             this.txtAccountTitle.Size = new System.Drawing.Size(420, 21);
-            this.txtAccountTitle.TabIndex = 5;
+            this.txtAccountTitle.TabIndex = 8;
             // 
             // lblAccountNumber
             // 
             this.lblAccountNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
             this.lblAccountNumber.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblAccountNumber.Location = new System.Drawing.Point(12, 131);
+            this.lblAccountNumber.Location = new System.Drawing.Point(12, 163);
             this.lblAccountNumber.Name = "lblAccountNumber";
             this.lblAccountNumber.Size = new System.Drawing.Size(140, 20);
-            this.lblAccountNumber.TabIndex = 6;
+            this.lblAccountNumber.TabIndex = 9;
             this.lblAccountNumber.Text = "Account Number :";
             this.lblAccountNumber.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -411,19 +465,19 @@ namespace ERP
             this.txtAccountNumber.BackColor = System.Drawing.Color.White;
             this.txtAccountNumber.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtAccountNumber.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
-            this.txtAccountNumber.Location = new System.Drawing.Point(158, 130);
+            this.txtAccountNumber.Location = new System.Drawing.Point(158, 162);
             this.txtAccountNumber.Name = "txtAccountNumber";
             this.txtAccountNumber.Size = new System.Drawing.Size(200, 21);
-            this.txtAccountNumber.TabIndex = 7;
+            this.txtAccountNumber.TabIndex = 10;
             // 
             // lblCurrency
             // 
             this.lblCurrency.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
             this.lblCurrency.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblCurrency.Location = new System.Drawing.Point(365, 131);
+            this.lblCurrency.Location = new System.Drawing.Point(365, 163);
             this.lblCurrency.Name = "lblCurrency";
             this.lblCurrency.Size = new System.Drawing.Size(75, 20);
-            this.lblCurrency.TabIndex = 8;
+            this.lblCurrency.TabIndex = 11;
             this.lblCurrency.Text = "Currency :";
             this.lblCurrency.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -439,19 +493,19 @@ namespace ERP
             "GBP",
             "AED",
             "SAR"});
-            this.cmbCurrency.Location = new System.Drawing.Point(445, 129);
+            this.cmbCurrency.Location = new System.Drawing.Point(445, 161);
             this.cmbCurrency.Name = "cmbCurrency";
             this.cmbCurrency.Size = new System.Drawing.Size(133, 23);
-            this.cmbCurrency.TabIndex = 9;
+            this.cmbCurrency.TabIndex = 12;
             // 
             // lblIBAN
             // 
             this.lblIBAN.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
             this.lblIBAN.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblIBAN.Location = new System.Drawing.Point(12, 163);
+            this.lblIBAN.Location = new System.Drawing.Point(12, 195);
             this.lblIBAN.Name = "lblIBAN";
             this.lblIBAN.Size = new System.Drawing.Size(140, 20);
-            this.lblIBAN.TabIndex = 10;
+            this.lblIBAN.TabIndex = 13;
             this.lblIBAN.Text = "IBAN :";
             this.lblIBAN.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -460,19 +514,19 @@ namespace ERP
             this.txtIBAN.BackColor = System.Drawing.Color.White;
             this.txtIBAN.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtIBAN.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
-            this.txtIBAN.Location = new System.Drawing.Point(158, 162);
+            this.txtIBAN.Location = new System.Drawing.Point(158, 194);
             this.txtIBAN.Name = "txtIBAN";
             this.txtIBAN.Size = new System.Drawing.Size(420, 21);
-            this.txtIBAN.TabIndex = 11;
+            this.txtIBAN.TabIndex = 14;
             // 
             // lblBranchName
             // 
             this.lblBranchName.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
             this.lblBranchName.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblBranchName.Location = new System.Drawing.Point(12, 195);
+            this.lblBranchName.Location = new System.Drawing.Point(12, 227);
             this.lblBranchName.Name = "lblBranchName";
             this.lblBranchName.Size = new System.Drawing.Size(140, 20);
-            this.lblBranchName.TabIndex = 12;
+            this.lblBranchName.TabIndex = 15;
             this.lblBranchName.Text = "Branch Name :";
             this.lblBranchName.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -481,19 +535,19 @@ namespace ERP
             this.txtBranchName.BackColor = System.Drawing.Color.White;
             this.txtBranchName.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtBranchName.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
-            this.txtBranchName.Location = new System.Drawing.Point(158, 194);
+            this.txtBranchName.Location = new System.Drawing.Point(158, 226);
             this.txtBranchName.Name = "txtBranchName";
             this.txtBranchName.Size = new System.Drawing.Size(420, 21);
-            this.txtBranchName.TabIndex = 13;
+            this.txtBranchName.TabIndex = 16;
             // 
             // lblBranchCode
             // 
             this.lblBranchCode.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
             this.lblBranchCode.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblBranchCode.Location = new System.Drawing.Point(12, 227);
+            this.lblBranchCode.Location = new System.Drawing.Point(12, 259);
             this.lblBranchCode.Name = "lblBranchCode";
             this.lblBranchCode.Size = new System.Drawing.Size(140, 20);
-            this.lblBranchCode.TabIndex = 14;
+            this.lblBranchCode.TabIndex = 17;
             this.lblBranchCode.Text = "Branch Code :";
             this.lblBranchCode.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -502,19 +556,19 @@ namespace ERP
             this.txtBranchCode.BackColor = System.Drawing.Color.White;
             this.txtBranchCode.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtBranchCode.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
-            this.txtBranchCode.Location = new System.Drawing.Point(158, 226);
+            this.txtBranchCode.Location = new System.Drawing.Point(158, 258);
             this.txtBranchCode.Name = "txtBranchCode";
             this.txtBranchCode.Size = new System.Drawing.Size(130, 21);
-            this.txtBranchCode.TabIndex = 15;
+            this.txtBranchCode.TabIndex = 18;
             // 
             // lblSwiftCode
             // 
             this.lblSwiftCode.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
             this.lblSwiftCode.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblSwiftCode.Location = new System.Drawing.Point(295, 227);
+            this.lblSwiftCode.Location = new System.Drawing.Point(295, 259);
             this.lblSwiftCode.Name = "lblSwiftCode";
             this.lblSwiftCode.Size = new System.Drawing.Size(95, 20);
-            this.lblSwiftCode.TabIndex = 16;
+            this.lblSwiftCode.TabIndex = 19;
             this.lblSwiftCode.Text = "SWIFT / BIC :";
             this.lblSwiftCode.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -523,19 +577,19 @@ namespace ERP
             this.txtSwiftCode.BackColor = System.Drawing.Color.White;
             this.txtSwiftCode.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtSwiftCode.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
-            this.txtSwiftCode.Location = new System.Drawing.Point(395, 226);
+            this.txtSwiftCode.Location = new System.Drawing.Point(395, 258);
             this.txtSwiftCode.Name = "txtSwiftCode";
             this.txtSwiftCode.Size = new System.Drawing.Size(183, 21);
-            this.txtSwiftCode.TabIndex = 17;
+            this.txtSwiftCode.TabIndex = 20;
             // 
             // lblOpeningBalance
             // 
             this.lblOpeningBalance.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F, System.Drawing.FontStyle.Bold);
             this.lblOpeningBalance.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(58)))), ((int)(((byte)(138)))));
-            this.lblOpeningBalance.Location = new System.Drawing.Point(12, 259);
+            this.lblOpeningBalance.Location = new System.Drawing.Point(12, 291);
             this.lblOpeningBalance.Name = "lblOpeningBalance";
             this.lblOpeningBalance.Size = new System.Drawing.Size(140, 20);
-            this.lblOpeningBalance.TabIndex = 18;
+            this.lblOpeningBalance.TabIndex = 21;
             this.lblOpeningBalance.Text = "Opening Balance :";
             this.lblOpeningBalance.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -545,10 +599,10 @@ namespace ERP
             this.txtOpeningBalance.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtOpeningBalance.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.75F, System.Drawing.FontStyle.Bold);
             this.txtOpeningBalance.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(23)))), ((int)(((byte)(42)))));
-            this.txtOpeningBalance.Location = new System.Drawing.Point(158, 258);
+            this.txtOpeningBalance.Location = new System.Drawing.Point(158, 290);
             this.txtOpeningBalance.Name = "txtOpeningBalance";
             this.txtOpeningBalance.Size = new System.Drawing.Size(180, 22);
-            this.txtOpeningBalance.TabIndex = 19;
+            this.txtOpeningBalance.TabIndex = 22;
             this.txtOpeningBalance.Text = "0.00";
             this.txtOpeningBalance.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             // 
@@ -557,20 +611,20 @@ namespace ERP
             this.lblOpeningBalanceHint.AutoSize = true;
             this.lblOpeningBalanceHint.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F, System.Drawing.FontStyle.Italic);
             this.lblOpeningBalanceHint.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(116)))), ((int)(((byte)(139)))));
-            this.lblOpeningBalanceHint.Location = new System.Drawing.Point(345, 262);
+            this.lblOpeningBalanceHint.Location = new System.Drawing.Point(345, 294);
             this.lblOpeningBalanceHint.Name = "lblOpeningBalanceHint";
             this.lblOpeningBalanceHint.Size = new System.Drawing.Size(225, 13);
-            this.lblOpeningBalanceHint.TabIndex = 20;
+            this.lblOpeningBalanceHint.TabIndex = 23;
             this.lblOpeningBalanceHint.Text = "(Initial ledger balance when onboarding account)";
             // 
             // lblNotes
             // 
             this.lblNotes.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.75F);
             this.lblNotes.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblNotes.Location = new System.Drawing.Point(12, 291);
+            this.lblNotes.Location = new System.Drawing.Point(12, 323);
             this.lblNotes.Name = "lblNotes";
             this.lblNotes.Size = new System.Drawing.Size(140, 20);
-            this.lblNotes.TabIndex = 21;
+            this.lblNotes.TabIndex = 24;
             this.lblNotes.Text = "Notes / Description :";
             this.lblNotes.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
             // 
@@ -579,22 +633,22 @@ namespace ERP
             this.txtNotes.BackColor = System.Drawing.Color.White;
             this.txtNotes.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
             this.txtNotes.Font = new System.Drawing.Font("Microsoft Sans Serif", 9.25F);
-            this.txtNotes.Location = new System.Drawing.Point(158, 290);
+            this.txtNotes.Location = new System.Drawing.Point(158, 322);
             this.txtNotes.Multiline = true;
             this.txtNotes.Name = "txtNotes";
             this.txtNotes.ScrollBars = System.Windows.Forms.ScrollBars.Vertical;
             this.txtNotes.Size = new System.Drawing.Size(420, 50);
-            this.txtNotes.TabIndex = 22;
+            this.txtNotes.TabIndex = 25;
             // 
             // lblCreatedByTitle
             // 
             this.lblCreatedByTitle.AutoSize = true;
             this.lblCreatedByTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.lblCreatedByTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(116)))), ((int)(((byte)(139)))));
-            this.lblCreatedByTitle.Location = new System.Drawing.Point(85, 360);
+            this.lblCreatedByTitle.Location = new System.Drawing.Point(85, 385);
             this.lblCreatedByTitle.Name = "lblCreatedByTitle";
             this.lblCreatedByTitle.Size = new System.Drawing.Size(65, 13);
-            this.lblCreatedByTitle.TabIndex = 23;
+            this.lblCreatedByTitle.TabIndex = 26;
             this.lblCreatedByTitle.Text = "Created By :";
             // 
             // lblCreatedBy
@@ -602,10 +656,10 @@ namespace ERP
             this.lblCreatedBy.AutoSize = true;
             this.lblCreatedBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.lblCreatedBy.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblCreatedBy.Location = new System.Drawing.Point(158, 360);
+            this.lblCreatedBy.Location = new System.Drawing.Point(158, 385);
             this.lblCreatedBy.Name = "lblCreatedBy";
             this.lblCreatedBy.Size = new System.Drawing.Size(10, 13);
-            this.lblCreatedBy.TabIndex = 24;
+            this.lblCreatedBy.TabIndex = 27;
             this.lblCreatedBy.Text = "-";
             // 
             // lblEditByTitle
@@ -613,10 +667,10 @@ namespace ERP
             this.lblEditByTitle.AutoSize = true;
             this.lblEditByTitle.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.lblEditByTitle.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(100)))), ((int)(((byte)(116)))), ((int)(((byte)(139)))));
-            this.lblEditByTitle.Location = new System.Drawing.Point(72, 385);
+            this.lblEditByTitle.Location = new System.Drawing.Point(72, 405);
             this.lblEditByTitle.Name = "lblEditByTitle";
             this.lblEditByTitle.Size = new System.Drawing.Size(76, 13);
-            this.lblEditByTitle.TabIndex = 25;
+            this.lblEditByTitle.TabIndex = 28;
             this.lblEditByTitle.Text = "Last Modified :";
             // 
             // lblEditBy
@@ -624,10 +678,10 @@ namespace ERP
             this.lblEditBy.AutoSize = true;
             this.lblEditBy.Font = new System.Drawing.Font("Microsoft Sans Serif", 8.25F);
             this.lblEditBy.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(51)))), ((int)(((byte)(65)))), ((int)(((byte)(85)))));
-            this.lblEditBy.Location = new System.Drawing.Point(158, 385);
+            this.lblEditBy.Location = new System.Drawing.Point(158, 405);
             this.lblEditBy.Name = "lblEditBy";
             this.lblEditBy.Size = new System.Drawing.Size(10, 13);
-            this.lblEditBy.TabIndex = 26;
+            this.lblEditBy.TabIndex = 29;
             this.lblEditBy.Text = "-";
             // 
             // panel2
@@ -750,7 +804,7 @@ namespace ERP
             this.Controls.Add(this.tabControl);
             this.Name = "frmBankInfo";
             this.StartPosition = System.Windows.Forms.FormStartPosition.CenterScreen;
-            this.Text = "Bank Account Information";
+            this.Text = "Cash & Bank Accounts Information";
             this.Load += new System.EventHandler(this.FrmBankInfo_Load);
             this.tabControl.ResumeLayout(false);
             this.tpList.ResumeLayout(false);
@@ -780,6 +834,9 @@ namespace ERP
         private System.Windows.Forms.Panel pnlDetailBanner;
         private System.Windows.Forms.Label lblBannerTitle;
         private System.Windows.Forms.Label lblBannerSubtitle;
+        private System.Windows.Forms.Label lblAccountType;
+        private System.Windows.Forms.RadioButton rdoBank;
+        private System.Windows.Forms.RadioButton rdoCash;
         private System.Windows.Forms.Label lblBankName;
         private System.Windows.Forms.TextBox txtBankName;
         private System.Windows.Forms.CheckBox chkActive;
@@ -814,6 +871,7 @@ namespace ERP
         private System.Windows.Forms.Button btnReconcile;
         private System.Windows.Forms.Button btnClose;
         private System.Windows.Forms.DataGridViewTextBoxColumn colAccount;
+        private System.Windows.Forms.DataGridViewTextBoxColumn colAccountType;
         private System.Windows.Forms.DataGridViewTextBoxColumn colBankName;
         private System.Windows.Forms.DataGridViewTextBoxColumn colAccountTitle;
         private System.Windows.Forms.DataGridViewTextBoxColumn colAccountNumber;
