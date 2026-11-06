@@ -231,6 +231,7 @@ namespace ERP
             this.txtCashReceipt.Font = new System.Drawing.Font("Microsoft Sans Serif", 11.25F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.txtCashReceipt.Location = new System.Drawing.Point(86, 48);
             this.txtCashReceipt.Name = "txtCashReceipt";
+            this.txtCashReceipt.ReadOnly = true;
             this.txtCashReceipt.Size = new System.Drawing.Size(121, 24);
             this.txtCashReceipt.TabIndex = 214;
             this.txtCashReceipt.Text = "0";

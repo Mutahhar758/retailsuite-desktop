@@ -68,8 +68,16 @@ namespace ERP
             dgvSale.CellParsing += dgvSale_CellParsing;
             dgvSale.Enter += dgvSale_Enter;
             this.Shown += frmNormalSale_Shown;
-            txtCashReceipt.Enter += txtCashReceipt_Enter;
-            txtCashReceipt.KeyDown += txtCashReceipt_KeyDown;
+            txtDescription.TabStop = false;
+            cmbNarration.TabStop = false;
+            txtTotAmount.ReadOnly = true;
+            txtCashReceipt.ReadOnly = true;
+            txtBalance.ReadOnly = true;
+            txtCashBack.ReadOnly = true;
+            txtTotAmount.TabStop = false;
+            txtCashReceipt.TabStop = false;
+            txtBalance.TabStop = false;
+            txtCashBack.TabStop = false;
             dgvSale.Rows.Add();
             clnAmount.ReadOnly = false;
             SetupGridContextMenu();
@@ -142,6 +150,30 @@ namespace ERP
                     new object[] { true });
             }
             catch { }
+        }
+
+        private void cmbAccounts_KeyDown(object sender, KeyEventArgs e)
+        {
+            if (e.KeyCode == Keys.Enter)
+            {
+                e.SuppressKeyPress = true;
+                e.Handled = true;
+                if (ApiSession.IsBarcodeFastScanEnabled && groupBox2.Visible && txtBarcode.Enabled)
+                {
+                    txtBarcode.Focus();
+                    txtBarcode.SelectAll();
+                }
+                else
+                {
+                    dgvSale.Focus();
+                    if (dgvSale.Rows.Count > 0 && clnItemNo != null)
+                    {
+                        int targetRow = dgvSale.CurrentCell != null ? dgvSale.CurrentCell.RowIndex : 0;
+                        if (targetRow < 0 || targetRow >= dgvSale.Rows.Count) targetRow = 0;
+                        dgvSale.CurrentCell = dgvSale[clnItemNo.Index, targetRow];
+                    }
+                }
+            }
         }
 
         private void SetupGridContextMenu()
@@ -1295,6 +1327,45 @@ namespace ERP
             return list;
         }
 
+        private string GetNextAvailableAccountId()
+        {
+            if (dtCashBankAccounts == null || dtCashBankAccounts.Rows.Count == 0)
+                return _defaultCashAccountId;
+
+            var usedAccIds = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+            foreach (DataGridViewRow r in dgvPayments.Rows)
+            {
+                if (r.IsNewRow) continue;
+                var val = Convert.ToString(r.Cells[clnPayAccount.Index].Value);
+                if (!string.IsNullOrWhiteSpace(val))
+                    usedAccIds.Add(val);
+            }
+
+            foreach (DataRow row in dtCashBankAccounts.Rows)
+            {
+                var acc = row["Account"]?.ToString();
+                if (!string.IsNullOrWhiteSpace(acc) && !usedAccIds.Contains(acc))
+                {
+                    return acc;
+                }
+            }
+
+            if (dgvPayments.Rows.Count > 0)
+            {
+                var lastAcc = Convert.ToString(dgvPayments.Rows[dgvPayments.Rows.Count - 1].Cells[clnPayAccount.Index].Value);
+                for (int i = 0; i < dtCashBankAccounts.Rows.Count; i++)
+                {
+                    if (string.Equals(dtCashBankAccounts.Rows[i]["Account"]?.ToString(), lastAcc, StringComparison.OrdinalIgnoreCase))
+                    {
+                        int nextIdx = (i + 1) % dtCashBankAccounts.Rows.Count;
+                        return dtCashBankAccounts.Rows[nextIdx]["Account"]?.ToString();
+                    }
+                }
+            }
+
+            return _defaultCashAccountId;
+        }
+
         private void btnAddPayment_Click(object sender, EventArgs e)
         {
             decimal netBill = txtTotAmount.Value;
@@ -1303,7 +1374,7 @@ namespace ERP
 
             int newRowIdx = dgvPayments.Rows.Add();
             dgvPayments[clnPaySeq.Index, newRowIdx].Value = (newRowIdx + 1).ToString();
-            dgvPayments[clnPayAccount.Index, newRowIdx].Value = _defaultCashAccountId;
+            dgvPayments[clnPayAccount.Index, newRowIdx].Value = GetNextAvailableAccountId();
             dgvPayments[clnPayAmount.Index, newRowIdx].Value = remaining.ToString("N2");
             dgvPayments[clnPayReference.Index, newRowIdx].Value = "";
             CalcPaymentTotals();
@@ -1387,7 +1458,7 @@ namespace ERP
                     decimal remaining = netBill - totalPaid;
                     int newRowIdx = dgvPayments.Rows.Add();
                     dgvPayments[clnPaySeq.Index, newRowIdx].Value = (newRowIdx + 1).ToString();
-                    dgvPayments[clnPayAccount.Index, newRowIdx].Value = _defaultCashAccountId;
+                    dgvPayments[clnPayAccount.Index, newRowIdx].Value = GetNextAvailableAccountId();
                     dgvPayments[clnPayAmount.Index, newRowIdx].Value = remaining.ToString("N2");
                     dgvPayments[clnPayReference.Index, newRowIdx].Value = "";
                     CalcPaymentTotals();
@@ -1413,7 +1484,7 @@ namespace ERP
                     decimal remaining = netBill - totalPaid;
                     int newRowIdx = dgvPayments.Rows.Add();
                     dgvPayments[clnPaySeq.Index, newRowIdx].Value = (newRowIdx + 1).ToString();
-                    dgvPayments[clnPayAccount.Index, newRowIdx].Value = _defaultCashAccountId;
+                    dgvPayments[clnPayAccount.Index, newRowIdx].Value = GetNextAvailableAccountId();
                     dgvPayments[clnPayAmount.Index, newRowIdx].Value = remaining.ToString("N2");
                     dgvPayments[clnPayReference.Index, newRowIdx].Value = "";
                     CalcPaymentTotals();

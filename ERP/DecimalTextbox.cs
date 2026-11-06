@@ -1,4 +1,4 @@
-﻿using System;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Diagnostics;
@@ -7,7 +7,7 @@ using System.Text;
 
 namespace ERP
 {
-    public partial class DecimalTextbox : System .Windows .Forms .TextBox 
+    public partial class DecimalTextbox : System.Windows.Forms.TextBox 
     {
         public DecimalTextbox()
         {
@@ -23,27 +23,46 @@ namespace ERP
 
         private void NumericTextbox_KeyPress(object sender, System.Windows.Forms.KeyPressEventArgs e)
         {
-           
-                if (this.SelectedText.Length > 0)
+            if (this.ReadOnly)
+            {
+                e.Handled = true;
+                return;
+            }
+
+            if (this.SelectedText.Length > 0)
+            {
+                int selind = this.SelectionStart;
+                this.Text = this.Text.Replace(this.SelectedText, "");
+                this.SelectionStart = selind;
+                this.SelectionLength = 0;
+            }
+            if (!char.IsControl(e.KeyChar)
+                && !char.IsDigit(e.KeyChar)
+                && !(this.Text.Count(a => a == '.') == 0 && e.KeyChar == '.')
+                )
+            {
+                e.Handled = true;
+            }
+        }
+
+        protected override void OnKeyDown(System.Windows.Forms.KeyEventArgs e)
+        {
+            if (this.ReadOnly)
+            {
+                if (e.KeyCode == System.Windows.Forms.Keys.Back || e.KeyCode == System.Windows.Forms.Keys.Delete)
                 {
-                    int selind = this.SelectionStart;
-                    this.Text = this.Text.Replace(this.SelectedText, "");
-                    this.SelectionStart = selind;
-                    this.SelectionLength = 0;
-                }
-                if (!char.IsControl(e.KeyChar)
-           && !char.IsDigit(e.KeyChar)
-           && !(this.Text.Count(a => a == '.') == 0 && e.KeyChar == '.')
-                    )
-                {
+                    e.SuppressKeyPress = true;
                     e.Handled = true;
+                    return;
                 }
-            
+            }
+            base.OnKeyDown(e);
         }
 
         private void DecimalTextbox_Validated(object sender, EventArgs e)
         {
-            if (this.Text == "")this.Text = "0";
+            if (this.ReadOnly) return;
+            if (this.Text == "") this.Text = "0";
         }
 
         public decimal Value

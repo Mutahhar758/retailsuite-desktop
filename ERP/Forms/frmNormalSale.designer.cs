@@ -383,6 +383,7 @@ namespace ERP
             this.cmbNarration.Name = "cmbNarration";
             this.cmbNarration.Size = new System.Drawing.Size(279, 23);
             this.cmbNarration.TabIndex = 3;
+            this.cmbNarration.TabStop = false;
             // 
             // lblNarration
             // 
@@ -415,6 +416,7 @@ namespace ERP
             this.txtDescription.Name = "txtDescription";
             this.txtDescription.Size = new System.Drawing.Size(434, 23);
             this.txtDescription.TabIndex = 2;
+            this.txtDescription.TabStop = false;
             // 
             // cmbAccounts
             // 
@@ -429,6 +431,7 @@ namespace ERP
             this.cmbAccounts.Size = new System.Drawing.Size(434, 23);
             this.cmbAccounts.TabIndex = 1;
             this.cmbAccounts.SelectedIndexChanged += new System.EventHandler(this.cmbAccounts_SelectedIndexChanged);
+            this.cmbAccounts.KeyDown += new System.Windows.Forms.KeyEventHandler(this.cmbAccounts_KeyDown);
             // 
             // label10
             // 
