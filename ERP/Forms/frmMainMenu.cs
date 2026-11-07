@@ -188,6 +188,8 @@ namespace ERP
 
             ApplyPermissions();
 
+            SetupDailyStockClosingMenu();
+
             if (ApiSession.HasMobileShopFeature)
             {
                 SetupMobileShopMenu();
@@ -974,6 +976,31 @@ namespace ERP
             catch (Exception ex)
             {
                 System.Diagnostics.Debug.WriteLine("Error setting up Mobile Shop menu: " + ex.Message);
+            }
+        }
+
+        private void SetupDailyStockClosingMenu()
+        {
+            try
+            {
+                var closingItem = new ToolStripMenuItem("Daily Stock Closing");
+                closingItem.Click += (s, e) =>
+                {
+                    var frm = new ERP.Forms.frmDailyStockClosing();
+                    frm.MdiParent = this;
+                    frm.Show();
+                };
+                closingItem.Visible = UserInfo.IsOwner || UserInfo.HasPermission(AppAction.View, AppResource.Sales);
+
+                int adjIndex = dailyEntryToolStripMenuItem.DropDownItems.IndexOf(stockAdjustmentToolStripMenuItem);
+                if (adjIndex >= 0)
+                    dailyEntryToolStripMenuItem.DropDownItems.Insert(adjIndex + 1, closingItem);
+                else
+                    dailyEntryToolStripMenuItem.DropDownItems.Add(closingItem);
+            }
+            catch (Exception ex)
+            {
+                System.Diagnostics.Debug.WriteLine("Error setting up Daily Stock Closing menu: " + ex.Message);
             }
         }
     }

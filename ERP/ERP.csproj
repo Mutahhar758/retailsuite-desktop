@@ -257,6 +257,7 @@
     <Compile Include="Services\Legacy\SupplyOrderApiService.cs" />
     <Compile Include="Services\Legacy\BomApiService.cs" />
     <Compile Include="Services\Legacy\ManufacturingApiService.cs" />
+    <Compile Include="Services\Legacy\DailyStockClosingApiService.cs" />
     <Compile Include="Services\Legacy\SettingsApiService.cs" />
     <Compile Include="Services\Legacy\UnitApiService.cs" />
     <Compile Include="Services\Legacy\VendorApiService.cs" />
@@ -275,6 +276,12 @@
     </Compile>
     <Compile Include="Forms\frmManufacturing.designer.cs">
       <DependentUpon>frmManufacturing.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmDailyStockClosing.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Forms\frmDailyStockClosing.designer.cs">
+      <DependentUpon>frmDailyStockClosing.cs</DependentUpon>
     </Compile>
     <Compile Include="Classes\SecurityHelper.cs" />
     <Compile Include="Classes\QrPaymentInfo.cs" />
