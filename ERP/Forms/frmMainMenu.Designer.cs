@@ -78,6 +78,7 @@ namespace ERP
             this.incomeSummary2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.balanceSheet2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.customerBill2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.vendorBill2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.purchaseSupplyComparison2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.customerBalanceRecovery2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.profitByCustomer2ToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -430,6 +431,7 @@ namespace ERP
             this.incomeSummary2ToolStripMenuItem,
             this.balanceSheet2ToolStripMenuItem,
             this.customerBill2ToolStripMenuItem,
+            this.vendorBill2ToolStripMenuItem,
             this.purchaseSupplyComparison2ToolStripMenuItem,
             this.customerBalanceRecovery2ToolStripMenuItem,
             this.profitByCustomer2ToolStripMenuItem,
@@ -502,6 +504,13 @@ namespace ERP
             this.customerBill2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
             this.customerBill2ToolStripMenuItem.Text = "Customer Bill";
             this.customerBill2ToolStripMenuItem.Click += new System.EventHandler(this.customerBill2ToolStripMenuItem_Click);
+            // 
+            // vendorBill2ToolStripMenuItem
+            // 
+            this.vendorBill2ToolStripMenuItem.Name = "vendorBill2ToolStripMenuItem";
+            this.vendorBill2ToolStripMenuItem.Size = new System.Drawing.Size(228, 22);
+            this.vendorBill2ToolStripMenuItem.Text = "Vendor Bill";
+            this.vendorBill2ToolStripMenuItem.Click += new System.EventHandler(this.vendorBill2ToolStripMenuItem_Click);
             // 
             // purchaseSupplyComparison2ToolStripMenuItem
             // 
@@ -819,6 +828,7 @@ namespace ERP
         private System.Windows.Forms.ToolStripMenuItem incomeSummary2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem balanceSheet2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerBill2ToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem vendorBill2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem purchaseSupplyComparison2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem customerBalanceRecovery2ToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem profitByCustomer2ToolStripMenuItem;

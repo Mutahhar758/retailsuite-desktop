@@ -174,6 +174,7 @@ namespace ERP
         public const string ProfitByItem = "ProfitByItem";
         public const string BalanceSheet = "BalanceSheet";
         public const string CustomerBill = "CustomerBill";
+        public const string VendorBill = "VendorBill";
         public const string PurchaseSupplyComparison = "PurchaseSupplyComparison";
         public const string CustomerBalanceRecovery = "CustomerBalanceRecovery";
         public const string EnvelopeReport = "EnvelopeReport";

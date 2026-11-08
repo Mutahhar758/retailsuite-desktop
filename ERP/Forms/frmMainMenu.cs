@@ -281,6 +281,7 @@ namespace ERP
             incomeSummary2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.IncomeSummary);
             balanceSheet2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.BalanceSheet);
             customerBill2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBill);
+            vendorBill2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.VendorBill);
             purchaseSupplyComparison2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PurchaseSupplyComparison);
             customerBalanceRecovery2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.CustomerBalanceRecovery);
             profitByCustomer2ToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.ProfitByCustomer);
@@ -294,7 +295,7 @@ namespace ERP
                 stockBalance2ToolStripMenuItem.Visible || trialBalance2ToolStripMenuItem.Visible ||
                 accountBalance2ToolStripMenuItem.Visible || itemLedger2ToolStripMenuItem.Visible ||
                 incomeSummary2ToolStripMenuItem.Visible || balanceSheet2ToolStripMenuItem.Visible ||
-                customerBill2ToolStripMenuItem.Visible || purchaseSupplyComparison2ToolStripMenuItem.Visible ||
+                customerBill2ToolStripMenuItem.Visible || vendorBill2ToolStripMenuItem.Visible || purchaseSupplyComparison2ToolStripMenuItem.Visible ||
                 customerBalanceRecovery2ToolStripMenuItem.Visible ||
                 profitByCustomer2ToolStripMenuItem.Visible || profitByItem2ToolStripMenuItem.Visible ||
                 miscReports2ToolStripMenuItem.Visible;
@@ -471,6 +472,22 @@ namespace ERP
             else
             {
                 ERP.Reporting.NormalCustomerBillViewer viewer = new ERP.Reporting.NormalCustomerBillViewer();
+                viewer.MdiParent = this;
+                viewer.Show();
+            }
+        }
+
+        private void vendorBill2ToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (ApiSession.HasVariablePackFeature)
+            {
+                ERP.Reporting.WandaVendorBillViewer viewer = new ERP.Reporting.WandaVendorBillViewer();
+                viewer.MdiParent = this;
+                viewer.Show();
+            }
+            else
+            {
+                ERP.Reporting.NormalVendorBillViewer viewer = new ERP.Reporting.NormalVendorBillViewer();
                 viewer.MdiParent = this;
                 viewer.Show();
             }

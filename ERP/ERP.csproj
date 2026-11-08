@@ -825,6 +825,14 @@
     <Compile Include="Reporting\WandaCustomerBillViewer.cs">
       <SubType>Form</SubType>
     </Compile>
+    <Compile Include="Reporting\Models\VendorBillReportItem.cs" />
+    <Compile Include="Reporting\Documents\VendorBillDocument.cs" />
+    <Compile Include="Reporting\NormalVendorBillViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
+    <Compile Include="Reporting\WandaVendorBillViewer.cs">
+      <SubType>Form</SubType>
+    </Compile>
     <Compile Include="Reporting\Models\EnvelopeReportItem.cs" />
     <Compile Include="Reporting\Documents\EnvelopeDocument.cs" />
     <Compile Include="Reporting\EnvelopeViewer.cs">

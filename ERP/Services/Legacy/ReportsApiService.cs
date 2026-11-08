@@ -528,6 +528,169 @@ namespace ERP.Services.Legacy
             }
         }
 
+
+        public async Task<DataSet> GetNormalVendorBillAsync(string account, DateTime fromDate, DateTime toDate, string dateBasis = "VoucherDate")
+        {
+            var url = Endpoint
+                + "/vendor-bill?account=" + Uri.EscapeDataString(account ?? string.Empty)
+                + "&fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"))
+                + "&dateBasis=" + Uri.EscapeDataString(dateBasis ?? "VoucherDate");
+
+            using (var client = CreateClient(includeTenantId: true))
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<VendorBillDto>>(json);
+                var body = payload != null && payload.Body != null ? payload.Body : new VendorBillDto();
+
+                var ds = new DataSet();
+
+                var lines = new DataTable();
+                lines.Columns.Add("date", typeof(DateTime));
+                lines.Columns.Add("vno", typeof(string));
+                lines.Columns.Add("item", typeof(string));
+                lines.Columns.Add("unit", typeof(string));
+                lines.Columns.Add("qty", typeof(decimal));
+                lines.Columns.Add("rate", typeof(decimal));
+                lines.Columns.Add("addless", typeof(decimal));
+                lines.Columns.Add("carriage", typeof(decimal));
+                lines.Columns.Add("amount", typeof(decimal));
+                lines.Columns.Add("secqty", typeof(decimal));
+                lines.Columns.Add("secrate", typeof(decimal));
+                lines.Columns.Add("qtyinpack", typeof(decimal));
+                lines.Columns.Add("receiptdate", typeof(DateTime));
+                lines.Columns.Add("receiptamount", typeof(decimal));
+                lines.Columns.Add("transactiontype", typeof(string));
+
+                for (int i = 0; i < body.Lines.Count; i++)
+                {
+                    var row = body.Lines[i];
+                    lines.Rows.Add(
+                        row.Date,
+                        row.VNo ?? string.Empty,
+                        row.Item ?? string.Empty,
+                        row.Unit ?? string.Empty,
+                        row.Qty,
+                        row.Rate,
+                        row.AddLess,
+                        (object)row.Carriage ?? DBNull.Value,
+                        row.Amount,
+                        DBNull.Value,
+                        DBNull.Value,
+                        DBNull.Value,
+                        DBNull.Value,
+                        DBNull.Value,
+                        "Purchase");
+                }
+
+                var summary = new DataTable();
+                summary.Columns.Add("PreviousBalance", typeof(decimal));
+                summary.Columns.Add("Payment", typeof(decimal));
+                summary.Columns.Add("Balance", typeof(decimal));
+                summary.Columns.Add("EnableCarriage", typeof(bool));
+                summary.Columns.Add("TotalPurchases", typeof(decimal));
+                summary.Columns.Add("TotalBill", typeof(decimal));
+                summary.Rows.Add(
+                    body.Summary.PreviousBalance,
+                    body.Summary.Payment,
+                    body.Summary.Balance,
+                    body.Header?.EnableCarriage ?? false,
+                    body.Summary.TotalPurchases,
+                    body.Summary.TotalPurchases);
+
+                ds.Tables.Add(lines);
+                ds.Tables.Add(summary);
+                return ds;
+            }
+        }
+
+        public async Task<DataSet> GetWandaVendorBillAsync(string account, DateTime fromDate, DateTime toDate, string dateBasis = "VoucherDate")
+        {
+            var url = Endpoint
+                + "/wanda-vendor-bill?account=" + Uri.EscapeDataString(account ?? string.Empty)
+                + "&fromDate=" + Uri.EscapeDataString(fromDate.ToString("yyyy-MM-dd"))
+                + "&toDate=" + Uri.EscapeDataString(toDate.ToString("yyyy-MM-dd"))
+                + "&dateBasis=" + Uri.EscapeDataString(dateBasis ?? "VoucherDate");
+
+            using (var client = CreateClient(includeTenantId: true))
+            {
+                var response = await client.GetAsync(url);
+                await EnsureSuccessWithServerMessageAsync(response);
+
+                var json = await response.Content.ReadAsStringAsync();
+                var payload = JsonConvert.DeserializeObject<HttpResponseDto<WandaVendorBillDto>>(json);
+                var body = payload != null && payload.Body != null ? payload.Body : new WandaVendorBillDto();
+
+                var ds = new DataSet();
+
+                var lines = new DataTable();
+                lines.Columns.Add("date", typeof(DateTime));
+                lines.Columns.Add("vno", typeof(string));
+                lines.Columns.Add("item", typeof(string));
+                lines.Columns.Add("unit", typeof(string));
+                lines.Columns.Add("qty", typeof(decimal));
+                lines.Columns.Add("rate", typeof(decimal));
+                lines.Columns.Add("addless", typeof(decimal));
+                lines.Columns.Add("carriage", typeof(decimal));
+                lines.Columns.Add("amount", typeof(decimal));
+                lines.Columns.Add("secqty", typeof(decimal));
+                lines.Columns.Add("secrate", typeof(decimal));
+                lines.Columns.Add("qtyinpack", typeof(decimal));
+                lines.Columns.Add("receiptdate", typeof(DateTime));
+                lines.Columns.Add("receiptamount", typeof(decimal));
+                lines.Columns.Add("transactiontype", typeof(string));
+
+                for (int i = 0; i < body.Lines.Count; i++)
+                {
+                    var row = body.Lines[i];
+                    lines.Rows.Add(
+                        row.Date,
+                        row.VNo ?? string.Empty,
+                        row.Item ?? string.Empty,
+                        row.Unit ?? string.Empty,
+                        row.Qty,
+                        row.Rate,
+                        row.AddLess,
+                        (object)row.Carriage ?? DBNull.Value,
+                        row.Amount,
+                        (object)row.SecQty ?? DBNull.Value,
+                        (object)row.SecRate ?? DBNull.Value,
+                        (object)row.QtyInPack ?? DBNull.Value,
+                        (object)row.ReceiptDate ?? DBNull.Value,
+                        (object)row.ReceiptAmount ?? DBNull.Value,
+                        row.TransactionType ?? "Purchase");
+                }
+
+                var summary = new DataTable();
+                summary.Columns.Add("PreviousBalance", typeof(decimal));
+                summary.Columns.Add("Payment", typeof(decimal));
+                summary.Columns.Add("Balance", typeof(decimal));
+                summary.Columns.Add("EnableCarriage", typeof(bool));
+                summary.Columns.Add("TotalPurchases", typeof(decimal));
+                summary.Columns.Add("TotalPurchaseReturns", typeof(decimal));
+                summary.Columns.Add("TotalSales", typeof(decimal));
+                summary.Columns.Add("TotalSaleReturns", typeof(decimal));
+                summary.Columns.Add("TotalBill", typeof(decimal));
+                summary.Rows.Add(
+                    body.Summary.PreviousBalance,
+                    body.Summary.Payment,
+                    body.Summary.Balance,
+                    body.Header?.EnableCarriage ?? false,
+                    body.Summary.TotalPurchases,
+                    body.Summary.TotalPurchaseReturns,
+                    body.Summary.TotalSales,
+                    body.Summary.TotalSaleReturns,
+                    body.Summary.TotalBill);
+
+                ds.Tables.Add(lines);
+                ds.Tables.Add(summary);
+                return ds;
+            }
+        }
+
         public async Task<DataTable> GetEnvelopeAsync(string[] accounts)
         {
             var joined = accounts == null ? string.Empty : string.Join(",", accounts);
@@ -1423,6 +1586,160 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("totalPurchaseReturns")]
         public decimal TotalPurchaseReturns { get; set; }
+
+        [JsonProperty("totalBill")]
+        public decimal TotalBill { get; set; }
+
+        [JsonProperty("payment")]
+        public decimal Payment { get; set; }
+
+        [JsonProperty("balance")]
+        public decimal Balance { get; set; }
+    }
+
+
+    internal class VendorBillHeaderDto
+    {
+        [JsonProperty("enableCarriage")]
+        public bool EnableCarriage { get; set; }
+    }
+
+    internal class VendorBillDto
+    {
+        [JsonProperty("header")]
+        public VendorBillHeaderDto Header { get; set; } = new VendorBillHeaderDto();
+
+        [JsonProperty("lines")]
+        public List<VendorBillLineDto> Lines { get; set; } = new List<VendorBillLineDto>();
+
+        [JsonProperty("summary")]
+        public VendorBillSummaryDto Summary { get; set; } = new VendorBillSummaryDto();
+    }
+
+    internal class VendorBillLineDto
+    {
+        [JsonProperty("date")]
+        public DateTime Date { get; set; }
+
+        [JsonProperty("vNo")]
+        public string VNo { get; set; }
+
+        [JsonProperty("item")]
+        public string Item { get; set; }
+
+        [JsonProperty("unitTitle")]
+        public string Unit { get; set; }
+
+        [JsonProperty("qty")]
+        public decimal Qty { get; set; }
+
+        [JsonProperty("rate")]
+        public decimal Rate { get; set; }
+
+        [JsonProperty("addLess")]
+        public decimal AddLess { get; set; }
+
+        [JsonProperty("carriage")]
+        public decimal? Carriage { get; set; }
+
+        [JsonProperty("amount")]
+        public decimal Amount { get; set; }
+    }
+
+    internal class VendorBillSummaryDto
+    {
+        [JsonProperty("previousBalance")]
+        public decimal PreviousBalance { get; set; }
+
+        [JsonProperty("totalPurchases")]
+        public decimal TotalPurchases { get; set; }
+
+        [JsonProperty("payment")]
+        public decimal Payment { get; set; }
+
+        [JsonProperty("balance")]
+        public decimal Balance { get; set; }
+    }
+
+    internal class WandaVendorBillDto
+    {
+        [JsonProperty("header")]
+        public VendorBillHeaderDto Header { get; set; } = new VendorBillHeaderDto();
+
+        [JsonProperty("lines")]
+        public List<WandaVendorBillLineDto> Lines { get; set; } = new List<WandaVendorBillLineDto>();
+
+        [JsonProperty("summary")]
+        public WandaVendorBillSummaryDto Summary { get; set; } = new WandaVendorBillSummaryDto();
+    }
+
+    internal class WandaVendorBillLineDto
+    {
+        [JsonProperty("date")]
+        public DateTime Date { get; set; }
+
+        [JsonProperty("vNo")]
+        public string VNo { get; set; }
+
+        [JsonProperty("item")]
+        public string Item { get; set; }
+
+        [JsonProperty("unitTitle")]
+        public string Unit { get; set; }
+
+        [JsonProperty("qty")]
+        public decimal Qty { get; set; }
+
+        [JsonProperty("rate")]
+        public decimal Rate { get; set; }
+
+        [JsonProperty("addLess")]
+        public decimal AddLess { get; set; }
+
+        [JsonProperty("carriage")]
+        public decimal? Carriage { get; set; }
+
+        [JsonProperty("amount")]
+        public decimal Amount { get; set; }
+
+        [JsonProperty("secQty")]
+        public decimal? SecQty { get; set; }
+
+        [JsonProperty("secRate")]
+        public decimal? SecRate { get; set; }
+
+        [JsonProperty("qtyInPack")]
+        public decimal? QtyInPack { get; set; }
+
+        [JsonProperty("secUnitTitle")]
+        public string SecUnitTitle { get; set; }
+
+        [JsonProperty("receiptDate")]
+        public DateTime? ReceiptDate { get; set; }
+
+        [JsonProperty("receiptAmount")]
+        public decimal? ReceiptAmount { get; set; }
+
+        [JsonProperty("transactionType")]
+        public string TransactionType { get; set; } = "Purchase";
+    }
+
+    internal class WandaVendorBillSummaryDto
+    {
+        [JsonProperty("previousBalance")]
+        public decimal PreviousBalance { get; set; }
+
+        [JsonProperty("totalPurchases")]
+        public decimal TotalPurchases { get; set; }
+
+        [JsonProperty("totalPurchaseReturns")]
+        public decimal TotalPurchaseReturns { get; set; }
+
+        [JsonProperty("totalSales")]
+        public decimal TotalSales { get; set; }
+
+        [JsonProperty("totalSaleReturns")]
+        public decimal TotalSaleReturns { get; set; }
 
         [JsonProperty("totalBill")]
         public decimal TotalBill { get; set; }
