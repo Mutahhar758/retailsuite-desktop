@@ -332,6 +332,12 @@ namespace ERP.Reporting
                 webView.CoreWebView2.Settings.IsStatusBarEnabled = false;
                 webView.CoreWebView2.Settings.AreDevToolsEnabled = false;
 
+                // Intercept clicks on voucher hyperlinks
+                webView.CoreWebView2.NavigationStarting += OnWebViewNavigationStarting;
+                webView.CoreWebView2.FrameNavigationStarting += OnWebViewFrameNavigationStarting;
+                webView.CoreWebView2.NewWindowRequested += OnWebViewNewWindowRequested;
+                webView.CoreWebView2.LaunchingExternalUriScheme += OnWebViewLaunchingExternalUriScheme;
+
                 _isWebViewReady = true;
                 SetLoadingState(false, "Viewer ready");
             }
@@ -345,6 +351,101 @@ namespace ERP.Reporting
                     MessageBoxButtons.OK,
                     MessageBoxIcon.Warning);
             }
+        }
+
+        private void OnWebViewNavigationStarting(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationStartingEventArgs e)
+        {
+            if (TryHandleVoucherUri(e.Uri))
+            {
+                e.Cancel = true;
+            }
+        }
+
+        private void OnWebViewFrameNavigationStarting(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NavigationStartingEventArgs e)
+        {
+            if (TryHandleVoucherUri(e.Uri))
+            {
+                e.Cancel = true;
+            }
+        }
+
+        private void OnWebViewNewWindowRequested(object sender, Microsoft.Web.WebView2.Core.CoreWebView2NewWindowRequestedEventArgs e)
+        {
+            if (TryHandleVoucherUri(e.Uri))
+            {
+                e.Handled = true;
+            }
+        }
+
+        private void OnWebViewLaunchingExternalUriScheme(object sender, Microsoft.Web.WebView2.Core.CoreWebView2LaunchingExternalUriSchemeEventArgs e)
+        {
+            if (TryHandleVoucherUri(e.Uri))
+            {
+                e.Cancel = true;
+            }
+        }
+
+        private bool TryHandleVoucherUri(string uriString)
+        {
+            if (string.IsNullOrWhiteSpace(uriString)) return false;
+
+            string rawVoucherNo = null;
+
+            int openIdx = uriString.IndexOf("/voucher/open/", StringComparison.OrdinalIgnoreCase);
+            if (openIdx >= 0)
+            {
+                rawVoucherNo = uriString.Substring(openIdx + "/voucher/open/".Length);
+            }
+            else if (uriString.StartsWith("voucher://open/", StringComparison.OrdinalIgnoreCase))
+            {
+                rawVoucherNo = uriString.Substring("voucher://open/".Length);
+            }
+            else
+            {
+                int redirectIdx = uriString.IndexOf("voucher-redirect", StringComparison.OrdinalIgnoreCase);
+                if (redirectIdx >= 0)
+                {
+                    int noIdx = uriString.IndexOf("no=", redirectIdx, StringComparison.OrdinalIgnoreCase);
+                    if (noIdx >= 0)
+                    {
+                        rawVoucherNo = uriString.Substring(noIdx + 3);
+                    }
+                }
+            }
+
+            if (!string.IsNullOrWhiteSpace(rawVoucherNo))
+            {
+                int queryIdx = rawVoucherNo.IndexOfAny(new[] { '?', '#', '&' });
+                if (queryIdx >= 0)
+                {
+                    rawVoucherNo = rawVoucherNo.Substring(0, queryIdx);
+                }
+                rawVoucherNo = Uri.UnescapeDataString(rawVoucherNo).Trim().TrimEnd('/');
+
+                if (!string.IsNullOrWhiteSpace(rawVoucherNo))
+                {
+                    var mainMenu = this.MdiParent as frmMainMenu
+                        ?? Application.OpenForms.OfType<frmMainMenu>().FirstOrDefault();
+
+                    if (mainMenu != null)
+                    {
+                        mainMenu.BeginInvoke(new Action(async () =>
+                        {
+                            try
+                            {
+                                await mainMenu.OpenVoucherWindowAsync(rawVoucherNo);
+                            }
+                            catch (Exception ex)
+                            {
+                                MessageBox.Show("Failed to open voucher: " + ex.Message, "Voucher Open Notice", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                            }
+                        }));
+                    }
+                    return true;
+                }
+            }
+
+            return false;
         }
 
         /// <summary>

@@ -126,7 +126,18 @@ namespace ERP.Reporting.Documents
                     var bg = isEven ? Colors.White : Colors.Grey.Lighten5;
 
                     table.Cell().Element(c => BodyCell(c, bg)).Text(item.Date.ToString("dd-MMM-yyyy"));
-                    table.Cell().Element(c => BodyCell(c, bg)).Text(item.VoucherNo ?? string.Empty).SemiBold();
+                    if (!string.IsNullOrWhiteSpace(item.VoucherNo))
+                    {
+                        table.Cell().Element(c => BodyCell(c, bg))
+                            .Hyperlink("https://retailsuite.local/voucher/open/" + Uri.EscapeDataString(item.VoucherNo))
+                            .Text(item.VoucherNo)
+                            .SemiBold()
+                            .FontColor(Colors.Blue.Darken2);
+                    }
+                    else
+                    {
+                        table.Cell().Element(c => BodyCell(c, bg)).Text(string.Empty);
+                    }
                     table.Cell().Element(c => BodyCell(c, bg)).Text(item.Particular ?? string.Empty);
 
                     if (item.Debit > 0)

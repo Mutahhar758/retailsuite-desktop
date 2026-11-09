@@ -716,7 +716,7 @@ namespace ERP.Forms
             }
         }
 
-        private async Task LoadVoucherDetailAsync(string voucherNo)
+        internal async Task LoadVoucherDetailAsync(string voucherNo)
         {
             try
             {

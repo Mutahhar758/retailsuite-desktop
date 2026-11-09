@@ -1020,6 +1020,249 @@ namespace ERP
                 System.Diagnostics.Debug.WriteLine("Error setting up Daily Stock Closing menu: " + ex.Message);
             }
         }
+
+        /// <summary>
+        /// Opens the appropriate voucher transaction form as an MDI child window and loads the voucher by number.
+        /// Supports PV, RV, JV, SL, PU, SR, PR, SA, SS, MF prefixes, with Wanda / Non-Wanda feature awareness.
+        /// </summary>
+        public async System.Threading.Tasks.Task OpenVoucherWindowAsync(string rawVoucherNo)
+        {
+            if (string.IsNullOrWhiteSpace(rawVoucherNo)) return;
+
+            string trimmed = rawVoucherNo.Trim();
+            string prefix = string.Empty;
+            string cleanNo = trimmed;
+
+            int dashIdx = trimmed.IndexOf('-');
+            if (dashIdx > 0)
+            {
+                prefix = trimmed.Substring(0, dashIdx).ToUpperInvariant();
+                cleanNo = trimmed.Substring(dashIdx + 1).Trim();
+            }
+            else
+            {
+                int slashIdx = trimmed.IndexOf('/');
+                if (slashIdx > 0)
+                {
+                    prefix = trimmed.Substring(0, slashIdx).ToUpperInvariant();
+                    cleanNo = trimmed.Substring(slashIdx + 1).Trim();
+                }
+                else
+                {
+                    var match = System.Text.RegularExpressions.Regex.Match(trimmed, @"^([A-Za-z]+)\s*(\d+)$");
+                    if (match.Success)
+                    {
+                        prefix = match.Groups[1].Value.ToUpperInvariant();
+                        cleanNo = match.Groups[2].Value;
+                    }
+                }
+            }
+
+            try
+            {
+                Cursor.Current = Cursors.WaitCursor;
+
+                if (this.WindowState == FormWindowState.Minimized)
+                {
+                    this.WindowState = FormWindowState.Normal;
+                }
+                this.Activate();
+
+                switch (prefix)
+                {
+                    case "PV":
+                    case "CPV":
+                    case "BPV":
+                        {
+                            var frm = new frmPayments();
+                            frm.MdiParent = this;
+                            frm.Show();
+                            await frm.FillPaymentAsync(cleanNo);
+                            frm.BringToFront();
+                            frm.Activate();
+                            break;
+                        }
+                    case "RV":
+                    case "CRV":
+                    case "BRV":
+                        {
+                            var frm = new frmReceipt();
+                            frm.MdiParent = this;
+                            frm.Show();
+                            await frm.FillReceiptAsync(cleanNo);
+                            frm.BringToFront();
+                            frm.Activate();
+                            break;
+                        }
+                    case "JV":
+                        {
+                            var frm = new frmJournalVoucher();
+                            frm.MdiParent = this;
+                            frm.Show();
+                            await frm.FillJournalAsync(cleanNo);
+                            frm.BringToFront();
+                            frm.Activate();
+                            break;
+                        }
+                    case "SL":
+                    case "SI":
+                        {
+                            if (ApiSession.HasVariablePackFeature)
+                            {
+                                var frm = new frmWandaSale();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillSaleAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            else
+                            {
+                                var frm = new frmNormalSale();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillSaleAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            break;
+                        }
+                    case "PU":
+                    case "PI":
+                        {
+                            if (ApiSession.HasVariablePackFeature)
+                            {
+                                var frm = new frmWandaPurchase();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillPurchaseAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            else
+                            {
+                                var frm = new frmNormalPurchase();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillPurchaseAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            break;
+                        }
+                    case "SR":
+                        {
+                            if (ApiSession.HasVariablePackFeature)
+                            {
+                                var frm = new frmWandaSaleReturn();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillSaleAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            else
+                            {
+                                var frm = new frmNormalSaleReturn();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillSaleAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            break;
+                        }
+                    case "PR":
+                        {
+                            if (ApiSession.HasVariablePackFeature)
+                            {
+                                var frm = new frmWandaPurchaseReturn();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillPurchaseAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            else
+                            {
+                                var frm = new frmNormalPurchaseReturn();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillPurchaseAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            break;
+                        }
+                    case "SA":
+                        {
+                            if (ApiSession.HasVariablePackFeature)
+                            {
+                                var frm = new frmWandaStockAdjustment();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillSaleAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            else
+                            {
+                                var frm = new frmNormalStockAdjustment();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillSaleAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            break;
+                        }
+                    case "SS":
+                    case "SP":
+                        {
+                            if (ApiSession.HasVariablePackFeature)
+                            {
+                                var frm = new frmWandaSaleSupply();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillSaleAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            else
+                            {
+                                var frm = new frmNormalSaleSupply();
+                                frm.MdiParent = this;
+                                frm.Show();
+                                await frm.FillSaleAsync(cleanNo);
+                                frm.BringToFront();
+                                frm.Activate();
+                            }
+                            break;
+                        }
+                    case "MF":
+                        {
+                            var frm = new frmManufacturing();
+                            frm.MdiParent = this;
+                            frm.Show();
+                            await frm.LoadVoucherDetailAsync(cleanNo);
+                            frm.BringToFront();
+                            frm.Activate();
+                            break;
+                        }
+                    default:
+                        MessageBox.Show("Unknown or unsupported voucher format: " + rawVoucherNo, "Voucher Navigation", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                        break;
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Failed to open voucher " + rawVoucherNo + ": " + ex.Message, "Voucher Navigation Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
+            }
+        }
     }
 
 
