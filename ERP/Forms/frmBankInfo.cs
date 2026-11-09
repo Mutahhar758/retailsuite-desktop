@@ -177,7 +177,7 @@ namespace ERP
                     b.AccountTitle,
                     isCash ? "-" : (b.AccountNumber ?? "-"),
                     isCash ? "-" : (b.BranchName ?? "-"),
-                    b.OpeningBalance.ToString("N2"),
+                    b.CurrentBalance.ToString("N2"),
                     b.Currency ?? "PKR",
                     b.Active ? "Yes" : "No"
                 );

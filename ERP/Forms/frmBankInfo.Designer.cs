@@ -197,7 +197,7 @@ namespace ERP
             dataGridViewCellStyle3.Alignment = System.Windows.Forms.DataGridViewContentAlignment.MiddleRight;
             dataGridViewCellStyle3.Format = "N2";
             this.colOpeningBalance.DefaultCellStyle = dataGridViewCellStyle3;
-            this.colOpeningBalance.HeaderText = "Opening Balance";
+            this.colOpeningBalance.HeaderText = "Current Balance";
             this.colOpeningBalance.Name = "colOpeningBalance";
             this.colOpeningBalance.ReadOnly = true;
             this.colOpeningBalance.Width = 130;

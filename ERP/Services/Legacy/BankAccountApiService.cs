@@ -113,6 +113,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("openingBalance")]
         public decimal OpeningBalance { get; set; }
 
+        [JsonProperty("currentBalance")]
+        public decimal CurrentBalance { get; set; }
+
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
 
