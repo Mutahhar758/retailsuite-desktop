@@ -743,7 +743,7 @@ namespace ERP
                     row.Cells[clnSeq.Index].Value = line.Seq.ToString();
                     row.Cells[clnCustomer.Index].Value = line.CustomerId;
                     row.Cells[clnUnit.Index].Value = line.Unit;
-                    row.Cells[clnQty.Index].Value = line.Qty.ToString("0.##");
+                    row.Cells[clnQty.Index].Value = line.Qty.ToString("0.####");
                     row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
                     row.Cells[clnRate.Index].Tag = line.Rate;
                     row.Cells[clnDiscount.Index].Value = line.Discount.ToString("0.##");
@@ -1050,7 +1050,7 @@ namespace ERP
                             var customSetting = customItems?.FirstOrDefault();
                             if (customSetting != null)
                             {
-                                dgvSale[clnQty.Index, rowIndex].Value = (customSetting.Qty > 0 ? customSetting.Qty : 1).ToString("0.##");
+                                dgvSale[clnQty.Index, rowIndex].Value = (customSetting.Qty > 0 ? customSetting.Qty : 1).ToString("0.####");
                                 if (dgvSale.Columns.Contains("clnSecQty"))
                                 {
                                     dgvSale["clnSecQty", rowIndex].Value = (customSetting.SecQty ?? 0).ToString("0.##");
@@ -1270,7 +1270,7 @@ namespace ERP
                 discountPercent = lineGross == 0 ? 0 : decimal.Round((discount / lineGross) * 100, 2);
             }
 
-            row.Cells[clnQty.Index].Value = kgQty.ToString("0.##");
+            row.Cells[clnQty.Index].Value = kgQty.ToString("0.####");
             if (dgvSale.Columns.Contains("clnSecQty")) row.Cells["clnSecQty"].Value = bagQty.ToString("0.##");
             if (dgvSale.Columns.Contains("clnPackQty")) row.Cells["clnPackQty"].Value = packQty.ToString("0.##");
             if (dgvSale.Columns.Contains("clnPacking")) row.Cells["clnPacking"].Value = packing.ToString("0.##");
@@ -2066,7 +2066,7 @@ namespace ERP
                             string custId = row.Cells[clnCustomer.Index].Value?.ToString();
                             if (!string.IsNullOrEmpty(custId) && itemQtyMap.TryGetValue(custId, out var customSetting))
                             {
-                                row.Cells[clnQty.Index].Value = (customSetting.Qty > 0 ? customSetting.Qty : 1).ToString("0.##");
+                                row.Cells[clnQty.Index].Value = (customSetting.Qty > 0 ? customSetting.Qty : 1).ToString("0.####");
                                 if (dgvSale.Columns.Contains("clnSecQty"))
                                 {
                                     bool hasExistingSecQty = row.Cells["clnSecQty"].Value != null &&
@@ -2147,7 +2147,7 @@ namespace ERP
                                 secQty = customSetting.SecQty ?? 0;
                             }
 
-                            dgvSale.Rows[idx].Cells[clnQty.Index].Value = qty.ToString("0.##");
+                            dgvSale.Rows[idx].Cells[clnQty.Index].Value = qty.ToString("0.####");
                             if (dgvSale.Columns.Contains("clnSecQty"))
                             {
                                 dgvSale.Rows[idx].Cells["clnSecQty"].Value = secQty.ToString("0.##");

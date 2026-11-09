@@ -229,7 +229,7 @@ namespace ERP
                     row.Cells[clnItemKey.Index].Value = l.ItemKey;
                     row.Cells[clnItemNo.Index].Value = null;
                     row.Cells[clnUnit.Index].Value = null;
-                    row.Cells[clnQty.Index].Value = l.Qty.ToString("0.##");
+                    row.Cells[clnQty.Index].Value = l.Qty.ToString("0.####");
                     row.Cells[clnRate.Index].Value = l.Rate.ToString("0.##");
                     row.Cells[clnAmount.Index].Value = l.Amount.ToString("N2");
                     row.Cells[clnStatus.Index].Value = "0";
@@ -1191,7 +1191,7 @@ namespace ERP
                     catch { }
 
                     dgvSale[clnRate.Index, ind].Value = itemPriRate.ToString("0.##");
-                    dgvSale[clnQty.Index, ind].Value = qtyToScan.ToString("0.##");
+                    dgvSale[clnQty.Index, ind].Value = qtyToScan.ToString("0.####");
                     dgvSale[clnStatus.Index, ind].Value = "0";
 
                     if (ind == dgvSale.Rows.Count - 1)
@@ -1216,7 +1216,7 @@ namespace ERP
                     dgvSale["clnSecRate", ind].Value = secRate.ToString("0.##");
                 }
 
-                dgvSale[clnQty.Index, ind].Value = qty.ToString("0.##");
+                dgvSale[clnQty.Index, ind].Value = qty.ToString("0.####");
                 dgvSale[clnRate.Index, ind].Value = rate.ToString("0.##");
                 dgvSale[clnAmount.Index, ind].Value = decimal.Round((baseQty * rate) + (secQty * secRate), 2).ToString("N2");
                 CalcTotAmount();

@@ -241,7 +241,7 @@ namespace ERP
                     row.Cells[clnItemKey.Index].Value = line.ItemKey;
                     row.Cells[clnItemNo.Index].Value = null;
                     row.Cells[clnUnit.Index].Value = null;
-                    row.Cells[clnQty.Index].Value = line.Qty.ToString("0.##");
+                    row.Cells[clnQty.Index].Value = line.Qty.ToString("0.####");
                     row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
                     row.Cells[clnDiscount.Index].Value = line.Discount.ToString("0.##");
                     row.Cells[clnDiscPercent.Index].Value = discountPercent.ToString("0.##");
@@ -1331,7 +1331,7 @@ namespace ERP
                     catch { }
 
                     dgvSale[clnRate.Index, ind].Value = itemPriRate.ToString("0.##");
-                    dgvSale[clnQty.Index, ind].Value = qtyToScan.ToString("0.##");
+                    dgvSale[clnQty.Index, ind].Value = qtyToScan.ToString("0.####");
                     if (dgvSale[clnDiscount.Index, ind].Value == null)
                         dgvSale[clnDiscount.Index, ind].Value = "0";
                     if (dgvSale[clnDiscPercent.Index, ind].Value == null)

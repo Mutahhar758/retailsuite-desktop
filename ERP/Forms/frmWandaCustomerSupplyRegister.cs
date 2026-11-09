@@ -260,7 +260,7 @@ namespace ERP
                 row.Cells["colDate"].Value = m.Date.ToString("dd-MMM-yyyy");
                 row.Cells["colVoucher"].Value = "SP-" + m.VoucherNo;
                 row.Cells["colItem"].Value = !string.IsNullOrWhiteSpace(m.ItemTitle) ? m.ItemTitle : m.ItemId;
-                row.Cells["colQty"].Value = m.Qty.ToString("N2");
+                row.Cells["colQty"].Value = m.Qty.ToString("0.####");
                 row.Cells["colSecQty"].Value = m.SecQty.ToString("N2");
                 row.Cells["colPackQty"].Value = m.PackQty.ToString("N2");
                 row.Cells["colRate"].Value = m.Rate.ToString("N2");
@@ -369,7 +369,7 @@ namespace ERP
             model.Amount = Math.Round(((model.Qty * model.Rate) - model.Discount) + model.AddLess, 2);
 
             _isPopulatingGrid = true;
-            row.Cells["colQty"].Value = model.Qty.ToString("N2");
+            row.Cells["colQty"].Value = model.Qty.ToString("0.####");
             row.Cells["colSecQty"].Value = model.SecQty.ToString("N2");
             row.Cells["colPackQty"].Value = model.PackQty.ToString("N2");
             row.Cells["colRate"].Value = model.Rate.ToString("N2");

@@ -1191,7 +1191,7 @@ namespace ERP.Forms
                     item.SelectedUnitId = nextUnit.UnitId;
                     item.SelectedUnitTitle = nextUnit.Title;
                     item.SelectedUnitFactor = nextUnit.Factor;
-                    item.DisplayQty = Math.Max(1, Math.Round(currentBaseQty * nextUnit.Factor, 2));
+                    item.DisplayQty = Math.Max(0.0001m, Math.Round(currentBaseQty * nextUnit.Factor, 4));
 
                     RefreshCartGrid();
                 }

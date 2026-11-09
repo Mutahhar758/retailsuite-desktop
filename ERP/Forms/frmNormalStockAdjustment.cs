@@ -339,8 +339,8 @@ namespace ERP
                     row.Cells[clnItemKey.Index].Value = line.ItemKey;
                     row.Cells[clnItemNo.Index].Value = null;
                     row.Cells[clnUnit.Index].Value = null;
-                    row.Cells[clnQtyIn.Index].Value = line.QtyIn.ToString("0.##");
-                    row.Cells[clnQtyOut.Index].Value = line.QtyOut.ToString("0.##");
+                    row.Cells[clnQtyIn.Index].Value = line.QtyIn.ToString("0.####");
+                    row.Cells[clnQtyOut.Index].Value = line.QtyOut.ToString("0.####");
                     row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
                     row.Cells[clnAmount.Index].Value = line.Amount.ToString("N2");
                     row.Cells[clnStatus.Index].Value = "0";

@@ -250,7 +250,7 @@ namespace ERP
                 row.Cells["colDate"].Value = m.Date.ToString("dd-MMM-yyyy");
                 row.Cells["colVoucher"].Value = "SP-" + m.VoucherNo;
                 row.Cells["colItem"].Value = !string.IsNullOrWhiteSpace(m.ItemTitle) ? m.ItemTitle : m.ItemId;
-                row.Cells["colQty"].Value = m.Qty.ToString("N2");
+                row.Cells["colQty"].Value = m.Qty.ToString("0.####");
                 row.Cells["colRate"].Value = m.Rate.ToString("N2");
                 row.Cells["colDiscount"].Value = m.Discount.ToString("N2");
                 row.Cells["colAddLess"].Value = m.AddLess.ToString("N2");

@@ -354,7 +354,7 @@ namespace ERP
             var firstSub = subUnits[0];
             if (firstSub.Factor > 1m)
             {
-                displayQty = Math.Round(baseQty * firstSub.Factor, 2, MidpointRounding.AwayFromZero);
+                displayQty = Math.Round(baseQty * firstSub.Factor, 4, MidpointRounding.AwayFromZero);
                 displayUnitId = firstSub.UnitId;
             }
         }

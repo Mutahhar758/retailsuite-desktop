@@ -225,7 +225,7 @@ namespace ERP
                     row.Cells[clnItemKey.Index].Value = l.ItemKey;
                     row.Cells[clnItemNo.Index].Value = null;
                     row.Cells[clnUnit.Index].Value = null;
-                    row.Cells[clnQty.Index].Value = l.Qty.ToString("0.##");
+                    row.Cells[clnQty.Index].Value = l.Qty.ToString("0.####");
                     row.Cells[clnRate.Index].Value = l.Rate.ToString("0.##");
                     row.Cells[clnAddless.Index].Value = l.AddLess.ToString("0.##");
                     row.Cells[clnAmount.Index].Value = l.Amount.ToString("N2");
@@ -644,7 +644,7 @@ namespace ERP
                     kgRate = Math.Round(bagRate / packing, 4);
             }
 
-            dgvSale[clnQty.Index, e.RowIndex].Value = kgQty.ToString("0.##");
+            dgvSale[clnQty.Index, e.RowIndex].Value = kgQty.ToString("0.####");
             if (dgvSale.Columns.Contains("clnSecQty")) dgvSale["clnSecQty", e.RowIndex].Value = bagQty.ToString("0.##");
             if (dgvSale.Columns.Contains("clnPackQty")) dgvSale["clnPackQty", e.RowIndex].Value = packQty.ToString("0.##");
             if (dgvSale.Columns.Contains("clnPacking")) dgvSale["clnPacking", e.RowIndex].Value = packing.ToString("0.##");

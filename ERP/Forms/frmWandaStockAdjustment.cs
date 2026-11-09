@@ -333,8 +333,8 @@ namespace ERP
                     row.Cells[clnItemKey.Index].Value = line.ItemKey;
                     row.Cells[clnItemNo.Index].Value = null;
                     row.Cells[clnUnit.Index].Value = null;
-                    row.Cells[clnQtyIn.Index].Value = line.QtyIn.ToString("0.##");
-                    row.Cells[clnQtyOut.Index].Value = line.QtyOut.ToString("0.##");
+                    row.Cells[clnQtyIn.Index].Value = line.QtyIn.ToString("0.####");
+                    row.Cells[clnQtyOut.Index].Value = line.QtyOut.ToString("0.####");
                     row.Cells[clnRate.Index].Value = line.Rate.ToString("0.##");
                     row.Cells[clnAmount.Index].Value = line.Amount.ToString("N2");
                     row.Cells[clnStatus.Index].Value = "0";
@@ -747,8 +747,8 @@ namespace ERP
                     rate = Math.Round(secRate / packing, 4);
             }
 
-            dgvSale[clnQtyIn.Index, e.RowIndex].Value = qtyIn.ToString("0.##");
-            dgvSale[clnQtyOut.Index, e.RowIndex].Value = qtyOut.ToString("0.##");
+            dgvSale[clnQtyIn.Index, e.RowIndex].Value = qtyIn.ToString("0.####");
+            dgvSale[clnQtyOut.Index, e.RowIndex].Value = qtyOut.ToString("0.####");
             if (dgvSale.Columns.Contains("clnSecQtyIn")) dgvSale["clnSecQtyIn", e.RowIndex].Value = secQtyIn.ToString("0.##");
             if (dgvSale.Columns.Contains("clnSecQtyOut")) dgvSale["clnSecQtyOut", e.RowIndex].Value = secQtyOut.ToString("0.##");
             if (dgvSale.Columns.Contains("clnPackQty")) dgvSale["clnPackQty", e.RowIndex].Value = packQty.ToString("0.##");
