@@ -32,9 +32,9 @@ namespace ERP.Reporting.Models
         public string FormattedQtyWithUnit => !string.IsNullOrWhiteSpace(Unit)
             ? string.Format("{0:#,##0.##} {1}", Qty, Unit)
             : Qty.ToString("#,##0.##");
-        public string FormattedRate => Rate.ToString("#,##0.00");
-        public string FormattedDiscount => Discount > 0 ? Discount.ToString("#,##0.00") : "-";
-        public string FormattedAmount => Amount.ToString("#,##0.00");
+        public string FormattedRate => Rate.ToString("#,##0");
+        public string FormattedDiscount => Discount > 0 ? Discount.ToString("#,##0") : "-";
+        public string FormattedAmount => Amount.ToString("#,##0");
     }
 
     /// <summary>
@@ -63,12 +63,12 @@ namespace ERP.Reporting.Models
         public bool IsDuplicate { get; set; }
 
         public string FormattedDate => Date != DateTime.MinValue ? Date.ToString("dd-MMM-yyyy HH:mm") : DateTime.Now.ToString("dd-MMM-yyyy HH:mm");
-        public string FormattedGrossTotal => GrossTotal.ToString("#,##0.00");
-        public string FormattedDiscount => TotalDiscount.ToString("#,##0.00");
-        public string FormattedNetAmount => NetAmount.ToString("#,##0.00");
-        public string FormattedCashReceipt => CashReceipt.ToString("#,##0.00");
-        public string FormattedCashBack => CashBack.ToString("#,##0.00");
-        public string FormattedBalance => Balance.ToString("#,##0.00");
+        public string FormattedGrossTotal => GrossTotal.ToString("#,##0");
+        public string FormattedDiscount => TotalDiscount.ToString("#,##0");
+        public string FormattedNetAmount => NetAmount.ToString("#,##0");
+        public string FormattedCashReceipt => CashReceipt.ToString("#,##0");
+        public string FormattedCashBack => CashBack.ToString("#,##0");
+        public string FormattedBalance => Balance.ToString("#,##0");
     }
 
     /// <summary>

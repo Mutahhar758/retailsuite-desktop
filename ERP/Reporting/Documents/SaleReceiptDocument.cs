@@ -173,7 +173,7 @@ namespace ERP.Reporting.Documents
                     col.Item().Row(r =>
                     {
                         r.RelativeItem().Text("Gross Total:").FontSize(8f).SemiBold();
-                        r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.GrossTotal)).FontSize(8.5f).SemiBold();
+                        r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.GrossTotal)).FontSize(8.5f).SemiBold();
                     });
 
                     if (_summary.TotalDiscount > 0)
@@ -181,7 +181,7 @@ namespace ERP.Reporting.Documents
                         col.Item().Row(r =>
                         {
                             r.RelativeItem().Text("Discount:").FontSize(8f).SemiBold();
-                            r.AutoItem().Text(string.Format("-Rs. {0:N2}", _summary.TotalDiscount)).FontSize(8.5f).SemiBold();
+                            r.AutoItem().Text(string.Format("-Rs. {0:N0}", _summary.TotalDiscount)).FontSize(8.5f).SemiBold();
                         });
                     }
 
@@ -190,7 +190,7 @@ namespace ERP.Reporting.Documents
                     col.Item().Row(r =>
                     {
                         r.RelativeItem().Text("NET TOTAL:").FontSize(9.5f).Bold();
-                        r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.NetAmount)).FontSize(10f).Bold();
+                        r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.NetAmount)).FontSize(10f).Bold();
                     });
 
                     col.Item().PaddingVertical(1).LineHorizontal(0.5f).LineColor(Colors.Grey.Darken1);
@@ -200,7 +200,7 @@ namespace ERP.Reporting.Documents
                         col.Item().Row(r =>
                         {
                             r.RelativeItem().Text("Cash Received:").FontSize(8f).SemiBold();
-                            r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.CashReceipt)).FontSize(8.5f).SemiBold();
+                            r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.CashReceipt)).FontSize(8.5f).SemiBold();
                         });
                     }
 
@@ -209,7 +209,7 @@ namespace ERP.Reporting.Documents
                         col.Item().Row(r =>
                         {
                             r.RelativeItem().Text("Change Return:").FontSize(8f).SemiBold();
-                            r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.CashBack)).FontSize(8.5f).SemiBold();
+                            r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.CashBack)).FontSize(8.5f).SemiBold();
                         });
                     }
 
@@ -218,7 +218,7 @@ namespace ERP.Reporting.Documents
                         col.Item().PaddingTop(1).Row(r =>
                         {
                             r.RelativeItem().Text("Remaining Due:").FontSize(8.5f).Bold();
-                            r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.Balance)).FontSize(9f).Bold();
+                            r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.Balance)).FontSize(9f).Bold();
                         });
                     }
 
@@ -389,7 +389,7 @@ namespace ERP.Reporting.Documents
                         c.Item().Row(r =>
                         {
                             r.RelativeItem().Text("Gross Total:").FontSize(8.5f);
-                            r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.GrossTotal)).FontSize(8.5f).SemiBold();
+                            r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.GrossTotal)).FontSize(8.5f).SemiBold();
                         });
 
                         if (_summary.TotalDiscount > 0)
@@ -397,7 +397,7 @@ namespace ERP.Reporting.Documents
                             c.Item().PaddingTop(2).Row(r =>
                             {
                                 r.RelativeItem().Text("Discount:").FontSize(8.5f);
-                                r.AutoItem().Text(string.Format("-Rs. {0:N2}", _summary.TotalDiscount)).FontSize(8.5f).SemiBold();
+                                r.AutoItem().Text(string.Format("-Rs. {0:N0}", _summary.TotalDiscount)).FontSize(8.5f).SemiBold();
                             });
                         }
 
@@ -406,7 +406,7 @@ namespace ERP.Reporting.Documents
                         c.Item().Row(r =>
                         {
                             r.RelativeItem().Text("Net Amount:").Bold().FontSize(9.5f);
-                            r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.NetAmount)).Bold().FontSize(10f);
+                            r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.NetAmount)).Bold().FontSize(10f);
                         });
 
                         if (_summary.CashReceipt > 0)
@@ -414,7 +414,7 @@ namespace ERP.Reporting.Documents
                             c.Item().PaddingTop(3).Row(r =>
                             {
                                 r.RelativeItem().Text("Cash Received:").FontSize(8.5f);
-                                r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.CashReceipt)).FontSize(8.5f).SemiBold();
+                                r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.CashReceipt)).FontSize(8.5f).SemiBold();
                             });
                         }
 
@@ -423,7 +423,7 @@ namespace ERP.Reporting.Documents
                             c.Item().PaddingTop(2).Row(r =>
                             {
                                 r.RelativeItem().Text("Change:").FontSize(8.5f);
-                                r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.CashBack)).FontSize(8.5f).SemiBold();
+                                r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.CashBack)).FontSize(8.5f).SemiBold();
                             });
                         }
 
@@ -432,7 +432,7 @@ namespace ERP.Reporting.Documents
                             c.Item().PaddingTop(3).Row(r =>
                             {
                                 r.RelativeItem().Text("Balance Due:").Bold().FontSize(9f);
-                                r.AutoItem().Text(string.Format("Rs. {0:N2}", _summary.Balance)).Bold().FontSize(9.5f);
+                                r.AutoItem().Text(string.Format("Rs. {0:N0}", _summary.Balance)).Bold().FontSize(9.5f);
                             });
                         }
                     });
