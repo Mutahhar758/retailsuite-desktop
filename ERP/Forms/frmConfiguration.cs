@@ -32,15 +32,10 @@ namespace ERP.Forms
 
                 // Default Bill Format options
                 cmbDefaultFormat.Items.Clear();
-                cmbDefaultFormat.Items.AddRange(new object[] { "80mm Thermal Receipt", "A4 Sheet (Commercial Invoice)" });
-                if (ConfigInfo.IsThermalDefault)
-                {
-                    cmbDefaultFormat.SelectedIndex = 0;
-                }
-                else
-                {
-                    cmbDefaultFormat.SelectedIndex = 1;
-                }
+                cmbDefaultFormat.Items.AddRange(new object[] { "80mm Thermal Receipt", "A5 Sheet (Slip)", "A4 Sheet (Commercial Invoice)" });
+                cmbDefaultFormat.SelectedIndex = ConfigInfo.PreferredSaleReceiptLayout == ERP.Reporting.Models.SaleReceiptPrintLayout.Thermal80mm
+                    ? 0
+                    : (ConfigInfo.PreferredSaleReceiptLayout == ERP.Reporting.Models.SaleReceiptPrintLayout.A5Sheet ? 1 : 2);
 
                 // Thermal Printer selection
                 if (!string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName) && cmbPrinter.Items.Contains(ConfigInfo.ThermalPrinterName))
@@ -98,8 +93,9 @@ namespace ERP.Forms
                 if (!string.IsNullOrWhiteSpace(tenantFormat))
                 {
                     ConfigInfo.DefaultBillFormat = tenantFormat;
-                    bool isThermal = tenantFormat.IndexOf("thermal", StringComparison.OrdinalIgnoreCase) >= 0;
-                    cmbDefaultFormat.SelectedIndex = isThermal ? 0 : 1;
+                    cmbDefaultFormat.SelectedIndex = tenantFormat.IndexOf("thermal", StringComparison.OrdinalIgnoreCase) >= 0
+                        ? 0
+                        : (tenantFormat.IndexOf("a5", StringComparison.OrdinalIgnoreCase) >= 0 ? 1 : 2);
                 }
 
                 string tenantThermal = await _settingsService.GetSettingValueAsync("Printer.ThermalPrinter");
@@ -298,7 +294,9 @@ namespace ERP.Forms
                     ConfigInfo.A4PrinterName = selectedA4;
                 }
 
-                string selectedFormat = (cmbDefaultFormat.SelectedIndex == 0) ? "80mm Thermal" : "A4 Sheet";
+                string selectedFormat = cmbDefaultFormat.SelectedIndex == 0
+                    ? "80mm Thermal"
+                    : (cmbDefaultFormat.SelectedIndex == 1 ? "A5 Sheet" : "A4 Sheet");
                 INIFile.WriteValue("PrinterSetting", "DefaultBillFormat", selectedFormat);
                 ConfigInfo.DefaultBillFormat = selectedFormat;
 
@@ -323,7 +321,7 @@ namespace ERP.Forms
                     {
                         Key = "Bill.DefaultFormat",
                         Value = selectedFormat,
-                        Description = "Default Bill Print Format (80mm Thermal or A4 Sheet)",
+                        Description = "Default Bill Print Format (80mm Thermal, A5 Sheet, or A4 Sheet)",
                         Category = "Bill"
                     },
                     new SettingItemDto

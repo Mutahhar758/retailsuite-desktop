@@ -26,8 +26,6 @@ namespace ERP.Reporting
         // UI Controls
         private Panel pnlTopBar;
         private Label lblTitle;
-        private Label lblLayout;
-        private ComboBox cmbLayout;
         private Button btnDirectPrint;
         private Button btnPrintDialog;
         private Button btnSavePdf;
@@ -73,37 +71,10 @@ namespace ERP.Reporting
                 ForeColor = Color.FromArgb(15, 23, 42)
             };
 
-            lblLayout = new Label
-            {
-                Text = "Format:",
-                Location = new Point(170, 18),
-                AutoSize = true,
-                Font = new Font("Segoe UI", 8.5F, FontStyle.Regular),
-                ForeColor = Color.FromArgb(71, 85, 105)
-            };
-
-            cmbLayout = new ComboBox
-            {
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Location = new Point(220, 14),
-                Size = new Size(160, 28),
-                Font = new Font("Segoe UI", 8.5F, FontStyle.Regular)
-            };
-            cmbLayout.Items.AddRange(new object[] { "80mm Thermal Slip", "A5 Sheet Invoice", "A4 Sheet Invoice" });
-            cmbLayout.SelectedIndex = _layout == SaleReceiptPrintLayout.Thermal80mm ? 0 : (_layout == SaleReceiptPrintLayout.A5Sheet ? 1 : 2);
-            cmbLayout.SelectedIndexChanged += async (s, e) =>
-            {
-                if (cmbLayout.SelectedIndex == 0) _layout = SaleReceiptPrintLayout.Thermal80mm;
-                else if (cmbLayout.SelectedIndex == 1) _layout = SaleReceiptPrintLayout.A5Sheet;
-                else _layout = SaleReceiptPrintLayout.A4Sheet;
-
-                await RenderPdfAsync();
-            };
-
             btnDirectPrint = new Button
             {
                 Text = "Quick Print",
-                Location = new Point(395, 12),
+                Location = new Point(170, 12),
                 Size = new Size(100, 30),
                 FlatStyle = FlatStyle.Flat,
                 BackColor = Color.FromArgb(37, 99, 235),
@@ -202,8 +173,6 @@ namespace ERP.Reporting
             };
 
             pnlTopBar.Controls.Add(lblTitle);
-            pnlTopBar.Controls.Add(lblLayout);
-            pnlTopBar.Controls.Add(cmbLayout);
             pnlTopBar.Controls.Add(btnDirectPrint);
             pnlTopBar.Controls.Add(btnPrintDialog);
             pnlTopBar.Controls.Add(btnSavePdf);
@@ -300,7 +269,7 @@ namespace ERP.Reporting
                 }
 
                 var dataResult = SaleReceiptDataResult.FromDataSet(ds, voucherNo, isDuplicate);
-                var layout = preferredLayout ?? (ConfigInfo.IsThermalDefault ? SaleReceiptPrintLayout.Thermal80mm : SaleReceiptPrintLayout.A5Sheet);
+                var layout = preferredLayout ?? ConfigInfo.PreferredSaleReceiptLayout;
 
                 if (isDirect)
                 {

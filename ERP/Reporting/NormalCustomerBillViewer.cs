@@ -44,8 +44,6 @@ namespace ERP.Reporting
         private DateTimePicker dtpToDate;
         private Label lblDateBasis;
         private ComboBox cmbDateBasis;
-        private Label lblLayout;
-        private ComboBox cmbLayout;
         private Button btnGenerateSingle;
         private Button btnExportExcel;
         private Button btnExportCsv;
@@ -67,8 +65,6 @@ namespace ERP.Reporting
         private DateTimePicker dtpBulkToDate;
         private Label lblBulkDateBasis;
         private ComboBox cmbBulkDateBasis;
-        private Label lblBulkFormat;
-        private ComboBox cmbBulkFormat;
         private Button btnBulkPrintDirect;
         private Button btnBulkPreviewBatch;
         private Button btnCancelBulk;
@@ -260,47 +256,10 @@ namespace ERP.Reporting
             cmbDateBasis.Items.AddRange(new object[] { "Clearing Date", "Voucher Date" });
             cmbDateBasis.SelectedIndex = 0;
 
-            lblLayout = new Label
-            {
-                Text = "FORMAT",
-                AutoSize = true,
-                Location = new Point(610, 10),
-                Font = new Font("Segoe UI", 7.5F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(100, 116, 139)
-            };
-            cmbLayout = new ComboBox
-            {
-                Location = new Point(610, 28),
-                Width = 106,
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 9F)
-            };
-            cmbLayout.Items.AddRange(new object[] { "A4 Sheet", "80mm Thermal" });
-            cmbLayout.SelectedIndex = ConfigInfo.IsThermalDefault ? 1 : 0;
-            cmbLayout.SelectedIndexChanged += async (s, e) =>
-            {
-                bool isThermal = cmbLayout.SelectedIndex == 1;
-                if (webView != null && _isWebViewReady && webView.CoreWebView2 != null)
-                {
-                    webView.CoreWebView2.Settings.HiddenPdfToolbarItems = isThermal
-                        ? Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.Print
-                        : Microsoft.Web.WebView2.Core.CoreWebView2PdfToolbarItems.None;
-                }
-                string preferredPrinter = isThermal ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
-                if (!string.IsNullOrWhiteSpace(preferredPrinter) && cmbPrinter != null && cmbPrinter.Items.Contains(preferredPrinter))
-                {
-                    cmbPrinter.SelectedItem = preferredPrinter;
-                }
-                if (_currentResult != null)
-                {
-                    await LoadAndRenderSingleBillAsync();
-                }
-            };
-
             btnGenerateSingle = new Button
             {
                 Text = "Preview",
-                Location = new Point(724, 26),
+                Location = new Point(610, 26),
                 Width = 68,
                 Height = 28,
                 BackColor = Color.FromArgb(37, 99, 235),
@@ -392,7 +351,6 @@ namespace ERP.Reporting
                 lblFromDate, dtpFromDate,
                 lblToDate, dtpToDate,
                 lblDateBasis, cmbDateBasis,
-                lblLayout, cmbLayout,
                 btnGenerateSingle, btnExportExcel, btnExportCsv, btnPrintPreview, btnPrintThermalSingle, btnPrintDirectSingle
             });
 
@@ -565,38 +523,6 @@ namespace ERP.Reporting
             pnlBulkSidebar.Controls.Add(cmbBulkDateBasis);
             curY += 34;
 
-            lblBulkFormat = new Label
-            {
-                Text = "PRINT FORMAT:",
-                Location = new Point(12, curY),
-                AutoSize = true,
-                Font = new Font("Segoe UI", 8F, FontStyle.Bold),
-                ForeColor = Color.FromArgb(100, 116, 139)
-            };
-            pnlBulkSidebar.Controls.Add(lblBulkFormat);
-            curY += 18;
-
-            cmbBulkFormat = new ComboBox
-            {
-                Location = new Point(12, curY),
-                Width = 370,
-                DropDownStyle = ComboBoxStyle.DropDownList,
-                Font = new Font("Segoe UI", 9F)
-            };
-            cmbBulkFormat.Items.AddRange(new object[] { "A4 Commercial Invoice (Full Page)", "80mm Thermal Receipt (POS Roll)" });
-            cmbBulkFormat.SelectedIndex = ConfigInfo.IsThermalDefault ? 1 : 0;
-            cmbBulkFormat.SelectedIndexChanged += (s, e) =>
-            {
-                bool isThermal = cmbBulkFormat.SelectedIndex == 1;
-                string preferredPrinter = isThermal ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
-                if (!string.IsNullOrWhiteSpace(preferredPrinter) && cmbPrinter != null && cmbPrinter.Items.Contains(preferredPrinter))
-                {
-                    cmbPrinter.SelectedItem = preferredPrinter;
-                }
-            };
-            pnlBulkSidebar.Controls.Add(cmbBulkFormat);
-            curY += 34;
-
             // Action Buttons
             btnBulkPrintDirect = new Button
             {
@@ -725,7 +651,7 @@ namespace ERP.Reporting
                     cmbPrinter.Items.Add(printer);
                 }
 
-                bool isThermal = cmbLayout != null && cmbLayout.SelectedIndex == 1;
+                bool isThermal = ConfigInfo.IsThermalDefault;
                 string preferredPrinter = isThermal ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
 
                 if (!string.IsNullOrWhiteSpace(preferredPrinter) && cmbPrinter.Items.Contains(preferredPrinter))
@@ -874,7 +800,7 @@ namespace ERP.Reporting
                 CustomerBillDataResult result = CustomerBillDataService.ConvertNormalDataSet(ds, customerCode, customerTitle, fromDate, toDate, dateBasis);
 
                 _currentResult = result;
-                var layout = (cmbLayout != null && cmbLayout.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
+                var layout = ConfigInfo.IsThermalDefault ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
                 bool isThermal = layout == CustomerBillPrintLayout.Thermal80mm;
                 if (webView != null && _isWebViewReady && webView.CoreWebView2 != null)
                 {
@@ -908,7 +834,7 @@ namespace ERP.Reporting
         {
             if (webView != null && _isWebViewReady)
             {
-                bool isThermal = cmbLayout != null && cmbLayout.SelectedIndex == 1;
+                bool isThermal = ConfigInfo.IsThermalDefault;
                 if (isThermal)
                 {
                     await TriggerDirectThermalPrintAsync();
@@ -984,7 +910,7 @@ namespace ERP.Reporting
                 return;
             }
 
-            bool isThermal = cmbLayout != null && cmbLayout.SelectedIndex == 1;
+            bool isThermal = ConfigInfo.IsThermalDefault;
             string defaultPrinter = isThermal ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
             string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : defaultPrinter;
 
@@ -1020,7 +946,7 @@ namespace ERP.Reporting
                 return;
             }
 
-            var layout = (cmbBulkFormat != null && cmbBulkFormat.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
+            var layout = ConfigInfo.IsThermalDefault ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
             string defaultPrinter = layout == CustomerBillPrintLayout.Thermal80mm ? ConfigInfo.ThermalPrinterName : ConfigInfo.A4PrinterName;
             string printer = cmbPrinter.SelectedItem != null ? cmbPrinter.SelectedItem.ToString() : defaultPrinter;
             if (string.IsNullOrWhiteSpace(printer))
@@ -1201,7 +1127,7 @@ namespace ERP.Reporting
             string dateBasis = (cmbBulkDateBasis != null && cmbBulkDateBasis.SelectedItem != null && cmbBulkDateBasis.SelectedItem.ToString().StartsWith("Clearing", StringComparison.OrdinalIgnoreCase))
                 ? "ClearingDate"
                 : "VoucherDate";
-            var layout = (cmbBulkFormat != null && cmbBulkFormat.SelectedIndex == 1) ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
+            var layout = ConfigInfo.IsThermalDefault ? CustomerBillPrintLayout.Thermal80mm : CustomerBillPrintLayout.A4Sheet;
 
             SetLoading(true, string.Format("Compiling batch preview for {0} customers...", checkedItems.Count));
 

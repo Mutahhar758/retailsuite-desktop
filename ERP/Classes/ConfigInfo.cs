@@ -108,6 +108,19 @@ namespace ERP
             }
         }
 
+        public static ERP.Reporting.Models.SaleReceiptPrintLayout PreferredSaleReceiptLayout
+        {
+            get
+            {
+                string fmt = DefaultBillFormat ?? "";
+                if (fmt.IndexOf("thermal", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return ERP.Reporting.Models.SaleReceiptPrintLayout.Thermal80mm;
+                if (fmt.IndexOf("a5", StringComparison.OrdinalIgnoreCase) >= 0)
+                    return ERP.Reporting.Models.SaleReceiptPrintLayout.A5Sheet;
+                return ERP.Reporting.Models.SaleReceiptPrintLayout.A4Sheet;
+            }
+        }
+
         public static string LoadDefaultBillFormat()
         {
             try

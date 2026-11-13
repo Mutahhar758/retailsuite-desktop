@@ -1363,7 +1363,7 @@ namespace ERP
                 ? txtVoucherNo.Text.Substring(3)
                 : txtVoucherNo.Text;
 
-            await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewAsync(vno, IsDirect, ERP.Reporting.Models.SaleReceiptPrintLayout.A5Sheet);
+            await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewAsync(vno, IsDirect);
         }
 
         private async void Print(bool IsDirect)
@@ -1373,7 +1373,7 @@ namespace ERP
                 ? txtVoucherNo.Text.Substring(3)
                 : txtVoucherNo.Text;
 
-            await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewAsync(vno, IsDirect, ERP.Reporting.Models.SaleReceiptPrintLayout.Thermal80mm);
+            await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewAsync(vno, IsDirect);
         }
 
         private void txtCashReceipt_TextChanged(object sender, EventArgs e)

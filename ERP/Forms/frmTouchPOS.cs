@@ -1415,7 +1415,7 @@ namespace ERP.Forms
                     {
                         try
                         {
-                            await SaleReceiptViewer.PrintOrPreviewAsync(voucherNo, isDirect: true, preferredLayout: SaleReceiptPrintLayout.Thermal80mm);
+                            await SaleReceiptViewer.PrintOrPreviewAsync(voucherNo, isDirect: true);
                         }
                         catch (Exception printEx)
                         {
