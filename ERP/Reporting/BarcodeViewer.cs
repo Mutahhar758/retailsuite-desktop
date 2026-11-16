@@ -37,6 +37,8 @@ namespace ERP.Reporting
         private Label lblPrice;
         private TextBox txtPrice;
         private CheckBox chkVariableWeight;
+        private RadioButton rbByQty;
+        private RadioButton rbByAmount;
         private Label lblWeightQty;
         private NumericUpDown nudWeightQty;
         private Label lblUnitName;
@@ -211,13 +213,37 @@ namespace ERP.Reporting
             // Variable Weight Checkbox
             chkVariableWeight = new CheckBox
             {
-                Text = "Variable Weight / Quantity (Put Qty in Barcode)",
+                Text = "Variable Weight / Packet",
                 Location = new Point(14, curY),
-                Width = 330,
+                Width = 170,
                 Font = new Font("Segoe UI", 8F, FontStyle.Bold),
                 ForeColor = Color.FromArgb(15, 23, 42)
             };
             pnlSidebar.Controls.Add(chkVariableWeight);
+
+            rbByQty = new RadioButton
+            {
+                Text = "By Qty",
+                Location = new Point(188, curY - 1),
+                Width = 68,
+                Font = new Font("Segoe UI", 7.8F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(30, 64, 175),
+                Checked = true,
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(rbByQty);
+
+            rbByAmount = new RadioButton
+            {
+                Text = "By Amount",
+                Location = new Point(258, curY - 1),
+                Width = 90,
+                Font = new Font("Segoe UI", 7.8F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(30, 64, 175),
+                Checked = false,
+                Visible = false
+            };
+            pnlSidebar.Controls.Add(rbByAmount);
             curY += 26;
 
             // Variable Weight Controls: Qty & Amount to calculate Qty
@@ -313,9 +339,45 @@ namespace ERP.Reporting
             pnlSidebar.Controls.Add(lblCalcHelp);
             curY += 26;
 
+            Action updateVariableModeUi = () =>
+            {
+                bool isVar = chkVariableWeight.Checked;
+                bool byAmt = isVar && rbByAmount.Checked;
+                if (chkIncludePrice != null)
+                {
+                    if (byAmt)
+                    {
+                        if (chkIncludePrice.Text != "Show Qty on Sticker")
+                        {
+                            chkIncludePrice.Text = "Show Qty on Sticker";
+                            chkIncludePrice.Checked = false;
+                        }
+                    }
+                    else
+                    {
+                        if (chkIncludePrice.Text != "Show Price / Amount on Sticker")
+                        {
+                            chkIncludePrice.Text = "Show Price / Amount on Sticker";
+                            chkIncludePrice.Checked = true;
+                        }
+                    }
+                }
+                if (lblCalcHelp != null)
+                {
+                    lblCalcHelp.Text = byAmt
+                        ? "* Barcode stores packet Amount (Rs). Qty is calculated at scan time."
+                        : "* Barcode stores item & Qty. Rate is resolved at scan time.";
+                }
+            };
+
+            rbByQty.CheckedChanged += (s, e) => updateVariableModeUi();
+            rbByAmount.CheckedChanged += (s, e) => updateVariableModeUi();
+
             chkVariableWeight.CheckedChanged += (s, e) =>
             {
                 bool isVar = chkVariableWeight.Checked;
+                rbByQty.Visible = isVar;
+                rbByAmount.Visible = isVar;
                 lblWeightQty.Visible = isVar;
                 nudWeightQty.Visible = isVar;
                 lblUnitName.Visible = isVar;
@@ -337,6 +399,7 @@ namespace ERP.Reporting
                     }
                     SyncQtyFromRateAndAmount();
                 }
+                updateVariableModeUi();
             };
 
             nudWeightQty.ValueChanged += (s, e) =>
@@ -345,6 +408,7 @@ namespace ERP.Reporting
                 try
                 {
                     _isSyncingAmounts = true;
+                    if (!rbByQty.Checked) rbByQty.Checked = true;
                     if (decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal rate) && rate > 0)
                     {
                         txtCalcAmount.Text = Math.Round(nudWeightQty.Value * rate).ToString("0");
@@ -362,13 +426,16 @@ namespace ERP.Reporting
                 try
                 {
                     _isSyncingAmounts = true;
-                    if (decimal.TryParse(txtCalcAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amt) &&
-                        decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal rate) && rate > 0)
+                    if (decimal.TryParse(txtCalcAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal amt) && amt > 0)
                     {
-                        decimal calculatedQty = Math.Max(0.001m, Math.Round(amt / rate, 3));
-                        if (calculatedQty <= nudWeightQty.Maximum)
+                        if (!rbByAmount.Checked) rbByAmount.Checked = true;
+                        if (decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out decimal rate) && rate > 0)
                         {
-                            nudWeightQty.Value = calculatedQty;
+                            decimal calculatedQty = Math.Max(0.001m, Math.Round(amt / rate, 3));
+                            if (calculatedQty <= nudWeightQty.Maximum)
+                            {
+                                nudWeightQty.Value = calculatedQty;
+                            }
                         }
                     }
                 }
@@ -906,6 +973,7 @@ namespace ERP.Reporting
 
             string barcode;
             bool isVariable = chkVariableWeight.Checked;
+            bool isByAmount = isVariable && rbByAmount != null && rbByAmount.Checked;
             decimal? varQty = null;
             string varUnit = null;
             decimal rate = 0m;
@@ -916,26 +984,41 @@ namespace ERP.Reporting
                 decimal qty = nudWeightQty.Value;
                 decimal.TryParse(txtCalcRate.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out rate);
                 rate = Math.Round(rate);
-                totalAmount = Math.Round(qty * rate);
+
+                decimal enteredAmt = 0m;
+                bool hasEnteredAmt = decimal.TryParse(txtCalcAmount.Text.Trim(), NumberStyles.Any, CultureInfo.InvariantCulture, out enteredAmt) && enteredAmt > 0m;
+                totalAmount = (isByAmount && hasEnteredAmt) ? Math.Round(enteredAmt) : Math.Round(qty * rate);
 
                 string rawBase = !string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : (!string.IsNullOrWhiteSpace(item.ItemKey) ? item.ItemKey : item.Id);
                 string baseCode = rawBase?.Replace("\r", string.Empty).Replace("\n", string.Empty).Trim() ?? "000000";
 
                 // Format as compact all-numeric Code 128C format:
-                // 12-digit format: 2 (prefix) + 6-digit Item ID + 5-digit Qty (x1000) (Qty Only, NO AMOUNT IN BARCODE NUMBER)
+                // - By Amount: 12-digit format: 3 (prefix) + 6-digit Item ID + 5-digit Amount (Rs.)
+                // - By Qty:    12-digit format: 2 (prefix) + 6-digit Item ID + 5-digit Qty (x1000)
                 string idStr = !string.IsNullOrWhiteSpace(item.Id) ? item.Id.Trim() : baseCode;
                 if (long.TryParse(idStr, out long numId) && numId <= 999999)
                 {
                     string idPart = numId.ToString("D6");
-                    int qtyGrams = Math.Min(99999, Math.Max(1, (int)Math.Round(qty * 1000m)));
-                    barcode = string.Format(CultureInfo.InvariantCulture, "2{0}{1:D5}", idPart, qtyGrams);
+                    if (isByAmount)
+                    {
+                        int amtInt = Math.Min(99999, Math.Max(1, (int)Math.Round(totalAmount > 0 ? totalAmount : 1m)));
+                        barcode = string.Format(CultureInfo.InvariantCulture, "3{0}{1:D5}", idPart, amtInt);
+                    }
+                    else
+                    {
+                        int qtyGrams = Math.Min(99999, Math.Max(1, (int)Math.Round(qty * 1000m)));
+                        barcode = string.Format(CultureInfo.InvariantCulture, "2{0}{1:D5}", idPart, qtyGrams);
+                    }
                 }
                 else
                 {
-                    barcode = string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
+                    barcode = isByAmount
+                        ? string.Format(CultureInfo.InvariantCulture, "VW-{0}-Q{1:0.###}-P{2:0}", baseCode, qty, totalAmount)
+                        : string.Format(CultureInfo.InvariantCulture, "{0}*{1:0.###}", baseCode, qty);
                 }
 
-                varQty = qty;
+                bool showQtyOnSticker = !isByAmount || (chkIncludePrice != null && chkIncludePrice.Checked);
+                varQty = showQtyOnSticker ? (decimal?)qty : null;
                 varUnit = GetUnitTitle(item);
             }
             else
@@ -944,7 +1027,7 @@ namespace ERP.Reporting
                 barcode = (!string.IsNullOrWhiteSpace(item.Barcode) ? item.Barcode : ("200" + (item.Id ?? "101").PadLeft(7, '0'))).Replace("\r", string.Empty).Replace("\n", string.Empty).Trim();
             }
 
-            var (subQty, subUnit) = isVariable ? ResolveSubUnit(item, varQty ?? 1m) : (1m, GetUnitTitle(item));
+            var (subQty, subUnit) = (isVariable && varQty.HasValue) ? ResolveSubUnit(item, varQty.Value) : (1m, GetUnitTitle(item));
             string companySub = GetCompanySubHeader();
 
             var labelItem = new BarcodeLabelItem
@@ -957,8 +1040,8 @@ namespace ERP.Reporting
                 IsVariableWeight = isVariable,
                 Qty = varQty,
                 Unit = varUnit,
-                DisplayQty = isVariable ? subQty : (decimal?)null,
-                DisplayUnit = isVariable ? subUnit : null,
+                DisplayQty = (isVariable && varQty.HasValue) ? subQty : (decimal?)null,
+                DisplayUnit = (isVariable && varQty.HasValue) ? subUnit : null,
                 TotalAmount = isVariable ? totalAmount : (decimal?)null,
                 CompanySubHeader = companySub
             };
@@ -970,7 +1053,7 @@ namespace ERP.Reporting
             try
             {
                 float spread = nudSpread != null ? (float)nudSpread.Value : 2.0f;
-                bool incPrice = chkIncludePrice == null || chkIncludePrice.Checked;
+                bool incPrice = isByAmount ? true : (chkIncludePrice == null || chkIncludePrice.Checked);
                 bool incRate = chkIncludeRate != null && chkIncludeRate.Checked;
                 bool incSub = chkIncludeCompanySubHeader == null || chkIncludeCompanySubHeader.Checked;
                 var doc = new BarcodeDocument(new List<BarcodeLabelItem> { labelItem }, layout, spread, companySub,
@@ -1029,7 +1112,8 @@ namespace ERP.Reporting
                 {
                     float spread = nudSpread != null ? (float)nudSpread.Value : 2.0f;
                     string companySub = GetCompanySubHeader();
-                    bool incPrice = chkIncludePrice == null || chkIncludePrice.Checked;
+                    bool isByAmt = chkVariableWeight.Checked && rbByAmount != null && rbByAmount.Checked;
+                    bool incPrice = isByAmt ? true : (chkIncludePrice == null || chkIncludePrice.Checked);
                     bool incRate = chkIncludeRate != null && chkIncludeRate.Checked;
                     bool incSub = chkIncludeCompanySubHeader == null || chkIncludeCompanySubHeader.Checked;
                     var doc = new BarcodeDocument(new List<BarcodeLabelItem> { _currentItem }, layout, spread, companySub,

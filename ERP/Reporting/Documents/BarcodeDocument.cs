@@ -257,27 +257,34 @@ namespace ERP.Reporting.Documents
 
                                     if (isVariable)
                                     {
-                                        decimal tot = Math.Round(item.TotalAmount ?? (item.Qty.Value * item.Rate));
+                                        decimal tot = Math.Round(item.TotalAmount ?? ((item.Qty ?? 1m) * item.Rate));
                                         string u = !string.IsNullOrWhiteSpace(item.Unit) && !decimal.TryParse(item.Unit, out _) ? item.Unit : "kg";
+                                        bool hasQty = item.Qty.HasValue && item.Qty.Value > 0m;
 
-                                        decimal dispQty = item.DisplayQty.HasValue ? item.DisplayQty.Value : item.Qty.Value;
-                                        string dispUnit = !string.IsNullOrWhiteSpace(item.DisplayUnit) ? item.DisplayUnit : u;
-                                        string formattedQty = dispQty % 1m == 0m ? dispQty.ToString("0") : dispQty.ToString("0.###");
-
-                                        if (_includePrice)
+                                        if (hasQty)
                                         {
-                                            string priceStr = tot > 0
-                                                ? string.Format("Qty: {0} {1} • Rs. {2:#,##0}", formattedQty, dispUnit, tot)
-                                                : string.Format("Qty: {0} {1}", formattedQty, dispUnit);
+                                            decimal dispQty = item.DisplayQty.HasValue ? item.DisplayQty.Value : item.Qty.Value;
+                                            string dispUnit = !string.IsNullOrWhiteSpace(item.DisplayUnit) ? item.DisplayUnit : u;
+                                            string formattedQty = dispQty % 1m == 0m ? dispQty.ToString("0") : dispQty.ToString("0.###");
 
-                                            col.Item().AlignCenter().Text(priceStr)
-                                                .FontSize(priceFontSize)
-                                                .Bold()
-                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                            if (_includePrice && tot > 0)
+                                            {
+                                                col.Item().AlignCenter().Text(string.Format("Qty: {0} {1} • Rs. {2:#,##0}", formattedQty, dispUnit, tot))
+                                                    .FontSize(priceFontSize)
+                                                    .Bold()
+                                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                                            }
+                                            else
+                                            {
+                                                col.Item().AlignCenter().Text(string.Format("Qty: {0} {1}", formattedQty, dispUnit))
+                                                    .FontSize(priceFontSize)
+                                                    .Bold()
+                                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                                            }
                                         }
-                                        else
+                                        else if (_includePrice && tot > 0)
                                         {
-                                            col.Item().AlignCenter().Text(string.Format("Qty: {0} {1}", formattedQty, dispUnit))
+                                            col.Item().AlignCenter().Text(string.Format("Rs. {0:#,##0}", tot))
                                                 .FontSize(priceFontSize)
                                                 .Bold()
                                                 .FontColor(QuestPDF.Helpers.Colors.Black);
@@ -379,29 +386,36 @@ namespace ERP.Reporting.Documents
 
                         col.Item().PaddingVertical(1).AlignCenter().Height(item.IsVariableWeight ? 11 : 13, Unit.Millimetre).Image(barcodeBytes);
 
-                        if (item.IsVariableWeight && item.Qty.HasValue)
+                        if (item.IsVariableWeight || (item.Qty.HasValue && item.Qty.Value > 0m))
                         {
-                            decimal tot = Math.Round(item.TotalAmount ?? (item.Qty.Value * item.Rate));
+                            decimal tot = Math.Round(item.TotalAmount ?? ((item.Qty ?? 1m) * item.Rate));
                             string u = !string.IsNullOrWhiteSpace(item.Unit) && !decimal.TryParse(item.Unit, out _) ? item.Unit : "kg";
+                            bool hasQty = item.Qty.HasValue && item.Qty.Value > 0m;
 
-                            decimal dispQty = item.DisplayQty.HasValue ? item.DisplayQty.Value : item.Qty.Value;
-                            string dispUnit = !string.IsNullOrWhiteSpace(item.DisplayUnit) ? item.DisplayUnit : u;
-                            string formattedQty = dispQty % 1m == 0m ? dispQty.ToString("0") : dispQty.ToString("0.###");
-
-                            if (_includePrice)
+                            if (hasQty)
                             {
-                                string priceStr = tot > 0
-                                    ? string.Format("Qty: {0} {1} • Rs. {2:#,##0}", formattedQty, dispUnit, tot)
-                                    : string.Format("Qty: {0} {1}", formattedQty, dispUnit);
+                                decimal dispQty = item.DisplayQty.HasValue ? item.DisplayQty.Value : item.Qty.Value;
+                                string dispUnit = !string.IsNullOrWhiteSpace(item.DisplayUnit) ? item.DisplayUnit : u;
+                                string formattedQty = dispQty % 1m == 0m ? dispQty.ToString("0") : dispQty.ToString("0.###");
 
-                                col.Item().AlignCenter().Text(priceStr)
-                                    .FontSize(8.5f)
-                                    .Bold()
-                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                                if (_includePrice && tot > 0)
+                                {
+                                    col.Item().AlignCenter().Text(string.Format("Qty: {0} {1} • Rs. {2:#,##0}", formattedQty, dispUnit, tot))
+                                        .FontSize(8.5f)
+                                        .Bold()
+                                        .FontColor(QuestPDF.Helpers.Colors.Black);
+                                }
+                                else
+                                {
+                                    col.Item().AlignCenter().Text(string.Format("Qty: {0} {1}", formattedQty, dispUnit))
+                                        .FontSize(8.5f)
+                                        .Bold()
+                                        .FontColor(QuestPDF.Helpers.Colors.Black);
+                                }
                             }
-                            else
+                            else if (_includePrice && tot > 0)
                             {
-                                col.Item().AlignCenter().Text(string.Format("Qty: {0} {1}", formattedQty, dispUnit))
+                                col.Item().AlignCenter().Text(string.Format("Rs. {0:#,##0}", tot))
                                     .FontSize(8.5f)
                                     .Bold()
                                     .FontColor(QuestPDF.Helpers.Colors.Black);
@@ -496,29 +510,36 @@ namespace ERP.Reporting.Documents
 
                                     sticker.Item().PaddingVertical(2).AlignCenter().Height(item.IsVariableWeight ? 13 : 16, Unit.Millimetre).Image(barcodeBytes);
 
-                                    if (item.IsVariableWeight && item.Qty.HasValue)
+                                    if (item.IsVariableWeight || (item.Qty.HasValue && item.Qty.Value > 0m))
                                     {
-                                        decimal tot = Math.Round(item.TotalAmount ?? (item.Qty.Value * item.Rate));
+                                        decimal tot = Math.Round(item.TotalAmount ?? ((item.Qty ?? 1m) * item.Rate));
                                         string u = !string.IsNullOrWhiteSpace(item.Unit) && !decimal.TryParse(item.Unit, out _) ? item.Unit : "kg";
+                                        bool hasQty = item.Qty.HasValue && item.Qty.Value > 0m;
 
-                                        decimal dispQty = item.DisplayQty.HasValue ? item.DisplayQty.Value : item.Qty.Value;
-                                        string dispUnit = !string.IsNullOrWhiteSpace(item.DisplayUnit) ? item.DisplayUnit : u;
-                                        string formattedQty = dispQty % 1m == 0m ? dispQty.ToString("0") : dispQty.ToString("0.###");
-
-                                        if (_includePrice)
+                                        if (hasQty)
                                         {
-                                            string priceStr = tot > 0
-                                                ? string.Format("Qty: {0} {1} • Rs. {2:#,##0}", formattedQty, dispUnit, tot)
-                                                : string.Format("Qty: {0} {1}", formattedQty, dispUnit);
+                                            decimal dispQty = item.DisplayQty.HasValue ? item.DisplayQty.Value : item.Qty.Value;
+                                            string dispUnit = !string.IsNullOrWhiteSpace(item.DisplayUnit) ? item.DisplayUnit : u;
+                                            string formattedQty = dispQty % 1m == 0m ? dispQty.ToString("0") : dispQty.ToString("0.###");
 
-                                            sticker.Item().AlignCenter().Text(priceStr)
-                                                .FontSize(8.5f)
-                                                .Bold()
-                                                .FontColor(QuestPDF.Helpers.Colors.Black);
+                                            if (_includePrice && tot > 0)
+                                            {
+                                                sticker.Item().AlignCenter().Text(string.Format("Qty: {0} {1} • Rs. {2:#,##0}", formattedQty, dispUnit, tot))
+                                                    .FontSize(8.5f)
+                                                    .Bold()
+                                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                                            }
+                                            else
+                                            {
+                                                sticker.Item().AlignCenter().Text(string.Format("Qty: {0} {1}", formattedQty, dispUnit))
+                                                    .FontSize(8.5f)
+                                                    .Bold()
+                                                    .FontColor(QuestPDF.Helpers.Colors.Black);
+                                            }
                                         }
-                                        else
+                                        else if (_includePrice && tot > 0)
                                         {
-                                            sticker.Item().AlignCenter().Text(string.Format("Qty: {0} {1}", formattedQty, dispUnit))
+                                            sticker.Item().AlignCenter().Text(string.Format("Rs. {0:#,##0}", tot))
                                                 .FontSize(8.5f)
                                                 .Bold()
                                                 .FontColor(QuestPDF.Helpers.Colors.Black);

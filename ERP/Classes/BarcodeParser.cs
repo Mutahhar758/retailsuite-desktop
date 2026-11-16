@@ -70,6 +70,58 @@ namespace ERP.Classes
                 }
             }
 
+            // 0a-2. Compact 12-digit Variable Barcode (By Amount): 3 + IIIIII + PPPPP
+            // Prefix 3 (1 digit) + Item ID (6 digits) + Amount in Rs. (5 digits)
+            // Even length (12 digits) for compact Code-128C; calculates qty from live rate at scan time.
+            // e.g. 300004100050 -> Item 000041, Rs. 50 packet -> qty = Round(50 / rate, 4)
+            if (cleanDigits.Length == 12 && cleanDigits.StartsWith("3"))
+            {
+                bool isExactBarcode = false;
+                if (dtItems.Columns.Contains("Barcode"))
+                {
+                    foreach (DataRow r in dtItems.Rows)
+                    {
+                        if (r["Barcode"] != DBNull.Value &&
+                            string.Equals(r["Barcode"].ToString().Trim(), raw, StringComparison.OrdinalIgnoreCase))
+                        {
+                            isExactBarcode = true;
+                            break;
+                        }
+                    }
+                }
+
+                if (!isExactBarcode)
+                {
+                    string itemCode = cleanDigits.Substring(1, 6);
+                    string amtStr = cleanDigits.Substring(7, 5);
+
+                    DataRow dr = FindItemByPlu(itemCode, dtItems) ?? FindItemByCode(itemCode, dtItems);
+                    if (dr != null && int.TryParse(amtStr, out int rawAmt) && rawAmt > 0)
+                    {
+                        decimal totalAmt = decimal.Round(rawAmt, 2);
+                        decimal baseRate = dr["PriRate"] != DBNull.Value ? Convert.ToDecimal(dr["PriRate"]) : 0m;
+                        if (rateResolver != null && dr.Table.Columns.Contains("Id") && dr["Id"] != DBNull.Value)
+                            baseRate = rateResolver(dr["Id"].ToString(), baseRate);
+
+                        decimal parsedQty = baseRate > 0m
+                            ? decimal.Round(totalAmt / baseRate, 4, MidpointRounding.AwayFromZero)
+                            : 1m;
+                        string unit = ResolveUnitTitle(dr);
+
+                        return new ParsedBarcodeItem
+                        {
+                            ItemRow = dr,
+                            Qty = parsedQty,
+                            Rate = baseRate > 0m ? baseRate : totalAmt,
+                            Amount = totalAmt,
+                            IsVariableWeight = true,
+                            Unit = unit,
+                            RawCode = raw
+                        };
+                    }
+                }
+            }
+
             // 0b. Compact 18-digit Variable Barcode: 2 + IIIIII + QQQQQ + AAAAAA
             // Prefix 2 (1 digit) + Item ID (6 digits) + Qty*1000 (5 digits) + Amount (6 digits, whole number max 9 lac)
             // If Amount is 000000, resolves live rate from product at scan time.
