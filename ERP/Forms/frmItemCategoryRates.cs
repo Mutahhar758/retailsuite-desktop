@@ -19,9 +19,24 @@ namespace ERP.Forms
         private bool _isSaving;
 
         public List<ItemCustomerCategoryPriceUpsertRequest> ConfiguredRates { get; private set; }
+        public decimal? EditedPriRate { get; private set; }
+        public decimal? EditedSecSalePrice { get; private set; }
+        public decimal? EditedMinSalePrice { get; private set; }
         private readonly List<ItemCustomerCategoryPriceUpsertRequest> _initialRates;
+        private readonly bool _deferSave;
+        private TextBox _txtPriRate;
+        private TextBox _txtSecSalePrice;
+        private TextBox _txtMinSalePrice;
 
-        public frmItemCategoryRates(string itemId, string itemTitle, decimal defaultPriRate, decimal? defaultSecRate, List<ItemCustomerCategoryPriceUpsertRequest> initialRates = null)
+        public frmItemCategoryRates(
+            string itemId,
+            string itemTitle,
+            decimal defaultPriRate,
+            decimal? defaultSecRate,
+            List<ItemCustomerCategoryPriceUpsertRequest> initialRates = null,
+            bool deferSave = false,
+            decimal? minSalePrice = null,
+            bool showSecondaryRate = true)
         {
             InitializeComponent();
             _itemId = itemId;
@@ -29,6 +44,7 @@ namespace ERP.Forms
             _defaultPriRate = defaultPriRate;
             _defaultSecRate = defaultSecRate;
             _initialRates = initialRates;
+            _deferSave = deferSave;
 
             _inventoryApiService = new InventoryApiService();
             _customerCategoryApiService = new CustomerCategoryApiService();
@@ -37,6 +53,62 @@ namespace ERP.Forms
                 ? $"Category Rates - {_itemTitle} (New Product)"
                 : $"Category Rates - {_itemTitle} ({_itemId})";
             lblDefaults.Text = $"Default Rates: Primary = {_defaultPriRate:N2}" + (_defaultSecRate.HasValue ? $", Secondary = {_defaultSecRate.Value:N2}" : "");
+
+            if (_deferSave)
+            {
+                InitializeBasePricePanel(defaultPriRate, defaultSecRate, minSalePrice, showSecondaryRate);
+            }
+        }
+
+        private void InitializeBasePricePanel(decimal priRate, decimal? secRate, decimal? minSalePrice, bool showSecondaryRate)
+        {
+            var pnlBase = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 56,
+                BackColor = System.Drawing.Color.WhiteSmoke,
+                Padding = new Padding(12, 6, 12, 6)
+            };
+
+            var lblPri = new Label { Text = "Sale Price:", AutoSize = true, Location = new System.Drawing.Point(14, 8) };
+            _txtPriRate = new TextBox
+            {
+                Location = new System.Drawing.Point(14, 26),
+                Width = 120,
+                Text = priRate.ToString("0.##")
+            };
+            pnlBase.Controls.Add(lblPri);
+            pnlBase.Controls.Add(_txtPriRate);
+
+            int nextX = 150;
+            if (showSecondaryRate)
+            {
+                var lblSec = new Label { Text = "Sec. Sale Price:", AutoSize = true, Location = new System.Drawing.Point(nextX, 8) };
+                _txtSecSalePrice = new TextBox
+                {
+                    Location = new System.Drawing.Point(nextX, 26),
+                    Width = 120,
+                    Text = secRate.HasValue ? secRate.Value.ToString("0.##") : "0"
+                };
+                pnlBase.Controls.Add(lblSec);
+                pnlBase.Controls.Add(_txtSecSalePrice);
+                nextX += 136;
+            }
+
+            var lblMin = new Label { Text = "Min Sale Price:", AutoSize = true, Location = new System.Drawing.Point(nextX, 8) };
+            _txtMinSalePrice = new TextBox
+            {
+                Location = new System.Drawing.Point(nextX, 26),
+                Width = 120,
+                Text = minSalePrice.HasValue ? minSalePrice.Value.ToString("0.##") : string.Empty
+            };
+            pnlBase.Controls.Add(lblMin);
+            pnlBase.Controls.Add(_txtMinSalePrice);
+
+            this.Controls.Add(pnlBase);
+            pnlBase.BringToFront();
+            dgvRates.BringToFront();
+            this.Height += 56;
         }
 
         private async void frmItemCategoryRates_Load(object sender, EventArgs e)
@@ -137,10 +209,24 @@ namespace ERP.Forms
 
                 ConfiguredRates = request;
 
-                if (!string.IsNullOrWhiteSpace(_itemId) && _itemId != "0")
+                if (_deferSave)
+                {
+                    if (_txtPriRate != null && decimal.TryParse(_txtPriRate.Text, out decimal parsedPri))
+                        EditedPriRate = parsedPri;
+                    if (_txtSecSalePrice != null && decimal.TryParse(_txtSecSalePrice.Text, out decimal parsedSec))
+                        EditedSecSalePrice = parsedSec;
+                    if (_txtMinSalePrice != null && decimal.TryParse(_txtMinSalePrice.Text, out decimal parsedMin))
+                        EditedMinSalePrice = parsedMin;
+                }
+
+                if (!_deferSave && !string.IsNullOrWhiteSpace(_itemId) && _itemId != "0")
                 {
                     await _inventoryApiService.SaveItemCategoryPricesAsync(_itemId, request);
                     MessageBox.Show("Category rates saved successfully!", "Success", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else if (_deferSave)
+                {
+                    // Caller (e.g. Purchase form) will persist ConfiguredRates atomically on save.
                 }
                 else
                 {

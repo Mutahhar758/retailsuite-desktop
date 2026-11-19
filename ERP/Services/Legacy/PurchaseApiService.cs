@@ -370,6 +370,25 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("batteryHealth")]
         public int? BatteryHealth { get; set; }
+
+        [JsonProperty("salePrice")]
+        public decimal? SalePrice { get; set; }
+
+        [JsonProperty("secSalePrice")]
+        public decimal? SecSalePrice { get; set; }
+
+        [JsonProperty("minSalePrice")]
+        public decimal? MinSalePrice { get; set; }
+
+        [JsonProperty("customerCategoryPrices")]
+        public List<ItemCustomerCategoryPriceUpsertRequest> CustomerCategoryPrices { get; set; }
+    }
+
+    internal class PurchaseRowPriceState
+    {
+        public decimal? SecSalePrice { get; set; }
+        public decimal? MinSalePrice { get; set; }
+        public List<ItemCustomerCategoryPriceUpsertRequest> CustomerCategoryPrices { get; set; }
     }
 
     internal class PurchasePagedBody

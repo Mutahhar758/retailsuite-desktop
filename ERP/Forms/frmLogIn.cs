@@ -197,6 +197,9 @@ namespace ERP
                         ApiSession.EnableCarriage = string.Equals(carriageSetting, "true", StringComparison.OrdinalIgnoreCase);
                     }
 
+                    var purchaseSalePriceSetting = await _settingsApiService.GetSettingValueAsync("Purchase.AllowSalePriceUpdate");
+                    ApiSession.AllowSalePriceUpdateInPurchase = string.Equals(purchaseSalePriceSetting, "true", StringComparison.OrdinalIgnoreCase);
+
                     var fastScanSetting = await _settingsApiService.GetSettingValueAsync("Barcode.FastScanEnabled");
                     ApiSession.IsBarcodeFastScanEnabled = string.Equals(fastScanSetting, "true", StringComparison.OrdinalIgnoreCase);
 

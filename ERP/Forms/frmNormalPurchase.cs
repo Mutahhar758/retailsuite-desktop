@@ -174,6 +174,9 @@ namespace ERP
             dtItems.Columns.Add("DefaultUnit", typeof(string));
             dtItems.Columns.Add("RequireImei", typeof(bool));
             dtItems.Columns.Add("AdditionalUnits", typeof(string));
+            dtItems.Columns.Add("SalePriRate", typeof(decimal));
+            dtItems.Columns.Add("SaleSecRate", typeof(decimal));
+            dtItems.Columns.Add("MinSalePrice", typeof(decimal));
 
             dtUnits.Columns.Add("Code", typeof(string));
             dtUnits.Columns.Add("Title", typeof(string));
@@ -206,7 +209,11 @@ namespace ERP
 
             dtItems.Rows.Clear();
             foreach (var item in itemsTask.Result)
-                dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.LastPurchaseRate ?? item.PriRate, item.LastPurchaseSecRate ?? item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.RequireImei == true, item.AdditionalUnits);
+                dtItems.Rows.Add(
+                    item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode,
+                    item.LastPurchaseRate ?? item.PriRate, item.LastPurchaseSecRate ?? item.SecRate,
+                    item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.RequireImei == true, item.AdditionalUnits,
+                    item.PriRate, item.SecRate, item.MinSalePrice.HasValue ? (object)item.MinSalePrice.Value : DBNull.Value);
 
             dtUnits = UnitConversionHelper.CreateUnitsTable(unitsTask.Result);
 
@@ -707,6 +714,36 @@ namespace ERP
                 if (dgvSale.Columns.Contains("clnPtaStatus")) dgvSale.Columns["clnPtaStatus"].Visible = false;
                 if (dgvSale.Columns.Contains("clnBatteryHealth")) dgvSale.Columns["clnBatteryHealth"].Visible = false;
                 if (dgvSale.Columns.Contains("clnConditionNote")) dgvSale.Columns["clnConditionNote"].Visible = false;
+            }
+
+            if (!dgvSale.Columns.Contains("clnSalePrice"))
+            {
+                var colSalePrice = new DataGridViewTextBoxColumn
+                {
+                    Name = "clnSalePrice",
+                    HeaderText = "Sale Price",
+                    Width = 85,
+                    Visible = ApiSession.AllowSalePriceUpdateInPurchase,
+                    DefaultCellStyle = { Alignment = DataGridViewContentAlignment.MiddleRight }
+                };
+                var colCatPrices = new DataGridViewButtonColumn
+                {
+                    Name = "clnCatPrices",
+                    HeaderText = "Cat. Rates",
+                    Text = "Rates",
+                    UseColumnTextForButtonValue = true,
+                    Visible = ApiSession.AllowSalePriceUpdateInPurchase,
+                    Width = 75
+                };
+
+                int insertIdx = clnAmount != null ? clnAmount.Index : dgvSale.Columns.Count;
+                dgvSale.Columns.Insert(insertIdx, colSalePrice);
+                dgvSale.Columns.Insert(insertIdx + 1, colCatPrices);
+            }
+            else
+            {
+                dgvSale.Columns["clnSalePrice"].Visible = ApiSession.AllowSalePriceUpdateInPurchase;
+                dgvSale.Columns["clnCatPrices"].Visible = ApiSession.AllowSalePriceUpdateInPurchase;
             }
         }
 
@@ -1292,6 +1329,23 @@ namespace ERP
                     dgvSale["clnSecQty", rowInd].Value = "0";
                 dgvSale["clnSecRate", rowInd].Value = dr["SecRate"]?.ToString() ?? "0";
             }
+
+            PopulateRowSalePrices(rowInd, dr.Row);
+        }
+
+        private void PopulateRowSalePrices(int rowInd, DataRow itemRow)
+        {
+            if (itemRow == null || rowInd < 0 || rowInd >= dgvSale.Rows.Count) return;
+
+            if (dgvSale.Columns.Contains("clnSalePrice") && itemRow.Table.Columns.Contains("SalePriRate"))
+                dgvSale["clnSalePrice", rowInd].Value = itemRow["SalePriRate"] != DBNull.Value ? Convert.ToDecimal(itemRow["SalePriRate"]).ToString("0.##") : "0";
+
+            dgvSale.Rows[rowInd].Tag = new PurchaseRowPriceState
+            {
+                SecSalePrice = itemRow.Table.Columns.Contains("SaleSecRate") && itemRow["SaleSecRate"] != DBNull.Value ? (decimal?)Convert.ToDecimal(itemRow["SaleSecRate"]) : null,
+                MinSalePrice = itemRow.Table.Columns.Contains("MinSalePrice") && itemRow["MinSalePrice"] != DBNull.Value ? (decimal?)Convert.ToDecimal(itemRow["MinSalePrice"]) : null,
+                CustomerCategoryPrices = null
+            };
         }
 
         private void dgvPurchase_DataError(object sender, DataGridViewDataErrorEventArgs e)
@@ -1624,7 +1678,11 @@ namespace ERP
                     Imei2 = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnImei2") ? Convert.ToString(row.Cells["clnImei2"].Value) : null,
                     PtaStatus = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnPtaStatus") ? Convert.ToString(row.Cells["clnPtaStatus"].Value) : null,
                     BatteryHealth = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnBatteryHealth") && int.TryParse(Convert.ToString(row.Cells["clnBatteryHealth"].Value), out int bh) ? (int?)bh : null,
-                    ConditionNote = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnConditionNote") ? Convert.ToString(row.Cells["clnConditionNote"].Value) : null
+                    ConditionNote = ApiSession.HasMobileShopFeature && dgvSale.Columns.Contains("clnConditionNote") ? Convert.ToString(row.Cells["clnConditionNote"].Value) : null,
+                    SalePrice = ApiSession.AllowSalePriceUpdateInPurchase && dgvSale.Columns.Contains("clnSalePrice") && decimal.TryParse(Convert.ToString(row.Cells["clnSalePrice"].Value), out decimal sp) ? (decimal?)sp : null,
+                    SecSalePrice = ApiSession.AllowSalePriceUpdateInPurchase ? (row.Tag as PurchaseRowPriceState)?.SecSalePrice : null,
+                    MinSalePrice = ApiSession.AllowSalePriceUpdateInPurchase ? (row.Tag as PurchaseRowPriceState)?.MinSalePrice : null,
+                    CustomerCategoryPrices = ApiSession.AllowSalePriceUpdateInPurchase ? (row.Tag as PurchaseRowPriceState)?.CustomerCategoryPrices : null
                 });
             }
 
@@ -1940,6 +1998,39 @@ namespace ERP
 
         private void dgvSale_CellContentClick(object sender, DataGridViewCellEventArgs e)
         {
+            if (e.RowIndex < 0 || e.ColumnIndex < 0) return;
+            if (dgvSale.Columns[e.ColumnIndex].Name == "clnCatPrices")
+            {
+                var row = dgvSale.Rows[e.RowIndex];
+                string itemId = Convert.ToString(row.Cells[clnItemNo.Index].Value);
+                if (string.IsNullOrWhiteSpace(itemId)) return;
+
+                string itemTitle = Convert.ToString(row.Cells[clnItemNo.Index].FormattedValue) ?? itemId;
+                decimal salePri = dgvSale.Columns.Contains("clnSalePrice") ? ParseDecimal(row.Cells["clnSalePrice"].Value) : 0;
+                var priceState = row.Tag as PurchaseRowPriceState ?? new PurchaseRowPriceState();
+
+                using (var dlg = new ERP.Forms.frmItemCategoryRates(
+                    itemId,
+                    itemTitle,
+                    salePri,
+                    priceState.SecSalePrice,
+                    priceState.CustomerCategoryPrices,
+                    deferSave: true,
+                    minSalePrice: priceState.MinSalePrice,
+                    showSecondaryRate: ApiSession.HasSecondaryQty))
+                {
+                    if (dlg.ShowDialog(this) == DialogResult.OK)
+                    {
+                        if (dlg.EditedPriRate.HasValue && dgvSale.Columns.Contains("clnSalePrice"))
+                            row.Cells["clnSalePrice"].Value = dlg.EditedPriRate.Value.ToString("0.##");
+
+                        priceState.SecSalePrice = dlg.EditedSecSalePrice;
+                        priceState.MinSalePrice = dlg.EditedMinSalePrice;
+                        priceState.CustomerCategoryPrices = dlg.ConfiguredRates;
+                        row.Tag = priceState;
+                    }
+                }
+            }
         }
 
         private bool _isProcessingBarcodeScan = false;
@@ -2119,6 +2210,7 @@ namespace ERP
                     UnitConversionHelper.BindRowUnitComboBox(dgvSale.Rows[ind], clnUnit.Index, dr, dtUnits, displayScanUnit);
 
                     dgvSale[clnRate.Index, ind].Value = itemPriRate.ToString("0.##");
+                    PopulateRowSalePrices(ind, dr);
                     dgvSale[clnQty.Index, ind].Value = displayScanQty.ToString("0.####");
                     if (dgvSale[clnAddless.Index, ind].Value == null)
                         dgvSale[clnAddless.Index, ind].Value = "0";

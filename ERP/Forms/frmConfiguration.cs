@@ -13,10 +13,28 @@ namespace ERP.Forms
     public partial class frmConfiguration : Form
     {
         private readonly SettingsApiService _settingsService = new SettingsApiService();
+        private CheckBox chkAllowPurchaseSalePriceUpdate;
 
         public frmConfiguration()
         {
             InitializeComponent();
+            InitializePurchaseSalePriceCheckBox();
+        }
+
+        private void InitializePurchaseSalePriceCheckBox()
+        {
+            if (chkEnableSecondaryQty == null || chkEnableSecondaryQty.Parent == null) return;
+
+            chkAllowPurchaseSalePriceUpdate = new CheckBox
+            {
+                Name = "chkAllowPurchaseSalePriceUpdate",
+                Text = "Allow Updating Sale Prices && Category Rates from Purchase Form",
+                AutoSize = true,
+                Font = chkEnableSecondaryQty.Font,
+                ForeColor = chkEnableSecondaryQty.ForeColor,
+                Location = new Point(chkEnableSecondaryQty.Left, chkEnableSecondaryQty.Bottom + 8)
+            };
+            chkEnableSecondaryQty.Parent.Controls.Add(chkAllowPurchaseSalePriceUpdate);
         }
 
         private async void frmConfiguration_Load(object sender, EventArgs e)
@@ -129,6 +147,12 @@ namespace ERP.Forms
                 if (!string.IsNullOrWhiteSpace(secQtyStr))
                 {
                     chkEnableSecondaryQty.Checked = string.Equals(secQtyStr, "true", StringComparison.OrdinalIgnoreCase);
+                }
+
+                if (chkAllowPurchaseSalePriceUpdate != null)
+                {
+                    string purchasePriceStr = await _settingsService.GetSettingValueAsync("Purchase.AllowSalePriceUpdate");
+                    chkAllowPurchaseSalePriceUpdate.Checked = string.Equals(purchasePriceStr, "true", StringComparison.OrdinalIgnoreCase);
                 }
                 else
                 {
@@ -361,6 +385,13 @@ namespace ERP.Forms
                     },
                     new SettingItemDto
                     {
+                        Key = "Purchase.AllowSalePriceUpdate",
+                        Value = (chkAllowPurchaseSalePriceUpdate != null && chkAllowPurchaseSalePriceUpdate.Checked) ? "true" : "false",
+                        Description = "Allow updating item sale prices and customer category rates from Purchase forms",
+                        Category = "Transaction"
+                    },
+                    new SettingItemDto
+                    {
                         Key = "Barcode.FastScanEnabled",
                         Value = chkEnableBarcodeFastScan.Checked ? "true" : "false",
                         Description = "Enable Barcode Fast Scanning on Transaction Grids",
@@ -386,6 +417,8 @@ namespace ERP.Forms
 
                 // Update active session flag immediately
                 ApiSession.HasSecondaryQty = chkEnableSecondaryQty.Checked;
+                if (chkAllowPurchaseSalePriceUpdate != null)
+                    ApiSession.AllowSalePriceUpdateInPurchase = chkAllowPurchaseSalePriceUpdate.Checked;
                 ConfigInfo.IsBarcodeFastScanEnabled = chkEnableBarcodeFastScan.Checked;
                 ConfigInfo.FastScanAutoIncrement = chkFastScanAutoIncrement.Checked;
                 ConfigInfo.FastScanSound = chkFastScanSound.Checked;
