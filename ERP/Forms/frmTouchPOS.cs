@@ -10,6 +10,7 @@ using ERP.Classes;
 using ERP.Reporting;
 using ERP.Reporting.Models;
 using ERP.Services.Legacy;
+using ERP.Services.Offline;
 
 namespace ERP.Forms
 {
@@ -688,22 +689,15 @@ namespace ERP.Forms
 
             try
             {
+                if (ApiSession.IsOfflineMode)
+                {
+                    LoadPosDataFromOfflineCache();
+                    return;
+                }
+
                 // 1. Fetch Customers
                 _customers = await _chartOfAccountApiService.GetCustomerAccountsAsync();
-                cmbCustomer.DataSource = _customers;
-                cmbCustomer.DisplayMember = "Title";
-                cmbCustomer.ValueMember = "Account";
-
-                // Default to standard Cash Customer "001002001001" if present
-                var defaultCust = _customers.FirstOrDefault(c => c.Account == "001002001001" || c.Account == AccountHead.Customer);
-                if (defaultCust != null)
-                {
-                    cmbCustomer.SelectedValue = defaultCust.Account;
-                }
-                else if (_customers.Count > 0)
-                {
-                    cmbCustomer.SelectedIndex = 0;
-                }
+                BindCustomerCombo();
 
                 // 2. Fetch Units (for sub-unit conversion)
                 try
@@ -727,13 +721,62 @@ namespace ERP.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to load POS catalog: " + ex.Message, "POS Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                if (OfflineSyncService.IsNetworkException(ex) && OfflineStore.HasCatalogCache())
+                {
+                    ApiSession.SetOfflineMode(true);
+                    LoadPosDataFromOfflineCache();
+                    MessageBox.Show("Server unreachable — Touch POS loaded from local offline catalog.", "Offline Mode", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                else
+                {
+                    MessageBox.Show("Failed to load POS catalog: " + ex.Message, "POS Load Error", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                }
             }
             finally
             {
                 _isLoading = false;
                 txtBarcode.Focus();
             }
+        }
+
+        private void BindCustomerCombo()
+        {
+            cmbCustomer.DataSource = _customers;
+            cmbCustomer.DisplayMember = "Title";
+            cmbCustomer.ValueMember = "Account";
+
+            // Default to standard Cash Customer "001002001001" if present
+            var defaultCust = _customers.FirstOrDefault(c => c.Account == "001002001001" || c.Account == AccountHead.Customer);
+            if (defaultCust != null)
+            {
+                cmbCustomer.SelectedValue = defaultCust.Account;
+            }
+            else if (_customers.Count > 0)
+            {
+                cmbCustomer.SelectedIndex = 0;
+            }
+        }
+
+        private void LoadPosDataFromOfflineCache()
+        {
+            var cache = OfflineCacheService.LoadCatalog();
+            if (cache == null)
+            {
+                MessageBox.Show("No offline catalog cache found. Please connect to the internet and log in once.", "Offline Cache Missing", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            _customers = cache.Customers ?? new List<ChartOfAccountHeadDto>();
+            BindCustomerCombo();
+
+            _dtUnits = UnitConversionHelper.CreateUnitsTable(cache.Units ?? new List<UnitLookupDto>());
+
+            _categories = cache.Categories ?? new List<ItemCategoryDto>();
+            RenderCategoryButtons();
+
+            _allItems = cache.Items ?? new List<InventoryItemDto>();
+            _filteredItems = new List<InventoryItemDto>(_allItems);
+            RenderProductTiles();
         }
 
         private void RenderCategoryButtons()
@@ -749,7 +792,7 @@ namespace ERP.Forms
             {
                 var catCode = cat.Code;
                 Button btnCat = CreateCategoryChip(cat.Title, catCode, _activeCategoryCode == catCode);
-                if (!string.IsNullOrWhiteSpace(cat.MediaUrl))
+                if (!ApiSession.IsOfflineMode && !string.IsNullOrWhiteSpace(cat.MediaUrl))
                 {
                     _ = LoadCategoryIconAsync(btnCat, cat.MediaUrl);
                 }
@@ -1407,6 +1450,12 @@ namespace ERP.Forms
             btnPay.Enabled = false;
             try
             {
+                if (ApiSession.IsOfflineMode)
+                {
+                    await SaveSaleOfflineAsync(request, cart, cashReceived, cashBack, printReceipt);
+                    return;
+                }
+
                 string voucherNo = await _saleApiService.CreateAsync(request);
 
                 if (!string.IsNullOrWhiteSpace(voucherNo))
@@ -1434,13 +1483,90 @@ namespace ERP.Forms
             }
             catch (Exception ex)
             {
-                MessageBox.Show("Failed to save POS sale: " + ex.Message, "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (OfflineSyncService.IsNetworkException(ex))
+                {
+                    ApiSession.SetOfflineMode(true);
+                    await SaveSaleOfflineAsync(request, cart, cashReceived, cashBack, printReceipt);
+                }
+                else
+                {
+                    MessageBox.Show("Failed to save POS sale: " + ex.Message, "Save Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             finally
             {
                 btnPay.Enabled = true;
                 txtBarcode.Focus();
             }
+        }
+
+        private async Task SaveSaleOfflineAsync(SaleCreateRequest request, List<TouchCartItem> cart, decimal cashReceived, decimal cashBack, bool printReceipt)
+        {
+            string voucherNo = OfflineVoucherGenerator.NextVoucherNo(out string terminalCode);
+            request.OfflineVoucherNo = voucherNo;
+            request.Counter = terminalCode;
+
+            var receiptLines = new List<SaleReceiptLineItem>();
+            decimal grossTotal = 0m;
+            decimal totalDiscount = 0m;
+            int seq = 1;
+            foreach (var item in cart)
+            {
+                decimal lineGross = item.Qty * item.BaseRate;
+                decimal lineNet = lineGross - item.Discount;
+                grossTotal += lineGross;
+                totalDiscount += item.Discount;
+
+                receiptLines.Add(new SaleReceiptLineItem
+                {
+                    Seq = seq++,
+                    Item = item.Title,
+                    Unit = item.SelectedUnitTitle ?? "",
+                    Qty = item.Qty,
+                    Rate = item.BaseRate,
+                    GrossRate = item.BaseRate,
+                    Discount = item.Discount,
+                    Amount = lineNet
+                });
+            }
+
+            string customerName = cmbCustomer.Text;
+            var queuedSale = new OfflineQueuedSale
+            {
+                VoucherNo = voucherNo,
+                TerminalCode = terminalCode,
+                SourceForm = "TouchPOS",
+                CreatedAtLocal = DateTime.Now,
+                CashierName = UserInfo.UserName ?? "Cashier",
+                CustomerName = string.IsNullOrWhiteSpace(customerName) ? "Walk-in Customer" : customerName,
+                GrossTotal = grossTotal,
+                TotalDiscount = totalDiscount,
+                NetAmount = grossTotal - totalDiscount,
+                CashReceipt = cashReceived,
+                CashBack = cashBack,
+                Request = request,
+                ReceiptLines = receiptLines,
+                Status = OfflineSaleStatus.Pending
+            };
+
+            OfflineStore.EnqueueSale(queuedSale);
+            OfflineSyncService.NotifyPendingCountChanged();
+
+            if (printReceipt)
+            {
+                try
+                {
+                    await SaleReceiptViewer.PrintOrPreviewOfflineAsync(queuedSale.ToReceiptDataResult(), isDirect: true);
+                }
+                catch (Exception printEx)
+                {
+                    MessageBox.Show("Offline sale saved (#" + voucherNo + "), but receipt printing failed: " + printEx.Message, "Print Notice", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+            }
+
+            ScannerToneHelper.PlaySuccess();
+            MessageBox.Show($"Offline Sale Voucher #SL-{voucherNo} saved locally (pending sync)!", "Offline Sale Saved", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            ClearCurrentCart();
         }
 
         private void FrmTouchPOS_KeyDown(object sender, KeyEventArgs e)

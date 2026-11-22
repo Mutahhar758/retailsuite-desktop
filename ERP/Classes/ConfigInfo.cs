@@ -25,14 +25,17 @@ namespace ERP
 
         public static string LoadThermalPrinter()
         {
-            try
+            if (!ApiSession.IsOfflineMode)
             {
-                var service = new Services.Legacy.SettingsApiService();
-                string val = System.Threading.Tasks.Task.Run(() => service.GetSettingValueAsync("Printer.ThermalPrinter")).GetAwaiter().GetResult();
-                if (!string.IsNullOrWhiteSpace(val))
-                    return val;
+                try
+                {
+                    var service = new Services.Legacy.SettingsApiService();
+                    string val = System.Threading.Tasks.Task.Run(() => service.GetSettingValueAsync("Printer.ThermalPrinter")).GetAwaiter().GetResult();
+                    if (!string.IsNullOrWhiteSpace(val))
+                        return val;
+                }
+                catch { }
             }
-            catch { }
 
             try
             {
@@ -62,14 +65,17 @@ namespace ERP
 
         public static string LoadA4Printer()
         {
-            try
+            if (!ApiSession.IsOfflineMode)
             {
-                var service = new Services.Legacy.SettingsApiService();
-                string val = System.Threading.Tasks.Task.Run(() => service.GetSettingValueAsync("Printer.A4Printer")).GetAwaiter().GetResult();
-                if (!string.IsNullOrWhiteSpace(val))
-                    return val;
+                try
+                {
+                    var service = new Services.Legacy.SettingsApiService();
+                    string val = System.Threading.Tasks.Task.Run(() => service.GetSettingValueAsync("Printer.A4Printer")).GetAwaiter().GetResult();
+                    if (!string.IsNullOrWhiteSpace(val))
+                        return val;
+                }
+                catch { }
             }
-            catch { }
 
             try
             {
@@ -123,14 +129,17 @@ namespace ERP
 
         public static string LoadDefaultBillFormat()
         {
-            try
+            if (!ApiSession.IsOfflineMode)
             {
-                var service = new Services.Legacy.SettingsApiService();
-                string val = System.Threading.Tasks.Task.Run(() => service.GetSettingValueAsync("Bill.DefaultFormat")).GetAwaiter().GetResult();
-                if (!string.IsNullOrWhiteSpace(val))
-                    return val;
+                try
+                {
+                    var service = new Services.Legacy.SettingsApiService();
+                    string val = System.Threading.Tasks.Task.Run(() => service.GetSettingValueAsync("Bill.DefaultFormat")).GetAwaiter().GetResult();
+                    if (!string.IsNullOrWhiteSpace(val))
+                        return val;
+                }
+                catch { }
             }
-            catch { }
 
             try
             {
@@ -160,15 +169,18 @@ namespace ERP
 
         public static string LoadThankyouLine()
         {
-            try
+            if (!ApiSession.IsOfflineMode)
             {
-                var service = new Services.Legacy.SettingsApiService();
-                string val = System.Threading.Tasks.Task.Run(() => service.GetSettingValueAsync("Bill.ThankYouMessage")).GetAwaiter().GetResult();
-                if (!string.IsNullOrWhiteSpace(val))
-                    return val;
-            }
-            catch
-            {
+                try
+                {
+                    var service = new Services.Legacy.SettingsApiService();
+                    string val = System.Threading.Tasks.Task.Run(() => service.GetSettingValueAsync("Bill.ThankYouMessage")).GetAwaiter().GetResult();
+                    if (!string.IsNullOrWhiteSpace(val))
+                        return val;
+                }
+                catch
+                {
+                }
             }
 
             try

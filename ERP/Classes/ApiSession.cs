@@ -31,5 +31,23 @@ namespace ERP.Classes
         public static bool IsBarcodeFastScanEnabled { get; set; } = false;
         public static bool FastScanAutoIncrement { get; set; } = true;
         public static bool FastScanSound { get; set; } = true;
+
+        // Offline Mode state (kept in memory only; never stores credentials/tokens on disk)
+        private static bool _isOfflineMode = false;
+        public static bool IsOfflineMode => _isOfflineMode;
+        public static bool NeedsOnlineReauth { get; set; } = false;
+        public static string TerminalCode { get; set; } = "T01";
+        public static DateTime? LastOfflineCacheSyncUtc { get; set; }
+
+        public static event EventHandler<bool> OfflineModeChanged;
+
+        public static void SetOfflineMode(bool isOffline)
+        {
+            if (_isOfflineMode == isOffline)
+                return;
+
+            _isOfflineMode = isOffline;
+            OfflineModeChanged?.Invoke(null, isOffline);
+        }
     }
 }

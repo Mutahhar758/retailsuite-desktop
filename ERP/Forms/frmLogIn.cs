@@ -1,9 +1,11 @@
 using System;
+using System.Drawing;
 using System.Windows.Forms;
 using ERP.Classes;
 using ERP.Dtos.Authentication;
 using ERP.Services.Authentication;
 using ERP.Services.Legacy;
+using ERP.Services.Offline;
 
 namespace ERP
 {
@@ -14,10 +16,14 @@ namespace ERP
         private CompanyApiService _companyApiService;
         private PersonalApiService _personalApiService;
         private SettingsApiService _settingsApiService;
+        private Button btnOfflinePos;
+        private Timer _tmrServerCheck;
+        private bool _isCheckingServer;
 
         public frmLogIn()
         {
             InitializeComponent();
+            InitializeOfflinePosButton();
             _licenseService = new LicenseService();
             _loginService = new LoginService();
             _companyApiService = new CompanyApiService();
@@ -34,6 +40,142 @@ namespace ERP
             btnClose.MouseLeave += (s, e) => btnClose.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
             btnAddOrganization.MouseEnter += (s, e) => btnAddOrganization.BackColor = System.Drawing.Color.FromArgb(226, 232, 240);
             btnAddOrganization.MouseLeave += (s, e) => btnAddOrganization.BackColor = System.Drawing.Color.FromArgb(241, 245, 249);
+        }
+
+        private void InitializeOfflinePosButton()
+        {
+            if (btnLogIn == null || btnLogIn.Parent == null) return;
+
+            btnOfflinePos = new Button
+            {
+                Name = "btnOfflinePos",
+                Text = "Offline POS Mode",
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(254, 243, 199), // Amber-100
+                ForeColor = Color.FromArgb(146, 64, 14),   // Amber-800
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                Cursor = Cursors.Hand,
+                Height = 32,
+                Width = Math.Max(btnClose.Right - btnLogIn.Left, btnLogIn.Width),
+                Location = new Point(btnLogIn.Left, btnLogIn.Bottom + 10),
+                Enabled = false,
+                Visible = false
+            };
+            btnOfflinePos.FlatAppearance.BorderColor = Color.FromArgb(245, 158, 11);
+            btnOfflinePos.FlatAppearance.BorderSize = 1;
+            btnOfflinePos.MouseEnter += (s, e) => { if (btnOfflinePos.Enabled) btnOfflinePos.BackColor = Color.FromArgb(253, 230, 138); };
+            btnOfflinePos.MouseLeave += (s, e) => { if (btnOfflinePos.Enabled) btnOfflinePos.BackColor = Color.FromArgb(254, 243, 199); };
+            btnOfflinePos.Click += btnOfflinePos_Click;
+
+            btnLogIn.Parent.Controls.Add(btnOfflinePos);
+            RefreshTerminalLabel();
+
+            _tmrServerCheck = new Timer { Interval = 10000 };
+            _tmrServerCheck.Tick += async (s, e) => await UpdateOfflineButtonAvailabilityAsync();
+            this.FormClosed += (s, e) => { try { _tmrServerCheck?.Stop(); _tmrServerCheck?.Dispose(); } catch { } };
+        }
+
+        private string GetTerminalDisplayText()
+        {
+            return OfflineVoucherGenerator.HasAssignedTerminalCode()
+                ? OfflineVoucherGenerator.GetTerminalCode()
+                : "(Assigns on first online login)";
+        }
+
+        private void RefreshTerminalLabel()
+        {
+            if (textBox1 != null && !textBox1.IsDisposed)
+                textBox1.Text = GetTerminalDisplayText();
+        }
+
+        private async System.Threading.Tasks.Task UpdateOfflineButtonAvailabilityAsync()
+        {
+            if (_isCheckingServer || this.IsDisposed || btnOfflinePos == null) return;
+            _isCheckingServer = true;
+            try
+            {
+                bool reachable = await OfflineSyncService.IsApiReachableAsync(3);
+                if (this.IsDisposed) return;
+
+                SetOfflineButtonState(!reachable);
+            }
+            catch
+            {
+                if (!this.IsDisposed) SetOfflineButtonState(true);
+            }
+            finally
+            {
+                _isCheckingServer = false;
+            }
+        }
+
+        private void SetOfflineButtonState(bool serverUnreachable)
+        {
+            if (btnOfflinePos == null || btnOfflinePos.IsDisposed) return;
+            btnOfflinePos.Visible = serverUnreachable;
+            btnOfflinePos.Enabled = serverUnreachable;
+            if (serverUnreachable && this.ClientSize.Height < btnOfflinePos.Bottom + 24)
+            {
+                this.ClientSize = new Size(this.ClientSize.Width, btnOfflinePos.Bottom + 28);
+            }
+        }
+
+        private void btnOfflinePos_Click(object sender, EventArgs e)
+        {
+            StartOfflinePosMode(txtUserId.Text.Trim());
+        }
+
+        private void StartOfflinePosMode(string cashierName)
+        {
+            string tenantId = ApiSession.TenantIdentifier;
+            if (string.IsNullOrWhiteSpace(tenantId) && cmbOrganization.SelectedItem is OrganizationLicense lic)
+            {
+                tenantId = lic.TenantIdentifier;
+            }
+
+            if (string.IsNullOrWhiteSpace(cashierName))
+            {
+                cashierName = PromptForCashierName();
+                if (string.IsNullOrWhiteSpace(cashierName))
+                    return;
+            }
+
+            if (!OfflineCacheService.TryStartOfflinePosSession(tenantId, cashierName, out string err))
+            {
+                MessageBox.Show(err, "Offline POS Unavailable", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            frmMainMenu frm = new frmMainMenu();
+            frm.Owner = this;
+            Hide();
+            frm.ShowDialog();
+            Close();
+        }
+
+        private static string PromptForCashierName()
+        {
+            using (var dlg = new Form())
+            {
+                dlg.Text = "Offline POS — Cashier Name";
+                dlg.Size = new Size(360, 165);
+                dlg.FormBorderStyle = FormBorderStyle.FixedDialog;
+                dlg.StartPosition = FormStartPosition.CenterParent;
+                dlg.MaximizeBox = false;
+                dlg.MinimizeBox = false;
+                dlg.Font = new Font("Segoe UI", 9F);
+
+                var lbl = new Label { Text = "Enter cashier display name for offline receipts:", Location = new Point(14, 14), AutoSize = true };
+                var txt = new TextBox { Location = new Point(14, 40), Width = 315, Text = "Cashier" };
+                var btnOk = new Button { Text = "Start Offline POS", DialogResult = DialogResult.OK, Location = new Point(135, 80), Width = 115, Height = 30 };
+                var btnCancel = new Button { Text = "Cancel", DialogResult = DialogResult.Cancel, Location = new Point(255, 80), Width = 74, Height = 30 };
+
+                dlg.AcceptButton = btnOk;
+                dlg.CancelButton = btnCancel;
+                dlg.Controls.AddRange(new Control[] { lbl, txt, btnOk, btnCancel });
+
+                return dlg.ShowDialog() == DialogResult.OK ? txt.Text.Trim() : null;
+            }
         }
 
         void INISetting()
@@ -67,6 +209,8 @@ namespace ERP
             }
 
             UserInfo.UserId = "Log Out";
+            _tmrServerCheck?.Start();
+            _ = UpdateOfflineButtonAvailabilityAsync();
         }
 
         private async void btnLogIn_Click(object sender, EventArgs e)
@@ -237,6 +381,19 @@ namespace ERP
                 {
                 }
 
+                ApiSession.NeedsOnlineReauth = false;
+                try
+                {
+                    ApiSession.TerminalCode = await OfflineVoucherGenerator.RegisterTerminalWithServerAsync();
+                }
+                catch
+                {
+                    ApiSession.TerminalCode = OfflineVoucherGenerator.GetTerminalCode();
+                }
+                ApiSession.SetOfflineMode(false);
+                OfflineCacheService.SaveCompanyAndSettingsSnapshot();
+                _ = OfflineCacheService.RefreshCatalogAsync();
+
                 frmMainMenu frm = new frmMainMenu();
                 frm.Owner = this;
                 UserInfo.LogInDateTime = DateTime.Now;
@@ -247,7 +404,25 @@ namespace ERP
             }
             catch (Exception ex)
             {
-                MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                if (OfflineSyncService.IsNetworkException(ex))
+                {
+                    SetOfflineButtonState(true);
+                    var ans = MessageBox.Show(
+                        "Cannot reach the RetailSuite server (" + ex.Message + ").\n\nWould you like to continue in Offline POS Mode (Touch POS & Sale Billing only)?",
+                        "Server Unreachable",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Warning);
+
+                    if (ans == DialogResult.Yes)
+                    {
+                        StartOfflinePosMode(txtUserId.Text.Trim());
+                        return;
+                    }
+                }
+                else
+                {
+                    MessageBox.Show("An error occurred: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
             }
             finally
             {
@@ -311,6 +486,7 @@ namespace ERP
             _companyApiService = new CompanyApiService();
             _personalApiService = new PersonalApiService();
             ConfigInfo.Reset();
+            RefreshTerminalLabel();
         }
 
         private void frmLogIn_KeyDown(object sender, KeyEventArgs e)

@@ -7,6 +7,7 @@ using System.Threading.Tasks;
 using System.Windows.Forms;
 using ERP.Classes;
 using ERP.Services.Legacy;
+using ERP.Services.Offline;
 
 namespace ERP.Forms
 {
@@ -14,11 +15,60 @@ namespace ERP.Forms
     {
         private readonly SettingsApiService _settingsService = new SettingsApiService();
         private CheckBox chkAllowPurchaseSalePriceUpdate;
+        private TextBox txtTerminalCode;
+        private Label lblOfflineCacheInfo;
 
         public frmConfiguration()
         {
             InitializeComponent();
             InitializePurchaseSalePriceCheckBox();
+            InitializeOfflineTerminalControls();
+        }
+
+        private void InitializeOfflineTerminalControls()
+        {
+            if (chkAllowPurchaseSalePriceUpdate == null || chkAllowPurchaseSalePriceUpdate.Parent == null) return;
+            var parent = chkAllowPurchaseSalePriceUpdate.Parent;
+            int topY = chkAllowPurchaseSalePriceUpdate.Bottom + 12;
+
+            var lblTerm = new Label
+            {
+                Text = "Offline POS Terminal Code (2–6 chars, e.g. T01, POS1):",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 8.75F, FontStyle.Bold),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                Location = new Point(chkAllowPurchaseSalePriceUpdate.Left, topY + 3)
+            };
+
+            txtTerminalCode = new TextBox
+            {
+                Name = "txtTerminalCode",
+                Width = 88,
+                MaxLength = 6,
+                CharacterCasing = CharacterCasing.Upper,
+                Text = OfflineVoucherGenerator.GetTerminalCode(),
+                Location = new Point(lblTerm.Left + 310, topY)
+            };
+
+            lblOfflineCacheInfo = new Label
+            {
+                Text = "",
+                AutoSize = true,
+                Font = new Font("Segoe UI", 8F, FontStyle.Italic),
+                ForeColor = Color.FromArgb(100, 116, 139),
+                Location = new Point(chkAllowPurchaseSalePriceUpdate.Left, topY + 28)
+            };
+
+            parent.Controls.Add(lblTerm);
+            parent.Controls.Add(txtTerminalCode);
+            parent.Controls.Add(lblOfflineCacheInfo);
+
+            if (parent.Height < lblOfflineCacheInfo.Bottom + 12)
+            {
+                int extra = (lblOfflineCacheInfo.Bottom + 16) - parent.Height;
+                parent.Height += extra;
+                this.Height += extra;
+            }
         }
 
         private void InitializePurchaseSalePriceCheckBox()
@@ -90,13 +140,34 @@ namespace ERP.Forms
                     }
                 }
 
-                // 2. Load Tenant Printer, QR Payment & Inventory settings from API
-                lblStatus.Text = "Loading settings...";
-                await LoadTenantPrinterSettingsAsync();
-                await LoadQrSettingsAsync();
-                await LoadInventorySettingsAsync();
-                await LoadBarcodeSettingsAsync();
-                lblStatus.Text = "Ready";
+                // 2. Load Offline Terminal Info
+                if (txtTerminalCode != null)
+                {
+                    txtTerminalCode.Text = OfflineVoucherGenerator.GetTerminalCode();
+                }
+                if (lblOfflineCacheInfo != null)
+                {
+                    var cached = OfflineCacheService.LoadCatalog();
+                    string syncedText = cached != null
+                        ? $"Offline catalog cached: {cached.Items?.Count ?? 0} items (last synced {cached.SyncedAtUtc.ToLocalTime():dd-MMM-yyyy HH:mm})"
+                        : "Offline catalog not yet cached (log in online once to sync).";
+                    lblOfflineCacheInfo.Text = syncedText;
+                }
+
+                // 3. Load Tenant Printer, QR Payment & Inventory settings from API (online only)
+                if (ApiSession.IsOfflineMode)
+                {
+                    lblStatus.Text = "Offline Mode — local printer & terminal settings only";
+                }
+                else
+                {
+                    lblStatus.Text = "Loading settings...";
+                    await LoadTenantPrinterSettingsAsync();
+                    await LoadQrSettingsAsync();
+                    await LoadInventorySettingsAsync();
+                    await LoadBarcodeSettingsAsync();
+                    lblStatus.Text = "Ready";
+                }
             }
             catch (Exception ex)
             {
@@ -412,6 +483,29 @@ namespace ERP.Forms
                         Category = "Barcode"
                     }
                 };
+
+                // Always persist Offline Terminal Code (server-validated when online to guarantee uniqueness)
+                if (txtTerminalCode != null && !string.IsNullOrWhiteSpace(txtTerminalCode.Text))
+                {
+                    if (!ApiSession.IsOfflineMode && !string.IsNullOrWhiteSpace(ApiSession.AccessToken))
+                    {
+                        string registered = await OfflineVoucherGenerator.RegisterTerminalWithServerAsync(txtTerminalCode.Text);
+                        txtTerminalCode.Text = registered;
+                    }
+                    else
+                    {
+                        OfflineVoucherGenerator.SaveTerminalCode(txtTerminalCode.Text);
+                        txtTerminalCode.Text = OfflineVoucherGenerator.GetTerminalCode();
+                    }
+                }
+
+                if (ApiSession.IsOfflineMode)
+                {
+                    OfflineCacheService.SaveCompanyAndSettingsSnapshot();
+                    lblStatus.Text = "Saved locally (Offline Mode) at " + DateTime.Now.ToString("HH:mm:ss");
+                    MessageBox.Show("Local printer & offline terminal settings saved!", "Configuration (Offline)", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
 
                 bool apiSuccess = await _settingsService.BatchUpsertAsync(settingsToSave);
 

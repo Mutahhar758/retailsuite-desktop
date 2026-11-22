@@ -299,6 +299,12 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("payments")]
         public List<PaymentRecordRequest> Payments { get; set; } = new List<PaymentRecordRequest>();
+
+        [JsonProperty("offlineVoucherNo")]
+        public string OfflineVoucherNo { get; set; }
+
+        [JsonProperty("counter")]
+        public string Counter { get; set; }
     }
 
     internal class SaleUpdateRequest

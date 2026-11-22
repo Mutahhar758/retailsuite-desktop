@@ -295,5 +295,43 @@ namespace ERP.Reporting
                 Cursor.Current = Cursors.Default;
             }
         }
+
+        /// <summary>
+        /// Prints or previews an offline sale receipt directly from local in-memory data using QuestPDF
+        /// without making any network/API call.
+        /// </summary>
+        public static async Task PrintOrPreviewOfflineAsync(SaleReceiptDataResult dataResult, bool isDirect, SaleReceiptPrintLayout? preferredLayout = null)
+        {
+            if (dataResult == null) return;
+
+            Cursor.Current = Cursors.WaitCursor;
+            try
+            {
+                var layout = preferredLayout ?? ConfigInfo.PreferredSaleReceiptLayout;
+
+                if (isDirect)
+                {
+                    var doc = new SaleReceiptDocument(dataResult.Summary, dataResult.Lines, layout);
+                    string printer = (layout == SaleReceiptPrintLayout.Thermal80mm && !string.IsNullOrWhiteSpace(ConfigInfo.ThermalPrinterName))
+                        ? ConfigInfo.ThermalPrinterName
+                        : null;
+
+                    await Task.Run(() => SaleReceiptDocument.PrintDirectToPrinter(doc, printer));
+                }
+                else
+                {
+                    var viewer = new SaleReceiptViewer(dataResult, layout);
+                    viewer.ShowDialog();
+                }
+            }
+            catch (Exception ex)
+            {
+                MessageBox.Show("Error generating offline QuestPDF sale receipt: " + ex.Message, "Print Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
+            }
+        }
     }
 }

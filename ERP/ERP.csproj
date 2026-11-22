@@ -251,6 +251,11 @@
     <Compile Include="Services\Legacy\ReceiptApiService.cs" />
     <Compile Include="Services\Legacy\ReportsApiService.cs" />
     <Compile Include="Services\Legacy\SaleApiService.cs" />
+    <Compile Include="Services\Offline\OfflineCacheService.cs" />
+    <Compile Include="Services\Offline\OfflineModels.cs" />
+    <Compile Include="Services\Offline\OfflineStore.cs" />
+    <Compile Include="Services\Offline\OfflineSyncService.cs" />
+    <Compile Include="Services\Offline\OfflineVoucherGenerator.cs" />
     <Compile Include="Services\Legacy\SaleReturnApiService.cs" />
     <Compile Include="Services\Legacy\SaleSupplyApiService.cs" />
     <Compile Include="Services\Legacy\StockAdjustmentApiService.cs" />
@@ -392,6 +397,9 @@
     </Compile>
     <Compile Include="Forms\frmWandaCustomerSupplyRegister.Designer.cs">
       <DependentUpon>frmWandaCustomerSupplyRegister.cs</DependentUpon>
+    </Compile>
+    <Compile Include="Forms\frmOfflineSyncQueue.cs">
+      <SubType>Form</SubType>
     </Compile>
     <Compile Include="Forms\frmTouchPOS.cs">
       <SubType>Form</SubType>

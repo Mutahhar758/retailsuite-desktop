@@ -10,6 +10,7 @@ using System.Threading;
 using System.IO;
 using ERP.Classes;
 using ERP.Forms;
+using ERP.Services.Offline;
 namespace ERP
 {
     public partial class frmMainMenu : Form
@@ -48,6 +49,13 @@ namespace ERP
         }
 
         private MdiClient _mdiClient;
+        private Panel _offlineBanner;
+        private Label _lblOfflineBanner;
+        private ToolStripStatusLabel _stOfflineStatus;
+        private ToolStripMenuItem _miOfflineSyncQueue;
+        private ToolStripMenuItem _miToggleOfflineMode;
+        private ToolStripMenuItem _miRefreshOfflineCache;
+        private bool _isSyncPromptOpen = false;
 
         private void SetupModernTheme()
         {
@@ -195,7 +203,31 @@ namespace ERP
                 SetupMobileShopMenu();
             }
 
-            _ = RefreshCompanyBrandingAsync();
+            SetupOfflineUi();
+            ApiSession.OfflineModeChanged += OnOfflineModeChanged;
+            OfflineSyncService.PendingCountChanged += OnPendingCountChanged;
+            OfflineSyncService.ConnectivityRestoredWithPendingSales += OnConnectivityRestoredWithPendingSales;
+            OfflineSyncService.ApiReachabilityChanged += OnApiReachabilityChanged;
+
+            ApplyOfflineModeState();
+            OfflineSyncService.StartMonitor(20);
+
+            if (!ApiSession.IsOfflineMode)
+            {
+                _ = RefreshCompanyBrandingAsync();
+
+                int pendingCount = OfflineStore.GetPendingCount();
+                if (pendingCount > 0)
+                {
+                    this.BeginInvoke(new Action(() => OpenOfflineSyncQueue(isAutoPrompt: true)));
+                }
+            }
+            else
+            {
+                picLogo.Image = global::ERP.Properties.Resources.logoPNG;
+                CompanyCetreLoc();
+                if (_mdiClient != null) _mdiClient.Invalidate();
+            }
         }
 
         public async System.Threading.Tasks.Task RefreshCompanyBrandingAsync()
@@ -301,6 +333,348 @@ namespace ERP
                 miscReports2ToolStripMenuItem.Visible;
             
             configurationToolStripMenuItem.Visible = UserInfo.HasPermission(AppAction.View, AppResource.PrinterSettings);
+        }
+
+        private void SetupOfflineUi()
+        {
+            // 1. Offline Mode Amber Banner docked below menuStrip1
+            _offlineBanner = new Panel
+            {
+                Dock = DockStyle.Top,
+                Height = 36,
+                BackColor = Color.FromArgb(245, 158, 11), // Amber-500
+                Visible = false,
+                Padding = new Padding(12, 6, 12, 6)
+            };
+
+            _lblOfflineBanner = new Label
+            {
+                Text = "OFFLINE MODE — Only Touch POS & Sale Billing are available.",
+                ForeColor = Color.FromArgb(15, 23, 42),
+                Font = new Font("Segoe UI", 9.5F, FontStyle.Bold),
+                AutoSize = true,
+                Location = new Point(12, 8)
+            };
+
+            var btnReviewSync = new Button
+            {
+                Text = "Review / Sync Queue",
+                Dock = DockStyle.Right,
+                Width = 148,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(15, 23, 42),
+                ForeColor = Color.White,
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnReviewSync.FlatAppearance.BorderSize = 0;
+            btnReviewSync.Click += (s, e) => OpenOfflineSyncQueue(isAutoPrompt: false);
+
+            var btnTryOnline = new Button
+            {
+                Text = "Try Go Online",
+                Dock = DockStyle.Right,
+                Width = 110,
+                FlatStyle = FlatStyle.Flat,
+                BackColor = Color.FromArgb(254, 243, 199),
+                ForeColor = Color.FromArgb(15, 23, 42),
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                Cursor = Cursors.Hand
+            };
+            btnTryOnline.FlatAppearance.BorderSize = 0;
+            btnTryOnline.Click += async (s, e) => await TrySwitchOnlineAsync();
+
+            _offlineBanner.Controls.Add(_lblOfflineBanner);
+            _offlineBanner.Controls.Add(btnTryOnline);
+            _offlineBanner.Controls.Add(btnReviewSync);
+
+            this.Controls.Add(_offlineBanner);
+            // Keep menuStrip1 at very top (z-order: higher index docks first)
+            this.Controls.SetChildIndex(_offlineBanner, 0);
+            menuStrip1.SendToBack();
+            statusStrip1.SendToBack();
+
+            // 2. Status bar indicator
+            var sep = new ToolStripStatusLabel("  |  ") { ForeColor = Color.FromArgb(148, 163, 184) };
+            _stOfflineStatus = new ToolStripStatusLabel
+            {
+                Text = "● Online",
+                ForeColor = Color.FromArgb(52, 211, 153),
+                Font = new Font("Segoe UI", 9F, FontStyle.Bold),
+                IsLink = false
+            };
+            _stOfflineStatus.Click += (s, e) => OpenOfflineSyncQueue(isAutoPrompt: false);
+            statusStrip1.Items.Add(sep);
+            statusStrip1.Items.Add(_stOfflineStatus);
+
+            // 3. Settings menu items
+            settingToolStripMenuItem.DropDownItems.Add(new ToolStripSeparator());
+
+            _miOfflineSyncQueue = new ToolStripMenuItem("Offline Sync Queue...");
+            _miOfflineSyncQueue.Click += (s, e) => OpenOfflineSyncQueue(isAutoPrompt: false);
+            settingToolStripMenuItem.DropDownItems.Add(_miOfflineSyncQueue);
+
+            _miToggleOfflineMode = new ToolStripMenuItem("Switch to Offline Mode");
+            _miToggleOfflineMode.Click += async (s, e) =>
+            {
+                if (ApiSession.IsOfflineMode)
+                    await TrySwitchOnlineAsync();
+                else
+                    SwitchToOfflineModeManual();
+            };
+            settingToolStripMenuItem.DropDownItems.Add(_miToggleOfflineMode);
+
+            _miRefreshOfflineCache = new ToolStripMenuItem("Refresh Offline Catalog Cache");
+            _miRefreshOfflineCache.Click += async (s, e) =>
+            {
+                if (ApiSession.IsOfflineMode)
+                {
+                    MessageBox.Show("Cannot refresh catalog while in Offline Mode.", "Offline", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                    return;
+                }
+                try
+                {
+                    Cursor.Current = Cursors.WaitCursor;
+                    await OfflineCacheService.RefreshCatalogAsync();
+                    MessageBox.Show("Offline catalog cache updated successfully.", "Cache Updated", MessageBoxButtons.OK, MessageBoxIcon.Information);
+                }
+                catch (Exception ex)
+                {
+                    MessageBox.Show("Failed to refresh offline catalog: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                }
+                finally
+                {
+                    Cursor.Current = Cursors.Default;
+                }
+            };
+            settingToolStripMenuItem.DropDownItems.Add(_miRefreshOfflineCache);
+        }
+
+        private void SwitchToOfflineModeManual()
+        {
+            if (!OfflineStore.HasCatalogCache())
+            {
+                MessageBox.Show("Please refresh the offline catalog cache while online before switching to Offline Mode.", "No Offline Cache", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
+            // Close any open non-sale MDI children before entering Offline Mode
+            foreach (Form child in this.MdiChildren)
+            {
+                if (!(child is frmTouchPOS || child is frmNormalSale || child is frmWandaSale || child is frmConfiguration))
+                {
+                    child.Close();
+                }
+            }
+
+            ApiSession.SetOfflineMode(true);
+        }
+
+        private async System.Threading.Tasks.Task TrySwitchOnlineAsync()
+        {
+            Cursor.Current = Cursors.WaitCursor;
+            try
+            {
+                bool reachable = await OfflineSyncService.IsApiReachableAsync(5);
+                if (!reachable)
+                {
+                    MessageBox.Show("Server is still unreachable. Remaining in Offline Mode.", "Still Offline", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                    return;
+                }
+
+                int pendingCount = OfflineStore.GetPendingCount();
+                if (pendingCount > 0)
+                {
+                    // Open confirmation dialog so user can authenticate (if needed) and review Sync or Ignore
+                    OpenOfflineSyncQueue(isAutoPrompt: false);
+                    return;
+                }
+
+                if (ApiSession.NeedsOnlineReauth || string.IsNullOrWhiteSpace(ApiSession.AccessToken))
+                {
+                    // Ask user to log in online via Sync Queue's auth or restart login
+                    var ans = MessageBox.Show(
+                        "Internet connection is back! To unlock full ERP menus, please sign in with your RetailSuite account now.",
+                        "Online Connection Available",
+                        MessageBoxButtons.OKCancel,
+                        MessageBoxIcon.Information);
+                    if (ans == DialogResult.OK)
+                    {
+                        OpenOfflineSyncQueue(isAutoPrompt: false);
+                    }
+                    return;
+                }
+
+                ApiSession.SetOfflineMode(false);
+                _ = OfflineCacheService.RefreshCatalogAsync();
+                MessageBox.Show("Switched back to Online Mode.", "Online", MessageBoxButtons.OK, MessageBoxIcon.Information);
+            }
+            finally
+            {
+                Cursor.Current = Cursors.Default;
+            }
+        }
+
+        private void OnOfflineModeChanged(object sender, bool isOffline)
+        {
+            if (this.IsDisposed) return;
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(ApplyOfflineModeState)); } catch { }
+            }
+            else
+            {
+                ApplyOfflineModeState();
+            }
+        }
+
+        private void OnApiReachabilityChanged(object sender, bool reachable)
+        {
+            if (this.IsDisposed) return;
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(ApplyOfflineModeState)); } catch { }
+            }
+            else
+            {
+                ApplyOfflineModeState();
+            }
+        }
+
+        private void OnPendingCountChanged(object sender, int pendingCount)
+        {
+            if (this.IsDisposed) return;
+            if (this.InvokeRequired)
+            {
+                try { this.BeginInvoke(new Action(UpdateOfflineStatusIndicators)); } catch { }
+            }
+            else
+            {
+                UpdateOfflineStatusIndicators();
+            }
+        }
+
+        private void OnConnectivityRestoredWithPendingSales(object sender, int pendingCount)
+        {
+            if (this.IsDisposed) return;
+            try
+            {
+                this.BeginInvoke(new Action(() =>
+                {
+                    if (_isSyncPromptOpen) return;
+                    var ans = MessageBox.Show(
+                        $"Server connection has been restored and you have {pendingCount} pending offline sale bill(s).\n\nWould you like to open the Sync Confirmation screen to review and Sync or Ignore them?",
+                        "Connection Restored — Pending Offline Sales",
+                        MessageBoxButtons.YesNo,
+                        MessageBoxIcon.Information);
+                    if (ans == DialogResult.Yes)
+                    {
+                        OpenOfflineSyncQueue(isAutoPrompt: true);
+                    }
+                }));
+            }
+            catch { }
+        }
+
+        private void OpenOfflineSyncQueue(bool isAutoPrompt)
+        {
+            if (_isSyncPromptOpen) return;
+            _isSyncPromptOpen = true;
+            try
+            {
+                using (var dlg = new frmOfflineSyncQueue())
+                {
+                    dlg.ShowDialog(this);
+                }
+                ApplyOfflineModeState();
+            }
+            finally
+            {
+                _isSyncPromptOpen = false;
+            }
+        }
+
+        private void ApplyOfflineModeState()
+        {
+            bool isOffline = ApiSession.IsOfflineMode;
+
+            // Top-level menus: only Daily Entry (Sale/POS) & Setting remain enabled while offline
+            foreach (ToolStripItem topItem in menuStrip1.Items)
+            {
+                if (topItem == dailyEntryToolStripMenuItem || topItem == settingToolStripMenuItem)
+                {
+                    topItem.Enabled = true;
+                }
+                else
+                {
+                    topItem.Enabled = !isOffline;
+                }
+            }
+
+            // Inside Daily Entry: only Touch POS and Sale Billing remain enabled while offline
+            foreach (ToolStripItem subItem in dailyEntryToolStripMenuItem.DropDownItems)
+            {
+                if (subItem is ToolStripSeparator) continue;
+                if (subItem == touchPosToolStripMenuItem || subItem == saleOrderToolStripMenuItem)
+                {
+                    subItem.Enabled = true;
+                }
+                else
+                {
+                    subItem.Enabled = !isOffline;
+                }
+            }
+
+            // Re-apply permissions when returning to Online Mode
+            if (!isOffline)
+            {
+                ApplyPermissions();
+            }
+
+            if (_miToggleOfflineMode != null)
+            {
+                _miToggleOfflineMode.Text = isOffline ? "Switch to Online Mode..." : "Switch to Offline Mode";
+                // Only allow entering Offline Mode when the server is NOT reachable
+                _miToggleOfflineMode.Enabled = isOffline || !OfflineSyncService.IsLastKnownApiReachable;
+            }
+
+            if (_miRefreshOfflineCache != null)
+                _miRefreshOfflineCache.Enabled = !isOffline;
+
+            if (_offlineBanner != null)
+                _offlineBanner.Visible = isOffline;
+
+            UpdateOfflineStatusIndicators();
+        }
+
+        private void UpdateOfflineStatusIndicators()
+        {
+            int pending = OfflineStore.GetPendingCount();
+            string term = OfflineVoucherGenerator.GetTerminalCode();
+
+            if (_lblOfflineBanner != null)
+            {
+                _lblOfflineBanner.Text = $"OFFLINE MODE — Terminal {term}  |  Only Touch POS & Sale Billing are enabled  |  Pending Bills: {pending}";
+            }
+
+            if (_stOfflineStatus != null)
+            {
+                if (ApiSession.IsOfflineMode)
+                {
+                    _stOfflineStatus.Text = pending > 0 ? $"● Offline ({term} • {pending} pending)" : $"● Offline ({term})";
+                    _stOfflineStatus.ForeColor = Color.FromArgb(251, 191, 36); // Amber-400
+                }
+                else
+                {
+                    _stOfflineStatus.Text = pending > 0 ? $"● Online ({pending} offline bill(s) pending review)" : "● Online";
+                    _stOfflineStatus.ForeColor = pending > 0 ? Color.FromArgb(251, 191, 36) : Color.FromArgb(52, 211, 153);
+                }
+            }
+
+            if (_miOfflineSyncQueue != null)
+            {
+                _miOfflineSyncQueue.Text = pending > 0 ? $"Offline Sync Queue ({pending} Pending)..." : "Offline Sync Queue...";
+            }
         }
 
         private void customerInformationToolStripMenuItem_Click(object sender, EventArgs e)
@@ -565,6 +939,12 @@ namespace ERP
 
         private void frmMain_FormClosing(object sender, FormClosingEventArgs e)
         {
+            ApiSession.OfflineModeChanged -= OnOfflineModeChanged;
+            OfflineSyncService.PendingCountChanged -= OnPendingCountChanged;
+            OfflineSyncService.ConnectivityRestoredWithPendingSales -= OnConnectivityRestoredWithPendingSales;
+            OfflineSyncService.ApiReachabilityChanged -= OnApiReachabilityChanged;
+            OfflineSyncService.StopMonitor();
+
             if (th != null && th.IsAlive)
                 th.Abort();
             Application.Exit();

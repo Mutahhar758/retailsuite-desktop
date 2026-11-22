@@ -7,7 +7,9 @@ using System.Linq;
 using System.Text.RegularExpressions;
 using System.Windows.Forms;
 using ERP.Classes;
+using ERP.Reporting.Models;
 using ERP.Services.Legacy;
+using ERP.Services.Offline;
 
 namespace ERP
 {
@@ -293,17 +295,65 @@ namespace ERP
 
         private async System.Threading.Tasks.Task LoadLookupsAsync()
         {
-            var accountsTask = _chartOfAccountApiService.GetCustomerAccountsAsync();
-            var narrationsTask = _narrationApiService.GetLookupAsync();
-            var categoriesTask = _itemCategoryApiService.GetLookupAsync();
-            var unitsTask = _unitApiService.GetLookupAsync();
-            var itemsTask = _inventoryApiService.GetLookupAsync(null);
-            var categoryPricesTask = _inventoryApiService.GetCustomerCategoryPricesAsync();
-            var cashBankTask = _chartOfAccountApiService.GetCashBankAccountsAsync();
-            await System.Threading.Tasks.Task.WhenAll(accountsTask, narrationsTask, categoriesTask, unitsTask, itemsTask, categoryPricesTask, cashBankTask);
+            List<ChartOfAccountHeadDto> accountsList;
+            List<NarrationDto> narrationsList;
+            List<ItemCategoryDto> categoriesList;
+            List<UnitLookupDto> unitsList;
+            List<InventoryItemDto> itemsList;
+            List<ItemCustomerCategoryPriceDto> categoryPricesList;
+            List<ChartOfAccountHeadDto> cashBankList;
+
+            if (ApiSession.IsOfflineMode)
+            {
+                var cache = OfflineCacheService.LoadCatalog();
+                if (cache == null)
+                    throw new Exception("No offline catalog cache found. Please log in online once to sync items and customers.");
+
+                accountsList = cache.Customers ?? new List<ChartOfAccountHeadDto>();
+                narrationsList = cache.Narrations ?? new List<NarrationDto>();
+                categoriesList = cache.Categories ?? new List<ItemCategoryDto>();
+                unitsList = cache.Units ?? new List<UnitLookupDto>();
+                itemsList = cache.Items ?? new List<InventoryItemDto>();
+                categoryPricesList = cache.CustomerCategoryPrices ?? new List<ItemCustomerCategoryPriceDto>();
+                cashBankList = cache.CashBankAccounts ?? new List<ChartOfAccountHeadDto>();
+            }
+            else
+            {
+                try
+                {
+                    var accountsTask = _chartOfAccountApiService.GetCustomerAccountsAsync();
+                    var narrationsTask = _narrationApiService.GetLookupAsync();
+                    var categoriesTask = _itemCategoryApiService.GetLookupAsync();
+                    var unitsTask = _unitApiService.GetLookupAsync();
+                    var itemsTask = _inventoryApiService.GetLookupAsync(null);
+                    var categoryPricesTask = _inventoryApiService.GetCustomerCategoryPricesAsync();
+                    var cashBankTask = _chartOfAccountApiService.GetCashBankAccountsAsync();
+                    await System.Threading.Tasks.Task.WhenAll(accountsTask, narrationsTask, categoriesTask, unitsTask, itemsTask, categoryPricesTask, cashBankTask);
+
+                    accountsList = accountsTask.Result;
+                    narrationsList = narrationsTask.Result;
+                    categoriesList = categoriesTask.Result;
+                    unitsList = unitsTask.Result;
+                    itemsList = itemsTask.Result;
+                    categoryPricesList = categoryPricesTask.Result;
+                    cashBankList = cashBankTask.Result;
+                }
+                catch (Exception ex) when (OfflineSyncService.IsNetworkException(ex) && OfflineStore.HasCatalogCache())
+                {
+                    ApiSession.SetOfflineMode(true);
+                    var cache = OfflineCacheService.LoadCatalog();
+                    accountsList = cache.Customers ?? new List<ChartOfAccountHeadDto>();
+                    narrationsList = cache.Narrations ?? new List<NarrationDto>();
+                    categoriesList = cache.Categories ?? new List<ItemCategoryDto>();
+                    unitsList = cache.Units ?? new List<UnitLookupDto>();
+                    itemsList = cache.Items ?? new List<InventoryItemDto>();
+                    categoryPricesList = cache.CustomerCategoryPrices ?? new List<ItemCustomerCategoryPriceDto>();
+                    cashBankList = cache.CashBankAccounts ?? new List<ChartOfAccountHeadDto>();
+                }
+            }
 
             _categoryPriceMap.Clear();
-            foreach (var cp in categoryPricesTask.Result)
+            foreach (var cp in categoryPricesList)
             {
                 if (!string.IsNullOrWhiteSpace(cp.ItemId) && !string.IsNullOrWhiteSpace(cp.CustomerCategoryId))
                 {
@@ -312,24 +362,24 @@ namespace ERP
             }
 
             _minSalePriceMap.Clear();
-            foreach (var item in itemsTask.Result)
+            foreach (var item in itemsList)
             {
                 if (!string.IsNullOrWhiteSpace(item.Id) && item.MinSalePrice.HasValue && item.MinSalePrice.Value > 0)
                     _minSalePriceMap[item.Id] = item.MinSalePrice.Value;
             }
 
             dtItems.Rows.Clear();
-            foreach (var item in itemsTask.Result)
+            foreach (var item in itemsList)
                 dtItems.Rows.Add(item.Id, item.Title, item.ItemCategoryCode, item.ItemKey, item.Barcode, item.PriRate, item.SecRate, item.PrimaryUnit, item.SecondaryUnit, item.DefaultUnit, item.RequireImei == true, item.AdditionalUnits);
 
-            dtUnits = UnitConversionHelper.CreateUnitsTable(unitsTask.Result);
+            dtUnits = UnitConversionHelper.CreateUnitsTable(unitsList);
 
             dtCategories.Rows.Clear();
-            foreach (var c in categoriesTask.Result)
+            foreach (var c in categoriesList)
                 dtCategories.Rows.Add(c.Code, c.Title);
 
             dtAccounts.Rows.Clear();
-            foreach (var a in accountsTask.Result)
+            foreach (var a in accountsList)
             {
                 string typeLabel = string.Equals(a.AccountType, "Vendor", StringComparison.OrdinalIgnoreCase) ? "Vendor" : "Customer";
                 string displayTitle = $"{a.Title} ({typeLabel})";
@@ -337,12 +387,12 @@ namespace ERP
             }
 
             dtNarration.Rows.Clear();
-            foreach (var n in narrationsTask.Result)
+            foreach (var n in narrationsList)
                 dtNarration.Rows.Add(n.Code, n.Title);
 
             dtCashBankAccounts.Rows.Clear();
             _defaultCashAccountId = null;
-            foreach (var cb in cashBankTask.Result)
+            foreach (var cb in cashBankList)
             {
                 dtCashBankAccounts.Rows.Add(cb.Account, cb.Title);
                 if (_defaultCashAccountId == null && (cb.Account.StartsWith("001002002001") || cb.Title.IndexOf("Cash", StringComparison.OrdinalIgnoreCase) >= 0))
@@ -438,6 +488,36 @@ namespace ERP
             _qFrom = fromDate; _qTo = toDate; _qAccount = account; _qVoucherNo = voucherNo;
             if (pageSize > 0) _qPageSize = pageSize;
 
+            if (ApiSession.IsOfflineMode)
+            {
+                var pending = OfflineStore.GetPendingSales()
+                    .OrderByDescending(x => x.CreatedAtLocal)
+                    .ToList();
+
+                _queryList = pending.Select(p => new SaleDto
+                {
+                    Date = p.CreatedAtLocal,
+                    VoucherNo = p.VoucherNo,
+                    Account = p.CustomerName,
+                    CreatedBy = (p.CashierName ?? "Cashier") + " [OFFLINE]",
+                    CreatedOn = p.CreatedAtLocal
+                }).ToList();
+
+                _pager.SetPagination(1, 1, _queryList.Count, _qPageSize);
+                dgvQuery.Rows.Clear();
+                for (int i = 0; i < _queryList.Count; i++)
+                {
+                    var row = _queryList[i];
+                    dgvQuery.Rows.Add(
+                        row.Date.ToString("dd-MMM-yyyy"),
+                        "SL-" + row.VoucherNo,
+                        row.Account,
+                        row.CreatedBy + " | " + row.CreatedOn.ToString("dd-MMM-yyyy hh:mm:ss tt"),
+                        null);
+                }
+                return;
+            }
+
             var page = await _apiService.GetPagedListAsync(fromDate, toDate, account, voucherNo, pageNumber, _qPageSize);
             _queryList = page.Data;
             _pager.SetPagination(page.CurrentPage, page.TotalPages, page.TotalCount, page.PageSize);
@@ -460,7 +540,52 @@ namespace ERP
 
         internal async System.Threading.Tasks.Task FillSaleAsync(string vno)
         {
-            var lines = await _apiService.GetDetailAsync(vno);
+            OfflineQueuedSale localOfflineSale = ApiSession.IsOfflineMode ? OfflineStore.GetPendingSale(vno) : null;
+            List<SaleLineDto> lines;
+            if (localOfflineSale != null && localOfflineSale.Request != null)
+            {
+                DateTime parsedDate = DateTime.TryParse(localOfflineSale.Request.Date, out var dt) ? dt : localOfflineSale.CreatedAtLocal;
+                lines = localOfflineSale.Request.Lines.Select(l =>
+                {
+                    DataRow ir = dtItems.Select("Id = '" + (l.ItemId ?? "").Replace("'", "''") + "'").FirstOrDefault();
+                    decimal amt = ((l.Qty * l.Rate) + ((l.SecQty ?? 0) * (l.SecRate ?? 0))) - l.Discount + (l.Carriage ?? 0);
+                    return new SaleLineDto
+                    {
+                        Seq = l.Seq,
+                        Date = parsedDate,
+                        VoucherNo = localOfflineSale.VoucherNo,
+                        AccountId = localOfflineSale.Request.Account,
+                        Narration = localOfflineSale.Request.Narration,
+                        Description = localOfflineSale.Request.Description,
+                        ItemId = l.ItemId,
+                        ItemKey = ir != null ? Convert.ToString(ir["ItemKey"]) : null,
+                        ItemCategoryCode = ir != null ? Convert.ToString(ir["fkItemcatagory"]) : "",
+                        Unit = ir != null ? Convert.ToString(ir["PrimaryUnit"]) : "",
+                        Qty = l.Qty,
+                        Rate = l.Rate,
+                        Discount = l.Discount,
+                        Carriage = l.Carriage,
+                        Amount = amt,
+                        SecQty = l.SecQty,
+                        SecRate = l.SecRate,
+                        SecUnit = l.SecUnit,
+                        Imei = l.Imei,
+                        Imei2 = l.Imei2,
+                        PtaStatus = l.PtaStatus,
+                        ConditionNote = l.ConditionNote,
+                        BatteryHealth = l.BatteryHealth,
+                        WarrantyMonths = l.WarrantyMonths,
+                        CashReceipt = localOfflineSale.CashReceipt,
+                        CashBack = localOfflineSale.CashBack,
+                        CreatedBy = (localOfflineSale.CashierName ?? "Cashier") + " [OFFLINE]",
+                        CreatedOn = localOfflineSale.CreatedAtLocal
+                    };
+                }).ToList();
+            }
+            else
+            {
+                lines = await _apiService.GetDetailAsync(vno);
+            }
             txtVoucherNo.Text = "SL-" + vno;
             VoucherNum = vno;
             dgvSale.Rows.Clear();
@@ -557,16 +682,31 @@ namespace ERP
             dgvPayments.Rows.Clear();
             try
             {
-                var payments = await _apiService.GetPaymentsAsync(vno);
-                if (payments != null && payments.Count > 0)
+                if (localOfflineSale != null && localOfflineSale.Request?.Payments != null && localOfflineSale.Request.Payments.Count > 0)
                 {
-                    foreach (var p in payments)
+                    int pSeq = 1;
+                    foreach (var p in localOfflineSale.Request.Payments)
                     {
                         int pIdx = dgvPayments.Rows.Add();
-                        dgvPayments[clnPaySeq.Index, pIdx].Value = p.Seq > 0 ? p.Seq.ToString() : (pIdx + 1).ToString();
+                        dgvPayments[clnPaySeq.Index, pIdx].Value = (pSeq++).ToString();
                         dgvPayments[clnPayAccount.Index, pIdx].Value = p.AccountId;
                         dgvPayments[clnPayAmount.Index, pIdx].Value = p.Amount.ToString("N2");
                         dgvPayments[clnPayReference.Index, pIdx].Value = p.Reference ?? "";
+                    }
+                }
+                else if (!ApiSession.IsOfflineMode)
+                {
+                    var payments = await _apiService.GetPaymentsAsync(vno);
+                    if (payments != null && payments.Count > 0)
+                    {
+                        foreach (var p in payments)
+                        {
+                            int pIdx = dgvPayments.Rows.Add();
+                            dgvPayments[clnPaySeq.Index, pIdx].Value = p.Seq > 0 ? p.Seq.ToString() : (pIdx + 1).ToString();
+                            dgvPayments[clnPayAccount.Index, pIdx].Value = p.AccountId;
+                            dgvPayments[clnPayAmount.Index, pIdx].Value = p.Amount.ToString("N2");
+                            dgvPayments[clnPayReference.Index, pIdx].Value = p.Reference ?? "";
+                        }
                     }
                 }
             }
@@ -741,10 +881,32 @@ namespace ERP
                         Lines = lines,
                         Payments = payments
                     };
-                    voucher = await _apiService.CreateAsync(createRequest);
+
+                    if (ApiSession.IsOfflineMode)
+                    {
+                        voucher = SaveNormalSaleOffline(createRequest);
+                    }
+                    else
+                    {
+                        try
+                        {
+                            voucher = await _apiService.CreateAsync(createRequest);
+                        }
+                        catch (Exception netEx) when (OfflineSyncService.IsNetworkException(netEx))
+                        {
+                            ApiSession.SetOfflineMode(true);
+                            voucher = SaveNormalSaleOffline(createRequest);
+                        }
+                    }
                 }
                 else
                 {
+                    if (ApiSession.IsOfflineMode)
+                    {
+                        MessageBox.Show("Editing existing vouchers is not available in Offline Mode. Click New to create a new offline sale.", "Offline Mode", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                        return;
+                    }
+
                     var updateRequest = new SaleUpdateRequest
                     {
                         Date = dtpDate.Value.ToString("yyyy-MM-dd"),
@@ -770,13 +932,86 @@ namespace ERP
                     Print(true);
                 }
 
-                MessageBox.Show("Record Successfully Saved...!");
+                MessageBox.Show(ApiSession.IsOfflineMode
+                    ? $"Offline Sale Voucher #SL-{voucher} saved locally (pending sync)!"
+                    : "Record Successfully Saved...!");
                 btnNew.Focus();
             }
             catch (Exception ex)
             {
                 MessageBox.Show("Error saving sale: " + ex.Message, "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
+        }
+
+        private string SaveNormalSaleOffline(SaleCreateRequest createRequest)
+        {
+            string voucherNo = OfflineVoucherGenerator.NextVoucherNo(out string terminalCode);
+            createRequest.OfflineVoucherNo = voucherNo;
+            createRequest.Counter = terminalCode;
+
+            var receiptLines = new List<SaleReceiptLineItem>();
+            decimal grossTotal = 0m;
+            decimal totalDiscount = 0m;
+            int seq = 1;
+
+            foreach (var line in createRequest.Lines)
+            {
+                DataRow itemRow = dtItems.Select("Id = '" + (line.ItemId ?? "").Replace("'", "''") + "'").FirstOrDefault();
+                string itemTitle = itemRow != null ? Convert.ToString(itemRow["Title"]) : line.ItemId;
+                string unitId = itemRow != null ? Convert.ToString(itemRow["PrimaryUnit"]) : "";
+                string unitTitle = unitId;
+                if (dtUnits != null && !string.IsNullOrWhiteSpace(unitId))
+                {
+                    string unitKeyCol = dtUnits.Columns.Contains("Code") ? "Code" : (dtUnits.Columns.Contains("Id") ? "Id" : null);
+                    if (unitKeyCol != null)
+                    {
+                        DataRow uRow = dtUnits.Select(unitKeyCol + " = '" + unitId.Replace("'", "''") + "'").FirstOrDefault();
+                        if (uRow != null && dtUnits.Columns.Contains("Title"))
+                            unitTitle = Convert.ToString(uRow["Title"]);
+                    }
+                }
+
+                decimal lineGross = (line.Qty * line.Rate) + ((line.SecQty ?? 0) * (line.SecRate ?? 0));
+                decimal lineNet = lineGross - line.Discount + (line.Carriage ?? 0);
+                grossTotal += lineGross;
+                totalDiscount += line.Discount;
+
+                receiptLines.Add(new SaleReceiptLineItem
+                {
+                    Seq = seq++,
+                    Item = itemTitle,
+                    Unit = unitTitle ?? "",
+                    Qty = line.Qty,
+                    Rate = line.Rate,
+                    GrossRate = line.Rate,
+                    Discount = line.Discount,
+                    Amount = lineNet,
+                    Imei = line.Imei
+                });
+            }
+
+            var queuedSale = new OfflineQueuedSale
+            {
+                VoucherNo = voucherNo,
+                TerminalCode = terminalCode,
+                SourceForm = "NormalSale",
+                CreatedAtLocal = DateTime.Now,
+                CashierName = UserInfo.UserName ?? "Cashier",
+                CustomerName = cmbAccounts.Text,
+                NarrationTitle = cmbNarration.Text,
+                GrossTotal = grossTotal,
+                TotalDiscount = totalDiscount,
+                NetAmount = receiptLines.Sum(l => l.Amount),
+                CashReceipt = createRequest.CashReceipt,
+                CashBack = createRequest.CashBack,
+                Request = createRequest,
+                ReceiptLines = receiptLines,
+                Status = OfflineSaleStatus.Pending
+            };
+
+            OfflineStore.EnqueueSale(queuedSale);
+            OfflineSyncService.NotifyPendingCountChanged();
+            return voucherNo;
         }
 
         private void rdb_CheckedChanged(object sender, EventArgs e)
@@ -2337,6 +2572,12 @@ namespace ERP
             if (txtVoucherNo.Text == "")
                 return;
 
+            if (ApiSession.IsOfflineMode)
+            {
+                MessageBox.Show("Deleting vouchers is disabled in Offline Mode. Use Settings → Offline Sync Queue to ignore/discard pending offline bills.", "Offline Mode", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                return;
+            }
+
             if (MessageBox.Show("Are you sure?" + Environment.NewLine + "You want to Delete this...!", "Confirmation", MessageBoxButtons.YesNo, MessageBoxIcon.Question) == DialogResult.Yes)
             {
                 try
@@ -2372,6 +2613,11 @@ namespace ERP
                     {
                         if (txtVoucherNo.Text != "")
                         {
+                            if (ApiSession.IsOfflineMode)
+                            {
+                                MessageBox.Show("Deleting lines from saved vouchers is disabled in Offline Mode.", "Offline Mode", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+                                return;
+                            }
                             int seq = int.Parse(dgvSale[clnSeq.Index, dgvSale.CurrentRow.Index].Value.ToString());
                             await _apiService.DeleteLineAsync(txtVoucherNo.Text.Substring(3), seq);
                         }
@@ -2423,6 +2669,13 @@ namespace ERP
                 ? txtVoucherNo.Text.Substring(3)
                 : txtVoucherNo.Text;
 
+            var localOffline = OfflineStore.GetPendingSale(vno);
+            if (ApiSession.IsOfflineMode && localOffline != null)
+            {
+                await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewOfflineAsync(localOffline.ToReceiptDataResult(), IsDirect);
+                return;
+            }
+
             await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewAsync(vno, IsDirect);
         }
 
@@ -2432,6 +2685,13 @@ namespace ERP
             string vno = txtVoucherNo.Text.StartsWith("SL-", StringComparison.OrdinalIgnoreCase)
                 ? txtVoucherNo.Text.Substring(3)
                 : txtVoucherNo.Text;
+
+            var localOffline = OfflineStore.GetPendingSale(vno);
+            if (ApiSession.IsOfflineMode && localOffline != null)
+            {
+                await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewOfflineAsync(localOffline.ToReceiptDataResult(), IsDirect);
+                return;
+            }
 
             await ERP.Reporting.SaleReceiptViewer.PrintOrPreviewAsync(vno, IsDirect);
         }
