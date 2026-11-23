@@ -88,8 +88,8 @@ namespace ERP.Forms
 
         private async System.Threading.Tasks.Task LoadAccountLookupsAsync()
         {
-            var expenseAccounts = await _chartOfAccountService.GetAccountsByPrefixAsync("004", 5);
-            var payableAccounts = await _chartOfAccountService.GetAccountsByPrefixAsync("002", 5);
+            var expenseAccounts = await _chartOfAccountService.GetAccountsByPrefixAsync(AccountHead.ExpensesRootId, AccountHead.DetailLevel);
+            var payableAccounts = await _chartOfAccountService.GetAccountsByPrefixAsync(AccountHead.LiabilitiesRootId, AccountHead.DetailLevel);
 
             BindAccountCombo(cmbExpenseAccount, expenseAccounts.OrderBy(x => x.Title).ToList());
             BindAccountCombo(cmbPayable, payableAccounts.OrderBy(x => x.Title).ToList());

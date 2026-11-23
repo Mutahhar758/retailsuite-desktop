@@ -112,11 +112,11 @@ namespace ERP.Reporting.Models
 
                     if (string.IsNullOrWhiteSpace(title)) title = lvl4;
 
-                    bool isAsset = lvl1.IndexOf("asset", StringComparison.OrdinalIgnoreCase) >= 0 || lvl1.StartsWith("001");
-                    bool isLiability = lvl1.IndexOf("liabilit", StringComparison.OrdinalIgnoreCase) >= 0 || lvl1.StartsWith("002");
+                    bool isAsset = lvl1.IndexOf("asset", StringComparison.OrdinalIgnoreCase) >= 0 || lvl1.StartsWith(AccountHead.AssetsRootId);
+                    bool isLiability = lvl1.IndexOf("liabilit", StringComparison.OrdinalIgnoreCase) >= 0 || lvl1.StartsWith(AccountHead.LiabilitiesRootId);
                     bool isEquity = lvl1.IndexOf("equity", StringComparison.OrdinalIgnoreCase) >= 0
                                  || lvl1.IndexOf("capital", StringComparison.OrdinalIgnoreCase) >= 0
-                                 || lvl1.StartsWith("005");
+                                 || lvl1.StartsWith(AccountHead.CapitalRootId);
 
                     if (isAsset)
                     {

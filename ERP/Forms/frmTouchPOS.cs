@@ -746,7 +746,7 @@ namespace ERP.Forms
             cmbCustomer.ValueMember = "Account";
 
             // Default to standard Cash Customer "001002001001" if present
-            var defaultCust = _customers.FirstOrDefault(c => c.Account == "001002001001" || c.Account == AccountHead.Customer);
+            var defaultCust = _customers.FirstOrDefault(c => c.Account == AccountHead.DefaultCustomerHead || c.Account == AccountHead.Customer);
             if (defaultCust != null)
             {
                 cmbCustomer.SelectedValue = defaultCust.Account;
@@ -1421,7 +1421,7 @@ namespace ERP.Forms
             var cart = GetActiveCart();
             if (cart.Count == 0) return;
 
-            string accountId = cmbCustomer.SelectedValue?.ToString() ?? "001002001001";
+            string accountId = cmbCustomer.SelectedValue?.ToString() ?? AccountHead.DefaultCustomerHead;
 
             var lines = new List<SaleLineRequest>();
             int seq = 1;

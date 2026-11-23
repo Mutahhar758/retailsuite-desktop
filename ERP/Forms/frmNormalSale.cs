@@ -395,7 +395,7 @@ namespace ERP
             foreach (var cb in cashBankList)
             {
                 dtCashBankAccounts.Rows.Add(cb.Account, cb.Title);
-                if (_defaultCashAccountId == null && (cb.Account.StartsWith("001002002001") || cb.Title.IndexOf("Cash", StringComparison.OrdinalIgnoreCase) >= 0))
+                if (_defaultCashAccountId == null && (cb.Account.StartsWith(AccountHead.DefaultCashPrefix) || cb.Title.IndexOf("Cash", StringComparison.OrdinalIgnoreCase) >= 0))
                 {
                     _defaultCashAccountId = cb.Account;
                 }

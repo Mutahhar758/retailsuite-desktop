@@ -170,8 +170,8 @@ namespace ERP
             this.Text = CompanyInfo.CompanyName;
             lblCompanyName.Text = CompanyInfo.CompanyName;
             lblUrCompanyName.Text = CompanyInfo.UrCompanyName;
-            AccountHead.Customer = "001002001001";
-            AccountHead.Farmer = "002001001001";
+            AccountHead.Customer = AccountHead.DefaultCustomerHead;
+            AccountHead.Farmer = AccountHead.DefaultVendorHead;
             CompanyCetreLoc();
 
             frmLogin = this.Owner;

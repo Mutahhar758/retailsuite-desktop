@@ -7,6 +7,18 @@ namespace ERP
 {
     class AccountHead
     {
+        public const int DetailLevel = 5;
+
+        public const string AssetsRootId = "001";
+        public const string LiabilitiesRootId = "002";
+        public const string IncomeRootId = "003";
+        public const string ExpensesRootId = "004";
+        public const string CapitalRootId = "005";
+
+        public const string DefaultCustomerHead = "001002001001";
+        public const string DefaultVendorHead = "002001001001";
+        public const string DefaultCashPrefix = "001002002001";
+
         private static string _Customer;
 
         public static string Customer
