@@ -117,6 +117,39 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lines")]
         public List<BomDetailDto> Items { get; set; } = new List<BomDetailDto>();
+
+        [JsonProperty("expenses")]
+        public List<BomExpenseDto> Expenses { get; set; } = new List<BomExpenseDto>();
+    }
+
+    internal class BomExpenseDto
+    {
+        [JsonProperty("id")]
+        public int Id { get; set; }
+
+        [JsonProperty("seq")]
+        public int Seq { get; set; }
+
+        [JsonProperty("title")]
+        public string Title { get; set; }
+
+        [JsonProperty("accountId")]
+        public string AccountId { get; set; }
+
+        [JsonProperty("accountTitle")]
+        public string AccountTitle { get; set; }
+
+        [JsonProperty("calculationType")]
+        public string CalculationType { get; set; } = "PerUnit";
+
+        [JsonProperty("rate")]
+        public decimal Rate { get; set; }
+
+        [JsonProperty("estimatedAmount")]
+        public decimal EstimatedAmount { get; set; }
+
+        [JsonProperty("remarks")]
+        public string Remarks { get; set; }
     }
 
     internal class BomDetailDto
@@ -183,6 +216,30 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("lines")]
         public List<BomDetailCreateUpdateRequest> Items { get; set; } = new List<BomDetailCreateUpdateRequest>();
+
+        [JsonProperty("expenses")]
+        public List<BomExpenseRequest> Expenses { get; set; } = new List<BomExpenseRequest>();
+    }
+
+    internal class BomExpenseRequest
+    {
+        [JsonProperty("seq")]
+        public int Seq { get; set; }
+
+        [JsonProperty("title")]
+        public string Title { get; set; }
+
+        [JsonProperty("accountId")]
+        public string AccountId { get; set; }
+
+        [JsonProperty("calculationType")]
+        public string CalculationType { get; set; } = "PerUnit";
+
+        [JsonProperty("rate")]
+        public decimal Rate { get; set; }
+
+        [JsonProperty("remarks")]
+        public string Remarks { get; set; }
     }
 
     internal class BomDetailCreateUpdateRequest

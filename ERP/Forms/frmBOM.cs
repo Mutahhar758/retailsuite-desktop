@@ -13,10 +13,20 @@ namespace ERP.Forms
     {
         private readonly BomApiService _bomApiService;
         private readonly InventoryApiService _inventoryApiService;
+        private readonly ChartOfAccountApiService _coaApiService;
         private List<BomDto> _allBoms = new List<BomDto>();
         private List<InventoryItemDto> _items = new List<InventoryItemDto>();
+        private List<ChartOfAccountHeadDto> _expenseAccounts = new List<ChartOfAccountHeadDto>();
         private int _selectedBomId = 0;
         private bool _isLoading = false;
+
+        private DataGridView dgvExpenses;
+        private DataGridViewComboBoxColumn clnExpAccount;
+        private DataGridViewTextBoxColumn clnExpTitle;
+        private DataGridViewComboBoxColumn clnExpBasis;
+        private DataGridViewTextBoxColumn clnExpRate;
+        private DataGridViewTextBoxColumn clnExpAmount;
+        private DataGridViewTextBoxColumn clnExpRemarks;
 
         public frmBOM()
         {
@@ -24,13 +34,86 @@ namespace ERP.Forms
             dgvBomList.AutoGenerateColumns = false;
             _bomApiService = new BomApiService();
             _inventoryApiService = new InventoryApiService();
+            _coaApiService = new ChartOfAccountApiService();
+            InitializeExpensesTab();
             UserInfo.ApplyFormPermissions(this, AppResource.BillOfMaterials);
+        }
+
+        private void InitializeExpensesTab()
+        {
+            var tabDetails = new TabControl { Dock = DockStyle.Fill };
+            var tabMaterials = new TabPage("Raw Materials / Ingredients");
+            var tabExpenses = new TabPage("Manufacturing Expenses (Per Account)");
+
+            grpDetails.Controls.Remove(dgvRawMaterials);
+            grpDetails.Controls.Remove(pnlDetailButtons);
+            tabMaterials.Controls.Add(dgvRawMaterials);
+            tabMaterials.Controls.Add(pnlDetailButtons);
+
+            var pnlExpButtons = new Panel { Dock = DockStyle.Bottom, Height = 36 };
+            var btnAddExp = new Button { Text = "+ Add Expense", Width = 120, Height = 26, Location = new Point(6, 5) };
+            var btnDelExp = new Button { Text = "- Remove Expense", Width = 130, Height = 26, Location = new Point(132, 5) };
+            btnAddExp.Click += btnAddExpense_Click;
+            btnDelExp.Click += btnDeleteExpense_Click;
+            pnlExpButtons.Controls.Add(btnAddExp);
+            pnlExpButtons.Controls.Add(btnDelExp);
+
+            dgvExpenses = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                BackgroundColor = Color.White,
+                RowHeadersVisible = false
+            };
+
+            clnExpAccount = new DataGridViewComboBoxColumn { HeaderText = "Expense Account", Name = "clnExpAccount", FillWeight = 130, DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox };
+            clnExpTitle = new DataGridViewTextBoxColumn { HeaderText = "Description", Name = "clnExpTitle", FillWeight = 110 };
+            clnExpBasis = new DataGridViewComboBoxColumn
+            {
+                HeaderText = "Basis",
+                Name = "clnExpBasis",
+                FillWeight = 85,
+                DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox,
+                DataSource = new[] { "PerUnit", "LumpSum", "PercentOfMaterial" }
+            };
+            clnExpRate = new DataGridViewTextBoxColumn { HeaderText = "Rate / Value", Name = "clnExpRate", FillWeight = 75 };
+            clnExpAmount = new DataGridViewTextBoxColumn { HeaderText = "Est. Amount", Name = "clnExpAmount", FillWeight = 80, ReadOnly = true };
+            clnExpRemarks = new DataGridViewTextBoxColumn { HeaderText = "Remarks", Name = "clnExpRemarks", FillWeight = 90 };
+
+            dgvExpenses.Columns.AddRange(new DataGridViewColumn[]
+            {
+                clnExpAccount, clnExpTitle, clnExpBasis, clnExpRate, clnExpAmount, clnExpRemarks
+            });
+            dgvExpenses.CellValueChanged += dgvExpenses_CellValueChanged;
+            dgvExpenses.DataError += (s, ev) => { ev.ThrowException = false; };
+
+            tabExpenses.Controls.Add(dgvExpenses);
+            tabExpenses.Controls.Add(pnlExpButtons);
+
+            tabDetails.TabPages.Add(tabMaterials);
+            tabDetails.TabPages.Add(tabExpenses);
+            grpDetails.Controls.Add(tabDetails);
         }
 
         private async void frmBOM_Load(object sender, EventArgs e)
         {
             await LoadItemsAsync();
+            await LoadExpenseAccountsAsync();
             await LoadBomsAsync();
+        }
+
+        private async Task LoadExpenseAccountsAsync()
+        {
+            try
+            {
+                _expenseAccounts = await _coaApiService.GetAccountsByPrefixAsync("004", 5) ?? new List<ChartOfAccountHeadDto>();
+                clnExpAccount.DisplayMember = "Title";
+                clnExpAccount.ValueMember = "Account";
+                clnExpAccount.DataSource = new List<ChartOfAccountHeadDto>(_expenseAccounts);
+            }
+            catch { }
         }
 
         private async Task LoadItemsAsync()
@@ -129,7 +212,70 @@ namespace ERP.Forms
                 }
             }
 
+            dgvExpenses.Rows.Clear();
+            if (bom.Expenses != null && bom.Expenses.Count > 0)
+            {
+                foreach (var exp in bom.Expenses)
+                {
+                    int rIdx = dgvExpenses.Rows.Add();
+                    var row = dgvExpenses.Rows[rIdx];
+                    row.Cells[clnExpAccount.Index].Value = string.IsNullOrWhiteSpace(exp.AccountId) ? null : exp.AccountId;
+                    row.Cells[clnExpTitle.Index].Value = exp.Title;
+                    row.Cells[clnExpBasis.Index].Value = NormalizeBasis(exp.CalculationType);
+                    row.Cells[clnExpRate.Index].Value = exp.Rate.ToString("0.##");
+                    row.Cells[clnExpAmount.Index].Value = exp.EstimatedAmount.ToString("0.##");
+                    row.Cells[clnExpRemarks.Index].Value = exp.Remarks;
+                }
+            }
+
             _isLoading = false;
+            RecalculateTotals();
+        }
+
+        private static string NormalizeBasis(string val)
+        {
+            if (string.IsNullOrWhiteSpace(val)) return "PerUnit";
+            if (val.Equals("0", StringComparison.OrdinalIgnoreCase) || val.Equals("LumpSum", StringComparison.OrdinalIgnoreCase)) return "LumpSum";
+            if (val.Equals("2", StringComparison.OrdinalIgnoreCase) || val.Equals("PercentOfMaterial", StringComparison.OrdinalIgnoreCase)) return "PercentOfMaterial";
+            return "PerUnit";
+        }
+
+        private void btnAddExpense_Click(object sender, EventArgs e)
+        {
+            int rIdx = dgvExpenses.Rows.Add();
+            var row = dgvExpenses.Rows[rIdx];
+            row.Cells[clnExpAccount.Index].Value = null;
+            row.Cells[clnExpTitle.Index].Value = "";
+            row.Cells[clnExpBasis.Index].Value = "PerUnit";
+            row.Cells[clnExpRate.Index].Value = "0";
+            row.Cells[clnExpAmount.Index].Value = "0.00";
+            row.Cells[clnExpRemarks.Index].Value = "";
+            RecalculateTotals();
+        }
+
+        private void btnDeleteExpense_Click(object sender, EventArgs e)
+        {
+            if (dgvExpenses.CurrentRow != null && !dgvExpenses.CurrentRow.IsNewRow)
+            {
+                dgvExpenses.Rows.Remove(dgvExpenses.CurrentRow);
+                RecalculateTotals();
+            }
+        }
+
+        private void dgvExpenses_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (_isLoading || e.RowIndex < 0) return;
+            var row = dgvExpenses.Rows[e.RowIndex];
+            if (e.ColumnIndex == clnExpAccount.Index)
+            {
+                var accId = row.Cells[clnExpAccount.Index].Value?.ToString();
+                var curTitle = row.Cells[clnExpTitle.Index].Value?.ToString();
+                if (!string.IsNullOrWhiteSpace(accId) && string.IsNullOrWhiteSpace(curTitle))
+                {
+                    var acc = _expenseAccounts.FirstOrDefault(a => a.Account == accId);
+                    if (acc != null) row.Cells[clnExpTitle.Index].Value = acc.Title;
+                }
+            }
             RecalculateTotals();
         }
 
@@ -199,10 +345,32 @@ namespace ERP.Forms
                 rawMaterialsTotal += ParseDecimal(row.Cells[clnLineCost.Index].Value);
             }
 
-            decimal labor = ParseDecimal(txtLaborCost.Text);
-            decimal overhead = ParseDecimal(txtOverheadCost.Text);
-            decimal total = rawMaterialsTotal + labor + overhead;
+            decimal outputQty = ParseDecimal(txtOutputQty.Text);
+            decimal expensesTotal = 0;
+            if (dgvExpenses != null && dgvExpenses.Rows.Count > 0)
+            {
+                _isLoading = true;
+                foreach (DataGridViewRow row in dgvExpenses.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    string basis = NormalizeBasis(row.Cells[clnExpBasis.Index].Value?.ToString());
+                    decimal rate = ParseDecimal(row.Cells[clnExpRate.Index].Value);
+                    decimal amt = basis == "LumpSum"
+                        ? rate
+                        : basis == "PercentOfMaterial"
+                            ? rawMaterialsTotal * (rate / 100m)
+                            : rate * outputQty;
+                    row.Cells[clnExpAmount.Index].Value = amt.ToString("0.##");
+                    expensesTotal += amt;
+                }
+                _isLoading = false;
+            }
+            else
+            {
+                expensesTotal = ParseDecimal(txtLaborCost.Text) + ParseDecimal(txtOverheadCost.Text);
+            }
 
+            decimal total = rawMaterialsTotal + expensesTotal;
             lblTotalEstimatedCost.Text = total.ToString("N2");
         }
 
@@ -227,6 +395,7 @@ namespace ERP.Forms
             chkIsActive.Checked = true;
             txtNotes.Text = "";
             dgvRawMaterials.Rows.Clear();
+            if (dgvExpenses != null) dgvExpenses.Rows.Clear();
             _isLoading = false;
             RecalculateTotals();
             txtBomName.Focus();
@@ -298,6 +467,28 @@ namespace ERP.Forms
                     ScrapPercentage = ParseDecimal(row.Cells[clnScrapPct.Index].Value),
                     Notes = row.Cells[clnDetailNotes.Index].Value?.ToString()
                 });
+            }
+
+            if (dgvExpenses != null)
+            {
+                int expSeq = 1;
+                foreach (DataGridViewRow row in dgvExpenses.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    string accId = row.Cells[clnExpAccount.Index].Value?.ToString();
+                    string title = (row.Cells[clnExpTitle.Index].Value?.ToString() ?? "").Trim();
+                    if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(accId)) continue;
+
+                    request.Expenses.Add(new BomExpenseRequest
+                    {
+                        Seq = expSeq++,
+                        Title = string.IsNullOrWhiteSpace(title) ? "Expense" : title,
+                        AccountId = string.IsNullOrWhiteSpace(accId) ? null : accId,
+                        CalculationType = NormalizeBasis(row.Cells[clnExpBasis.Index].Value?.ToString()),
+                        Rate = ParseDecimal(row.Cells[clnExpRate.Index].Value),
+                        Remarks = row.Cells[clnExpRemarks.Index].Value?.ToString()
+                    });
+                }
             }
 
             try

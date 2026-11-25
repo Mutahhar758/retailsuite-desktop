@@ -239,11 +239,59 @@ namespace ERP.Services.Legacy
         [JsonProperty("remarks")]
         public string Remarks { get; set; }
 
+        [JsonProperty("createRawMaterialPurchase")]
+        public bool CreateRawMaterialPurchase { get; set; }
+
+        [JsonProperty("purchaseSupplierAccountId")]
+        public string PurchaseSupplierAccountId { get; set; }
+
+        [JsonProperty("purchaseScope")]
+        public string PurchaseScope { get; set; }
+
+        [JsonProperty("linkedPurchaseVoucherNo")]
+        public string LinkedPurchaseVoucherNo { get; set; }
+
         [JsonProperty("lines")]
         public List<ProductionDetailDto> Items { get; set; } = new List<ProductionDetailDto>();
 
         [JsonProperty("items")]
         private List<ProductionDetailDto> ItemsAlias { set { if (value != null && value.Count > 0 && Items.Count == 0) Items = value; } }
+
+        [JsonProperty("expenses")]
+        public List<ProductionExpenseDto> Expenses { get; set; } = new List<ProductionExpenseDto>();
+    }
+
+    internal class ProductionExpenseDto
+    {
+        [JsonProperty("id")]
+        public int Id { get; set; }
+
+        [JsonProperty("seq")]
+        public int Seq { get; set; }
+
+        [JsonProperty("title")]
+        public string Title { get; set; }
+
+        [JsonProperty("accountId")]
+        public string AccountId { get; set; }
+
+        [JsonProperty("accountTitle")]
+        public string AccountTitle { get; set; }
+
+        [JsonProperty("calculationType")]
+        public string CalculationType { get; set; } = "PerUnit";
+
+        [JsonProperty("rate")]
+        public decimal Rate { get; set; }
+
+        [JsonProperty("plannedAmount")]
+        public decimal PlannedAmount { get; set; }
+
+        [JsonProperty("actualAmount")]
+        public decimal ActualAmount { get; set; }
+
+        [JsonProperty("remarks")]
+        public string Remarks { get; set; }
     }
 
     internal class ProductionDetailDto
@@ -371,11 +419,53 @@ namespace ERP.Services.Legacy
         [JsonProperty("remarks")]
         public string Remarks { get; set; }
 
+        [JsonProperty("createRawMaterialPurchase")]
+        public bool CreateRawMaterialPurchase { get; set; }
+
+        [JsonProperty("purchaseSupplierAccountId")]
+        public string PurchaseSupplierAccountId { get; set; }
+
+        [JsonProperty("purchaseScope")]
+        public string PurchaseScope { get; set; }
+
+        [JsonProperty("linkedPurchaseVoucherNo")]
+        public string LinkedPurchaseVoucherNo { get; set; }
+
         [JsonProperty("lines")]
         public List<ProductionDetailCreateUpdateRequest> Items { get; set; } = new List<ProductionDetailCreateUpdateRequest>();
 
         [JsonProperty("items")]
         private List<ProductionDetailCreateUpdateRequest> ItemsAlias { set { if (value != null && value.Count > 0 && Items.Count == 0) Items = value; } }
+
+        [JsonProperty("expenses")]
+        public List<ProductionExpenseRequest> Expenses { get; set; } = new List<ProductionExpenseRequest>();
+    }
+
+    internal class ProductionExpenseRequest
+    {
+        [JsonProperty("seq")]
+        public int Seq { get; set; }
+
+        [JsonProperty("title")]
+        public string Title { get; set; }
+
+        [JsonProperty("accountId")]
+        public string AccountId { get; set; }
+
+        [JsonProperty("calculationType")]
+        public string CalculationType { get; set; } = "PerUnit";
+
+        [JsonProperty("rate")]
+        public decimal Rate { get; set; }
+
+        [JsonProperty("plannedAmount")]
+        public decimal PlannedAmount { get; set; }
+
+        [JsonProperty("actualAmount")]
+        public decimal ActualAmount { get; set; }
+
+        [JsonProperty("remarks")]
+        public string Remarks { get; set; }
     }
 
     internal class ProductionDetailCreateUpdateRequest

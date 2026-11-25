@@ -14,10 +14,27 @@ namespace ERP.Forms
         private readonly ManufacturingApiService _manufacturingApiService;
         private readonly BomApiService _bomApiService;
         private readonly InventoryApiService _inventoryApiService;
+        private readonly ChartOfAccountApiService _coaApiService;
 
         private List<ProductionMasterDto> _allVouchers = new List<ProductionMasterDto>();
         private List<BomDto> _allBoms = new List<BomDto>();
         private List<InventoryItemDto> _items = new List<InventoryItemDto>();
+        private List<ChartOfAccountHeadDto> _expenseAccounts = new List<ChartOfAccountHeadDto>();
+        private List<ChartOfAccountHeadDto> _supplierAccounts = new List<ChartOfAccountHeadDto>();
+
+        private DataGridView dgvExpenses;
+        private DataGridViewComboBoxColumn clnExpAccount;
+        private DataGridViewTextBoxColumn clnExpTitle;
+        private DataGridViewComboBoxColumn clnExpBasis;
+        private DataGridViewTextBoxColumn clnExpRate;
+        private DataGridViewTextBoxColumn clnExpAmount;
+        private DataGridViewTextBoxColumn clnExpRemarks;
+        private Button btnAddExpense;
+        private Button btnDeleteExpense;
+        private CheckBox chkCreatePurchase;
+        private ComboBox cmbPurchaseSupplier;
+        private ComboBox cmbPurchaseScope;
+        private Label lblLinkedPurchase;
 
         private string _selectedVoucherNo = string.Empty;
         private string _currentStatus = "Planned";
@@ -30,6 +47,8 @@ namespace ERP.Forms
             _manufacturingApiService = new ManufacturingApiService();
             _bomApiService = new BomApiService();
             _inventoryApiService = new InventoryApiService();
+            _coaApiService = new ChartOfAccountApiService();
+            InitializeExpensesTab();
             UserInfo.ApplyFormPermissions(this, AppResource.Manufacturing);
 
             EnableDoubleBuffering(dgvRawMaterials);
@@ -46,6 +65,169 @@ namespace ERP.Forms
             this.Shown += frmManufacturing_Shown;
             SetupButtonFocusHighlights();
             SetupDropdownFocusHighlights();
+        }
+
+        private void InitializeExpensesTab()
+        {
+            var tabDetails = new TabControl { Dock = DockStyle.Fill };
+            var tabMaterials = new TabPage("Consumed Raw Materials");
+            var tabExpenses = new TabPage("Manufacturing Expenses (Per Account)");
+
+            grpDetails.Controls.Remove(dgvRawMaterials);
+            grpDetails.Controls.Remove(pnlDetailButtons);
+
+            var pnlPurchaseBar = new Panel { Dock = DockStyle.Top, Height = 34, Padding = new Padding(4, 4, 4, 4) };
+            chkCreatePurchase = new CheckBox
+            {
+                Text = "Auto-Purchase Raw Materials",
+                AutoSize = true,
+                Location = new Point(6, 8)
+            };
+            cmbPurchaseSupplier = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 220,
+                Location = new Point(195, 5),
+                Enabled = false
+            };
+            cmbPurchaseScope = new ComboBox
+            {
+                DropDownStyle = ComboBoxStyle.DropDownList,
+                Width = 140,
+                Location = new Point(422, 5),
+                Enabled = false
+            };
+            cmbPurchaseScope.Items.AddRange(new object[] { "ShortageOnly", "AllMaterials" });
+            cmbPurchaseScope.SelectedIndex = 0;
+
+            lblLinkedPurchase = new Label
+            {
+                AutoSize = true,
+                ForeColor = Color.FromArgb(21, 128, 61),
+                Font = new Font("Segoe UI", 8.5F, FontStyle.Bold),
+                Location = new Point(572, 9),
+                Text = ""
+            };
+            chkCreatePurchase.CheckedChanged += (s, ev) =>
+            {
+                bool on = chkCreatePurchase.Checked;
+                cmbPurchaseSupplier.Enabled = on;
+                cmbPurchaseScope.Enabled = on;
+            };
+            pnlPurchaseBar.Controls.Add(chkCreatePurchase);
+            pnlPurchaseBar.Controls.Add(cmbPurchaseSupplier);
+            pnlPurchaseBar.Controls.Add(cmbPurchaseScope);
+            pnlPurchaseBar.Controls.Add(lblLinkedPurchase);
+
+            tabMaterials.Controls.Add(dgvRawMaterials);
+            tabMaterials.Controls.Add(pnlPurchaseBar);
+            tabMaterials.Controls.Add(pnlDetailButtons);
+
+            var pnlExpButtons = new Panel { Dock = DockStyle.Bottom, Height = 36 };
+            btnAddExpense = new Button { Text = "+ Add Expense", Width = 120, Height = 26, Location = new Point(6, 5) };
+            btnDeleteExpense = new Button { Text = "- Remove Expense", Width = 130, Height = 26, Location = new Point(132, 5) };
+            btnAddExpense.Click += btnAddExpense_Click;
+            btnDeleteExpense.Click += btnDeleteExpense_Click;
+            pnlExpButtons.Controls.Add(btnAddExpense);
+            pnlExpButtons.Controls.Add(btnDeleteExpense);
+
+            dgvExpenses = new DataGridView
+            {
+                Dock = DockStyle.Fill,
+                AllowUserToAddRows = false,
+                AllowUserToDeleteRows = false,
+                AutoSizeColumnsMode = DataGridViewAutoSizeColumnsMode.Fill,
+                BackgroundColor = Color.White,
+                RowHeadersVisible = false
+            };
+            EnableDoubleBuffering(dgvExpenses);
+
+            clnExpAccount = new DataGridViewComboBoxColumn { HeaderText = "Expense Account", Name = "clnExpAccount", FillWeight = 135, DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox };
+            clnExpTitle = new DataGridViewTextBoxColumn { HeaderText = "Description", Name = "clnExpTitle", FillWeight = 110 };
+            clnExpBasis = new DataGridViewComboBoxColumn
+            {
+                HeaderText = "Basis",
+                Name = "clnExpBasis",
+                FillWeight = 85,
+                DisplayStyle = DataGridViewComboBoxDisplayStyle.ComboBox,
+                DataSource = new[] { "PerUnit", "LumpSum", "PercentOfMaterial" }
+            };
+            clnExpRate = new DataGridViewTextBoxColumn { HeaderText = "Rate / Value", Name = "clnExpRate", FillWeight = 75 };
+            clnExpAmount = new DataGridViewTextBoxColumn { HeaderText = "Actual Amount", Name = "clnExpAmount", FillWeight = 85 };
+            clnExpRemarks = new DataGridViewTextBoxColumn { HeaderText = "Remarks", Name = "clnExpRemarks", FillWeight = 90 };
+
+            dgvExpenses.Columns.AddRange(new DataGridViewColumn[]
+            {
+                clnExpAccount, clnExpTitle, clnExpBasis, clnExpRate, clnExpAmount, clnExpRemarks
+            });
+            dgvExpenses.CellValueChanged += dgvExpenses_CellValueChanged;
+            dgvExpenses.DataError += (s, ev) => { ev.ThrowException = false; };
+
+            tabExpenses.Controls.Add(dgvExpenses);
+            tabExpenses.Controls.Add(pnlExpButtons);
+
+            tabDetails.TabPages.Add(tabMaterials);
+            tabDetails.TabPages.Add(tabExpenses);
+            grpDetails.Controls.Add(tabDetails);
+        }
+
+        private static string NormalizeBasis(string val)
+        {
+            if (string.IsNullOrWhiteSpace(val)) return "PerUnit";
+            if (val.Equals("0", StringComparison.OrdinalIgnoreCase) || val.Equals("LumpSum", StringComparison.OrdinalIgnoreCase)) return "LumpSum";
+            if (val.Equals("2", StringComparison.OrdinalIgnoreCase) || val.Equals("PercentOfMaterial", StringComparison.OrdinalIgnoreCase)) return "PercentOfMaterial";
+            return "PerUnit";
+        }
+
+        private void btnAddExpense_Click(object sender, EventArgs e)
+        {
+            int rIdx = dgvExpenses.Rows.Add();
+            var row = dgvExpenses.Rows[rIdx];
+            row.Cells[clnExpAccount.Index].Value = null;
+            row.Cells[clnExpTitle.Index].Value = "";
+            row.Cells[clnExpBasis.Index].Value = "PerUnit";
+            row.Cells[clnExpRate.Index].Value = "0";
+            row.Cells[clnExpAmount.Index].Value = "0.00";
+            row.Cells[clnExpRemarks.Index].Value = "";
+            RecalculateTotals();
+        }
+
+        private void btnDeleteExpense_Click(object sender, EventArgs e)
+        {
+            if (dgvExpenses.CurrentRow != null && !dgvExpenses.CurrentRow.IsNewRow)
+            {
+                dgvExpenses.Rows.Remove(dgvExpenses.CurrentRow);
+                RecalculateTotals();
+            }
+        }
+
+        private void dgvExpenses_CellValueChanged(object sender, DataGridViewCellEventArgs e)
+        {
+            if (_isLoading || e.RowIndex < 0) return;
+            var row = dgvExpenses.Rows[e.RowIndex];
+            if (e.ColumnIndex == clnExpAccount.Index)
+            {
+                var accId = row.Cells[clnExpAccount.Index].Value?.ToString();
+                var curTitle = row.Cells[clnExpTitle.Index].Value?.ToString();
+                if (!string.IsNullOrWhiteSpace(accId) && string.IsNullOrWhiteSpace(curTitle))
+                {
+                    var acc = _expenseAccounts.FirstOrDefault(a => a.Account == accId);
+                    if (acc != null) row.Cells[clnExpTitle.Index].Value = acc.Title;
+                }
+            }
+            if (e.ColumnIndex == clnExpBasis.Index || e.ColumnIndex == clnExpRate.Index)
+            {
+                decimal qty = ParseDecimal(txtProducedQty.Text);
+                if (qty <= 0) qty = ParseDecimal(txtPlannedQty.Text);
+                decimal matTotal = ParseDecimal(txtRawCost.Text);
+                string basis = NormalizeBasis(row.Cells[clnExpBasis.Index].Value?.ToString());
+                decimal rate = ParseDecimal(row.Cells[clnExpRate.Index].Value);
+                decimal amt = basis == "LumpSum" ? rate : basis == "PercentOfMaterial" ? matTotal * (rate / 100m) : rate * qty;
+                _isLoading = true;
+                row.Cells[clnExpAmount.Index].Value = amt.ToString("0.##");
+                _isLoading = false;
+            }
+            RecalculateTotals();
         }
 
         private static void EnableDoubleBuffering(Control control)
@@ -605,6 +787,21 @@ namespace ERP.Forms
                 cmbBom.DisplayMember = "BomName";
                 cmbBom.ValueMember = "Id";
                 cmbBom.DataSource = bomListForCombo;
+
+                _expenseAccounts = await _coaApiService.GetAccountsByPrefixAsync("004", 5) ?? new List<ChartOfAccountHeadDto>();
+                clnExpAccount.DisplayMember = "Title";
+                clnExpAccount.ValueMember = "Account";
+                clnExpAccount.DataSource = new List<ChartOfAccountHeadDto>(_expenseAccounts);
+
+                var suppliers = await _coaApiService.GetSupplierAccountsAsync() ?? new List<ChartOfAccountHeadDto>();
+                var cashBanks = await _coaApiService.GetCashBankAccountsAsync() ?? new List<ChartOfAccountHeadDto>();
+                _supplierAccounts = suppliers.Concat(cashBanks)
+                    .GroupBy(a => a.Account)
+                    .Select(g => g.First())
+                    .ToList();
+                cmbPurchaseSupplier.DisplayMember = "Title";
+                cmbPurchaseSupplier.ValueMember = "Account";
+                cmbPurchaseSupplier.DataSource = new List<ChartOfAccountHeadDto>(_supplierAccounts);
             }
             catch (Exception ex)
             {
@@ -765,6 +962,19 @@ namespace ERP.Forms
             txtLaborCost.Text = voucher.ActualLaborCost.ToString("0.##");
             txtOverheadCost.Text = voucher.ActualOverheadCost.ToString("0.##");
 
+            if (chkCreatePurchase != null)
+            {
+                chkCreatePurchase.Checked = voucher.CreateRawMaterialPurchase;
+                if (!string.IsNullOrWhiteSpace(voucher.PurchaseSupplierAccountId))
+                    cmbPurchaseSupplier.SelectedValue = voucher.PurchaseSupplierAccountId;
+                cmbPurchaseScope.SelectedItem = string.Equals(voucher.PurchaseScope, "AllMaterials", StringComparison.OrdinalIgnoreCase)
+                    ? "AllMaterials"
+                    : "ShortageOnly";
+                lblLinkedPurchase.Text = string.IsNullOrWhiteSpace(voucher.LinkedPurchaseVoucherNo)
+                    ? ""
+                    : "Linked Purchase: PU-" + voucher.LinkedPurchaseVoucherNo;
+            }
+
             dgvRawMaterials.Rows.Clear();
             if (voucher.Items != null)
             {
@@ -779,6 +989,22 @@ namespace ERP.Forms
                     row.Cells[clnUnitCost.Index].Value = line.UnitCost.ToString("0.##");
                     row.Cells[clnTotalCost.Index].Value = line.TotalCost.ToString("0.##");
                     row.Cells[clnDetailNotes.Index].Value = line.Notes;
+                }
+            }
+
+            dgvExpenses.Rows.Clear();
+            if (voucher.Expenses != null && voucher.Expenses.Count > 0)
+            {
+                foreach (var exp in voucher.Expenses)
+                {
+                    int rIdx = dgvExpenses.Rows.Add();
+                    var row = dgvExpenses.Rows[rIdx];
+                    row.Cells[clnExpAccount.Index].Value = string.IsNullOrWhiteSpace(exp.AccountId) ? null : exp.AccountId;
+                    row.Cells[clnExpTitle.Index].Value = exp.Title;
+                    row.Cells[clnExpBasis.Index].Value = NormalizeBasis(exp.CalculationType);
+                    row.Cells[clnExpRate.Index].Value = exp.Rate.ToString("0.##");
+                    row.Cells[clnExpAmount.Index].Value = exp.ActualAmount.ToString("0.##");
+                    row.Cells[clnExpRemarks.Index].Value = exp.Remarks;
                 }
             }
 
@@ -817,6 +1043,9 @@ namespace ERP.Forms
             dgvRawMaterials.ReadOnly = isCompletedOrCancelled;
             btnAddRow.Enabled = !isCompletedOrCancelled;
             btnDeleteRow.Enabled = !isCompletedOrCancelled;
+            if (dgvExpenses != null) dgvExpenses.ReadOnly = isCompletedOrCancelled;
+            if (btnAddExpense != null) btnAddExpense.Enabled = !isCompletedOrCancelled;
+            if (btnDeleteExpense != null) btnDeleteExpense.Enabled = !isCompletedOrCancelled;
         }
 
         private void cmbBom_SelectedIndexChanged(object sender, EventArgs e)
@@ -834,6 +1063,7 @@ namespace ERP.Forms
                 txtLaborCost.Text = (bom.EstimatedLaborCost * multiplier).ToString("0.##");
                 txtOverheadCost.Text = (bom.EstimatedOverheadCost * multiplier).ToString("0.##");
 
+                decimal matSum = 0;
                 dgvRawMaterials.Rows.Clear();
                 if (bom.Items != null)
                 {
@@ -842,13 +1072,37 @@ namespace ERP.Forms
                         int rowIndex = dgvRawMaterials.Rows.Add();
                         var row = dgvRawMaterials.Rows[rowIndex];
                         decimal requiredQty = line.Quantity * multiplier;
+                        decimal lCost = requiredQty * line.StandardCost;
+                        matSum += lCost;
                         row.Cells[clnRawItem.Index].Value = line.RawItemId;
                         row.Cells[clnPlannedQty.Index].Value = requiredQty.ToString("0.##");
                         row.Cells[clnActualQty.Index].Value = requiredQty.ToString("0.##");
                         row.Cells[clnWastageQty.Index].Value = "0";
                         row.Cells[clnUnitCost.Index].Value = line.StandardCost.ToString("0.##");
-                        row.Cells[clnTotalCost.Index].Value = (requiredQty * line.StandardCost).ToString("0.##");
+                        row.Cells[clnTotalCost.Index].Value = lCost.ToString("0.##");
                         row.Cells[clnDetailNotes.Index].Value = line.Notes;
+                    }
+                }
+
+                dgvExpenses.Rows.Clear();
+                if (bom.Expenses != null && bom.Expenses.Count > 0)
+                {
+                    foreach (var exp in bom.Expenses)
+                    {
+                        int rIdx = dgvExpenses.Rows.Add();
+                        var row = dgvExpenses.Rows[rIdx];
+                        string basis = NormalizeBasis(exp.CalculationType);
+                        decimal amt = basis == "LumpSum"
+                            ? exp.Rate
+                            : basis == "PercentOfMaterial"
+                                ? matSum * (exp.Rate / 100m)
+                                : exp.Rate * plannedQty;
+                        row.Cells[clnExpAccount.Index].Value = string.IsNullOrWhiteSpace(exp.AccountId) ? null : exp.AccountId;
+                        row.Cells[clnExpTitle.Index].Value = exp.Title;
+                        row.Cells[clnExpBasis.Index].Value = basis;
+                        row.Cells[clnExpRate.Index].Value = exp.Rate.ToString("0.##");
+                        row.Cells[clnExpAmount.Index].Value = amt.ToString("0.##");
+                        row.Cells[clnExpRemarks.Index].Value = exp.Remarks;
                     }
                 }
 
@@ -870,6 +1124,7 @@ namespace ERP.Forms
                     txtLaborCost.Text = (bom.EstimatedLaborCost * multiplier).ToString("0.##");
                     txtOverheadCost.Text = (bom.EstimatedOverheadCost * multiplier).ToString("0.##");
 
+                    decimal matSum = 0;
                     for (int i = 0; i < dgvRawMaterials.Rows.Count && i < (bom.Items?.Count ?? 0); i++)
                     {
                         var row = dgvRawMaterials.Rows[i];
@@ -878,8 +1133,24 @@ namespace ERP.Forms
                         row.Cells[clnPlannedQty.Index].Value = requiredQty.ToString("0.##");
                         row.Cells[clnActualQty.Index].Value = requiredQty.ToString("0.##");
                         decimal cost = ParseDecimal(row.Cells[clnUnitCost.Index].Value);
-                        row.Cells[clnTotalCost.Index].Value = (requiredQty * cost).ToString("0.##");
+                        decimal lCost = requiredQty * cost;
+                        matSum += lCost;
+                        row.Cells[clnTotalCost.Index].Value = lCost.ToString("0.##");
                     }
+
+                    if (dgvExpenses != null)
+                    {
+                        foreach (DataGridViewRow expRow in dgvExpenses.Rows)
+                        {
+                            if (expRow.IsNewRow) continue;
+                            string basis = NormalizeBasis(expRow.Cells[clnExpBasis.Index].Value?.ToString());
+                            if (basis == "LumpSum") continue;
+                            decimal rate = ParseDecimal(expRow.Cells[clnExpRate.Index].Value);
+                            decimal amt = basis == "PercentOfMaterial" ? matSum * (rate / 100m) : rate * plannedQty;
+                            expRow.Cells[clnExpAmount.Index].Value = amt.ToString("0.##");
+                        }
+                    }
+
                     _isLoading = false;
                     RecalculateTotals();
                 }
@@ -926,9 +1197,20 @@ namespace ERP.Forms
                 rawMaterialsTotal += ParseDecimal(row.Cells[clnTotalCost.Index].Value);
             }
 
-            decimal labor = ParseDecimal(txtLaborCost.Text);
-            decimal overhead = ParseDecimal(txtOverheadCost.Text);
-            decimal totalCost = rawMaterialsTotal + labor + overhead;
+            decimal expensesTotal = 0;
+            if (dgvExpenses != null && dgvExpenses.Rows.Count > 0)
+            {
+                foreach (DataGridViewRow row in dgvExpenses.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    expensesTotal += ParseDecimal(row.Cells[clnExpAmount.Index].Value);
+                }
+            }
+            else
+            {
+                expensesTotal = ParseDecimal(txtLaborCost.Text) + ParseDecimal(txtOverheadCost.Text);
+            }
+            decimal totalCost = rawMaterialsTotal + expensesTotal;
 
             txtRawCost.Text = rawMaterialsTotal.ToString("N2");
             txtTotalCost.Text = totalCost.ToString("N2");
@@ -1021,6 +1303,17 @@ namespace ERP.Forms
             txtOverheadCost.Text = "0";
             dgvRawMaterials.ReadOnly = false;
             dgvRawMaterials.Rows.Clear();
+            if (dgvExpenses != null)
+            {
+                dgvExpenses.ReadOnly = false;
+                dgvExpenses.Rows.Clear();
+            }
+            if (chkCreatePurchase != null)
+            {
+                chkCreatePurchase.Checked = false;
+                cmbPurchaseScope.SelectedIndex = 0;
+                lblLinkedPurchase.Text = "";
+            }
             btnAddRow_Click(null, null);
             _isLoading = false;
             RecalculateTotals();
@@ -1072,6 +1365,9 @@ namespace ERP.Forms
                 ActualOverheadCost = ParseDecimal(txtOverheadCost.Text),
                 BatchNo = txtBatchNo.Text.Trim(),
                 Remarks = txtRemarks.Text.Trim(),
+                CreateRawMaterialPurchase = chkCreatePurchase != null && chkCreatePurchase.Checked,
+                PurchaseSupplierAccountId = chkCreatePurchase != null && chkCreatePurchase.Checked ? cmbPurchaseSupplier.SelectedValue?.ToString() : null,
+                PurchaseScope = chkCreatePurchase != null && chkCreatePurchase.Checked ? (cmbPurchaseScope.SelectedItem?.ToString() ?? "ShortageOnly") : null,
                 Items = new List<ProductionDetailCreateUpdateRequest>()
             };
 
@@ -1097,6 +1393,31 @@ namespace ERP.Forms
                     WastageQuantity = ParseDecimal(row.Cells[clnWastageQty.Index].Value),
                     Notes = row.Cells[clnDetailNotes.Index].Value?.ToString()
                 });
+            }
+
+            if (dgvExpenses != null)
+            {
+                int expSeq = 1;
+                foreach (DataGridViewRow row in dgvExpenses.Rows)
+                {
+                    if (row.IsNewRow) continue;
+                    string accId = row.Cells[clnExpAccount.Index].Value?.ToString();
+                    string title = (row.Cells[clnExpTitle.Index].Value?.ToString() ?? "").Trim();
+                    if (string.IsNullOrWhiteSpace(title) && string.IsNullOrWhiteSpace(accId)) continue;
+
+                    decimal amt = ParseDecimal(row.Cells[clnExpAmount.Index].Value);
+                    request.Expenses.Add(new ProductionExpenseRequest
+                    {
+                        Seq = expSeq++,
+                        Title = string.IsNullOrWhiteSpace(title) ? "Expense" : title,
+                        AccountId = string.IsNullOrWhiteSpace(accId) ? null : accId,
+                        CalculationType = NormalizeBasis(row.Cells[clnExpBasis.Index].Value?.ToString()),
+                        Rate = ParseDecimal(row.Cells[clnExpRate.Index].Value),
+                        PlannedAmount = amt,
+                        ActualAmount = amt,
+                        Remarks = row.Cells[clnExpRemarks.Index].Value?.ToString()
+                    });
+                }
             }
 
             try
