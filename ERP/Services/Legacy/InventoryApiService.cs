@@ -328,6 +328,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("additionalUnits")]
         public string AdditionalUnits { get; set; }
+
+        [JsonProperty("sortIndex")]
+        public decimal? SortIndex { get; set; }
     }
 
     internal class InventoryItemUpsertApiRequest
@@ -409,6 +412,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("additionalUnits")]
         public string AdditionalUnits { get; set; }
+
+        [JsonProperty("sortIndex")]
+        public decimal? SortIndex { get; set; }
     }
 
     internal class InventoryItemPagedBody

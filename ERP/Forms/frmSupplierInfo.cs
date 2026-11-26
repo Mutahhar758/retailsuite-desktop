@@ -53,7 +53,7 @@ namespace ERP
 
         private void ClearDetail()
         {
-            txtTitle.Text = txtEmail.Text = txtFax.Text = txtNic.Text = string.Empty;
+            txtTitle.Text = txtEmail.Text = txtFax.Text = txtNic.Text = txtSortIndex.Text = string.Empty;
             txtAddress.Text = txtQualification.Text = txtPhone1.Text = txtPhone2.Text = string.Empty;
             txtSMSNumber.Text = txtIBAN.Text = string.Empty;
             lblCreatedBy.Text = lblEditBy.Text = "-";
@@ -145,6 +145,7 @@ namespace ERP
             chkEmailAlert.Checked  = v.EmailAlert;
             chkActive.Checked      = v.Active;
             chkShowInSales.Checked = v.ShowInSales;
+            txtSortIndex.Text      = v.SortIndex.HasValue ? v.SortIndex.Value.ToString("0.####") : string.Empty;
 
             lblCreatedBy.Text = FormatAudit(v.CreatedBy,      v.CreatedOn);
             lblEditBy.Text    = FormatAudit(v.LastModifiedBy, v.LastModifiedOn);
@@ -178,6 +179,7 @@ namespace ERP
             EmailAlert    = chkEmailAlert.Checked,
             Active        = chkActive.Checked,
             ShowInSales   = chkShowInSales.Checked,
+            SortIndex     = decimal.TryParse(txtSortIndex.Text?.Trim(), out decimal sIdx) ? (decimal?)sIdx : null,
             MediaId       = profileImage1?.MediaId
         };
 

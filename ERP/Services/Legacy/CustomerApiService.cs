@@ -206,6 +206,9 @@ namespace ERP.Services.Legacy
         [JsonProperty("active")]
         public bool Active { get; set; }
 
+        [JsonProperty("sortIndex")]
+        public decimal? SortIndex { get; set; }
+
         [JsonProperty("createdBy")]
         public string CreatedBy { get; set; }
 
@@ -283,6 +286,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("active")]
         public bool Active { get; set; }
+
+        [JsonProperty("sortIndex")]
+        public decimal? SortIndex { get; set; }
 
         [JsonProperty("mediaId")]
         public string MediaId { get; set; }

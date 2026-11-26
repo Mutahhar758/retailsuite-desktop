@@ -48,6 +48,8 @@ namespace ERP
             this.txtBarcode = new System.Windows.Forms.TextBox();
             this.lblItemKey = new System.Windows.Forms.Label();
             this.txtItemKey = new System.Windows.Forms.TextBox();
+            this.lblSortIndex = new System.Windows.Forms.Label();
+            this.txtSortIndex = new System.Windows.Forms.TextBox();
             this.label11 = new System.Windows.Forms.Label();
             this.cmbItemCatagory = new System.Windows.Forms.ComboBox();
             this.lblItemType = new System.Windows.Forms.Label();
@@ -274,6 +276,8 @@ namespace ERP
             this.grpBasic.Controls.Add(this.cmbItemType);
             this.grpBasic.Controls.Add(this.lblTitle);
             this.grpBasic.Controls.Add(this.txtTitle);
+            this.grpBasic.Controls.Add(this.lblSortIndex);
+            this.grpBasic.Controls.Add(this.txtSortIndex);
             this.grpBasic.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grpBasic.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(15)))), ((int)(((byte)(23)))), ((int)(((byte)(42)))));
             this.grpBasic.Location = new System.Drawing.Point(10, 8);
@@ -342,7 +346,7 @@ namespace ERP
             this.cmbItemCatagory.FormattingEnabled = true;
             this.cmbItemCatagory.Location = new System.Drawing.Point(458, 23);
             this.cmbItemCatagory.Name = "cmbItemCatagory";
-            this.cmbItemCatagory.Size = new System.Drawing.Size(220, 23);
+            this.cmbItemCatagory.Size = new System.Drawing.Size(175, 23);
             this.cmbItemCatagory.TabIndex = 5;
             this.cmbItemCatagory.SelectedIndexChanged += new System.EventHandler(this.cmbItemCatagory_SelectedIndexChanged);
             // 
@@ -351,7 +355,7 @@ namespace ERP
             this.lblItemType.AutoSize = true;
             this.lblItemType.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.lblItemType.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(71)))), ((int)(((byte)(85)))), ((int)(((byte)(105)))));
-            this.lblItemType.Location = new System.Drawing.Point(695, 26);
+            this.lblItemType.Location = new System.Drawing.Point(645, 26);
             this.lblItemType.Name = "lblItemType";
             this.lblItemType.Size = new System.Drawing.Size(35, 15);
             this.lblItemType.TabIndex = 6;
@@ -362,11 +366,30 @@ namespace ERP
             this.cmbItemType.DropDownStyle = System.Windows.Forms.ComboBoxStyle.DropDownList;
             this.cmbItemType.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.cmbItemType.FormattingEnabled = true;
-            this.cmbItemType.Location = new System.Drawing.Point(735, 23);
+            this.cmbItemType.Location = new System.Drawing.Point(685, 23);
             this.cmbItemType.Name = "cmbItemType";
-            this.cmbItemType.Size = new System.Drawing.Size(120, 23);
+            this.cmbItemType.Size = new System.Drawing.Size(105, 23);
             this.cmbItemType.TabIndex = 7;
             this.cmbItemType.SelectedIndexChanged += new System.EventHandler(this.cmbItemType_SelectedIndexChanged);
+            // 
+            // lblSortIndex
+            // 
+            this.lblSortIndex.AutoSize = true;
+            this.lblSortIndex.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSortIndex.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(71)))), ((int)(((byte)(85)))), ((int)(((byte)(105)))));
+            this.lblSortIndex.Location = new System.Drawing.Point(800, 26);
+            this.lblSortIndex.Name = "lblSortIndex";
+            this.lblSortIndex.Size = new System.Drawing.Size(38, 15);
+            this.lblSortIndex.TabIndex = 7;
+            this.lblSortIndex.Text = "Index:";
+            // 
+            // txtSortIndex
+            // 
+            this.txtSortIndex.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSortIndex.Location = new System.Drawing.Point(842, 23);
+            this.txtSortIndex.Name = "txtSortIndex";
+            this.txtSortIndex.Size = new System.Drawing.Size(90, 23);
+            this.txtSortIndex.TabIndex = 8;
             // 
             // lblTitle
             // 
@@ -1376,6 +1399,8 @@ namespace ERP
         private System.Windows.Forms.TextBox txtBarcode;
         private System.Windows.Forms.Label lblItemKey;
         private System.Windows.Forms.TextBox txtItemKey;
+        private System.Windows.Forms.Label lblSortIndex;
+        private System.Windows.Forms.TextBox txtSortIndex;
         private System.Windows.Forms.Label label11;
         private System.Windows.Forms.ComboBox cmbItemCatagory;
         private System.Windows.Forms.Label lblItemType;

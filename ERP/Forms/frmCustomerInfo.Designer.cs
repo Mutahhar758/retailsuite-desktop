@@ -45,6 +45,8 @@ namespace ERP
             this.grpCustomerInfo = new System.Windows.Forms.GroupBox();
             this.label2 = new System.Windows.Forms.Label();
             this.txtAccountCode = new System.Windows.Forms.TextBox();
+            this.lblSortIndex = new System.Windows.Forms.Label();
+            this.txtSortIndex = new System.Windows.Forms.TextBox();
             this.chkActive = new System.Windows.Forms.CheckBox();
             this.lblCustomerName = new System.Windows.Forms.Label();
             this.txtTitle = new System.Windows.Forms.TextBox();
@@ -404,6 +406,8 @@ namespace ERP
             this.grpCustomerInfo.Controls.Add(this.lblCustomerName);
             this.grpCustomerInfo.Controls.Add(this.chkActive);
             this.grpCustomerInfo.Controls.Add(this.txtAccountCode);
+            this.grpCustomerInfo.Controls.Add(this.lblSortIndex);
+            this.grpCustomerInfo.Controls.Add(this.txtSortIndex);
             this.grpCustomerInfo.Controls.Add(this.label2);
             this.grpCustomerInfo.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Bold, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
             this.grpCustomerInfo.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(30)))), ((int)(((byte)(41)))), ((int)(((byte)(59)))));
@@ -449,6 +453,27 @@ namespace ERP
             this.chkActive.TabIndex = 102;
             this.chkActive.Text = "Active";
             this.chkActive.UseVisualStyleBackColor = true;
+            // 
+            // lblSortIndex
+            // 
+            this.lblSortIndex.Font = new System.Drawing.Font("Segoe UI", 8.5F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.lblSortIndex.ForeColor = System.Drawing.Color.FromArgb(((int)(((byte)(71)))), ((int)(((byte)(85)))), ((int)(((byte)(105)))));
+            this.lblSortIndex.Location = new System.Drawing.Point(455, 23);
+            this.lblSortIndex.Name = "lblSortIndex";
+            this.lblSortIndex.Size = new System.Drawing.Size(65, 20);
+            this.lblSortIndex.TabIndex = 102;
+            this.lblSortIndex.Text = "Index :";
+            this.lblSortIndex.TextAlign = System.Drawing.ContentAlignment.MiddleRight;
+            // 
+            // txtSortIndex
+            // 
+            this.txtSortIndex.BackColor = System.Drawing.Color.White;
+            this.txtSortIndex.BorderStyle = System.Windows.Forms.BorderStyle.FixedSingle;
+            this.txtSortIndex.Font = new System.Drawing.Font("Segoe UI", 9F, System.Drawing.FontStyle.Regular, System.Drawing.GraphicsUnit.Point, ((byte)(0)));
+            this.txtSortIndex.Location = new System.Drawing.Point(525, 22);
+            this.txtSortIndex.Name = "txtSortIndex";
+            this.txtSortIndex.Size = new System.Drawing.Size(105, 23);
+            this.txtSortIndex.TabIndex = 0;
             // 
             // lblCustomerName
             // 
@@ -1102,6 +1127,8 @@ namespace ERP
         private System.Windows.Forms.GroupBox grpCustomerInfo;
         private System.Windows.Forms.Label label2;
         private System.Windows.Forms.TextBox txtAccountCode;
+        private System.Windows.Forms.Label lblSortIndex;
+        private System.Windows.Forms.TextBox txtSortIndex;
         private System.Windows.Forms.CheckBox chkActive;
         private System.Windows.Forms.Label lblCustomerName;
         private System.Windows.Forms.TextBox txtTitle;

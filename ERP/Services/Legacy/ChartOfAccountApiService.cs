@@ -170,6 +170,9 @@ namespace ERP.Services.Legacy
 
         [JsonProperty("isSubAccount")]
         public bool IsSubAccount { get; set; }
+
+        [JsonProperty("sortIndex")]
+        public decimal? SortIndex { get; set; }
     }
 
     internal class ChartOfAccountDto

@@ -64,7 +64,7 @@ namespace ERP
 
         private void ClearDetail()
         {
-            txtTitle.Text = txtEmail.Text = txtFax.Text = txtNic.Text = string.Empty;
+            txtTitle.Text = txtEmail.Text = txtFax.Text = txtNic.Text = txtSortIndex.Text = string.Empty;
             txtAddress.Text = txtQualification.Text = txtPhone1.Text = txtPhone2.Text = string.Empty;
             txtSMSNumber.Text = txtIBAN.Text = string.Empty;
             lblCreatedBy.Text = lblEditBy.Text = "-";
@@ -169,6 +169,7 @@ namespace ERP
             chkSMSAlert.Checked   = c.SmsAlert;
             chkEmailAlert.Checked = c.EmailAlert;
             chkActive.Checked     = c.Active;
+            txtSortIndex.Text     = c.SortIndex.HasValue ? c.SortIndex.Value.ToString("0.####") : string.Empty;
             if (cmbCustomerCategory != null && cmbCustomerCategory.DataSource != null)
                 cmbCustomerCategory.SelectedValue = c.CustomerCategoryId ?? string.Empty;
             PopulateParentCustomersCombo(code);
@@ -278,6 +279,7 @@ namespace ERP
                 SmsAlert      = chkSMSAlert.Checked,
                 EmailAlert    = chkEmailAlert.Checked,
                 Active        = chkActive.Checked,
+                SortIndex     = decimal.TryParse(txtSortIndex.Text?.Trim(), out decimal sIdx) ? (decimal?)sIdx : null,
                 MediaId       = profileImage1?.MediaId,
                 CustomerCategoryId = cmbCustomerCategory != null && cmbCustomerCategory.SelectedValue != null && !string.IsNullOrWhiteSpace(cmbCustomerCategory.SelectedValue.ToString())
                     ? cmbCustomerCategory.SelectedValue.ToString()

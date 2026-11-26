@@ -218,6 +218,7 @@ namespace ERP
             dtItemDetail.Columns.Add("Ram", typeof(string));
             dtItemDetail.Columns.Add("Color", typeof(string));
             dtItemDetail.Columns.Add("AdditionalUnits", typeof(string));
+            dtItemDetail.Columns.Add("SortIndex", typeof(decimal));
 
             for (int i = 0; i < items.Count; i++)
             {
@@ -249,7 +250,8 @@ namespace ERP
                     items[i].Storage,
                     items[i].Ram,
                     items[i].Color,
-                    items[i].AdditionalUnits);
+                    items[i].AdditionalUnits,
+                    items[i].SortIndex.HasValue ? (object)items[i].SortIndex.Value : DBNull.Value);
             }
         }
 
@@ -357,7 +359,8 @@ namespace ERP
                     fetched.Storage,
                     fetched.Ram,
                     fetched.Color,
-                    fetched.AdditionalUnits);
+                    fetched.AdditionalUnits,
+                    fetched.SortIndex.HasValue ? (object)fetched.SortIndex.Value : DBNull.Value);
             }
 
             _isPopulating = true;
@@ -366,6 +369,7 @@ namespace ERP
                 _currentEditingItemId = itemId;
                 txtBarcode.Text = row["Barcode"]?.ToString() ?? "";
                 txtItemKey.Text = row["ItemKey"]?.ToString() ?? "";
+                txtSortIndex.Text = row.Table.Columns.Contains("SortIndex") && row["SortIndex"] != DBNull.Value ? Convert.ToDecimal(row["SortIndex"]).ToString("0.####") : "";
                 txtTitle.Text = row["Title"]?.ToString() ?? "";
 
                 if (row["fkitemcatagory"] != DBNull.Value)
@@ -446,6 +450,7 @@ namespace ERP
 
                 txtBarcode.Text = "";
                 txtItemKey.Text = "";
+                txtSortIndex.Text = "";
                 txtTitle.Text = "";
 
                 if (cmbItemCatagory.Items.Count > 0 && cmbItemCatagory.SelectedIndex < 0)
@@ -540,7 +545,8 @@ namespace ERP
                 Storage = ApiSession.HasMobileShopFeature ? txtStorage.Text : null,
                 Ram = ApiSession.HasMobileShopFeature ? txtRam.Text : null,
                 Color = ApiSession.HasMobileShopFeature ? txtColor.Text : null,
-                AdditionalUnits = isService ? null : _currentAdditionalUnits
+                AdditionalUnits = isService ? null : _currentAdditionalUnits,
+                SortIndex = ParseNullableDecimal(txtSortIndex.Text)
             };
 
             try
